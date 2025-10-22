@@ -24,7 +24,8 @@ class GeofenceWorker @AssistedInject constructor(
         val geofenceId = inputData.getString("geofenceId") ?: return Result.failure()
         val transitionType = inputData.getString("transitionType") ?: return Result.failure()
 
-        val userId = firebaseAuth.currentUser?.uid ?: return Result.failure()
+//        val userId = firebaseAuth.currentUser?.uid ?: return Result.failure()
+        val userId = "user123"
 
         val timestamp = System.currentTimeMillis()
         val readableTime = SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault()).format(Date(timestamp))
