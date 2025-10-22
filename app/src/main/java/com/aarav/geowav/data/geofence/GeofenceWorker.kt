@@ -1,6 +1,7 @@
 package com.aarav.geowav.data.geofence
 
 import android.content.Context
+import android.util.Log
 import androidx.hilt.work.HiltWorker
 import androidx.work.Worker
 import androidx.work.WorkerParameters
@@ -12,15 +13,17 @@ import com.google.firebase.auth.FirebaseAuth
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedInject
 
-@HiltWorker
-class GeofenceWorker @AssistedInject constructor(
-    @Assisted context: Context,
-    @Assisted workerParams: WorkerParameters,
-    private val firebaseAuth: FirebaseAuth,
-    private val firebaseDatabase: FirebaseDatabase
+class GeofenceWorker(
+    context: Context,
+    workerParams: WorkerParameters
 ) : Worker(context, workerParams) {
 
     override fun doWork(): Result {
+
+         val firebaseDatabase = FirebaseDatabase.getInstance()
+
+        Log.i("MYTAG", "worker called")
+
         val geofenceId = inputData.getString("geofenceId") ?: return Result.failure()
         val transitionType = inputData.getString("transitionType") ?: return Result.failure()
 
@@ -48,6 +51,9 @@ class GeofenceWorker @AssistedInject constructor(
             .child(userId)
             .push()
             .setValue(activityData)
+            .addOnSuccessListener { Log.i("MYTAG", "Firebase write success") }
+            .addOnFailureListener { e -> Log.e("MYTAG", "Firebase write failed", e) }
+
 
         return Result.success()
     }

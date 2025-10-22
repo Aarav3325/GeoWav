@@ -4,20 +4,15 @@ import android.Manifest
 import android.content.Intent
 import android.os.Build
 import android.os.Bundle
-import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
-import androidx.activity.viewModels
 import androidx.annotation.RequiresPermission
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.text.input.rememberTextFieldState
 import androidx.compose.material3.Button
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.LaunchedEffect
@@ -28,38 +23,31 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.core.content.ContextCompat
 import androidx.hilt.navigation.compose.hiltViewModel
-import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.compose.rememberNavController
 import com.aarav.geowav.data.geofence.GeofenceForegroundService
-import com.aarav.geowav.data.geofence.GeofenceHelper
 import com.aarav.geowav.data.geofence.GeofencingVM
-import com.aarav.geowav.data.room.PlaceDatabase
-import com.aarav.geowav.domain.place.PlaceRepositoryImpl
-import com.aarav.geowav.presentation.components.PlaceModalSheet
-import com.aarav.geowav.presentation.map.MapScreen
+import com.aarav.geowav.domain.authentication.GoogleSignInClient
 import com.aarav.geowav.presentation.map.MapViewModel
-import com.aarav.geowav.presentation.map.NewSearch
-import com.aarav.geowav.presentation.map.PlaceVMProvider
 import com.aarav.geowav.presentation.map.PlaceViewModel
-import com.aarav.geowav.presentation.navigation.BottomNavigationBar
 import com.aarav.geowav.presentation.navigation.NavGraph
+import com.aarav.geowav.presentation.navigation.NavRoute
 import com.aarav.geowav.ui.theme.GeoWavTheme
 import com.google.accompanist.permissions.ExperimentalPermissionsApi
 import com.google.accompanist.permissions.rememberMultiplePermissionsState
-import com.google.android.gms.maps.MapView
-import com.google.android.libraries.places.api.model.AutocompletePrediction
 import com.google.android.libraries.places.api.model.Place
 import dagger.hilt.android.AndroidEntryPoint
+import kotlinx.coroutines.delay
 import javax.inject.Inject
 
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
 
 
+    @Inject
+    lateinit var googleSignInClient: GoogleSignInClient
 
     @RequiresPermission(Manifest.permission.ACCESS_FINE_LOCATION)
     @OptIn(ExperimentalPermissionsApi::class, ExperimentalMaterial3Api::class)
@@ -71,7 +59,7 @@ class MainActivity : ComponentActivity() {
 
         setContent {
 
-            val mapViewModel : MapViewModel = hiltViewModel()
+            val mapViewModel: MapViewModel = hiltViewModel()
             val textFieldState = rememberTextFieldState()
 
             var expanded by remember {
@@ -90,7 +78,7 @@ class MainActivity : ComponentActivity() {
                 skipPartiallyExpanded = false
             )
 
-            val geoVM : GeofencingVM = hiltViewModel()
+            val geoVM: GeofencingVM = hiltViewModel()
 
             val placesViewModel: PlaceViewModel = hiltViewModel()
 
@@ -107,6 +95,7 @@ class MainActivity : ComponentActivity() {
 
             val context = LocalContext.current
 
+
 //            LaunchedEffect(Unit) {
 //                placesViewModel.addPlace(Place(
 //        id = "School1",
@@ -116,6 +105,10 @@ class MainActivity : ComponentActivity() {
 //        radius = 200f
 //    ))
 //            }
+
+            var signOut by remember {
+                mutableStateOf(false)
+            }
 
 
             GeoWavTheme {
@@ -135,6 +128,14 @@ class MainActivity : ComponentActivity() {
 //                }
 
                 val navController = rememberNavController()
+
+
+//                LaunchedEffect(signOut) {
+//                    delay(800)
+//                    signOut = true
+//                    googleSignInClient.firebaseSignOut()
+//                    navController.navigate(NavRoute.SignUp.path)
+//                }
 
 //                Scaffold(
 //                    modifier = Modifier.fillMaxSize(),
@@ -162,33 +163,35 @@ class MainActivity : ComponentActivity() {
 //                        BottomNavigationBar(navController)
 //                    }
 //                ) {
-                    Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                        when {
-                            !fineLocationPermission.allPermissionsGranted -> {
-                                Button(onClick = { fineLocationPermission.launchMultiplePermissionRequest() }) {
-                                    Text("Grant foreground location")
-                                }
+                Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                    when {
+                        !fineLocationPermission.allPermissionsGranted -> {
+                            Button(onClick = { fineLocationPermission.launchMultiplePermissionRequest() }) {
+                                Text("Grant foreground location")
                             }
+                        }
 
-                            Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q &&
-                                    !backgroundPermission.allPermissionsGranted -> {
-                                Button(onClick = { backgroundPermission.launchMultiplePermissionRequest() }) {
-                                    Text("Grant background location")
-                                }
+                        Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q &&
+                                !backgroundPermission.allPermissionsGranted -> {
+                            Button(onClick = { backgroundPermission.launchMultiplePermissionRequest() }) {
+                                Text("Grant background location")
                             }
+                        }
 
 
-                            else -> {
+                        else -> {
 
-                                val location1 = location?.let { it.latitude to it.longitude } ?: (0.0 to 0.0)
+                            val location1 =
+                                location?.let { it.latitude to it.longitude } ?: (0.0 to 0.0)
 
 
-                                NavGraph(
-                                    navController,
-                                    location1,
-                                    mapViewModel,
-                                    placesViewModel
-                                )
+                            NavGraph(
+                                navController,
+                                location1,
+                                googleSignInClient,
+                                mapViewModel,
+                                placesViewModel
+                            )
 
 //                                PlaceModalSheet(
 //                                    place = selectedPlace,
@@ -214,22 +217,21 @@ class MainActivity : ComponentActivity() {
 //                                    placeViewModel = placesViewModel,
 //                                    textFieldState = textFieldState
 //                                )
-                            }
                         }
-
                     }
-                }
 
+                }
+            }
 
 
 //            Log.i("MYTAG", places.get(0).toString())
 //                LaunchedEffect(places) {
 //                    geoVM.registerPlaces(places)
 //                }
-            }
-
         }
-   // }
+
+    }
+    // }
 }
 
 //@RequiresPermission(Manifest.permission.ACCESS_FINE_LOCATION)

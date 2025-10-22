@@ -1,6 +1,7 @@
 {
   "project_info": {
     "project_number": "173198777031",
+    "firebase_url": "https://geowav-default-rtdb.firebaseio.com",
     "project_id": "geowav",
     "storage_bucket": "geowav.firebasestorage.app"
   },
@@ -12,7 +13,20 @@
           "package_name": "com.aarav.geowav"
         }
       },
-      "oauth_client": [],
+      "oauth_client": [
+        {
+          "client_id": "173198777031-kp7jot8serti050bt15m7s8ka4q8naef.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.aarav.geowav",
+            "certificate_hash": "87a6e5304e38676e6bc7837c9d8e00b8feb01b83"
+          }
+        },
+        {
+          "client_id": "173198777031-5fars1360cfht9dlrei7u9n24blkc7ot.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
       "api_key": [
         {
           "current_key": "AIzaSyDpMOY4GjpJ8dz2kL32YfEjo_vy2GtO4vM"
@@ -20,7 +34,12 @@
       ],
       "services": {
         "appinvite_service": {
-          "other_platform_oauth_client": []
+          "other_platform_oauth_client": [
+            {
+              "client_id": "173198777031-2iobb0l0l2237otr0jqenjeel6hke0hv.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
         }
       }
     }

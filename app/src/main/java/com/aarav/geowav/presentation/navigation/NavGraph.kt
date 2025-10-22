@@ -10,6 +10,9 @@ import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.navArgument
+import com.aarav.geowav.domain.authentication.GoogleSignInClient
+import com.aarav.geowav.presentation.auth.LoginScreen
+import com.aarav.geowav.presentation.auth.SignupScreen
 import com.aarav.geowav.presentation.map.AddPlaceScreen
 import com.aarav.geowav.presentation.map.MapScreen
 import com.aarav.geowav.presentation.map.MapViewModel
@@ -20,10 +23,13 @@ import com.google.android.gms.maps.MapView
 @Composable
 fun NavGraph(navHostController: NavHostController,
              location: Pair<Double, Double>?,
+             googleSignInClient: GoogleSignInClient,
              mapViewModel: MapViewModel,
              placesViewModel: PlaceViewModel) {
 
-    NavHost(navController = navHostController, startDestination = NavRoute.MapScreen.path){
+    NavHost(navController = navHostController,
+        startDestination = if (googleSignInClient.isLoggedIn()) NavRoute.MapScreen.path else NavRoute.SignUp.path
+    ){
         AddMapsScreen(
             navHostController,
             this,
@@ -43,6 +49,18 @@ fun NavGraph(navHostController: NavHostController,
             navHostController,
             this,
             placesViewModel
+        )
+
+        AddSignUpScreen(
+            navHostController,
+            this,
+            googleSignInClient
+        )
+
+        AddLoginScreen(
+            navHostController,
+            this,
+            googleSignInClient
         )
     }
 
@@ -106,6 +124,40 @@ fun AddYourPlacesScreen(navController: NavController, navGraphBuilder: NavGraphB
             placesViewModel,
             navigateToMap ={
                 navController.navigate(NavRoute.MapScreen.path)
+            }
+        )
+    }
+}
+
+fun AddSignUpScreen(navController: NavController, navGraphBuilder: NavGraphBuilder, googleSignInClient: GoogleSignInClient
+){
+    navGraphBuilder.composable(
+        route = NavRoute.SignUp.path
+    ){
+        SignupScreen(
+            googleSignInClient,
+            navigateToMap ={
+                navController.navigate(NavRoute.MapScreen.path)
+            },
+            navigateToLogin = {
+                navController.navigate(NavRoute.Login.path)
+            }
+        )
+    }
+}
+
+fun AddLoginScreen(navController: NavController, navGraphBuilder: NavGraphBuilder, googleSignInClient: GoogleSignInClient
+){
+    navGraphBuilder.composable(
+        route = NavRoute.Login.path
+    ){
+        LoginScreen(
+            googleSignInClient,
+            navigateToMap = {
+                navController.navigate(NavRoute.MapScreen.path)
+            },
+            navigateToSignUp = {
+                navController.navigate(NavRoute.SignUp.path)
             }
         )
     }

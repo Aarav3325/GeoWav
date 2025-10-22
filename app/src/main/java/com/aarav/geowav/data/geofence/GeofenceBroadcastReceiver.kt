@@ -8,6 +8,7 @@ import android.content.Intent
 import android.os.Build
 import android.util.Log
 import androidx.core.app.NotificationCompat
+import androidx.work.WorkManager
 import com.aarav.geowav.R
 import com.google.android.gms.location.Geofence
 import com.google.android.gms.location.GeofencingEvent
@@ -72,14 +73,17 @@ class GeofenceBroadcastReceiver : BroadcastReceiver() {
             // Enqueue WorkManager
             val inputData = androidx.work.workDataOf(
                 "geofenceId" to geofence.requestId,
-                "transitionType" to transitionType
+                "transitionType" to transitionType,
+                "latitude" to geofence.latitude,
+                "longitude" to geofence.longitude
             )
 
             val workRequest = androidx.work.OneTimeWorkRequestBuilder<GeofenceWorker>()
                 .setInputData(inputData)
                 .build()
-
-            androidx.work.WorkManager.getInstance(context).enqueue(workRequest)
+            Log.i("MYTAG", "Enqueueing GeofenceWorker for ${geofence.requestId}")
+            WorkManager.getInstance(context).enqueue(workRequest)
+            Log.i("MYTAG", "Worker enqueued")
 
             // Log
             Log.i("MYTAG", "${transitionType.uppercase()} ${geofence.requestId} at ${System.currentTimeMillis()}")

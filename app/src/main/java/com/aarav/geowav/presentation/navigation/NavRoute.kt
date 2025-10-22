@@ -12,4 +12,6 @@ sealed class NavRoute(val path : String) {
     }
 
     object YourPlaces : NavRoute("yourPlaces")
+    object SignUp : NavRoute("signUp")
+    object Login : NavRoute("login")
 }

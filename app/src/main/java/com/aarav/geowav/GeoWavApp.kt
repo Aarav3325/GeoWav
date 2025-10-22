@@ -51,7 +51,6 @@ class GeoWavApp : Application(), Configuration.Provider {
         fusedClient = LocationServices.getFusedLocationProviderClient(this)
 
 
-
         // Register geofences once app starts
 //        CoroutineScope(Dispatchers.Default).launch {
 //            placeRepo.getPlaces().firstOrNull()?.let { places ->
