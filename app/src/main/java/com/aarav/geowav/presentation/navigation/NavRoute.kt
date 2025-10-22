@@ -1,0 +1,15 @@
+package com.aarav.geowav.presentation.navigation
+
+sealed class NavRoute(val path : String) {
+//    object HomeScreen : NavRoute("home")
+
+    object MapScreen : NavRoute("mapScreen")
+
+    object AddPlace : NavRoute("addPlace"){
+        fun createRoute(placeId: String): String {
+            return "addPlace/$placeId"
+        }
+    }
+
+    object YourPlaces : NavRoute("yourPlaces")
+}
