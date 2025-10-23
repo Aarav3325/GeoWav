@@ -18,6 +18,7 @@ import com.aarav.geowav.presentation.map.MapScreen
 import com.aarav.geowav.presentation.map.MapViewModel
 import com.aarav.geowav.presentation.map.PlaceViewModel
 import com.aarav.geowav.presentation.map.YourPlacesScreen
+import com.aarav.geowav.presentation.onboard.OnboardingScreen
 import com.google.android.gms.maps.MapView
 
 @Composable
@@ -28,7 +29,7 @@ fun NavGraph(navHostController: NavHostController,
              placesViewModel: PlaceViewModel) {
 
     NavHost(navController = navHostController,
-        startDestination = if (googleSignInClient.isLoggedIn()) NavRoute.MapScreen.path else NavRoute.SignUp.path
+        startDestination = if (googleSignInClient.isLoggedIn()) NavRoute.OnBoard.path else NavRoute.SignUp.path
     ){
         AddMapsScreen(
             navHostController,
@@ -61,6 +62,11 @@ fun NavGraph(navHostController: NavHostController,
             navHostController,
             this,
             googleSignInClient
+        )
+
+        AddOnBoard(
+            navHostController,
+            this
         )
     }
 
@@ -157,6 +163,18 @@ fun AddLoginScreen(navController: NavController, navGraphBuilder: NavGraphBuilde
                 navController.navigate(NavRoute.MapScreen.path)
             },
             navigateToSignUp = {
+                navController.navigate(NavRoute.SignUp.path)
+            }
+        )
+    }
+}
+
+fun AddOnBoard(navController: NavController, navGraphBuilder: NavGraphBuilder){
+    navGraphBuilder.composable(
+        route = NavRoute.OnBoard.path
+    ){
+        OnboardingScreen(
+            navigateToAuth = {
                 navController.navigate(NavRoute.SignUp.path)
             }
         )
