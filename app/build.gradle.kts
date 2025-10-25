@@ -60,6 +60,14 @@ dependencies {
 ////    implementation("com.google.firebase:firebase-ai")
 //    implementation("com.google.firebase:firebase-crashlytics-ndk")
 
+    //Retrofit
+    implementation("com.squareup.retrofit2:retrofit:3.0.0")
+    implementation("com.squareup.retrofit2:converter-gson:2.11.0")
+
+    //Constraint Layout
+
+    implementation("androidx.constraintlayout:constraintlayout-compose:1.0.1")
+
     // Firebase Credential Manager
     implementation("androidx.credentials:credentials:1.3.0")
     implementation("androidx.credentials:credentials-play-services-auth:1.3.0")

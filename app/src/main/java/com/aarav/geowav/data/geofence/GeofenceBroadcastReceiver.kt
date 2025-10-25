@@ -12,6 +12,7 @@ import androidx.work.WorkManager
 import com.aarav.geowav.R
 import com.google.android.gms.location.Geofence
 import com.google.android.gms.location.GeofencingEvent
+import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.database.FirebaseDatabase
 
 class GeofenceBroadcastReceiver : BroadcastReceiver() {
@@ -75,7 +76,9 @@ class GeofenceBroadcastReceiver : BroadcastReceiver() {
                 "geofenceId" to geofence.requestId,
                 "transitionType" to transitionType,
                 "latitude" to geofence.latitude,
-                "longitude" to geofence.longitude
+                "longitude" to geofence.longitude,
+//                "userName" to FirebaseAuth.getInstance().currentUser?.displayName,
+//                "phoneNumber" to "9558030582"
             )
 
             val workRequest = androidx.work.OneTimeWorkRequestBuilder<GeofenceWorker>()

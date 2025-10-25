@@ -163,7 +163,7 @@ fun NewSearch(
         SearchBar(
             shape = RoundedCornerShape(16.dp),
             colors = SearchBarDefaults.colors(
-                containerColor = MaterialTheme.colorScheme.background,
+                containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
                 dividerColor = MaterialTheme.colorScheme.primary
             ),
             expanded = expanded,

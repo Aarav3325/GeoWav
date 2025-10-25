@@ -100,6 +100,7 @@ fun AddPlaceScreen(
 //        mapViewModel.fetchUserLocation()
 //    }
 
+
     LaunchedEffect(selectedPlace) {
         placeViewModel.fetchPlace(
             placeId,

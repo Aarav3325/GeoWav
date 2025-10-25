@@ -51,8 +51,6 @@ import kotlinx.coroutines.launch
 @Composable
 fun OnboardingScreen(
     navigateToAuth: () -> Unit
-    //modifier: Modifier,
-                     //navigateToSignUp : () -> Unit
 )
 {
 
@@ -164,9 +162,9 @@ fun OnboardingScreen(
                             scope.launch { pagerState.animateScrollToPage(pagerState.currentPage + 1, animationSpec = TweenSpec(durationMillis = 350)) }
                         }
                     },
-                    shape = RoundedCornerShape(12.dp),
+                    shape = RoundedCornerShape(18.dp),
                     colors = ButtonDefaults.filledTonalButtonColors(containerColor = MaterialTheme.colorScheme.primary, contentColor = MaterialTheme.colorScheme.onPrimary),
-                    modifier = if(last) Modifier.fillMaxWidth().height(56.dp) else Modifier.height(56.dp)
+                    modifier = if(last) Modifier.fillMaxWidth().height(48.dp) else Modifier.height(48.dp)
                 ) {
                     AnimatedVisibility(!clickState) {
                         Text(

@@ -29,7 +29,7 @@ fun NavGraph(navHostController: NavHostController,
              placesViewModel: PlaceViewModel) {
 
     NavHost(navController = navHostController,
-        startDestination = if (googleSignInClient.isLoggedIn()) NavRoute.OnBoard.path else NavRoute.SignUp.path
+        startDestination = if (googleSignInClient.isLoggedIn()) NavRoute.MapScreen.path else NavRoute.SignUp.path
     ){
         AddMapsScreen(
             navHostController,

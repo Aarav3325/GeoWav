@@ -182,4 +182,8 @@ class GoogleSignInClient @Inject constructor(
     fun getUserId() : String{
         return firebaseAuth.currentUser?.uid ?: ""
     }
+
+    fun getUserName() : String{
+        return firebaseAuth.currentUser?.displayName ?: ""
+    }
 }

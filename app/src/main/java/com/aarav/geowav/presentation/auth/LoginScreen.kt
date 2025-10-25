@@ -291,7 +291,7 @@ fun LoginScreen(
                     text = "Login",
                     fontFamily = nunito,
                     color = MaterialTheme.colorScheme.onPrimary,
-                    fontWeight = FontWeight.Medium,
+                    fontWeight = FontWeight.SemiBold,
                     fontSize = 16.sp
                 )
             }
