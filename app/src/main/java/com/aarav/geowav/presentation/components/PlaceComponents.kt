@@ -180,7 +180,7 @@ fun SearchItem(prediction : AutocompletePrediction, onClick : () -> Unit){
     Row(
         modifier = Modifier.clickable{
           onClick()
-        }.padding(horizontal = 8.dp, vertical = 4.dp).fillMaxWidth(),
+        }.padding(horizontal = 8.dp, vertical = 4.dp).fillMaxWidth().wrapContentHeight(),
         horizontalArrangement = Arrangement.Start,
         verticalAlignment = Alignment.CenterVertically
     ) {
@@ -208,9 +208,6 @@ fun SearchItem(prediction : AutocompletePrediction, onClick : () -> Unit){
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
                 fontSize = 18.sp,
-                style = TextStyle(
-                    lineHeight = 0.5.sp
-                ),
                 fontWeight = FontWeight.SemiBold,
                 fontFamily = sora,
             )
@@ -218,12 +215,9 @@ fun SearchItem(prediction : AutocompletePrediction, onClick : () -> Unit){
             Text(
                 text = prediction.getSecondaryText(null).toString(),
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
-                maxLines = 2,
                 overflow = TextOverflow.Ellipsis,
+                maxLines = 2,
                 fontSize = 12.sp,
-                style = TextStyle(
-                    lineHeight = 0.5.sp
-                ),
                 fontWeight = FontWeight.Normal,
                 fontFamily = sora,
             )

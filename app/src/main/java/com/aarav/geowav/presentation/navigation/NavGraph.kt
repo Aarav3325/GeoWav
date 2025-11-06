@@ -2,6 +2,7 @@ package com.aarav.geowav.presentation.navigation
 
 import android.location.Location
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Modifier
 import androidx.navigation.NavController
 import androidx.navigation.NavGraph
 import androidx.navigation.NavGraph.Companion.findStartDestination
@@ -32,9 +33,12 @@ fun NavGraph(navHostController: NavHostController,
              location: Pair<Double, Double>?,
              googleSignInClient: GoogleSignInClient,
              mapViewModel: MapViewModel,
-             placesViewModel: PlaceViewModel) {
+             placesViewModel: PlaceViewModel,
+             modifier: Modifier) {
 
-    NavHost(navController = navHostController,
+    NavHost(
+        modifier = modifier,
+        navController = navHostController,
         startDestination = if (googleSignInClient.isLoggedIn()) NavRoute.HomeScreen.path else NavRoute.OnBoard.path
     ){
         AddMapsScreen(
@@ -99,6 +103,9 @@ fun AddMapsScreen(navController: NavController,
             navigateToAddPlace = {
                 id ->
                 navController.navigate(NavRoute.AddPlace.createRoute(id))
+            },
+            navigateToHome = {
+                navController.navigateUp()
             }
         )
     }
@@ -239,13 +246,7 @@ fun AddHomeScreen(navController: NavController, navGraphBuilder: NavGraphBuilder
                 alerts = sampleAlerts,
                 onViewMap = {},
                 onAddZone = {
-                    navController.navigate(NavRoute.MapScreen.path){
-                        popUpTo(navController.graph.findStartDestination().id) {
-                            saveState = true
-                        }
-                        launchSingleTop = true
-                        restoreState = true
-                    }
+                    navController.navigate(NavRoute.MapScreen.path)
                 },
                 onShareLocation = {},
                 onOpenAlerts = {}

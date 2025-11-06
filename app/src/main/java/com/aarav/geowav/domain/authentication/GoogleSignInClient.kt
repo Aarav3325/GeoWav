@@ -1,6 +1,7 @@
 package com.aarav.geowav.domain.authentication
 
 import android.content.Context
+import android.net.Uri
 import android.util.Log
 import com.aarav.geowav.R
 import androidx.credentials.ClearCredentialStateRequest
@@ -185,7 +186,7 @@ class GoogleSignInClient @Inject constructor(
         return firebaseAuth.currentUser?.displayName ?: ""
     }
 
-    fun getUserProfile(): String {
-        return firebaseAuth.currentUser?.photoUrl.toString()
+    fun getUserProfile(): Uri {
+        return firebaseAuth.currentUser?.photoUrl ?: Uri.EMPTY
     }
 }

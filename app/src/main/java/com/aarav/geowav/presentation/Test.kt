@@ -1,6 +1,7 @@
 package com.aarav.geowav.presentation
 
 
+import android.util.Log
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -38,10 +39,17 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.IconButtonDefaults
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
+import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -51,15 +59,19 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.zIndex
+import coil.ImageLoader
 import coil.compose.AsyncImage
+import coil.decode.SvgDecoder
 import com.aarav.geowav.R
 import com.aarav.geowav.domain.authentication.GoogleSignInClient
+import com.aarav.geowav.presentation.components.SnackbarManager
 import com.aarav.geowav.ui.theme.GeoWavTheme
 import com.aarav.geowav.ui.theme.manrope
 import com.aarav.geowav.ui.theme.sora
@@ -114,6 +126,20 @@ fun GeoWavHomeScreen(
     val Success = MaterialTheme.colorScheme.surfaceTint
     val scroll = rememberScrollState()
 
+
+    Scaffold(
+        modifier = Modifier.fillMaxSize(),
+        topBar = {
+            TopAppBar(
+                title = {
+
+                }
+            )
+        }
+    ) {
+
+    }
+
     Box(
         modifier = Modifier.fillMaxSize()
             .background(MaterialTheme.colorScheme.background)
@@ -149,45 +175,59 @@ fun GeoWavHomeScreen(
                     modifier = Modifier
                         .fillMaxWidth()
                         .align(Alignment.TopStart)
-                        .padding(start = 12.dp, end = 12.dp, top = 48.dp)
+                        .padding(start = 12.dp, end = 12.dp, top = 48.dp, bottom = 12.dp)
                 ) {
                     Text(
                         text = "GeoWav",
                         style = MaterialTheme.typography.headlineLarge.copy(
-                            color = MaterialTheme.colorScheme.background
+                            color = Color.Black
                         ),
                         fontFamily = manrope,
                         modifier = Modifier.weight(1.0f),
                         fontWeight = FontWeight.Bold
                     )
 
-                    Image(
-                        painter = painterResource(R.drawable.bell),
-                        contentDescription = "bell",
-                        modifier = Modifier
-                            .padding(end = 24.dp)
-                            .size(28.dp),
-                        colorFilter = ColorFilter.tint(MaterialTheme.colorScheme.background)
-                    )
+                    IconButton(
+                        onClick = {
+                            scope.launch {
+                                SnackbarManager.showMessage("No Notifications")
+                            }
+                        }
+                    ) {
+                        Image(
+                            painter = painterResource(R.drawable.bell),
+                            contentDescription = "bell",
+                            modifier = Modifier
+                                .size(28.dp),
+                            colorFilter = ColorFilter.tint(Color.Black)
+                        )
+                    }
 
-                    Image(
-                        painter = painterResource(R.drawable.gear_six),
-                        contentDescription = "setting",
-                        modifier = Modifier
-                            .padding(end = 0.dp).size(28.dp)
-                            .clickable{
-                                scope.launch {
-                                    googleSignInClient.signOut()
-                                    navigateToAuth()
-                                }
-                            },
-                        colorFilter = ColorFilter.tint(MaterialTheme.colorScheme.background)
-                    )
-                }
+                    Spacer(modifier = Modifier.width(10.dp))
+
+                    IconButton(
+                        onClick = {
+                            scope.launch {
+                                googleSignInClient.signOut()
+                                navigateToAuth()
+                            }
+                        }
+                    ) {
+                        Image(
+                            painter = painterResource(R.drawable.gear_six),
+                            contentDescription = "setting",
+                            modifier = Modifier.size(28.dp),
+                            colorFilter = ColorFilter.tint(Color.Black)
+                        )
+                    }
+                    }
+
+
+
 
                 ProfileCard(
                     googleSignInClient,
-                    modifier = Modifier.align(Alignment.Center).padding(top = 54.dp)
+                    modifier = Modifier.align(Alignment.Center).padding(top = 78.dp)
                 )
 
 //                Row(
@@ -404,7 +444,7 @@ fun ConnectionCard(conn: GeoConnection) {
                 conn.name.take(1),
                 color = MaterialTheme.colorScheme.onBackground,
                 style = MaterialTheme.typography.headlineSmall.copy(
-                    fontWeight = FontWeight.Bold,
+                    fontWeight = FontWeight.W600,
                     fontFamily = sora
                 ),
                 fontSize = 24.sp,
@@ -503,7 +543,7 @@ fun ZoneCard(zone: GeoZone, onClick: () -> Unit) {
     Card(
         modifier = Modifier
             .fillMaxWidth()
-            .height(72.dp),
+            .wrapContentHeight(),
         colors = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.surfaceContainer
         ),
@@ -537,10 +577,10 @@ fun ZoneCard(zone: GeoZone, onClick: () -> Unit) {
                         zone.name,
                         fontSize = 14.sp,
                         color = MaterialTheme.colorScheme.onSurface,
-                        style = MaterialTheme.typography.titleSmall.copy(fontFamily = sora)
+                        style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.SemiBold, fontFamily = sora)
                     )
                     Text(
-                        "${zone.radiusMeters} m • ${if (zone.inside) "Inside" else "Outside"}",
+                        "${zone.radiusMeters}m • ${if (zone.inside) "Inside" else "Outside"}",
                         style = MaterialTheme.typography.bodySmall.copy(
                             color = MaterialTheme.colorScheme.secondary,
                             fontFamily = sora
@@ -554,6 +594,7 @@ fun ZoneCard(zone: GeoZone, onClick: () -> Unit) {
                     "Edit",
                     fontSize = 14.sp,
                     fontFamily = sora,
+                    fontWeight = FontWeight.SemiBold,
                     color = MaterialTheme.colorScheme.tertiary
                 )
             }
@@ -625,7 +666,7 @@ fun RecentAlertsList(alerts: List<GeoAlert>) {
     val Success = MaterialTheme.colorScheme.surfaceTint
     Column(
         verticalArrangement = Arrangement.spacedBy(10.dp),
-        modifier = Modifier.padding(bottom = 154.dp)
+        modifier = Modifier.padding(bottom = 24.dp)
     ) {
         if (alerts.isEmpty()) {
             Text(
@@ -704,6 +745,7 @@ fun AlertItem(alert: GeoAlert) {
             }
             Text(alert.time,
                 fontFamily = sora,
+                fontWeight = FontWeight.SemiBold,
                 fontSize = 14.sp)
         }
     }
@@ -754,7 +796,7 @@ fun GeoWavHomePreview() {
 @Composable
 fun ProfileCard(googleSignInClient: GoogleSignInClient, modifier: Modifier = Modifier){
     Card(
-        modifier = modifier.fillMaxWidth().height(200.dp).padding(12.dp),
+        modifier = modifier.fillMaxWidth().wrapContentHeight().padding(12.dp),
         colors = CardDefaults.cardColors(
             containerColor = Color.Transparent
         ),
@@ -771,39 +813,73 @@ fun ProfileCard(googleSignInClient: GoogleSignInClient, modifier: Modifier = Mod
                 Text(
                     text = "Welcome,",
                     fontFamily = sora,
-                    fontSize = 24.sp,
-                    color = MaterialTheme.colorScheme.background,
+                    fontSize = 18.sp,
+                    color = Color.Black,
                     fontWeight = FontWeight.SemiBold,
                     modifier = Modifier
                 )
 
                 Text(
                     text = googleSignInClient.getUserName(),
-                    fontFamily = sora,
+                    fontFamily = manrope,
                     fontSize = 32.sp,
-                    color = MaterialTheme.colorScheme.background,
+                    color = Color.Black,
                     maxLines = 1,
                     fontWeight = FontWeight.Bold,
                     modifier = Modifier
                 )
             }
 
-            val avatar = googleSignInClient.getUserProfile().isEmpty()
+            val avatar by remember {
+                mutableStateOf(googleSignInClient.getUserProfile().toString().isBlank())
+            }
+
+            val isDark = isSystemInDarkTheme()
+
+            val imageUrl = remember(avatar, isDark) {
+                if (avatar) {
+                    if (isDark) {
+                        "https://storage.googleapis.com/geowav-bucket-1/user_dark_theme.svg"
+                    } else {
+                        "https://storage.googleapis.com/geowav-bucket-1/user_light_theme.svg"
+                    }
+                } else {
+                    googleSignInClient.getUserProfile() // ⚠️ Must return a *stable* String (not recompute every frame)
+                }
+            }
+
+            val context = LocalContext.current
+            val imageLoader = ImageLoader.Builder(context)
+                .components {
+                    add(SvgDecoder.Factory())
+                }
+                .build()
 
             Surface(
                 shape = CircleShape,
-                color = MaterialTheme.colorScheme.onPrimaryContainer,
-                modifier = Modifier
-                    .size(98.dp)
+                modifier = Modifier.size(96.dp),
+                color = Color.White
             ) {
                 AsyncImage(
-                    model = if(avatar) painterResource(R.drawable.user) else googleSignInClient.getUserProfile(),
+                    model = imageUrl,
                     contentDescription = "User avatar",
-                    //colorFilter = ColorFilter.tint(MaterialTheme.colorScheme.inversePrimary),
-                    modifier = Modifier
-                        .size(64.dp)
+                    imageLoader = imageLoader,
+                    placeholder = painterResource(R.drawable.user),
+                    contentScale = ContentScale.Crop,
+                    modifier = Modifier.size(96.dp)
                 )
             }
+
+            //data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIzMiIgaGVpZ2h0PSIzMiIgZmlsbD0iI2JhYzNmZiIgdmlld0JveD0iMCAwIDI1NiAyNTYiPjxwYXRoIGQ9Ik0yMzAuOTIsMjEyYy0xNS4yMy0yNi4zMy0zOC43LTQ1LjIxLTY2LjA5LTU0LjE2YTcyLDcyLDAsMSwwLTczLjY2LDBDNjMuNzgsMTY2Ljc4LDQwLjMxLDE4NS42NiwyNS4wOCwyMTJhOCw4LDAsMSwwLDEzLjg1LDhjMTguODQtMzIuNTYsNTIuMTQtNTIsODkuMDctNTJzNzAuMjMsMTkuNDQsODkuMDcsNTJhOCw4LDAsMSwwLDEzLjg1LThaTTcyLDk2YTU2LDU2LDAsMSwxLDU2LDU2QTU2LjA2LDU2LjA2LDAsMCwxLDcyLDk2WiI+PC9wYXRoPjwvc3ZnPg==
+
+//            Surface(
+//                shape = CircleShape,
+//                //color = MaterialTheme.colorScheme.background,
+//                modifier = Modifier
+//                    .size(96.dp)
+//            ) {
+
+          //  }
         }
     }
 }

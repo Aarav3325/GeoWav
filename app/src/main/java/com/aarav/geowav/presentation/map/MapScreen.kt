@@ -58,6 +58,7 @@ fun MapScreen(mapViewModel: MapViewModel,
               location : Pair<Double, Double>?,
               placesViewModel : PlaceViewModel,
               navigateToAddPlace: (String) -> Unit,
+              navigateToHome: () -> Unit,
               modifier: Modifier = Modifier) {
 
 
@@ -137,9 +138,7 @@ fun MapScreen(mapViewModel: MapViewModel,
                 },
                 navigationIcon = {
                     IconButton(
-                        onClick = {
-
-                        }
+                        onClick = navigateToHome
                     ) {
                         Icon(
                             imageVector = Icons.Default.ArrowBack,
@@ -148,6 +147,30 @@ fun MapScreen(mapViewModel: MapViewModel,
                     }
                 }
             )
+        },
+        floatingActionButton = {
+            FloatingActionButton(
+                shape = RoundedCornerShape(16.dp),
+                containerColor = MaterialTheme.colorScheme.primary,
+                contentColor = MaterialTheme.colorScheme.onPrimary,
+                onClick = {
+                    location?.let { (lat, lng) ->
+                        scope.launch {
+//                            mapViewModel.fetchUserLocation()
+                            cameraPositionState.animate(
+                                CameraUpdateFactory.newLatLngZoom(LatLng(lat, lng), 16f)
+                            )
+                        }
+                    }
+                },
+                modifier = Modifier
+            ) {
+                Image(
+                    painter = painterResource(id = R.drawable.gps),
+                    colorFilter = ColorFilter.tint(MaterialTheme.colorScheme.onPrimary),
+                    contentDescription = "My Location", modifier = Modifier.size(24.dp)
+                )
+            }
         }
     ) {
             innerPadding ->
@@ -267,30 +290,7 @@ fun MapScreen(mapViewModel: MapViewModel,
 
 
 
-            FloatingActionButton(
-                shape = RoundedCornerShape(16.dp),
-                containerColor = MaterialTheme.colorScheme.primary,
-                contentColor = MaterialTheme.colorScheme.onPrimary,
-                onClick = {
-                    location?.let { (lat, lng) ->
-                        scope.launch {
-//                            mapViewModel.fetchUserLocation()
-                            cameraPositionState.animate(
-                                CameraUpdateFactory.newLatLngZoom(LatLng(lat, lng), 16f)
-                            )
-                        }
-                    }
-                },
-                modifier = Modifier
-                    .align(Alignment.BottomEnd)
-                    .padding(26.dp)
-            ) {
-                Image(
-                    painter = painterResource(id = R.drawable.gps),
-                    colorFilter = ColorFilter.tint(MaterialTheme.colorScheme.onPrimary),
-                    contentDescription = "My Location", modifier = Modifier.size(24.dp)
-                )
-            }
+
         }
 
     }

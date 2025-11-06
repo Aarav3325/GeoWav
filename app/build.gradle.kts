@@ -66,7 +66,8 @@ dependencies {
 
     //Coil
 
-    implementation("io.coil-kt:coil-compose:2.5.0")
+    implementation("io.coil-kt:coil-compose:2.6.0")
+    implementation("io.coil-kt:coil-svg:2.6.0")
 
     //Constraint Layout
 
