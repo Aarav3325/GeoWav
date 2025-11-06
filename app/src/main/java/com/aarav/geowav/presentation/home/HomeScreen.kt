@@ -75,7 +75,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.aarav.geowav.R
-import com.aarav.geowav.ui.theme.nunito
+import com.aarav.geowav.ui.theme.sora
 import kotlinx.coroutines.delay
 
 @Preview(showBackground = true)

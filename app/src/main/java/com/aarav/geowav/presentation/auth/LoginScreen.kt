@@ -25,6 +25,7 @@ import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.TextField
 import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.Composable
@@ -49,7 +50,8 @@ import androidx.compose.ui.window.Dialog
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.aarav.geowav.R
 import com.aarav.geowav.domain.authentication.GoogleSignInClient
-import com.aarav.geowav.ui.theme.nunito
+import com.aarav.geowav.ui.theme.manrope
+import com.aarav.geowav.ui.theme.sora
 import kotlinx.coroutines.launch
 
 @Preview(showBackground = true)
@@ -114,7 +116,7 @@ fun LoginScreen(
                 text = "GeoWav",
                 fontSize = 36.sp,
                 fontWeight = FontWeight.ExtraBold,
-                fontFamily = nunito,
+                fontFamily = manrope,
                 color = MaterialTheme.colorScheme.onBackground
             )
 
@@ -123,7 +125,7 @@ fun LoginScreen(
             Text(
                 text = "Stay synced with your circle",
                 fontSize = 16.sp,
-                fontFamily = nunito,
+                fontFamily = sora,
                 fontWeight = FontWeight.Medium,
                 color = MaterialTheme.colorScheme.onBackground,
                 textAlign = TextAlign.Center
@@ -182,7 +184,7 @@ fun LoginScreen(
                         text = "Continue with Google",
                         fontSize = 16.sp,
                         fontWeight = FontWeight.SemiBold,
-                        fontFamily = nunito,
+                        fontFamily = manrope,
                         color = MaterialTheme.colorScheme.inverseOnSurface
                     )
                 }
@@ -192,9 +194,9 @@ fun LoginScreen(
 
             // Optional: email login (for later)
             Text(
-                text = "Or sign in with email",
+                text = "Or login with email",
                 fontSize = 14.sp,
-                fontFamily = nunito,
+                fontFamily = sora,
                 color = MaterialTheme.colorScheme.inverseSurface
             )
 
@@ -207,7 +209,7 @@ fun LoginScreen(
             TextField(
                 value = email,
                 onValueChange = { email = it },
-                label = { Text("Email", fontFamily = nunito, color = MaterialTheme.colorScheme.inverseSurface) },
+                label = { Text("Email", fontFamily = sora, color = MaterialTheme.colorScheme.inverseSurface) },
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(),
@@ -233,7 +235,7 @@ fun LoginScreen(
             TextField(
                 value = password,
                 onValueChange = { password = it },
-                label = { Text("Password", fontFamily = nunito, color = MaterialTheme.colorScheme.inverseSurface) },
+                label = { Text("Password", fontFamily = sora, color = MaterialTheme.colorScheme.inverseSurface) },
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(),
@@ -289,38 +291,45 @@ fun LoginScreen(
             ) {
                 Text(
                     text = "Login",
-                    fontFamily = nunito,
+                    fontFamily = manrope,
                     color = MaterialTheme.colorScheme.onPrimary,
                     fontWeight = FontWeight.SemiBold,
                     fontSize = 16.sp
                 )
             }
 
-            Spacer(modifier = Modifier.height(24.dp))
+            Spacer(modifier = Modifier.height(12.dp))
 
-            Row{
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.Center
+            ){
 
                 Text(
                     text = "New to GeoWav?",
                     color = MaterialTheme.colorScheme.onBackground,
                     fontSize = 14.sp,
-                    fontFamily = nunito
+                    fontFamily = sora
                 )
 
-                Spacer(modifier = Modifier.width(6.dp))
+                Spacer(modifier = Modifier.width(0.dp))
 
                 val context = LocalContext.current
 
-                Text(
-                    text = "Sign Up",
-                    color = MaterialTheme.colorScheme.primary,
-                    fontSize = 14.sp,
-                    fontFamily = nunito,
-                    modifier = Modifier.clickable{
+                TextButton(
+                    onClick = {
                         navigateToSignUp()
                         Toast.makeText(context, "Clicked", Toast.LENGTH_LONG).show()
                     }
-                )
+                ) {
+                    Text(
+                        text = "Sign Up",
+                        color = MaterialTheme.colorScheme.primary,
+                        fontSize = 14.sp,
+                        fontFamily = sora
+                    )
+                }
+
             }
         }
     }

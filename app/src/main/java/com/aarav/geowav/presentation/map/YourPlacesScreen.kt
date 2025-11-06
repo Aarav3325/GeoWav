@@ -1,18 +1,28 @@
 package com.aarav.geowav.presentation.map
 
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.FloatingActionButton
+import androidx.compose.material3.FloatingActionButtonDefaults
+import androidx.compose.material3.FloatingActionButtonElevation
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
@@ -20,13 +30,19 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.ColorFilter
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.aarav.geowav.R
 import com.aarav.geowav.presentation.components.GeofencePlaceCard
-import com.aarav.geowav.ui.theme.nunito
+import com.aarav.geowav.ui.theme.manrope
+import com.aarav.geowav.ui.theme.sora
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Preview(showBackground = true)
@@ -38,15 +54,15 @@ fun YourPlacesScreen(
 
     val placesList by placeViewModel.allPlaces.collectAsState()
 
-
+    val empty = emptyList<Nothing>()
     Scaffold(
         topBar = {
             TopAppBar(
                 title = {
                     Text(
                         text = "Your Places",
-                        fontSize = 36.sp,
-                        fontFamily = nunito,
+                        fontSize = 24.sp,
+                        fontFamily = manrope,
                         fontWeight = FontWeight.SemiBold,
                         color = MaterialTheme.colorScheme.onBackground
                     )
@@ -64,22 +80,82 @@ fun YourPlacesScreen(
 //                    }
                 }
             )
+        },
+        floatingActionButton = {
+            AddLocationFAB()
         }
     ) {
         Column(
-            modifier = Modifier
-                .padding(it)
-                .background(MaterialTheme.colorScheme.background)
-                .padding(12.dp).fillMaxSize(),
-        ) {
+            modifier = Modifier.background(MaterialTheme.colorScheme.background)
+                .padding(it).fillMaxSize()
+                .padding(start = 12.dp, end = 12.dp,
+                    top = 12.dp,
+                    bottom = 80.dp
+                )
 
+                ) {
 
-            LazyColumn {
+            if(placesList.isEmpty()){
+                Box(
+                    modifier = Modifier.fillMaxSize()
+                ){
+                    Column(
+                        modifier = Modifier.align(Alignment.Center),
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.spacedBy(24.dp)
+                    ) {
+                        Surface(
+                            shape = CircleShape,
+                            color = MaterialTheme.colorScheme.secondary,
+                            modifier = Modifier.size(132.dp)
+                        ) {
+                            Image(
+                                painter = painterResource(R.drawable.tray),
+                                contentDescription = "tray",
+                                colorFilter = ColorFilter.tint(MaterialTheme.colorScheme.onSecondary),
+                                modifier = Modifier.padding(12.dp)
+                            )
+                        }
+
+                        Text(
+                            text = "Add a location to start tracking your zones",
+                            fontSize = 16.sp,
+                            textAlign = TextAlign.Center,
+                            fontFamily = sora,
+                            fontWeight = FontWeight.SemiBold,
+                        )
+                    }
+                }
+            }
+
+            LazyColumn(
+//                modifier = Modifier.fillMaxSize().padding(bottom = 24.dp)
+            ) {
                 items(placesList){
                         place ->
                     GeofencePlaceCard(place, placeViewModel)
                 }
             }
         }
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+fun AddLocationFAB(){
+    FloatingActionButton(
+        modifier = Modifier,
+        shape = CircleShape,
+        containerColor = MaterialTheme.colorScheme.primaryContainer,
+        contentColor = MaterialTheme.colorScheme.onPrimaryContainer,
+        elevation = FloatingActionButtonDefaults.elevation(8.dp),
+        onClick = {
+
+        }
+    ) {
+        Icon(
+            imageVector = Icons.Default.Add,
+            contentDescription = "add location",
+        )
     }
 }

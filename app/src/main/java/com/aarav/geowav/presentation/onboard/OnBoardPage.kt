@@ -1,5 +1,6 @@
 package com.aarav.geowav.presentation.onboard
 
+import android.Manifest
 import android.util.Log
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.TweenSpec
@@ -15,6 +16,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
@@ -28,6 +30,7 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -44,15 +47,37 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.aarav.geowav.R
-import com.aarav.geowav.ui.theme.nunito
+import com.aarav.geowav.presentation.components.PermissionAlertDialog
+import com.aarav.geowav.ui.theme.manrope
+import com.aarav.geowav.ui.theme.sora
+import com.google.accompanist.permissions.ExperimentalPermissionsApi
+import com.google.accompanist.permissions.rememberMultiplePermissionsState
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
+@OptIn(ExperimentalPermissionsApi::class)
 @Composable
 fun OnboardingScreen(
     navigateToAuth: () -> Unit
 )
 {
+
+//    val fineLocationPermission = rememberMultiplePermissionsState(
+//        permissions = listOf(Manifest.permission.ACCESS_FINE_LOCATION)
+//    )
+//    val backgroundPermission = rememberMultiplePermissionsState(
+//        permissions = listOf(Manifest.permission.ACCESS_BACKGROUND_LOCATION)
+//    )
+
+    var showLocationDialog by remember {
+        mutableStateOf(false)
+    }
+
+    var permissionsGranted by remember { mutableStateOf(false) }
+
+//    val isFineLocationPermissionGranted = fineLocationPermission.allPermissionsGranted
+//    val isBackgroundLocationPermissionGranted = backgroundPermission.allPermissionsGranted
+
 
     val pages = listOf(
         OnBoardingPage(
@@ -77,6 +102,23 @@ fun OnboardingScreen(
         pageCount = { pages.size }
     )
     val scope = rememberCoroutineScope()
+
+    AnimatedVisibility(showLocationDialog) {
+        PermissionAlertDialog(
+            showDialog = showLocationDialog,
+            onDismiss = { showLocationDialog = false },
+            onPermissionsGranted = {
+                permissionsGranted = true
+            }
+        )
+    }
+
+    LaunchedEffect(permissionsGranted) {
+        if(permissionsGranted){
+            delay(2000)
+            navigateToAuth()
+        }
+    }
 
     Column(
         modifier = Modifier
@@ -106,7 +148,7 @@ fun OnboardingScreen(
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Row(
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier.fillMaxWidth().wrapContentHeight(),
                 verticalAlignment = Alignment.CenterVertically
             ) {
 
@@ -120,13 +162,13 @@ fun OnboardingScreen(
                        },
                        shape = RoundedCornerShape(12.dp),
                        colors = ButtonDefaults.textButtonColors(contentColor = MaterialTheme.colorScheme.onBackground),
-                       modifier = Modifier.wrapContentWidth().height(56.dp)
+                       modifier = Modifier.wrapContentWidth().height(48.dp)
                    ) {
                        Text(
                            text = "Skip",
-                           fontSize = 18.sp,
+                           fontSize = 14.sp,
                            textAlign = TextAlign.Center,
-                           fontFamily = nunito,
+                           fontFamily = manrope,
                            color = MaterialTheme.colorScheme.onBackground,
                            fontWeight = FontWeight.SemiBold
                        )
@@ -154,7 +196,8 @@ fun OnboardingScreen(
                         if (pagerState.currentPage == pages.lastIndex) {
                             //navigateToSignUp()
                             clickState = !clickState
-                            navigateToAuth()
+                            showLocationDialog = true
+                            //navigateToAuth()
 //                        val intent = Intent(context, HomeScreenActivity::class.java)
 //                        context.startActivity(intent)
 //                        Toast.makeText(context, "OnBoardCompleted", Toast.LENGTH_LONG).show()
@@ -169,9 +212,9 @@ fun OnboardingScreen(
                     AnimatedVisibility(!clickState) {
                         Text(
                             text = if (pagerState.currentPage == pages.lastIndex) "Grant Permissions" else "Next",
-                            fontSize = 18.sp,
+                            fontSize = 14.sp,
                             textAlign = TextAlign.Center,
-                            fontFamily = nunito,
+                            fontFamily = manrope,
                             color = MaterialTheme.colorScheme.onPrimary,
                             fontWeight = FontWeight.SemiBold
                         )
@@ -202,7 +245,7 @@ fun OnboardingPageContent(
 //        Text(
 //            text = "GeoWav",
 //            fontSize = 36.sp,
-//            fontFamily = nunito,
+//            fontFamily = sora,
 //            color = MaterialTheme.colorScheme.onBackground,
 //            fontWeight = FontWeight.Bold
 //        )
@@ -216,7 +259,7 @@ fun OnboardingPageContent(
                 Text(
             text = "GeoWav",
             fontSize = 36.sp,
-            fontFamily = nunito,
+            fontFamily = manrope,
             color = MaterialTheme.colorScheme.onBackground,
             fontWeight = FontWeight.Bold
         )
@@ -227,7 +270,7 @@ fun OnboardingPageContent(
             modifier = Modifier.fillMaxWidth()
         ){
             Surface(
-                modifier = Modifier.size(196.dp).align(Alignment.Center),
+                modifier = Modifier.size(172.dp).align(Alignment.Center),
                 color = MaterialTheme.colorScheme.tertiaryContainer,
                 shape = CircleShape,
             ) {
@@ -244,8 +287,8 @@ fun OnboardingPageContent(
 
         Text(
             text = page.title,
-            fontSize = 24.sp,
-            fontFamily = nunito,
+            fontSize = 20.sp,
+            fontFamily = manrope,
             color = MaterialTheme.colorScheme.onBackground,
             fontWeight = FontWeight.Bold
         )
@@ -255,11 +298,11 @@ fun OnboardingPageContent(
         Text(
             text = page.description,
             style = MaterialTheme.typography.bodyMedium,
-            fontSize = 18.sp,
+            fontSize = 16.sp,
             textAlign = TextAlign.Center,
-            fontFamily = nunito,
+            fontFamily = sora,
             color = MaterialTheme.colorScheme.onBackground,
-            fontWeight = FontWeight.SemiBold
+            fontWeight = FontWeight.Normal
         )
     }
 }

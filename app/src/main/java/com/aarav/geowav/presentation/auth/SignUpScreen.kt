@@ -25,6 +25,7 @@ import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.TextField
 import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.Composable
@@ -47,14 +48,15 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import com.aarav.geowav.R
 import com.aarav.geowav.domain.authentication.GoogleSignInClient
-import com.aarav.geowav.ui.theme.nunito
+import com.aarav.geowav.ui.theme.manrope
+import com.aarav.geowav.ui.theme.sora
 import kotlinx.coroutines.launch
 
 @Preview(showBackground = true)
 @Composable
 fun SignupScreen(
     googleSignInClient: GoogleSignInClient,
-    navigateToMap: () -> Unit,
+    navigateToHome: () -> Unit,
     navigateToLogin: () -> Unit
 
     //modifier: Modifier, navigateToLogin : () -> Unit, navigateToHome : () -> Unit
@@ -108,7 +110,7 @@ fun SignupScreen(
                 text = "GeoWav",
                 fontSize = 36.sp,
                 fontWeight = FontWeight.ExtraBold,
-                fontFamily = nunito,
+                fontFamily = manrope,
                 color = MaterialTheme.colorScheme.onBackground
             )
 
@@ -120,7 +122,7 @@ fun SignupScreen(
             Text(
                 text = "Create your GeoWav account",
                 fontSize = 16.sp,
-                fontFamily = nunito,
+                fontFamily = sora,
                 fontWeight = FontWeight.Medium,
                 color = MaterialTheme.colorScheme.onBackground,
                 textAlign = TextAlign.Center
@@ -140,7 +142,7 @@ fun SignupScreen(
                             val b = googleSignInClient.signIn()
                             if (b) {
                                 show = true
-                                navigateToMap()
+                                navigateToHome()
                             }
                         }
                     },
@@ -166,7 +168,7 @@ fun SignupScreen(
                         text = "Continue with Google",
                         fontSize = 16.sp,
                         fontWeight = FontWeight.SemiBold,
-                        fontFamily = nunito,
+                        fontFamily = manrope,
                         color = MaterialTheme.colorScheme.inverseOnSurface
                     )
                 }
@@ -177,7 +179,7 @@ fun SignupScreen(
             Text(
                 text = "Or sign up with email",
                 fontSize = 14.sp,
-                fontFamily = nunito,
+                fontFamily = sora,
                 color = MaterialTheme.colorScheme.inverseSurface
             )
 
@@ -193,7 +195,7 @@ fun SignupScreen(
                 label = {
                     Text(
                         "Name",
-                        fontFamily = nunito,
+                        fontFamily = sora,
                         color = MaterialTheme.colorScheme.inverseSurface
                     )
                 },
@@ -219,7 +221,7 @@ fun SignupScreen(
                 label = {
                     Text(
                         "Email",
-                        fontFamily = nunito,
+                        fontFamily = sora,
                         color = MaterialTheme.colorScheme.inverseSurface
                     )
                 },
@@ -245,7 +247,7 @@ fun SignupScreen(
                 label = {
                     Text(
                         "Password",
-                        fontFamily = nunito,
+                        fontFamily = sora,
                         color = MaterialTheme.colorScheme.inverseSurface
                     )
                 },
@@ -268,7 +270,7 @@ fun SignupScreen(
 //            TextField(
 //                value = confirmPassword,
 //                onValueChange = { confirmPassword = it },
-//                label = { Text("Confirm Password", fontFamily = nunito) },
+//                label = { Text("Confirm Password", fontFamily = sora) },
 //                modifier = Modifier.fillMaxWidth(),
 //                singleLine = true,
 //                colors = TextFieldDefaults.colors(
@@ -298,7 +300,7 @@ fun SignupScreen(
 
             LaunchedEffect(show) {
                 if (show) {
-                    navigateToMap()
+                    navigateToHome()
                 }
             }
             // val userFlowVM : UserLearningFlowViewModel = hiltViewModel()
@@ -326,37 +328,45 @@ fun SignupScreen(
             ) {
                 Text(
                     text = "Sign Up",
-                    fontFamily = nunito,
+                    fontFamily = manrope,
                     color = MaterialTheme.colorScheme.onPrimary,
                     fontWeight = FontWeight.SemiBold,
                     fontSize = 16.sp
                 )
             }
 
-            Spacer(modifier = Modifier.height(24.dp))
+            Spacer(modifier = Modifier.height(12.dp))
 
-            Row {
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.Center
+            ) {
                 Text(
                     text = "Already have an account?",
-                    fontFamily = nunito,
+                    fontFamily = sora,
                     fontSize = 14.sp,
                     color = MaterialTheme.colorScheme.onBackground
                 )
 
-                Spacer(modifier = Modifier.width(6.dp))
+                Spacer(modifier = Modifier.width(0.dp))
 
                 val context = LocalContext.current
 
-                Text(
-                    text = "Login",
-                    fontSize = 14.sp,
-                    fontFamily = nunito,
-                    color = MaterialTheme.colorScheme.primary,
-                    modifier = Modifier.clickable {
+
+                TextButton(
+                    onClick = {
                         navigateToLogin()
                         Toast.makeText(context, "Clicked", Toast.LENGTH_LONG).show()
                     }
-                )
+                ) {
+                    Text(
+                        text = "Login",
+                        fontSize = 14.sp,
+                        fontFamily = sora,
+                        color = MaterialTheme.colorScheme.primary
+                    )
+                }
+
             }
 
             //Spacer(modifier = Modifier.height(24.dp))

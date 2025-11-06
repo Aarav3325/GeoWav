@@ -44,7 +44,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.room.util.query
 import com.aarav.geowav.presentation.components.SearchItem
-import com.aarav.geowav.ui.theme.nunito
+import com.aarav.geowav.ui.theme.sora
 import com.google.android.libraries.places.api.Places
 import com.google.android.libraries.places.api.model.AutocompletePrediction
 import com.google.android.libraries.places.api.model.AutocompleteSessionToken
@@ -215,7 +215,7 @@ fun NewSearch(
                     },
                     expanded = expanded,
                     onExpandedChange = onExpandedChange,
-                    placeholder = { Text("Search here", fontFamily = nunito) },
+                    placeholder = { Text("Search here", fontFamily = sora) },
                     colors = TextFieldDefaults.colors(
                         unfocusedContainerColor = MaterialTheme.colorScheme.secondaryContainer,
                         focusedContainerColor = MaterialTheme.colorScheme.surface,

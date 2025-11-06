@@ -17,15 +17,17 @@ import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.compose.currentBackStackEntryAsState
+import com.aarav.geowav.ui.theme.sora
 
 @Composable
-fun BottomNavigationBar(navController : NavController, modifier: Modifier = Modifier){
+fun BottomNavigationBar(
+    navController : NavController, modifier: Modifier = Modifier){
 
     val navBackStackEntry by navController.currentBackStackEntryAsState()
 
     val currentRoute = navBackStackEntry?.destination?.route
 
-    val navItems = listOf(NavItem.Home, NavItem.AddPlace)
+    val navItems = listOf(NavItem.Home, NavItem.YourPlaces)
 
     NavigationBar(
         modifier = modifier,
@@ -58,7 +60,7 @@ fun BottomNavigationBar(navController : NavController, modifier: Modifier = Modi
                     )
                 },
                 label = {
-                    Text(destination.name)
+                    Text(destination.name, fontFamily = sora)
                 },
                 colors = NavigationBarItemDefaults.colors(
                     selectedIconColor = MaterialTheme.colorScheme.primary,

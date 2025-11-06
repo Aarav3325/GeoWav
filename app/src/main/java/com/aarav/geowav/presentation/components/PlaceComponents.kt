@@ -50,8 +50,10 @@ import com.aarav.geowav.R
 import com.aarav.geowav.data.place.Place
 import com.aarav.geowav.presentation.map.PlaceViewModel
 import com.aarav.geowav.ui.theme.GeoWavTheme
-import com.aarav.geowav.ui.theme.nunito
+import com.aarav.geowav.ui.theme.manrope
+import com.aarav.geowav.ui.theme.sora
 import com.google.android.libraries.places.api.model.AutocompletePrediction
+import kotlin.math.roundToInt
 
 @Preview(showBackground = true)
 @Composable
@@ -97,7 +99,7 @@ fun GeofencePlaceCard(
 //                    text = "Home",
 //                    color = MaterialTheme.colorScheme.primary,
 //                    fontSize = 22.sp,
-//                    fontFamily = nunito,
+//                    fontFamily = sora,
 //                    fontWeight = FontWeight.ExtraBold,
 //                )
 
@@ -106,10 +108,10 @@ fun GeofencePlaceCard(
                 Text(
                     text = place.placeName,
                     color = MaterialTheme.colorScheme.primary,
-                    fontSize = 20.sp,
+                    fontSize = 18.sp,
                     maxLines = 2,
                     overflow = TextOverflow.Ellipsis,
-                    fontFamily = nunito,
+                    fontFamily = manrope,
                     fontWeight = FontWeight.Bold,
                     modifier = Modifier
                         .padding(horizontal = 12.dp)
@@ -136,38 +138,37 @@ fun GeofencePlaceCard(
 
             }
 
-            Spacer(modifier = Modifier.height(2.dp))
 
             Column(
                 modifier = Modifier.fillMaxWidth()
-                    .padding(12.dp),
+                    .padding(8.dp),
                 horizontalAlignment = Alignment.Start,
-                verticalArrangement = Arrangement.spacedBy(6.dp)
+                verticalArrangement = Arrangement.spacedBy(4.dp)
             ) {
                 Text(
                     text = place.address.toString(),
                     color = MaterialTheme.colorScheme.onSurface,
                     maxLines = 2,
                     overflow = TextOverflow.Ellipsis,
-                    fontSize = 18.sp,
+                    fontSize = 16.sp,
                     fontWeight = FontWeight.SemiBold,
-                    fontFamily = nunito,
+                    fontFamily = sora,
                 )
 
                 Text(
                     text = "${place.radius} m • Lat: ${place.latitude.toString().take(7)}, Lng: ${place.latitude.toString().take(7)}",
                     color = MaterialTheme.colorScheme.onSurface,
                     fontSize = 14.sp,
-                    fontWeight = FontWeight.W500,
-                    fontFamily = nunito,
+                    fontWeight = FontWeight.Normal,
+                    fontFamily = sora,
                 )
 
                 Text(
                     text = place.addedOn,
                     color = MaterialTheme.colorScheme.tertiary,
-                    fontSize = 14.sp,
+                    fontSize = 12.sp,
                     fontWeight = FontWeight.W600,
-                    fontFamily = nunito,
+                    fontFamily = sora,
                 )
             }
         }
@@ -211,7 +212,7 @@ fun SearchItem(prediction : AutocompletePrediction, onClick : () -> Unit){
                     lineHeight = 0.5.sp
                 ),
                 fontWeight = FontWeight.SemiBold,
-                fontFamily = nunito,
+                fontFamily = sora,
             )
 
             Text(
@@ -224,7 +225,7 @@ fun SearchItem(prediction : AutocompletePrediction, onClick : () -> Unit){
                     lineHeight = 0.5.sp
                 ),
                 fontWeight = FontWeight.Normal,
-                fontFamily = nunito,
+                fontFamily = sora,
             )
 
             Spacer(
@@ -259,7 +260,7 @@ fun PlaceTextField(
             text = infoText,
             style = MaterialTheme.typography.titleMedium,
             color = MaterialTheme.colorScheme.onSurface,
-            fontFamily = nunito,
+            fontFamily = manrope,
             fontSize = 16.sp,
             fontWeight = FontWeight.SemiBold
         )
@@ -274,13 +275,13 @@ fun PlaceTextField(
             label = {
                 Text(
                     text = labelText,
-                    fontFamily = nunito
+                    fontFamily = sora
                 )
             },
             placeholder = {
                 Text(
                     placeHolder,
-                    fontFamily = nunito,
+                    fontFamily = sora,
                     fontWeight = FontWeight.Normal,
                     color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
                 )
@@ -316,7 +317,7 @@ fun RadiusChipGroup(
                 text = "Select Radius",
                 style = MaterialTheme.typography.titleMedium,
                 color = MaterialTheme.colorScheme.onSurface,
-                fontFamily = nunito,
+                fontFamily = manrope,
                 fontSize = 16.sp,
                 fontWeight = FontWeight.SemiBold
             )
@@ -332,7 +333,7 @@ fun RadiusChipGroup(
                         onClick = {
                             onRadiusSelected(radius)
                         },
-                        label = { Text("$radius m", fontFamily = nunito) },
+                        label = { Text("${radius.roundToInt()} m", fontFamily = sora) },
                         shape = RoundedCornerShape(12.dp),
                         colors = FilterChipDefaults.filterChipColors(
                             selectedContainerColor = MaterialTheme.colorScheme.primary,
@@ -361,7 +362,7 @@ fun CustomChip(
             )
         },
         onClick = {}, // disabled / not clickable
-        label = { Text(label, fontFamily = nunito) },
+        label = { Text(label, fontFamily = sora) },
         enabled = true, // disables interaction
         colors = FilterChipDefaults.filterChipColors(
             selectedContainerColor = MaterialTheme.colorScheme.tertiaryContainer,

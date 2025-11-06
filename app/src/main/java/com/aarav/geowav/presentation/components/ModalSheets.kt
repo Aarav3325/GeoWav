@@ -40,7 +40,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.aarav.geowav.R
 import com.aarav.geowav.ui.theme.GeoWavTheme
-import com.aarav.geowav.ui.theme.nunito
+import com.aarav.geowav.ui.theme.sora
 import com.google.android.libraries.places.api.model.Place
 import java.text.SimpleDateFormat
 import java.util.Date
@@ -115,16 +115,16 @@ fun SheetContent(place: Place?,
             Text(
                 text = place?.displayName ?: "Invalid Place",
                 style = MaterialTheme.typography.titleMedium,
-                fontFamily = nunito,
-                fontSize = 22.sp
+                fontFamily = sora,
+                fontSize = 20.sp
             )
         }
 
         Text(
             text = place?.shortFormattedAddress ?: "Address not available",
             style = MaterialTheme.typography.bodyMedium,
-            fontFamily = nunito,
-            fontSize = 18.sp,
+            fontFamily = sora,
+            fontSize = 16.sp,
             color = MaterialTheme.colorScheme.onSurfaceVariant
         )
 
@@ -148,13 +148,13 @@ fun SheetContent(place: Place?,
             modifier = Modifier.fillMaxWidth(),
             shape = RoundedCornerShape(10.dp)
         ) {
-            //Text("Add Place", fontFamily = nunito, fontWeight = FontWeight.SemiBold)
+            //Text("Add Place", fontFamily = sora, fontWeight = FontWeight.SemiBold)
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.Center,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Text("Add Place", fontFamily = nunito, fontWeight = FontWeight.SemiBold,
+                Text("Add Place", fontFamily = sora, fontWeight = FontWeight.SemiBold,
                     fontSize = 16.sp)
 
                 Spacer(modifier = Modifier.width(8.dp))

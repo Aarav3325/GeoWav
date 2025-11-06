@@ -58,7 +58,8 @@ import com.aarav.geowav.presentation.components.CustomChip
 import com.aarav.geowav.presentation.components.PlaceTextField
 import com.aarav.geowav.presentation.components.RadiusChipGroup
 import com.aarav.geowav.ui.theme.GeoWavTheme
-import com.aarav.geowav.ui.theme.nunito
+import com.aarav.geowav.ui.theme.manrope
+import com.aarav.geowav.ui.theme.sora
 import com.google.android.gms.maps.model.CameraPosition
 import com.google.android.gms.maps.model.LatLng
 import com.google.android.libraries.places.api.model.Place
@@ -129,7 +130,7 @@ fun AddPlaceScreen(
                         Text(
                             text = "Add Place",
                             fontWeight = FontWeight.Normal,
-                            fontFamily = nunito
+                            fontFamily = manrope
                         )
                     },
                     navigationIcon = {
@@ -208,10 +209,10 @@ fun AddPlaceScreen(
                                 Text(
                                     text = place.displayName ?: "Place Name Unavailable",
                                     color = MaterialTheme.colorScheme.onSurface,
-                                    fontSize = 24.sp,
+                                    fontSize = 20.sp,
                                     maxLines = 2,
                                     textAlign = TextAlign.Center,
-                                    fontFamily = nunito,
+                                    fontFamily = manrope,
                                     fontWeight = FontWeight.Bold,
                                 )
 
@@ -220,10 +221,10 @@ fun AddPlaceScreen(
                                     color = MaterialTheme.colorScheme.onSurface,
                                     maxLines = 3,
                                     overflow = TextOverflow.Ellipsis,
-                                    fontSize = 18.sp,
+                                    fontSize = 16.sp,
                                     textAlign = TextAlign.Center,
                                     fontWeight = FontWeight.SemiBold,
-                                    fontFamily = nunito,
+                                    fontFamily = sora,
                                 )
 
                                 Text(
@@ -231,7 +232,7 @@ fun AddPlaceScreen(
                                     color = MaterialTheme.colorScheme.onSurface,
                                     fontSize = 14.sp,
                                     fontWeight = FontWeight.W500,
-                                    fontFamily = nunito,
+                                    fontFamily = sora,
                                 )
 
                             }
@@ -275,7 +276,7 @@ fun AddPlaceScreen(
                             text = "Trigger Type : ",
                             style = MaterialTheme.typography.titleMedium,
                             color = MaterialTheme.colorScheme.onSurface,
-                            fontFamily = nunito,
+                            fontFamily = manrope,
                             fontSize = 16.sp,
                             fontWeight = FontWeight.SemiBold
                         )
@@ -302,7 +303,7 @@ fun AddPlaceScreen(
                         text = "Preview",
                         style = MaterialTheme.typography.titleMedium,
                         color = MaterialTheme.colorScheme.onSurface,
-                        fontFamily = nunito,
+                        fontFamily = sora,
                         fontSize = 16.sp,
                         fontWeight = FontWeight.SemiBold
                     )
@@ -375,7 +376,7 @@ fun AddPlaceScreen(
                             text = "Save Place",
                             style = MaterialTheme.typography.titleMedium,
                             color = MaterialTheme.colorScheme.onPrimary,
-                            fontFamily = nunito,
+                            fontFamily = sora,
                             fontSize = 18.sp,
                             fontWeight = FontWeight.SemiBold
                         )

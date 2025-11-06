@@ -8,22 +8,22 @@
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:173198777031:android:21433a9b505f3890507ce2",
+        "mobilesdk_app_id": "1:173198777031:android:50a6e5155cdfcd30507ce2",
         "android_client_info": {
           "package_name": "com.aarav.geowav"
         }
       },
       "oauth_client": [
         {
-          "client_id": "173198777031-kp7jot8serti050bt15m7s8ka4q8naef.apps.googleusercontent.com",
+          "client_id": "173198777031-pe25temekl3332d0vbjpv7gejjk8pac1.apps.googleusercontent.com",
           "client_type": 1,
           "android_info": {
             "package_name": "com.aarav.geowav",
-            "certificate_hash": "87a6e5304e38676e6bc7837c9d8e00b8feb01b83"
+            "certificate_hash": "a1e66097ef498b07fd34af64240de2e42011e9ec"
           }
         },
         {
-          "client_id": "173198777031-5fars1360cfht9dlrei7u9n24blkc7ot.apps.googleusercontent.com",
+          "client_id": "173198777031-k4r0anmv65abqa4h57fiq75m00hbem0p.apps.googleusercontent.com",
           "client_type": 3
         }
       ],

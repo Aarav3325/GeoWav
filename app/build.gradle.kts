@@ -9,7 +9,7 @@ plugins {
 }
 
 android {
-    namespace = "com.aarav.geowav"
+        namespace = "com.aarav.geowav"
     compileSdk = 36
 
     defaultConfig {
@@ -63,6 +63,10 @@ dependencies {
     //Retrofit
     implementation("com.squareup.retrofit2:retrofit:3.0.0")
     implementation("com.squareup.retrofit2:converter-gson:2.11.0")
+
+    //Coil
+
+    implementation("io.coil-kt:coil-compose:2.5.0")
 
     //Constraint Layout
 

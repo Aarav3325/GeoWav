@@ -15,6 +15,7 @@ import androidx.core.app.ActivityCompat
 import androidx.core.app.NotificationCompat
 import com.aarav.geowav.R
 import com.aarav.geowav.data.place.Place
+import com.aarav.geowav.domain.authentication.GoogleSignInClient
 import com.aarav.geowav.domain.place.PlaceRepositoryImpl
 import com.google.android.gms.location.Geofence
 import com.google.android.gms.location.GeofencingClient
@@ -37,6 +38,9 @@ class GeofenceForegroundService : Service() {
     lateinit var geofencingClient: GeofencingClient
 
     @Inject
+    lateinit var googleSignInClient: GoogleSignInClient
+
+    @Inject
     lateinit var geofenceHelper: GeofenceHelper
 
     @Inject
@@ -51,8 +55,14 @@ class GeofenceForegroundService : Service() {
 
     override fun onCreate() {
         super.onCreate()
+        // ⚡ 1. Start foreground immediately (within 5 seconds!)
         startForegroundService()
-        observePlaces()
+
+        // ⚙️ 2. Then start observing geofence data
+        if (googleSignInClient.isLoggedIn()) {
+            observePlaces()
+        }
+
     }
 
     private fun observePlaces() {
@@ -75,8 +85,9 @@ class GeofenceForegroundService : Service() {
                 .build()
         }
 
-        val geofencingRequest = GeofencingRequest.Builder()
-            .setInitialTrigger(GeofencingRequest.INITIAL_TRIGGER_ENTER)
+        val geofencingRequest = GeofencingRequest.Builder().setInitialTrigger(
+            GeofencingRequest.INITIAL_TRIGGER_ENTER or GeofencingRequest.INITIAL_TRIGGER_EXIT
+        )
             .addGeofences(geofenceList)
             .build()
 

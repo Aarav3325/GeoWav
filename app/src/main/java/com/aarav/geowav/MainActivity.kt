@@ -8,6 +8,7 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.annotation.RequiresPermission
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.text.input.rememberTextFieldState
@@ -26,17 +27,21 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.core.content.ContextCompat
 import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.aarav.geowav.data.geofence.GeofenceForegroundService
 import com.aarav.geowav.data.geofence.GeofencingVM
 import com.aarav.geowav.domain.authentication.GoogleSignInClient
 import com.aarav.geowav.presentation.map.MapViewModel
 import com.aarav.geowav.presentation.map.PlaceViewModel
+import com.aarav.geowav.presentation.navigation.BottomNavigationBar
 import com.aarav.geowav.presentation.navigation.NavGraph
 import com.aarav.geowav.presentation.navigation.NavRoute
 import com.aarav.geowav.ui.theme.GeoWavTheme
 import com.google.accompanist.permissions.ExperimentalPermissionsApi
+import com.google.accompanist.permissions.isGranted
 import com.google.accompanist.permissions.rememberMultiplePermissionsState
+import com.google.accompanist.permissions.rememberPermissionState
 import com.google.android.libraries.places.api.model.Place
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.delay
@@ -90,8 +95,8 @@ class MainActivity : ComponentActivity() {
 
             mapViewModel.startLocationUpdates()
 
-            val serviceIntent = Intent(this, GeofenceForegroundService::class.java)
-            ContextCompat.startForegroundService(this, serviceIntent)
+
+
 
             val context = LocalContext.current
 
@@ -112,17 +117,31 @@ class MainActivity : ComponentActivity() {
 
 
             GeoWavTheme {
-                val fineLocationPermission = rememberMultiplePermissionsState(
-                    permissions = listOf(Manifest.permission.ACCESS_FINE_LOCATION)
-                )
-                val backgroundPermission = rememberMultiplePermissionsState(
-                    permissions = listOf(Manifest.permission.ACCESS_BACKGROUND_LOCATION)
-                )
+
+                val fineLocationPermission = rememberPermissionState(Manifest.permission.ACCESS_FINE_LOCATION)
+                val backgroundLocationPermission = rememberPermissionState(Manifest.permission.ACCESS_BACKGROUND_LOCATION)
+
+                val permissionsGranted = fineLocationPermission.status.isGranted && backgroundLocationPermission.status.isGranted
+
+//                val fineLocationPermission = rememberMultiplePermissionsState(
+//                    permissions = listOf(Manifest.permission.ACCESS_FINE_LOCATION)
+//                )
+//                val backgroundPermission = rememberMultiplePermissionsState(
+//                    permissions = listOf(Manifest.permission.ACCESS_BACKGROUND_LOCATION)
+//                )
+
+                if(permissionsGranted){
+                    val intent = Intent(context, GeofenceForegroundService::class.java)
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                        context.startForegroundService(intent)
+                    } else {
+                        context.startService(intent)
+                    }
+                }
+
 
 //                LaunchedEffect(places) {
-//                    if (fineLocationPermission.allPermissionsGranted &&
-//                        (Build.VERSION.SDK_INT < Build.VERSION_CODES.Q || backgroundPermission.allPermissionsGranted)
-//                    ) {
+//                    if (permissionsGranted) {
 //                        geoVM.registerPlaces(places)
 //                    }
 //                }
@@ -165,18 +184,18 @@ class MainActivity : ComponentActivity() {
 //                ) {
                 Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                     when {
-                        !fineLocationPermission.allPermissionsGranted -> {
-                            Button(onClick = { fineLocationPermission.launchMultiplePermissionRequest() }) {
-                                Text("Grant foreground location")
-                            }
-                        }
-
-                        Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q &&
-                                !backgroundPermission.allPermissionsGranted -> {
-                            Button(onClick = { backgroundPermission.launchMultiplePermissionRequest() }) {
-                                Text("Grant background location")
-                            }
-                        }
+//                        !fineLocationPermission.allPermissionsGranted -> {
+//                            Button(onClick = { fineLocationPermission.launchMultiplePermissionRequest() }) {
+//                                Text("Grant foreground location")
+//                            }
+//                        }
+//
+//                        Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q &&
+//                                !backgroundPermission.allPermissionsGranted -> {
+//                            Button(onClick = { backgroundPermission.launchMultiplePermissionRequest() }) {
+//                                Text("Grant background location")
+//                            }
+//                        }
 
 
                         else -> {
@@ -192,6 +211,24 @@ class MainActivity : ComponentActivity() {
                                 mapViewModel,
                                 placesViewModel
                             )
+
+                            val navBackStackEntry by navController.currentBackStackEntryAsState()
+                            val currentRoute = navBackStackEntry?.destination?.route
+
+                            val showBottomRoutes = listOf(
+                                NavRoute.HomeScreen.path,
+                                NavRoute.YourPlaces.path
+                            )
+
+                            val isBottomBarVisible = currentRoute in showBottomRoutes
+
+                            AnimatedVisibility(
+                                visible = isBottomBarVisible,
+                                modifier = Modifier.align(Alignment.BottomCenter)
+                            ) {
+                                BottomNavigationBar(navController = navController)
+                            }
+
 
 //                                PlaceModalSheet(
 //                                    place = selectedPlace,

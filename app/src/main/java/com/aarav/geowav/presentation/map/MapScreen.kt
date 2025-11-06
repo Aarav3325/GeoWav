@@ -43,7 +43,7 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.style.LineHeightStyle
 import androidx.compose.ui.unit.dp
 import com.aarav.geowav.presentation.components.PlaceModalSheet
-import com.aarav.geowav.ui.theme.nunito
+import com.aarav.geowav.ui.theme.sora
 import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.model.CameraPosition
 import com.google.android.gms.maps.model.LatLng
@@ -132,7 +132,7 @@ fun MapScreen(mapViewModel: MapViewModel,
                 title = {
                     Text(
                         text = "Select Place",
-                        fontFamily = nunito
+                        fontFamily = sora
                     )
                 },
                 navigationIcon = {

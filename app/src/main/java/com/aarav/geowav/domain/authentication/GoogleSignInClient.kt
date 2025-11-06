@@ -2,12 +2,12 @@ package com.aarav.geowav.domain.authentication
 
 import android.content.Context
 import android.util.Log
+import com.aarav.geowav.R
 import androidx.credentials.ClearCredentialStateRequest
 import androidx.credentials.CredentialManager
 import androidx.credentials.CustomCredential
 import androidx.credentials.GetCredentialRequest
 import androidx.credentials.GetCredentialResponse
-import com.aarav.geowav.R
 import com.aarav.geowav.data.auth.User
 import com.google.android.libraries.identity.googleid.GetGoogleIdOption
 import com.google.android.libraries.identity.googleid.GoogleIdTokenCredential
@@ -67,7 +67,7 @@ class GoogleSignInClient @Inject constructor(
 
                 val authResult = firebaseAuth.signInWithCredential(authCredential).await()
 
-                if(authResult.user != null){
+                if (authResult.user != null) {
                     storeUserData(authResult.user?.email ?: "", authResult.user?.displayName ?: "")
                 }
 
@@ -87,7 +87,7 @@ class GoogleSignInClient @Inject constructor(
             .addCredentialOption(
                 GetGoogleIdOption.Builder()
                     .setFilterByAuthorizedAccounts(false)
-                    .setServerClientId("173198777031-5fars1360cfht9dlrei7u9n24blkc7ot.apps.googleusercontent.com") // Generate Client Id
+                    .setServerClientId(context.getString(R.string.google_client_id)) // Generate Client Id
                     .setAutoSelectEnabled(false)
                     .build()
             )
@@ -96,15 +96,11 @@ class GoogleSignInClient @Inject constructor(
         return credentialManager.getCredential(request = request, context = context)
     }
 
-     suspend fun signOut() {
+    suspend fun signOut() {
         credentialManager.clearCredentialState(
             ClearCredentialStateRequest()
         )
 
-        firebaseAuth.signOut()
-    }
-
-    fun firebaseSignOut(){
         firebaseAuth.signOut()
     }
 
@@ -139,12 +135,14 @@ class GoogleSignInClient @Inject constructor(
         }
     }
 
-    fun signInWithEmailAndPassword(email: String, password: String,
-                                   onSignInSuccess: (Boolean) -> Unit){
+    fun signInWithEmailAndPassword(
+        email: String, password: String,
+        onSignInSuccess: (Boolean) -> Unit
+    ) {
         val finalEmail = email.trim()
         val finalPass = password.trim()
 
-        if(finalEmail.isNotBlank() && finalPass.isNotBlank()){
+        if (finalEmail.isNotBlank() && finalPass.isNotBlank()) {
             firebaseAuth.signInWithEmailAndPassword(finalEmail, finalPass)
                 .addOnSuccessListener {
 
@@ -159,7 +157,7 @@ class GoogleSignInClient @Inject constructor(
         }
     }
 
-    fun storeUserData(email: String, username: String){
+    fun storeUserData(email: String, username: String) {
         val userId = getUserId()
 
         userId.let {
@@ -179,11 +177,15 @@ class GoogleSignInClient @Inject constructor(
         }
     }
 
-    fun getUserId() : String{
+    fun getUserId(): String {
         return firebaseAuth.currentUser?.uid ?: ""
     }
 
-    fun getUserName() : String{
+    fun getUserName(): String {
         return firebaseAuth.currentUser?.displayName ?: ""
+    }
+
+    fun getUserProfile(): String {
+        return firebaseAuth.currentUser?.photoUrl.toString()
     }
 }

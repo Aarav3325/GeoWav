@@ -23,7 +23,7 @@
               <option name="connection">
                 <ConnectionSetting>
                   <option name="appId" value="com.aarav.geowav" />
-                  <option name="mobileSdkAppId" value="1:173198777031:android:21433a9b505f3890507ce2" />
+                  <option name="mobileSdkAppId" value="1:173198777031:android:50a6e5155cdfcd30507ce2" />
                   <option name="projectId" value="geowav" />
                   <option name="projectNumber" value="173198777031" />
                 </ConnectionSetting>

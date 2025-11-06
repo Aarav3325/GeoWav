@@ -25,11 +25,11 @@ class GeofenceRepositoryImpl @Inject constructor(@ApplicationContext val context
     @RequiresPermission(Manifest.permission.ACCESS_FINE_LOCATION)
     fun registerAllPlaces(places: List<Place>) {
 
-
+        val pendingIntent = geofenceHelper.getGeofencePendingIntent(context)
         for (place in places) {
             val geofence = geofenceHelper.createGeofence(place.placeId, place.latitude, place.longitude, place.radius)
             val request = geofenceHelper.createGeofencingRequest(geofence)
-            val pendingIntent = geofenceHelper.getGeofencePendingIntent(context)
+
             geofencingClient.addGeofences(request, pendingIntent)
                 .addOnSuccessListener {
                     Log.d("MYTAG", "${place.placeId} added")
