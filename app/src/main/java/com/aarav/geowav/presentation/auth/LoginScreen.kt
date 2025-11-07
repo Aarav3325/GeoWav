@@ -175,7 +175,7 @@ fun LoginScreen(
                         painter = painterResource(id = R.drawable.google), // Add your Google icon
                         contentDescription = "Google Icon",
                         modifier = Modifier.size(24.dp),
-                        tint = MaterialTheme.colorScheme.inverseOnSurface
+                        tint = Color.Unspecified
                     )
 
                     Spacer(modifier = Modifier.width(16.dp))
@@ -214,6 +214,13 @@ fun LoginScreen(
                     .fillMaxWidth()
                     .padding(),
                 singleLine = true,
+                leadingIcon = {
+                    Icon(
+                        painter = painterResource(R.drawable.email),
+                        contentDescription = "email icon",
+                        modifier = Modifier.size(24.dp)
+                    )
+                },
                 colors = TextFieldDefaults.colors(
                     focusedContainerColor = MaterialTheme.colorScheme.surfaceContainer,
                     unfocusedContainerColor = MaterialTheme.colorScheme.surfaceContainer,
@@ -239,6 +246,13 @@ fun LoginScreen(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(),
+                leadingIcon = {
+                    Icon(
+                        painter = painterResource(R.drawable.password),
+                        contentDescription = "password icon",
+                        modifier = Modifier.size(24.dp)
+                    )
+                },
                 singleLine = true,
                 colors = TextFieldDefaults.colors(
                     focusedContainerColor = MaterialTheme.colorScheme.surfaceContainer,

@@ -1,7 +1,5 @@
 package com.aarav.geowav.presentation.navigation
 
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -21,7 +19,8 @@ import com.aarav.geowav.ui.theme.sora
 
 @Composable
 fun BottomNavigationBar(
-    navController : NavController, modifier: Modifier = Modifier){
+    navController: NavController, modifier: Modifier = Modifier
+) {
 
     val navBackStackEntry by navController.currentBackStackEntryAsState()
 
@@ -34,19 +33,18 @@ fun BottomNavigationBar(
         containerColor = MaterialTheme.colorScheme.surfaceContainer,
         tonalElevation = 8.dp,
     ) {
-        navItems.forEachIndexed {
-            index, destination ->
-            val isSelected =currentRoute?.startsWith(destination.path) == true
+        navItems.forEachIndexed { index, destination ->
+            val isSelected = currentRoute?.startsWith(destination.path) == true
 
             NavigationBarItem(
                 selected = isSelected,
                 //selected = if(destination.name == "Home") true else false,
                 onClick = {
-                    if(currentRoute != destination.path){
-                        navController.navigate(destination.path){
+                    if (currentRoute != destination.path) {
+                        navController.navigate(destination.path) {
                             launchSingleTop = true
                             restoreState = true
-                            popUpTo(navController.graph.findStartDestination().id){
+                            popUpTo(navController.graph.findStartDestination().id) {
                                 saveState = true
                             }
                         }
@@ -65,7 +63,7 @@ fun BottomNavigationBar(
                 colors = NavigationBarItemDefaults.colors(
                     selectedIconColor = MaterialTheme.colorScheme.primary,
                     unselectedIconColor = MaterialTheme.colorScheme.onSurfaceVariant,
-                    selectedTextColor = MaterialTheme.colorScheme.primary ,
+                    selectedTextColor = MaterialTheme.colorScheme.primary,
                     unselectedTextColor = MaterialTheme.colorScheme.onSurfaceVariant,
                     indicatorColor = MaterialTheme.colorScheme.primaryContainer
                 )

@@ -1,6 +1,7 @@
 package com.aarav.geowav.presentation.onboard
 
 import android.Manifest
+import android.content.SharedPreferences
 import android.util.Log
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.TweenSpec
@@ -54,11 +55,13 @@ import com.google.accompanist.permissions.ExperimentalPermissionsApi
 import com.google.accompanist.permissions.rememberMultiplePermissionsState
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import androidx.core.content.edit
 
 @OptIn(ExperimentalPermissionsApi::class)
 @Composable
 fun OnboardingScreen(
-    navigateToAuth: () -> Unit
+    navigateToAuth: () -> Unit,
+    sharedPreferences: SharedPreferences
 )
 {
 
@@ -77,6 +80,11 @@ fun OnboardingScreen(
 
 //    val isFineLocationPermissionGranted = fineLocationPermission.allPermissionsGranted
 //    val isBackgroundLocationPermissionGranted = backgroundPermission.allPermissionsGranted
+
+    var isOnboarded by remember {
+        mutableStateOf(false)
+    }
+
 
 
     val pages = listOf(
@@ -115,6 +123,10 @@ fun OnboardingScreen(
 
     LaunchedEffect(permissionsGranted) {
         if(permissionsGranted){
+            sharedPreferences.edit(commit = true) {
+                putBoolean("isOnboarded", true)
+                //editor.apply()
+            }
             delay(2000)
             navigateToAuth()
         }
@@ -270,7 +282,7 @@ fun OnboardingPageContent(
             modifier = Modifier.fillMaxWidth()
         ){
             Surface(
-                modifier = Modifier.size(172.dp).align(Alignment.Center),
+                modifier = Modifier.size(154.dp).align(Alignment.Center),
                 color = MaterialTheme.colorScheme.tertiaryContainer,
                 shape = CircleShape,
             ) {
@@ -287,8 +299,8 @@ fun OnboardingPageContent(
 
         Text(
             text = page.title,
-            fontSize = 20.sp,
             fontFamily = manrope,
+            style = MaterialTheme.typography.titleLarge,
             color = MaterialTheme.colorScheme.onBackground,
             fontWeight = FontWeight.Bold
         )
@@ -298,7 +310,7 @@ fun OnboardingPageContent(
         Text(
             text = page.description,
             style = MaterialTheme.typography.bodyMedium,
-            fontSize = 16.sp,
+            fontSize = 14.sp,
             textAlign = TextAlign.Center,
             fontFamily = sora,
             color = MaterialTheme.colorScheme.onBackground,

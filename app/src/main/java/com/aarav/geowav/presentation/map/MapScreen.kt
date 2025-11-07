@@ -5,6 +5,7 @@ import android.util.Log
 import com.aarav.geowav.R
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -43,7 +44,10 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.style.LineHeightStyle
 import androidx.compose.ui.unit.dp
 import com.aarav.geowav.presentation.components.PlaceModalSheet
+import com.aarav.geowav.ui.theme.manrope
 import com.aarav.geowav.ui.theme.sora
+import com.aarav.geowav.ui.theme.*
+import com.aarav.geowav.ui.theme.surfaceContainerLight
 import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.model.CameraPosition
 import com.google.android.gms.maps.model.LatLng
@@ -123,17 +127,16 @@ fun MapScreen(mapViewModel: MapViewModel,
     val scope = rememberCoroutineScope()
 
     Scaffold(
-        containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
         modifier = Modifier.fillMaxSize(),
         topBar = {
             TopAppBar(
                 colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.surfaceContainerHigh
+                    containerColor = if(!isSystemInDarkTheme()) surfaceContainerLowestLightHighContrast else _root_ide_package_.com.aarav.geowav.ui.theme.surfaceContainerLowDarkHighContrast,
                 ),
                 title = {
                     Text(
                         text = "Select Place",
-                        fontFamily = sora
+                        fontFamily = manrope
                     )
                 },
                 navigationIcon = {

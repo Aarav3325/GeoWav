@@ -2,6 +2,8 @@ package com.aarav.geowav.presentation
 
 
 import android.util.Log
+import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -11,6 +13,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -45,6 +48,7 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -120,73 +124,58 @@ fun GeoWavHomeScreen(
 
     val scope = rememberCoroutineScope()
 
-    val Primary = MaterialTheme.colorScheme.primary
-    val Secondary = MaterialTheme.colorScheme.secondary
-    val Accent = MaterialTheme.colorScheme.tertiary
-    val Success = MaterialTheme.colorScheme.surfaceTint
     val scroll = rememberScrollState()
+    val scrollOffset = scroll.value
 
+// Switch colors after scrolling 240px
+    val useDarkIcons = scrollOffset > 150
+
+// Animate colors smoothly
+    val textColor by animateColorAsState(
+        targetValue = if (useDarkIcons) {
+            if(isSystemInDarkTheme()){
+                Color.White
+            }
+            else{
+                Color.Black
+            }
+        } else {
+            if(isSystemInDarkTheme()){
+                Color.Black
+            }
+            else{
+                Color.Black
+            }
+        },
+        animationSpec = tween(durationMillis = 500), // smooth 0.5s fade
+        label = "TextColorAnimation"
+    )
+
+    val backgroundColor by animateColorAsState(
+        targetValue = if (useDarkIcons)
+            MaterialTheme.colorScheme.primaryContainer
+        else
+            Color.Transparent,
+        animationSpec = tween(durationMillis = 500),
+        label = "BackgroundColorAnimation"
+    )
 
     Scaffold(
         modifier = Modifier.fillMaxSize(),
+        contentWindowInsets = WindowInsets(0),
         topBar = {
             TopAppBar(
                 title = {
-
-                }
-            )
-        }
-    ) {
-
-    }
-
-    Box(
-        modifier = Modifier.fillMaxSize()
-            .background(MaterialTheme.colorScheme.background)
-    ) {
-        Column(
-            modifier = modifier
-                .fillMaxSize()
-                .verticalScroll(scroll)
-                .background(MaterialTheme.colorScheme.background)
-        ) {
-
-            // 🌅 Gradient Header Section
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-
-                    .background(MaterialTheme.colorScheme.background)
-            ) {
-
-                Image(
-                    painter = if (isSystemInDarkTheme()) painterResource(R.drawable.dark_bg_geowav_new_2) else painterResource(
-                        R.drawable.light_bg_geowav_new
-                    ),
-                    contentDescription = "bg",
-                    contentScale = ContentScale.FillBounds,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(250.dp)
-                )
-
-                Row(
-//                    horizontalArrangement = Arrangement.SpaceBetween,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .align(Alignment.TopStart)
-                        .padding(start = 12.dp, end = 12.dp, top = 48.dp, bottom = 12.dp)
-                ) {
                     Text(
                         text = "GeoWav",
                         style = MaterialTheme.typography.headlineLarge.copy(
-                            color = Color.Black
+                            color = textColor
                         ),
                         fontFamily = manrope,
-                        modifier = Modifier.weight(1.0f),
                         fontWeight = FontWeight.Bold
                     )
-
+                },
+                actions = {
                     IconButton(
                         onClick = {
                             scope.launch {
@@ -197,13 +186,10 @@ fun GeoWavHomeScreen(
                         Image(
                             painter = painterResource(R.drawable.bell),
                             contentDescription = "bell",
-                            modifier = Modifier
-                                .size(28.dp),
-                            colorFilter = ColorFilter.tint(Color.Black)
+                            modifier = Modifier.size(28.dp),
+                            colorFilter = ColorFilter.tint(textColor)
                         )
                     }
-
-                    Spacer(modifier = Modifier.width(10.dp))
 
                     IconButton(
                         onClick = {
@@ -217,18 +203,105 @@ fun GeoWavHomeScreen(
                             painter = painterResource(R.drawable.gear_six),
                             contentDescription = "setting",
                             modifier = Modifier.size(28.dp),
-                            colorFilter = ColorFilter.tint(Color.Black)
+                            colorFilter = ColorFilter.tint(textColor)
                         )
                     }
-                    }
-
-
-
-
-                ProfileCard(
-                    googleSignInClient,
-                    modifier = Modifier.align(Alignment.Center).padding(top = 78.dp)
+                },
+                colors = TopAppBarDefaults.topAppBarColors(
+                    containerColor = backgroundColor
                 )
+            )
+        }
+    ) {
+        Box(
+            modifier = Modifier.fillMaxSize()
+                .background(MaterialTheme.colorScheme.background)
+        ) {
+            Column(
+                modifier = modifier
+                    .fillMaxSize()
+                    .verticalScroll(scroll)
+                    .background(MaterialTheme.colorScheme.background)
+            ) {
+
+                // 🌅 Gradient Header Section
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+
+                        .background(MaterialTheme.colorScheme.background)
+                ) {
+
+                    Image(
+                        painter = if (isSystemInDarkTheme()) painterResource(R.drawable.dark_bg_geowav_new_2) else painterResource(
+                            R.drawable.light_bg_geowav_new
+                        ),
+                        contentDescription = "bg",
+                        contentScale = ContentScale.FillBounds,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(250.dp)
+                    )
+
+//                    Row(
+////                    horizontalArrangement = Arrangement.SpaceBetween,
+//                        modifier = Modifier
+//                            .fillMaxWidth()
+//                            .align(Alignment.TopStart)
+//                            .padding(start = 12.dp, end = 12.dp, top = 48.dp, bottom = 12.dp)
+//                    ) {
+//                        Text(
+//                            text = "GeoWav",
+//                            style = MaterialTheme.typography.headlineLarge.copy(
+//                                color = Color.Black
+//                            ),
+//                            fontFamily = manrope,
+//                            modifier = Modifier.weight(1.0f),
+//                            fontWeight = FontWeight.Bold
+//                        )
+//
+//                        IconButton(
+//                            onClick = {
+//                                scope.launch {
+//                                    SnackbarManager.showMessage("No Notifications")
+//                                }
+//                            }
+//                        ) {
+//                            Image(
+//                                painter = painterResource(R.drawable.bell),
+//                                contentDescription = "bell",
+//                                modifier = Modifier
+//                                    .size(28.dp),
+//                                colorFilter = ColorFilter.tint(Color.Black)
+//                            )
+//                        }
+//
+//                        Spacer(modifier = Modifier.width(10.dp))
+//
+//                        IconButton(
+//                            onClick = {
+//                                scope.launch {
+//                                    googleSignInClient.signOut()
+//                                    navigateToAuth()
+//                                }
+//                            }
+//                        ) {
+//                            Image(
+//                                painter = painterResource(R.drawable.gear_six),
+//                                contentDescription = "setting",
+//                                modifier = Modifier.size(28.dp),
+//                                colorFilter = ColorFilter.tint(Color.Black)
+//                            )
+//                        }
+//                    }
+
+
+
+
+                    ProfileCard(
+                        googleSignInClient,
+                        modifier = Modifier.align(Alignment.Center).padding(top = 96.dp)
+                    )
 
 //                Row(
 //                    modifier = Modifier
@@ -251,57 +324,60 @@ fun GeoWavHomeScreen(
 //                        )
 //                    }
 //                }
-            }
+                }
 
-            Column(
-                modifier = Modifier.padding(horizontal = 12.dp)
-                    .background(MaterialTheme.colorScheme.background)
-            ) {
+                Column(
+                    modifier = Modifier.padding(horizontal = 12.dp)
+                        .background(MaterialTheme.colorScheme.background)
+                ) {
 //                CurrentLocationCard(
 //                    city = "Ahmedabad, Gujarat",
 //                    lastUpdated = "2 mins ago",
 //                    onViewMap = onViewMap
 //                )
 
-                // 👥 Your Circle
-                ConnectionsRow(
-                    title = "Your Circle",
-                    connections = connections,
-                    onAdd = onAddZone
-                )
+                    // 👥 Your Circle
+                    ConnectionsRow(
+                        title = "Your Circle",
+                        connections = connections,
+                        onAdd = onAddZone
+                    )
 
-                // 🏠 Active Zones
-                ActiveZonesSection(
-                    zones = zones,
-                    onZoneClick = {}
-                )
+                    // 🏠 Active Zones
+                    ActiveZonesSection(
+                        zones = zones,
+                        onZoneClick = {}
+                    )
 
-                // ⚡ Quick Actions
-                QuickActionsRow(
-                    onAddZone = onAddZone,
-                    onShare = onShareLocation,
-                    onAlerts = onOpenAlerts
-                )
+                    // ⚡ Quick Actions
+                    QuickActionsRow(
+                        onAddZone = onAddZone,
+                        onShare = onShareLocation,
+                        onAlerts = onOpenAlerts
+                    )
 
-                // 🔔 Recent Alerts
-                Text(
-                    "Recent Alerts",
-                    color = MaterialTheme.colorScheme.onBackground,
-                    style = MaterialTheme.typography.titleMedium.copy(
-                        fontWeight = FontWeight.SemiBold,
-                        fontFamily = manrope
-                    ),
-                    fontSize = 16.sp,
-                    modifier = Modifier.padding(vertical = 12.dp)
-                )
-                RecentAlertsList(alerts)
+                    // 🔔 Recent Alerts
+                    Text(
+                        "Recent Alerts",
+                        color = MaterialTheme.colorScheme.onBackground,
+                        style = MaterialTheme.typography.titleMedium.copy(
+                            fontWeight = FontWeight.SemiBold,
+                            fontFamily = manrope
+                        ),
+                        fontSize = 16.sp,
+                        modifier = Modifier.padding(vertical = 12.dp)
+                    )
+                    RecentAlertsList(alerts)
+                }
+
+
+                // 📍 Current Location Card
+
             }
-
-
-            // 📍 Current Location Card
-
         }
     }
+
+
 }
 
 // ---------- CURRENT LOCATION CARD ----------
@@ -381,7 +457,9 @@ fun ConnectionsRow(title: String, connections: List<GeoConnection>, onAdd: () ->
     val Secondary = MaterialTheme.colorScheme.secondary
     val Accent = MaterialTheme.colorScheme.tertiary
     val Success = MaterialTheme.colorScheme.surfaceTint
-    Column {
+    Column(
+        modifier = Modifier.padding(top = 6.dp)
+    ) {
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceBetween,
@@ -591,7 +669,7 @@ fun ZoneCard(zone: GeoZone, onClick: () -> Unit) {
             }
             TextButton(onClick = onClick) {
                 Text(
-                    "Edit",
+                    "Active",
                     fontSize = 14.sp,
                     fontFamily = sora,
                     fontWeight = FontWeight.SemiBold,
@@ -627,6 +705,7 @@ fun QuickActionButton(
         colors = ButtonDefaults.buttonColors(
             containerColor = MaterialTheme.colorScheme.surfaceContainer
         ),
+        elevation = ButtonDefaults.elevatedButtonElevation(2.dp),
         modifier = Modifier.fillMaxWidth().wrapContentHeight(),
         onClick = onClick
         //modifier = Modifier.clickable { onClick() },
@@ -796,7 +875,7 @@ fun GeoWavHomePreview() {
 @Composable
 fun ProfileCard(googleSignInClient: GoogleSignInClient, modifier: Modifier = Modifier){
     Card(
-        modifier = modifier.fillMaxWidth().wrapContentHeight().padding(12.dp),
+        modifier = modifier.fillMaxWidth().wrapContentHeight().padding(16.dp),
         colors = CardDefaults.cardColors(
             containerColor = Color.Transparent
         ),
@@ -830,8 +909,16 @@ fun ProfileCard(googleSignInClient: GoogleSignInClient, modifier: Modifier = Mod
                 )
             }
 
+
+
+            val uri by remember {
+                mutableStateOf(
+                    googleSignInClient.getUserProfile()
+                )
+            }
+
             val avatar by remember {
-                mutableStateOf(googleSignInClient.getUserProfile().toString().isBlank())
+                mutableStateOf(uri.toString().isBlank())
             }
 
             val isDark = isSystemInDarkTheme()
@@ -844,7 +931,7 @@ fun ProfileCard(googleSignInClient: GoogleSignInClient, modifier: Modifier = Mod
                         "https://storage.googleapis.com/geowav-bucket-1/user_light_theme.svg"
                     }
                 } else {
-                    googleSignInClient.getUserProfile() // ⚠️ Must return a *stable* String (not recompute every frame)
+                    uri
                 }
             }
 
@@ -857,7 +944,7 @@ fun ProfileCard(googleSignInClient: GoogleSignInClient, modifier: Modifier = Mod
 
             Surface(
                 shape = CircleShape,
-                modifier = Modifier.size(96.dp),
+                modifier = Modifier.size(84.dp),
                 color = Color.White
             ) {
                 AsyncImage(
@@ -866,20 +953,10 @@ fun ProfileCard(googleSignInClient: GoogleSignInClient, modifier: Modifier = Mod
                     imageLoader = imageLoader,
                     placeholder = painterResource(R.drawable.user),
                     contentScale = ContentScale.Crop,
-                    modifier = Modifier.size(96.dp)
+                    modifier = Modifier.size(84.dp)
                 )
             }
 
-            //data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIzMiIgaGVpZ2h0PSIzMiIgZmlsbD0iI2JhYzNmZiIgdmlld0JveD0iMCAwIDI1NiAyNTYiPjxwYXRoIGQ9Ik0yMzAuOTIsMjEyYy0xNS4yMy0yNi4zMy0zOC43LTQ1LjIxLTY2LjA5LTU0LjE2YTcyLDcyLDAsMSwwLTczLjY2LDBDNjMuNzgsMTY2Ljc4LDQwLjMxLDE4NS42NiwyNS4wOCwyMTJhOCw4LDAsMSwwLDEzLjg1LDhjMTguODQtMzIuNTYsNTIuMTQtNTIsODkuMDctNTJzNzAuMjMsMTkuNDQsODkuMDcsNTJhOCw4LDAsMSwwLDEzLjg1LThaTTcyLDk2YTU2LDU2LDAsMSwxLDU2LDU2QTU2LjA2LDU2LjA2LDAsMCwxLDcyLDk2WiI+PC9wYXRoPjwvc3ZnPg==
-
-//            Surface(
-//                shape = CircleShape,
-//                //color = MaterialTheme.colorScheme.background,
-//                modifier = Modifier
-//                    .size(96.dp)
-//            ) {
-
-          //  }
         }
     }
 }

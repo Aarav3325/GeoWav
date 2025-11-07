@@ -50,16 +50,16 @@ fun YourPlacesScreen(
     val placesList by placeViewModel.allPlaces.collectAsState()
 
     val new = listOf<Place>(
-        Place(
-            latitude = 40.7128,
-            longitude = -74.0060,
-            radius = 200F,
-            placeId = "new_york",
-            customName = "new_york",
-            placeName = "new_york",
-            address = "TODO()",
-            addedOn = "06/11/25",
-        )
+//        Place(
+//            latitude = 40.7128,
+//            longitude = -74.0060,
+//            radius = 200F,
+//            placeId = "new_york",
+//            customName = "new_york",
+//            placeName = "new_york",
+//            address = "TODO()",
+//            addedOn = "06/11/25",
+//        )
     )
     //val empty = emptyList<Nothing>()
 //    Scaffold(
@@ -102,7 +102,7 @@ fun YourPlacesScreen(
 
 
         Column(
-
+        modifier = Modifier.padding(horizontal = 12.dp)
         ) {
             Text(
                 text = "Your Places",
@@ -110,7 +110,7 @@ fun YourPlacesScreen(
                 fontFamily = manrope,
                 fontWeight = FontWeight.SemiBold,
                 color = MaterialTheme.colorScheme.onBackground,
-                modifier = Modifier.padding(start = 12.dp, end = 12.dp, top = 54.dp)
+                modifier = Modifier.padding(top = 54.dp)
             )
 
             if (new.isEmpty()) {
@@ -148,7 +148,7 @@ fun YourPlacesScreen(
             }
 
             LazyColumn(
-                modifier = Modifier.fillMaxSize().padding(start = 12.dp, end = 12.dp, top = 24.dp, bottom = 12.dp)
+                modifier = Modifier.fillMaxSize().padding(top = 24.dp, bottom = 12.dp)
             ) {
                 items(new) { place ->
                     GeofencePlaceCard(place, placeViewModel)

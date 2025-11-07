@@ -7,6 +7,7 @@ import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -45,6 +46,7 @@ import androidx.compose.ui.unit.dp
 import androidx.room.util.query
 import com.aarav.geowav.presentation.components.SearchItem
 import com.aarav.geowav.ui.theme.sora
+import com.aarav.geowav.ui.theme.surfaceContainerLowestLightHighContrast
 import com.google.android.libraries.places.api.Places
 import com.google.android.libraries.places.api.model.AutocompletePrediction
 import com.google.android.libraries.places.api.model.AutocompleteSessionToken
@@ -161,9 +163,10 @@ fun NewSearch(
             .padding(horizontal = if (!expanded) 12.dp else 0.dp)
     ) {
         SearchBar(
+            shadowElevation = 16.dp,
             shape = RoundedCornerShape(16.dp),
             colors = SearchBarDefaults.colors(
-                containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
+                containerColor = if(!isSystemInDarkTheme()) surfaceContainerLowestLightHighContrast else _root_ide_package_.com.aarav.geowav.ui.theme.surfaceContainerLowDarkHighContrast,
                 dividerColor = MaterialTheme.colorScheme.primary
             ),
             expanded = expanded,

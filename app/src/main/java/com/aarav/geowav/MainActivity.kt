@@ -2,6 +2,7 @@ package com.aarav.geowav
 
 import android.Manifest
 import android.content.Intent
+import android.content.SharedPreferences
 import android.graphics.Color
 import android.os.Build
 import android.os.Bundle
@@ -67,6 +68,9 @@ class MainActivity : ComponentActivity() {
 
     @Inject
     lateinit var googleSignInClient: GoogleSignInClient
+
+    @Inject
+    lateinit var sharedPreferences: SharedPreferences
 
     @RequiresPermission(Manifest.permission.ACCESS_FINE_LOCATION)
     @OptIn(ExperimentalPermissionsApi::class, ExperimentalMaterial3Api::class)
@@ -240,6 +244,7 @@ class MainActivity : ComponentActivity() {
 
                     NavGraph(
                         navController,
+                        sharedPreferences,
                         location1,
                         googleSignInClient,
                         mapViewModel,

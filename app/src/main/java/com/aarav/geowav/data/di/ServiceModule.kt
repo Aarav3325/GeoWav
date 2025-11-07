@@ -1,6 +1,7 @@
 package com.aarav.geowav.data.di
 
 import android.content.Context
+import android.content.SharedPreferences
 import com.aarav.geowav.data.geofence.GeofenceHelper
 import com.aarav.geowav.data.location.LocationManager
 import com.aarav.geowav.data.retrofit.MessageAPI
@@ -72,4 +73,12 @@ object ServiceModule {
     fun provideWhatsAppApi(retrofit: Retrofit): MessageAPI {
         return retrofit.create(MessageAPI::class.java)
     }
+
+    @Provides
+    @Singleton
+    fun provideSharedPreference(@ApplicationContext context: Context) : SharedPreferences{
+        return context.getSharedPreferences("geowav", Context.MODE_PRIVATE)
+    }
+
+
 }
