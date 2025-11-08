@@ -137,7 +137,13 @@ fun AddNewPlaceScreen(
                 navController.navigateUp()
             },
             navigateToYourPlaces = {
-                navController.navigate(NavRoute.YourPlaces.path)
+                navController.navigate(NavRoute.YourPlaces.path) {
+                    popUpTo(navController.graph.findStartDestination().id) {
+                        saveState = true
+                    }
+                    launchSingleTop = true
+                    restoreState = true
+                }
             },
             mapViewModel,
             placesViewModel

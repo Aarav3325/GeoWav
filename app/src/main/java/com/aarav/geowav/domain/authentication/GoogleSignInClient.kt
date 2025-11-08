@@ -3,12 +3,12 @@ package com.aarav.geowav.domain.authentication
 import android.content.Context
 import android.net.Uri
 import android.util.Log
-import com.aarav.geowav.R
 import androidx.credentials.ClearCredentialStateRequest
 import androidx.credentials.CredentialManager
 import androidx.credentials.CustomCredential
 import androidx.credentials.GetCredentialRequest
 import androidx.credentials.GetCredentialResponse
+import com.aarav.geowav.R
 import com.aarav.geowav.data.auth.User
 import com.google.android.libraries.identity.googleid.GetGoogleIdOption
 import com.google.android.libraries.identity.googleid.GoogleIdTokenCredential
@@ -36,11 +36,7 @@ class GoogleSignInClient @Inject constructor(
 //    lateinit var firebaseAuth: FirebaseAuth
 
     fun isLoggedIn(): Boolean {
-        if (firebaseAuth.currentUser != null) {
-            return true
-        } else {
-            return false
-        }
+        return firebaseAuth.currentUser != null
     }
 
     suspend fun signIn(): Boolean {

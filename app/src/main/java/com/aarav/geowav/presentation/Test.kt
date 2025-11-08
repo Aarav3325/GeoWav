@@ -1,12 +1,10 @@
 package com.aarav.geowav.presentation
 
 
-import android.util.Log
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -40,17 +38,14 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.IconButtonDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -58,7 +53,6 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
@@ -69,7 +63,6 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.compose.ui.zIndex
 import coil.ImageLoader
 import coil.compose.AsyncImage
 import coil.decode.SvgDecoder
@@ -79,7 +72,6 @@ import com.aarav.geowav.presentation.components.SnackbarManager
 import com.aarav.geowav.ui.theme.GeoWavTheme
 import com.aarav.geowav.ui.theme.manrope
 import com.aarav.geowav.ui.theme.sora
-import com.google.maps.android.compose.Circle
 import kotlinx.coroutines.launch
 
 
@@ -133,21 +125,19 @@ fun GeoWavHomeScreen(
 // Animate colors smoothly
     val textColor by animateColorAsState(
         targetValue = if (useDarkIcons) {
-            if(isSystemInDarkTheme()){
+            if (isSystemInDarkTheme()) {
                 Color.White
-            }
-            else{
+            } else {
                 Color.Black
             }
         } else {
-            if(isSystemInDarkTheme()){
+            if (isSystemInDarkTheme()) {
                 Color.Black
-            }
-            else{
+            } else {
                 Color.Black
             }
         },
-        animationSpec = tween(durationMillis = 500), // smooth 0.5s fade
+        animationSpec = tween(durationMillis = 800), // smooth 0.5s fade
         label = "TextColorAnimation"
     )
 
@@ -156,7 +146,7 @@ fun GeoWavHomeScreen(
             MaterialTheme.colorScheme.primaryContainer
         else
             Color.Transparent,
-        animationSpec = tween(durationMillis = 500),
+        animationSpec = tween(durationMillis = 800),
         label = "BackgroundColorAnimation"
     )
 
@@ -212,9 +202,10 @@ fun GeoWavHomeScreen(
                 )
             )
         }
-    ) {
+    ) { innerPadding ->
         Box(
-            modifier = Modifier.fillMaxSize()
+            modifier = Modifier
+                .fillMaxSize()
                 .background(MaterialTheme.colorScheme.background)
         ) {
             Column(
@@ -296,11 +287,11 @@ fun GeoWavHomeScreen(
 //                    }
 
 
-
-
                     ProfileCard(
                         googleSignInClient,
-                        modifier = Modifier.align(Alignment.Center).padding(top = 96.dp)
+                        modifier = Modifier
+                            .align(Alignment.Center)
+                            .padding(top = 92.dp)
                     )
 
 //                Row(
@@ -327,7 +318,8 @@ fun GeoWavHomeScreen(
                 }
 
                 Column(
-                    modifier = Modifier.padding(horizontal = 12.dp)
+                    modifier = Modifier
+                        .padding(horizontal = 12.dp)
                         .background(MaterialTheme.colorScheme.background)
                 ) {
 //                CurrentLocationCard(
@@ -565,7 +557,7 @@ fun AddConnectionCard(onClick: () -> Unit) {
         Column(
             modifier = Modifier
                 .fillMaxSize(),
-                //.clickable { onClick() }
+            //.clickable { onClick() }
             verticalArrangement = Arrangement.Center,
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
@@ -655,7 +647,10 @@ fun ZoneCard(zone: GeoZone, onClick: () -> Unit) {
                         zone.name,
                         fontSize = 14.sp,
                         color = MaterialTheme.colorScheme.onSurface,
-                        style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.SemiBold, fontFamily = sora)
+                        style = MaterialTheme.typography.bodyMedium.copy(
+                            fontWeight = FontWeight.SemiBold,
+                            fontFamily = sora
+                        )
                     )
                     Text(
                         "${zone.radiusMeters}m • ${if (zone.inside) "Inside" else "Outside"}",
@@ -706,7 +701,9 @@ fun QuickActionButton(
             containerColor = MaterialTheme.colorScheme.surfaceContainer
         ),
         elevation = ButtonDefaults.elevatedButtonElevation(2.dp),
-        modifier = Modifier.fillMaxWidth().wrapContentHeight(),
+        modifier = Modifier
+            .fillMaxWidth()
+            .wrapContentHeight(),
         onClick = onClick
         //modifier = Modifier.clickable { onClick() },
     ) {
@@ -822,10 +819,12 @@ fun AlertItem(alert: GeoAlert) {
                     maxLines = 2
                 )
             }
-            Text(alert.time,
+            Text(
+                alert.time,
                 fontFamily = sora,
                 fontWeight = FontWeight.SemiBold,
-                fontSize = 14.sp)
+                fontSize = 14.sp
+            )
         }
     }
 }
@@ -854,7 +853,13 @@ fun GeoWavHomePreview() {
             "enter"
         ),
         GeoAlert("a2", "Left Office", "You left Office • 3 mins ago", "3:12 PM", "exit"),
-        GeoAlert("a2", "Entered Office", "300m • Sending auto updates to your circle", "9:15 AM", "enter"),
+        GeoAlert(
+            "a2",
+            "Entered Office",
+            "300m • Sending auto updates to your circle",
+            "9:15 AM",
+            "enter"
+        ),
         GeoAlert("a2", "Left Home", "10 mins ago", "8:46 AM", "exit")
     )
 
@@ -873,9 +878,12 @@ fun GeoWavHomePreview() {
 }
 
 @Composable
-fun ProfileCard(googleSignInClient: GoogleSignInClient, modifier: Modifier = Modifier){
+fun ProfileCard(googleSignInClient: GoogleSignInClient, modifier: Modifier = Modifier) {
     Card(
-        modifier = modifier.fillMaxWidth().wrapContentHeight().padding(16.dp),
+        modifier = modifier
+            .fillMaxWidth()
+            .wrapContentHeight()
+            .padding(16.dp),
         colors = CardDefaults.cardColors(
             containerColor = Color.Transparent
         ),
@@ -908,7 +916,6 @@ fun ProfileCard(googleSignInClient: GoogleSignInClient, modifier: Modifier = Mod
                     modifier = Modifier
                 )
             }
-
 
 
             val uri by remember {
@@ -963,7 +970,7 @@ fun ProfileCard(googleSignInClient: GoogleSignInClient, modifier: Modifier = Mod
 
 @Preview(showBackground = true)
 @Composable
-fun CurrentLocationCardPreview(){
+fun CurrentLocationCardPreview() {
     GeoWavTheme {
         CurrentLocationCard(
             "Ahmedabad",

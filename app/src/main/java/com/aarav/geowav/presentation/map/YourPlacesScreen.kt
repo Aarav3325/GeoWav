@@ -113,7 +113,7 @@ fun YourPlacesScreen(
                 modifier = Modifier.padding(top = 54.dp)
             )
 
-            if (new.isEmpty()) {
+            if (placesList.isEmpty()) {
                 Box(
                     modifier = Modifier.fillMaxSize()
                 ) {
@@ -150,7 +150,7 @@ fun YourPlacesScreen(
             LazyColumn(
                 modifier = Modifier.fillMaxSize().padding(top = 24.dp, bottom = 12.dp)
             ) {
-                items(new) { place ->
+                items(placesList) { place ->
                     GeofencePlaceCard(place, placeViewModel)
                 }
             }
