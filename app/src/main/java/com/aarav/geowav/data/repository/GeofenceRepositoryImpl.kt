@@ -1,20 +1,17 @@
-package com.aarav.geowav.data.geofence
+package com.aarav.geowav.data.repository
 
 import android.Manifest
-import android.annotation.SuppressLint
 import android.content.Context
-import android.os.Build
 import android.util.Log
-import androidx.annotation.RequiresApi
 import androidx.annotation.RequiresPermission
+import com.aarav.geowav.data.geofence.GeofenceHelper
 import com.aarav.geowav.data.place.Place
 import com.google.android.gms.location.GeofencingClient
-import com.google.android.gms.location.LocationServices
 import dagger.hilt.android.qualifiers.ApplicationContext
 import javax.inject.Inject
 
 class GeofenceRepositoryImpl @Inject constructor(@ApplicationContext val context: Context,
-    val geofencingClient: GeofencingClient, val geofenceHelper : GeofenceHelper
+                                                 val geofencingClient: GeofencingClient, val geofenceHelper : GeofenceHelper
     ) {
 
 //    @Inject
@@ -39,4 +36,5 @@ class GeofenceRepositoryImpl @Inject constructor(@ApplicationContext val context
                 }
         }
     }
+
 }

@@ -5,7 +5,7 @@ import android.view.View
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.aarav.geowav.data.place.Place
-import com.aarav.geowav.data.place.PlaceRepository
+import com.aarav.geowav.domain.repository.PlaceRepository
 import com.aarav.geowav.domain.place.PlaceRepositoryImpl
 import com.google.android.libraries.places.api.Places
 import com.google.android.libraries.places.api.model.AutocompletePrediction

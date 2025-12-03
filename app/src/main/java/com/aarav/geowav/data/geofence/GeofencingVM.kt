@@ -7,6 +7,7 @@ import androidx.annotation.RequiresPermission
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.ViewModel
 import com.aarav.geowav.data.place.Place
+import com.aarav.geowav.data.repository.GeofenceRepositoryImpl
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
 

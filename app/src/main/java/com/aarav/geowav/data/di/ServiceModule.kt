@@ -25,7 +25,7 @@ object ServiceModule {
 
     @Provides
     @Singleton
-    fun providePlacesClient(@ApplicationContext context: Context) : PlacesClient{
+    fun providePlacesClient(@ApplicationContext context: Context): PlacesClient {
         return Places.createClient(context)
     }
 
@@ -41,19 +41,19 @@ object ServiceModule {
 
     @Provides
     @Singleton
-    fun provideFusedLocationClient(@ApplicationContext context: Context) : FusedLocationProviderClient{
+    fun provideFusedLocationClient(@ApplicationContext context: Context): FusedLocationProviderClient {
         return LocationServices.getFusedLocationProviderClient(context)
     }
 
     @Provides
     @Singleton
-    fun provideGeofencingClient(@ApplicationContext context: Context) : GeofencingClient{
+    fun provideGeofencingClient(@ApplicationContext context: Context): GeofencingClient {
         return LocationServices.getGeofencingClient(context)
     }
 
     @Provides
     @Singleton
-    fun provideGeofenceHelper(@ApplicationContext context: Context) : GeofenceHelper{
+    fun provideGeofenceHelper(@ApplicationContext context: Context): GeofenceHelper {
         return GeofenceHelper(context)
     }
 
@@ -76,7 +76,7 @@ object ServiceModule {
 
     @Provides
     @Singleton
-    fun provideSharedPreference(@ApplicationContext context: Context) : SharedPreferences{
+    fun provideSharedPreference(@ApplicationContext context: Context): SharedPreferences {
         return context.getSharedPreferences("geowav", Context.MODE_PRIVATE)
     }
 

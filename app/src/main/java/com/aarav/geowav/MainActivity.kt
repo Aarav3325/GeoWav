@@ -6,6 +6,7 @@ import android.content.SharedPreferences
 import android.graphics.Color
 import android.os.Build
 import android.os.Bundle
+import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
@@ -109,6 +110,8 @@ class MainActivity : ComponentActivity() {
             val places by placesViewModel.allPlaces.collectAsState()
 
 
+
+
             val location by mapViewModel.currentLocation.collectAsState()
 
             mapViewModel.startLocationUpdates()
@@ -172,6 +175,7 @@ class MainActivity : ComponentActivity() {
 
                 val showBottomRoutes = listOf(
                     NavRoute.HomeScreen.path,
+                    NavRoute.ActivityScreen.path,
                     NavRoute.YourPlaces.path
                 )
 

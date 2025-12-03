@@ -2,6 +2,8 @@ package com.aarav.geowav.presentation.map
 
 import android.app.Activity
 import android.content.Context
+import android.content.Intent
+import android.net.Uri
 import android.util.Log
 import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
@@ -43,6 +45,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
+import androidx.core.content.ContextCompat.startActivity
 import androidx.room.util.query
 import com.aarav.geowav.presentation.components.SearchItem
 import com.aarav.geowav.ui.theme.sora
@@ -144,6 +147,10 @@ fun NewSearch(
     placeViewModel: PlaceViewModel,
     onPlaceSelected: (Place) -> Unit
 ) {
+//    val smsIntent = Intent(Intent.ACTION_VIEW).apply { data = Uri.parse("sms:9876543210")
+//        putExtra("sms_body", "Hello! This is a test SMS.") }
+//    startActivity(LocalContext.current, smsIntent, null)
+
     var predictions by remember { mutableStateOf<List<AutocompletePrediction>>(emptyList()) }
 
     // Fetch predictions based on query

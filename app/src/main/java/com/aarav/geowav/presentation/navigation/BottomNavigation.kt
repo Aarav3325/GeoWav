@@ -1,5 +1,6 @@
 package com.aarav.geowav.presentation.navigation
 
+import android.util.Log
 import androidx.compose.foundation.layout.size
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -26,7 +27,12 @@ fun BottomNavigationBar(
 
     val currentRoute = navBackStackEntry?.destination?.route
 
-    val navItems = listOf(NavItem.Home, NavItem.YourPlaces)
+    //val currentRoute = navBackStackEntry?.destination?.route?.substringBefore("/")
+
+    val navItems = listOf(NavItem.Home, NavItem.Activity, NavItem.YourPlaces)
+
+//    Log.i("NAV", navController.currentBackStack.value.toString())
+//    Log.i("NAV", navController.currentDestination.toString())
 
     NavigationBar(
         modifier = modifier,
@@ -40,6 +46,7 @@ fun BottomNavigationBar(
                 selected = isSelected,
                 //selected = if(destination.name == "Home") true else false,
                 onClick = {
+                    Log.i("NAV", "BottomNavigationBar: $currentRoute, dest : ${destination.path}")
                     if (currentRoute != destination.path) {
                         navController.navigate(destination.path) {
                             launchSingleTop = true
@@ -48,6 +55,7 @@ fun BottomNavigationBar(
                                 saveState = true
                             }
                         }
+
                     }
                 },
                 icon = {

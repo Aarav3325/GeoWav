@@ -1,16 +1,14 @@
-package com.aarav.geowav.data.whatsapp
+package com.aarav.geowav.data.repository
 
 import android.util.Log
-import com.aarav.geowav.data.retrofit.MessageAPI
+import com.aarav.geowav.data.model.TemplateMessageRequest
+import com.aarav.geowav.data.model.WhatsAppMessageResponse
 import com.aarav.geowav.data.retrofit.RetrofitInstance
-import com.aarav.geowav.data.retrofit.TemplateMessageRequest
-import com.aarav.geowav.data.retrofit.WhatsAppMessageResponse
-import com.google.firebase.Firebase
+import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.database.FirebaseDatabase
 import retrofit2.Call
 import retrofit2.Callback
 import retrofit2.Response
-import javax.inject.Inject
 
 class MessageRepo {
 
@@ -29,7 +27,6 @@ class MessageRepo {
                 if (response.isSuccessful) {
                     Log.i("MYTAG", "WhatsApp message sent: ${response.body()}")
 
-                    // Write to Firebase here
                     val firebaseDatabase = FirebaseDatabase.getInstance()
                     firebaseDatabase.getReference("geofence_activity")
                         .child("user123")
@@ -58,8 +55,10 @@ class MessageRepo {
                 Log.i("MYTAG", "WhatsApp message sent: ${response.body()}")
 
                 val firebaseDatabase = FirebaseDatabase.getInstance()
+
+                val userId = FirebaseAuth.getInstance().currentUser?.uid ?: "user123"
                 firebaseDatabase.getReference("geofence_activity")
-                    .child("user123")
+                    .child(userId)
                     .push()
                     .setValue(activityData)
                     .addOnSuccessListener { Log.i("MYTAG", "Firebase write success") }

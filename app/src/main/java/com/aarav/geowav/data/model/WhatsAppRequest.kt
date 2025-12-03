@@ -1,4 +1,4 @@
-package com.aarav.geowav.data.retrofit
+package com.aarav.geowav.data.model
 
 data class TemplateMessageRequest(
     val messaging_product: String,

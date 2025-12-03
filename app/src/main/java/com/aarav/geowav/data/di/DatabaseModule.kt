@@ -1,6 +1,7 @@
 package com.aarav.geowav.data.di
 
 import android.content.Context
+import com.aarav.geowav.data.room.ConnectionDao
 import com.aarav.geowav.data.room.PlaceDatabase
 import com.aarav.geowav.data.room.PlacesDAO
 import com.aarav.geowav.presentation.map.PlaceVMProvider
@@ -25,5 +26,11 @@ object DatabaseModule {
     @Singleton
     fun provideDao(placeDatabase: PlaceDatabase) : PlacesDAO{
         return placeDatabase.placeDao
+    }
+
+    @Provides
+    @Singleton
+    fun provideConnectionDao(placeDatabase: PlaceDatabase): ConnectionDao{
+        return placeDatabase.connectionDao
     }
 }

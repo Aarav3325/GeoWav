@@ -15,6 +15,7 @@ import androidx.core.app.ActivityCompat
 import androidx.core.app.NotificationCompat
 import com.aarav.geowav.R
 import com.aarav.geowav.data.place.Place
+import com.aarav.geowav.data.repository.GeofenceRepositoryImpl
 import com.aarav.geowav.domain.authentication.GoogleSignInClient
 import com.aarav.geowav.domain.place.PlaceRepositoryImpl
 import com.google.android.gms.location.Geofence
@@ -86,7 +87,8 @@ class GeofenceForegroundService : Service() {
         }
 
         val geofencingRequest = GeofencingRequest.Builder().setInitialTrigger(
-            GeofencingRequest.INITIAL_TRIGGER_ENTER or GeofencingRequest.INITIAL_TRIGGER_EXIT
+            GeofencingRequest.INITIAL_TRIGGER_ENTER
+                    //or GeofencingRequest.INITIAL_TRIGGER_EXIT
         )
             .addGeofences(geofenceList)
             .build()

@@ -7,7 +7,7 @@ import android.content.Intent
 import android.util.Log
 import androidx.annotation.RequiresPermission
 import com.aarav.geowav.data.geofence.GeofenceBroadcastReceiver
-import com.aarav.geowav.data.geofence.GeofenceRepositoryImpl
+import com.aarav.geowav.data.repository.GeofenceRepositoryImpl
 import com.aarav.geowav.data.geofence.GeofencingVM
 import com.aarav.geowav.domain.place.PlaceRepositoryImpl
 import com.aarav.geowav.presentation.map.PlaceViewModel

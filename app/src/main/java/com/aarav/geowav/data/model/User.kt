@@ -1,4 +1,4 @@
-package com.aarav.geowav.data.auth
+package com.aarav.geowav.data.model
 
 data class User(
     val userId : String,

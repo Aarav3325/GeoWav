@@ -2,6 +2,7 @@ package com.aarav.geowav.presentation.navigation
 
 sealed class NavRoute(val path : String) {
     object HomeScreen : NavRoute("home")
+    object ActivityScreen : NavRoute("activity")
 
     object MapScreen : NavRoute("mapScreen")
 

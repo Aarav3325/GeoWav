@@ -3,6 +3,7 @@ package com.aarav.geowav.presentation.navigation
 import android.content.SharedPreferences
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.navigation.NavController
 import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.NavGraphBuilder
@@ -13,9 +14,9 @@ import androidx.navigation.compose.composable
 import androidx.navigation.navArgument
 import com.aarav.geowav.domain.authentication.GoogleSignInClient
 import com.aarav.geowav.presentation.GeoAlert
-import com.aarav.geowav.presentation.GeoConnection
 import com.aarav.geowav.presentation.GeoWavHomeScreen
 import com.aarav.geowav.presentation.GeoZone
+import com.aarav.geowav.presentation.activity.ActivityScreen
 import com.aarav.geowav.presentation.auth.LoginScreen
 import com.aarav.geowav.presentation.auth.SignupScreen
 import com.aarav.geowav.presentation.map.AddPlaceScreen
@@ -41,8 +42,8 @@ fun NavGraph(
     NavHost(
         modifier = modifier,
         navController = navHostController,
-        startDestination = if (isLoggedIn && isOnboarded) NavRoute.HomeScreen.path else if(!isOnboarded) NavRoute.OnBoard.path
-        else if(!isLoggedIn && isOnboarded) NavRoute.Login.path else NavRoute.SignUp.path
+        startDestination = if (isLoggedIn && isOnboarded) NavRoute.HomeScreen.path else if (!isOnboarded) NavRoute.OnBoard.path
+        else if (!isLoggedIn && isOnboarded) NavRoute.Login.path else NavRoute.SignUp.path
     ) {
         AddMapsScreen(
             navHostController,
@@ -87,6 +88,11 @@ fun NavGraph(
             navHostController,
             this,
             googleSignInClient
+        )
+
+        AddActivityScreen(
+            navHostController,
+            this
         )
     }
 
@@ -207,8 +213,10 @@ fun AddLoginScreen(
     }
 }
 
-fun AddOnBoard(navController: NavController, navGraphBuilder: NavGraphBuilder,
-               sharedPreferences: SharedPreferences) {
+fun AddOnBoard(
+    navController: NavController, navGraphBuilder: NavGraphBuilder,
+    sharedPreferences: SharedPreferences
+) {
     navGraphBuilder.composable(
         route = NavRoute.OnBoard.path
     ) {
@@ -229,11 +237,11 @@ fun AddHomeScreen(
         route = NavRoute.HomeScreen.path
     ) {
 
-        val sampleConnections = listOf(
-            GeoConnection("1", "Anushree", true),
-            GeoConnection("2", "Akshat", true),
-            GeoConnection("3", "Mummy", false)
-        )
+//        val sampleConnections = listOf(
+//            GeoConnection("1", "Anushree", true),
+//            GeoConnection("2", "Akshat", true),
+//            GeoConnection("3", "Mummy", false)
+//        )
 
         val sampleZones = listOf(
             GeoZone("z1", "Home", true, 200),
@@ -270,7 +278,6 @@ fun AddHomeScreen(
                 }
             },
             googleSignInClient,
-            connections = sampleConnections,
             zones = sampleZones,
             alerts = sampleAlerts,
             onViewMap = {},
@@ -278,7 +285,21 @@ fun AddHomeScreen(
                 navController.navigate(NavRoute.MapScreen.path)
             },
             onShareLocation = {},
-            onOpenAlerts = {}
+            onOpenAlerts = {},
+            homeScreenVM = hiltViewModel()
         )
     }
 }
+
+fun AddActivityScreen(
+    navController: NavController, navGraphBuilder: NavGraphBuilder
+) {
+    navGraphBuilder.composable(
+        route = NavRoute.ActivityScreen.path
+    ) {
+        ActivityScreen(
+            activityViewModel = hiltViewModel()
+        )
+    }
+}
+

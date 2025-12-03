@@ -5,6 +5,7 @@ import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -19,7 +20,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.wrapContentHeight
-import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
@@ -46,6 +46,7 @@ import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -67,20 +68,19 @@ import coil.ImageLoader
 import coil.compose.AsyncImage
 import coil.decode.SvgDecoder
 import com.aarav.geowav.R
+import com.aarav.geowav.data.model.GeoConnection
+import com.aarav.geowav.data.place.Place
 import com.aarav.geowav.domain.authentication.GoogleSignInClient
 import com.aarav.geowav.presentation.components.SnackbarManager
+import com.aarav.geowav.presentation.home.HomeScreenVM
 import com.aarav.geowav.ui.theme.GeoWavTheme
 import com.aarav.geowav.ui.theme.manrope
 import com.aarav.geowav.ui.theme.sora
 import kotlinx.coroutines.launch
+import kotlin.text.equals
 
 
 // ---------- DATA CLASSES ----------
-data class GeoConnection(
-    val id: String,
-    val name: String,
-    val isOnline: Boolean = false
-)
 
 data class GeoZone(
     val id: String,
@@ -103,16 +103,24 @@ data class GeoAlert(
 fun GeoWavHomeScreen(
     navigateToAuth: () -> Unit,
     googleSignInClient: GoogleSignInClient,
-    connections: List<GeoConnection>,
     zones: List<GeoZone>,
     alerts: List<GeoAlert>,
     onViewMap: () -> Unit,
     onAddZone: () -> Unit,
     onShareLocation: () -> Unit,
     onOpenAlerts: () -> Unit,
+    homeScreenVM: HomeScreenVM,
     modifier: Modifier = Modifier
 ) {
 
+    val allConnection by homeScreenVM.allConnections.collectAsState()
+
+    val recentAlerts by homeScreenVM.alerts.collectAsState()
+
+    val finalRecentAlerts = recentAlerts.take(4)
+
+
+    val allPlaces by homeScreenVM.allPlaces.collectAsState()
 
     val scope = rememberCoroutineScope()
 
@@ -150,6 +158,7 @@ fun GeoWavHomeScreen(
         label = "BackgroundColorAnimation"
     )
 
+    val context = LocalContext.current
     Scaffold(
         modifier = Modifier.fillMaxSize(),
         contentWindowInsets = WindowInsets(0),
@@ -169,6 +178,7 @@ fun GeoWavHomeScreen(
                     IconButton(
                         onClick = {
                             scope.launch {
+                               // Toast.makeText(context, "Welcome to GeoWav", Toast.LENGTH_LONG).show()
                                 SnackbarManager.showMessage("No Notifications")
                             }
                         }
@@ -232,6 +242,20 @@ fun GeoWavHomeScreen(
                         modifier = Modifier
                             .fillMaxWidth()
                             .height(250.dp)
+                    )
+
+                    Box(
+                        modifier = Modifier
+                            .matchParentSize()
+                            .background(
+                                Brush.verticalGradient(
+                                    colors = listOf(
+                                        MaterialTheme.colorScheme.background.copy(alpha = 0.1f),
+                                        Color.Transparent,
+                                        MaterialTheme.colorScheme.onBackground.copy(alpha = 0.1f)
+                                    )
+                                )
+                            )
                     )
 
 //                    Row(
@@ -331,22 +355,24 @@ fun GeoWavHomeScreen(
                     // 👥 Your Circle
                     ConnectionsRow(
                         title = "Your Circle",
-                        connections = connections,
+                        connections = allConnection,
                         onAdd = onAddZone
                     )
 
                     // 🏠 Active Zones
                     ActiveZonesSection(
-                        zones = zones,
+                        zones = allPlaces,
                         onZoneClick = {}
                     )
 
                     // ⚡ Quick Actions
-                    QuickActionsRow(
-                        onAddZone = onAddZone,
-                        onShare = onShareLocation,
-                        onAlerts = onOpenAlerts
-                    )
+                    if(allPlaces.isEmpty()){
+                        QuickActionsRow(
+                            onAddZone = onAddZone,
+                            onShare = onShareLocation,
+                            onAlerts = onOpenAlerts
+                        )
+                    }
 
                     // 🔔 Recent Alerts
                     Text(
@@ -359,7 +385,7 @@ fun GeoWavHomeScreen(
                         fontSize = 16.sp,
                         modifier = Modifier.padding(vertical = 12.dp)
                     )
-                    RecentAlertsList(alerts)
+                    RecentAlertsList(finalRecentAlerts)
                 }
 
 
@@ -443,7 +469,7 @@ fun CurrentLocationCard(city: String, lastUpdated: String, onViewMap: () -> Unit
 
 // ---------- CONNECTIONS ----------
 @Composable
-fun ConnectionsRow(title: String, connections: List<GeoConnection>, onAdd: () -> Unit) {
+fun ConnectionsRow(title: String, connections: List<GeoConnection>?, onAdd: () -> Unit) {
 
     val Primary = MaterialTheme.colorScheme.primary
     val Secondary = MaterialTheme.colorScheme.secondary
@@ -482,7 +508,33 @@ fun ConnectionsRow(title: String, connections: List<GeoConnection>, onAdd: () ->
             horizontalArrangement = Arrangement.spacedBy(0.dp),
             modifier = Modifier.padding(top = 8.dp)
         ) {
-            items(connections) { conn -> ConnectionCard(conn) }
+            if (connections.isNullOrEmpty()) {
+                item {
+                    Column(
+                        modifier = Modifier
+                            .fillParentMaxWidth()
+                            .height(50.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.spacedBy(4.dp)
+                    ) {
+                        Image(
+                            painter = painterResource(R.drawable.empty),
+                            contentDescription = "empty icon",
+                            modifier = Modifier.size(24.dp),
+                            colorFilter = ColorFilter.tint(MaterialTheme.colorScheme.secondary)
+                        )
+
+                        Text("No connections yet",
+                            fontFamily = sora,
+                            color = MaterialTheme.colorScheme.onBackground,
+                            fontSize = 16.sp)
+                    }
+                }
+            } else {
+                items(connections) { conn ->
+                    ConnectionCard(conn)
+                }
+            }
             item { AddConnectionCard(onClick = onAdd) }
         }
     }
@@ -511,7 +563,7 @@ fun ConnectionCard(conn: GeoConnection) {
             contentAlignment = Alignment.BottomEnd
         ) {
             Text(
-                conn.name.take(1),
+                conn.name?.take(1).toString(),
                 color = MaterialTheme.colorScheme.onBackground,
                 style = MaterialTheme.typography.headlineSmall.copy(
                     fontWeight = FontWeight.W600,
@@ -530,7 +582,7 @@ fun ConnectionCard(conn: GeoConnection) {
         }
         Spacer(modifier = Modifier.height(8.dp))
         Text(
-            conn.name,
+            conn.name.toString(),
             fontSize = 14.sp,
             color = MaterialTheme.colorScheme.onBackground,
             style = MaterialTheme.typography.bodyMedium.copy(fontFamily = sora),
@@ -546,43 +598,38 @@ fun AddConnectionCard(onClick: () -> Unit) {
     val Accent = MaterialTheme.colorScheme.secondary
     val Tertiary = MaterialTheme.colorScheme.tertiary
     val Success = MaterialTheme.colorScheme.surfaceTint
-    FilledTonalButton(
-        shape = CircleShape,
-        modifier = Modifier
-            .wrapContentWidth()
-            .wrapContentHeight(),
-        onClick = {},
-        colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.background)
-    ) {
-        Column(
+    Column(
+        horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier
+            .width(84.dp)
+            .padding(start = 8.dp)) {
+        Box(
             modifier = Modifier
-                .fillMaxSize(),
-            //.clickable { onClick() }
-            verticalArrangement = Arrangement.Center,
-            horizontalAlignment = Alignment.CenterHorizontally
+                .size(64.dp)
+                .clip(CircleShape)
+                .border(1.dp, MaterialTheme.colorScheme.tertiary, CircleShape)
+                .background(Color.Transparent),
+            contentAlignment = Alignment.Center
         ) {
             Icon(
-                Icons.Default.Add,
+                imageVector = Icons.Default.Add,
                 contentDescription = "Add",
-                modifier = Modifier.size(28.dp),
                 tint = MaterialTheme.colorScheme.tertiary
             )
-            Spacer(modifier = Modifier.height(8.dp))
-            Text(
-                "Add",
-                style = MaterialTheme.typography.bodySmall.copy(
-                    color = MaterialTheme.colorScheme.tertiary,
-                    fontFamily = sora
-                ),
-                fontSize = 16.sp
-            )
         }
+        Spacer(modifier = Modifier.height(8.dp))
+        Text(
+            text = "Add",
+            fontFamily = sora,
+            fontSize = 14.sp,
+            style = MaterialTheme.typography.bodyMedium.copy(fontFamily = sora),
+            color = MaterialTheme.colorScheme.tertiary
+        )
     }
 }
 
 // ---------- ZONES ----------
 @Composable
-fun ActiveZonesSection(zones: List<GeoZone>, onZoneClick: (GeoZone) -> Unit) {
+fun ActiveZonesSection(zones: List<Place>, onZoneClick: (_root_ide_package_.com.aarav.geowav.data.place.Place) -> Unit) {
     Column(
         modifier = Modifier.padding(vertical = 12.dp)
     ) {
@@ -597,19 +644,41 @@ fun ActiveZonesSection(zones: List<GeoZone>, onZoneClick: (GeoZone) -> Unit) {
         )
         Spacer(modifier = Modifier.height(12.dp))
         Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
-            zones.forEach { zone -> ZoneCard(zone = zone, onClick = { onZoneClick(zone) }) }
+            if(zones.isNotEmpty()){
+                zones.forEach { zone -> ZoneCard(zone = zone, onClick = { onZoneClick(zone) }) }
+            }
+            else{
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth(),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.spacedBy(4.dp)
+                ) {
+                    Image(
+                        painter = painterResource(R.drawable.navigation_arrow),
+                        contentDescription = "empty icon",
+                        modifier = Modifier.size(24.dp),
+                        colorFilter = ColorFilter.tint(MaterialTheme.colorScheme.secondary)
+                    )
+
+                    Text("No Zones are addded yet",
+                        fontFamily = sora,
+                        color = MaterialTheme.colorScheme.onBackground,
+                        fontSize = 16.sp)
+                }
+            }
         }
     }
 }
 
 @Composable
-fun ZoneCard(zone: GeoZone, onClick: () -> Unit) {
+fun ZoneCard(zone: Place, onClick: () -> Unit) {
 
     val Primary = MaterialTheme.colorScheme.primary
     val Secondary = MaterialTheme.colorScheme.secondary
     val Tertiary = MaterialTheme.colorScheme.tertiary
     val Success = MaterialTheme.colorScheme.surfaceTint
-    val statusColor = if (zone.inside) Secondary else Tertiary
+    //val statusColor = if (zone.inside) Secondary else Tertiary
     Card(
         modifier = Modifier
             .fillMaxWidth()
@@ -632,7 +701,7 @@ fun ZoneCard(zone: GeoZone, onClick: () -> Unit) {
                     modifier = Modifier
                         .size(44.dp)
                         .clip(RoundedCornerShape(10.dp))
-                        .background(statusColor.copy(alpha = 0.12f)),
+                        .background(MaterialTheme.colorScheme.secondary.copy(alpha = 0.12f)),
                     contentAlignment = Alignment.Center
                 ) {
                     Icon(
@@ -644,7 +713,11 @@ fun ZoneCard(zone: GeoZone, onClick: () -> Unit) {
                 Spacer(modifier = Modifier.width(12.dp))
                 Column {
                     Text(
-                        zone.name,
+                        if(zone.customName.toString().isNotEmpty()){
+                            zone.customName
+                        }else{
+                            zone.placeName
+                        },
                         fontSize = 14.sp,
                         color = MaterialTheme.colorScheme.onSurface,
                         style = MaterialTheme.typography.bodyMedium.copy(
@@ -653,7 +726,7 @@ fun ZoneCard(zone: GeoZone, onClick: () -> Unit) {
                         )
                     )
                     Text(
-                        "${zone.radiusMeters}m • ${if (zone.inside) "Inside" else "Outside"}",
+                        "${zone.radius.toInt()}m • ENTER/EXIT Trigger",
                         style = MaterialTheme.typography.bodySmall.copy(
                             color = MaterialTheme.colorScheme.secondary,
                             fontFamily = sora
@@ -662,7 +735,7 @@ fun ZoneCard(zone: GeoZone, onClick: () -> Unit) {
                     )
                 }
             }
-            TextButton(onClick = onClick) {
+            TextButton(onClick = {  }) {
                 Text(
                     "Active",
                     fontSize = 14.sp,
@@ -734,7 +807,7 @@ fun QuickActionButton(
 
 // ---------- ALERTS ----------
 @Composable
-fun RecentAlertsList(alerts: List<GeoAlert>) {
+fun RecentAlertsList(alerts: List<com.aarav.geowav.data.model.GeoAlert>) {
 
     val Primary = MaterialTheme.colorScheme.primary
     val Secondary = MaterialTheme.colorScheme.secondary
@@ -759,10 +832,13 @@ fun RecentAlertsList(alerts: List<GeoAlert>) {
 }
 
 @Composable
-fun AlertItem(alert: GeoAlert) {
+fun AlertItem(alert: com.aarav.geowav.data.model.GeoAlert) {
 
+    val type = if (alert.type.equals("ENTER", ignoreCase = true)) "enter" else "exit"
 
     val enter = Color(0xFF00513f)
+
+    val relativeTime = buildRelativeSubtitle(type, alert.readableTime)
 
     Card(
         shape = RoundedCornerShape(12.dp),
@@ -813,7 +889,7 @@ fun AlertItem(alert: GeoAlert) {
                     )
                 )
                 Text(
-                    alert.subtitle,
+                    relativeTime,
                     fontSize = 12.sp,
                     style = MaterialTheme.typography.bodySmall.copy(fontFamily = sora),
                     maxLines = 2
@@ -833,11 +909,11 @@ fun AlertItem(alert: GeoAlert) {
 @Preview(showBackground = true)
 @Composable
 fun GeoWavHomePreview() {
-    val sampleConnections = listOf(
-        GeoConnection("1", "Anushree", true),
-        GeoConnection("2", "Akshat", true),
-        GeoConnection("3", "Mummy", false)
-    )
+//    val sampleConnections = listOf(
+//        GeoConnection("1", "Anushree"),
+//        GeoConnection("2", "Akshat"),
+//        GeoConnection("3", "Mummy")
+//    )
 
     val sampleZones = listOf(
         GeoZone("z1", "Home", true, 200),
@@ -976,5 +1052,28 @@ fun CurrentLocationCardPreview() {
             "Ahmedabad",
             "3 min ago"
         ) { }
+    }
+}
+
+fun buildRelativeSubtitle(type: String, timestamp: Long): String {
+    val now = System.currentTimeMillis()
+    val diff = now - timestamp
+
+    val minutes = diff / 60000
+    val hours = diff / (60000 * 60)
+
+    val verb = when (type) {
+        "enter" -> "Reached"
+        else    -> "Left"
+    }
+
+    return when {
+        minutes < 1 -> "Just now"
+        minutes < 60 -> "$minutes min${if (minutes > 1) "s" else ""} ago"
+        hours < 24 -> "$hours hour${if (hours > 1) "s" else ""} ago"
+        else -> {
+            val df = java.text.SimpleDateFormat("dd MMM, h:mm a", java.util.Locale.getDefault())
+            "$verb on ${df.format(java.util.Date(timestamp))}"
+        }
     }
 }

@@ -2,7 +2,7 @@ package com.aarav.geowav.presentation.map
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
-import com.aarav.geowav.data.place.PlaceRepository
+import com.aarav.geowav.domain.repository.PlaceRepository
 import com.aarav.geowav.domain.place.PlaceRepositoryImpl
 
 class PlaceVMProvider(val placeRepository: PlaceRepositoryImpl) : ViewModelProvider.Factory {
