@@ -112,6 +112,52 @@ fun ActivityScreen(
 }
 
 @Composable
+fun DateRangePickerModal(
+    onDateRangeSelected: (Pair<Long?, Long?>) -> Unit,
+    onDismiss: () -> Unit
+) {
+    val dateRangePickerState = rememberDateRangePickerState()
+
+    DatePickerDialog(
+        onDismissRequest = onDismiss,
+        confirmButton = {
+            TextButton(
+                onClick = {
+                    onDateRangeSelected(
+                        Pair(
+                            dateRangePickerState.selectedStartDateMillis,
+                            dateRangePickerState.selectedEndDateMillis
+                        )
+                    )
+                    onDismiss()
+                }
+            ) {
+                Text("OK")
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) {
+                Text("Cancel")
+            }
+        }
+    ) {
+        DateRangePicker(
+            state = dateRangePickerState,
+            title = {
+                Text(
+                    text = "Select date range"
+                )
+            },
+            showModeToggle = false,
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(500.dp)
+                .padding(16.dp)
+        )
+    }
+}
+
+@Composable
 fun ActivityContent(
     uiState: ActivityUiState
 ) {
@@ -210,7 +256,7 @@ fun FilterRow(
     LazyRow(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(start = 10.dp, top = 8.dp),
+            .padding(start = 12.dp, top = 8.dp),
         horizontalArrangement = Arrangement.spacedBy(4.dp),
     ) {
         item {
