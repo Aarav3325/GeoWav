@@ -16,6 +16,7 @@ import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -815,16 +816,32 @@ fun RecentAlertsList(alerts: List<com.aarav.geowav.data.model.GeoAlert>) {
     val Success = MaterialTheme.colorScheme.surfaceTint
     Column(
         verticalArrangement = Arrangement.spacedBy(10.dp),
-        modifier = Modifier.padding(bottom = 24.dp)
+        modifier = Modifier
+        .fillMaxWidth().padding(bottom = 24.dp)
     ) {
         if (alerts.isEmpty()) {
-            Text(
-                "No recent alerts. You’re all clear!",
-                style = MaterialTheme.typography.bodyMedium.copy(
-                    color = Accent,
-                    fontFamily = sora
+            Column(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.Center
+            ){
+                Image(
+                    painter = painterResource(R.drawable.link_break),
+                    contentDescription = "break",
+                    modifier = Modifier.size(48.dp),
+                    colorFilter = ColorFilter.tint(MaterialTheme.colorScheme.secondary)
                 )
-            )
+
+                Spacer(modifier = Modifier.height(12.dp))
+
+                Text(
+                    "No recent alerts. You’re all clear!",
+                    style = MaterialTheme.typography.bodyMedium.copy(
+                        color = MaterialTheme.colorScheme.onBackground,
+                        fontFamily = sora
+                    )
+                )
+            }
         } else {
             alerts.forEach { alert -> AlertItem(alert) }
         }

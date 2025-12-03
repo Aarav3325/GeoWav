@@ -102,7 +102,7 @@ fun YourPlacesScreen(
 
 
         Column(
-        modifier = Modifier.padding(horizontal = 12.dp)
+            modifier = Modifier.padding(horizontal = 12.dp)
         ) {
             Text(
                 text = "Your Places",
@@ -148,7 +148,9 @@ fun YourPlacesScreen(
             }
 
             LazyColumn(
-                modifier = Modifier.fillMaxSize().padding(top = 24.dp, bottom = 12.dp)
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(top = 8.dp, bottom = 12.dp)
             ) {
                 items(placesList) { place ->
                     GeofencePlaceCard(place, placeViewModel)
@@ -157,7 +159,9 @@ fun YourPlacesScreen(
         }
 
         AddLocationFAB(
-            Modifier.align(Alignment.BottomEnd).padding(vertical = 16.dp, horizontal = 12.dp)
+            Modifier
+                .align(Alignment.BottomEnd)
+                .padding(vertical = 16.dp, horizontal = 12.dp)
         )
     }
     //}

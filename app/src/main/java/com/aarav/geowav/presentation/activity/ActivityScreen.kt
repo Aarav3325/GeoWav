@@ -210,7 +210,7 @@ fun FilterRow(
     LazyRow(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(start = 12.dp, top = 8.dp),
+            .padding(start = 10.dp, top = 8.dp),
         horizontalArrangement = Arrangement.spacedBy(4.dp),
     ) {
         item {
