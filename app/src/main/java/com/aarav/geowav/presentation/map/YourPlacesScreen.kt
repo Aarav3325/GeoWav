@@ -161,7 +161,8 @@ fun YourPlacesScreen(
         AddLocationFAB(
             Modifier
                 .align(Alignment.BottomEnd)
-                .padding(vertical = 16.dp, horizontal = 12.dp)
+                .padding(vertical = 16.dp, horizontal = 12.dp),
+            navigateToMap
         )
     }
     //}
@@ -169,7 +170,7 @@ fun YourPlacesScreen(
 
 @Preview(showBackground = true)
 @Composable
-fun AddLocationFAB(modifier: Modifier) {
+fun AddLocationFAB(modifier: Modifier, onClick: () -> Unit) {
     FloatingActionButton(
         modifier = modifier,
         shape = RoundedCornerShape(16.dp),
@@ -177,7 +178,7 @@ fun AddLocationFAB(modifier: Modifier) {
         contentColor = MaterialTheme.colorScheme.onPrimaryContainer,
         elevation = FloatingActionButtonDefaults.elevation(8.dp),
         onClick = {
-
+            onClick()
         }
     ) {
         Icon(

@@ -33,6 +33,19 @@ class ActivityViewModel
         observeForFilter(newFilter)
     }
 
+    fun showDatePicker() {
+        _uiState.update {
+            it.copy(showDatePicker = true)
+        }
+    }
+
+    fun dismissDatePicker() {
+        _uiState.update {
+            it.copy(showDatePicker = false)
+        }
+    }
+
+
     fun observeForFilter(filter: ActivityFilter) {
         observeJob?.cancel()
 
@@ -69,10 +82,10 @@ class ActivityViewModel
     }
 }
 
-
 data class ActivityUiState(
     val alerts: List<GeoAlert> = emptyList(),
     val isLoading: Boolean = true,
     val error: String? = null,
+    val showDatePicker: Boolean = false,
     val currentFilter: ActivityFilter = ActivityFilter.Today
 )

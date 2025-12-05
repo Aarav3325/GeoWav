@@ -167,7 +167,13 @@ fun AddYourPlacesScreen(
         YourPlacesScreen(
             placesViewModel,
             navigateToMap = {
-                navController.navigate(NavRoute.MapScreen.path)
+                navController.navigate(NavRoute.MapScreen.path) {
+                    popUpTo(navController.graph.findStartDestination().id) {
+                        saveState = true
+                    }
+                    launchSingleTop = true
+                    restoreState = true
+                }
             }
         )
     }
@@ -286,7 +292,16 @@ fun AddHomeScreen(
             },
             onShareLocation = {},
             onOpenAlerts = {},
-            homeScreenVM = hiltViewModel()
+            homeScreenVM = hiltViewModel(),
+            navigateToActivity = {
+                navController.navigate(NavRoute.ActivityScreen.path) {
+                    popUpTo(navController.graph.findStartDestination().id) {
+                        saveState = true
+                    }
+                    launchSingleTop = true
+                    restoreState = true
+                }
+            }
         )
     }
 }

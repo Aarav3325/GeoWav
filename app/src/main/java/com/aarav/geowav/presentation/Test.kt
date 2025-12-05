@@ -111,6 +111,7 @@ fun GeoWavHomeScreen(
     onShareLocation: () -> Unit,
     onOpenAlerts: () -> Unit,
     homeScreenVM: HomeScreenVM,
+    navigateToActivity: () -> Unit,
     modifier: Modifier = Modifier
 ) {
 
@@ -376,16 +377,30 @@ fun GeoWavHomeScreen(
                     }
 
                     // 🔔 Recent Alerts
-                    Text(
-                        "Recent Alerts",
-                        color = MaterialTheme.colorScheme.onBackground,
-                        style = MaterialTheme.typography.titleMedium.copy(
-                            fontWeight = FontWeight.SemiBold,
-                            fontFamily = manrope
-                        ),
-                        fontSize = 16.sp,
-                        modifier = Modifier.padding(vertical = 12.dp)
-                    )
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        Text(
+                            "Recent Alerts",
+                            color = MaterialTheme.colorScheme.onBackground,
+                            style = MaterialTheme.typography.titleMedium.copy(
+                                fontWeight = FontWeight.SemiBold,
+                                fontFamily = manrope
+                            ),
+                            fontSize = 16.sp,
+                            modifier = Modifier.padding(vertical = 12.dp)
+                        )
+
+                        TextButton(onClick = navigateToActivity) {
+                            Text(
+                                "View All",
+                                fontSize = 16.sp,
+                                color = MaterialTheme.colorScheme.secondary,
+                                fontFamily = manrope
+                            )
+                        }
+                    }
                     RecentAlertsList(finalRecentAlerts)
                 }
 
@@ -503,13 +518,25 @@ fun ConnectionsRow(title: String, connections: List<GeoConnection>?, onAdd: () -
                 )
             }
         }
+        val c = listOf(
+            GeoConnection(
+            12,
+            "7575866812",
+            "Anushree"
+            ),
+            GeoConnection(
+                10,
+                "9558030582",
+                "Akshat"
+            )
+        )
 
         LazyRow(
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(0.dp),
             modifier = Modifier.padding(top = 8.dp)
         ) {
-            if (connections.isNullOrEmpty()) {
+            if (c.isNullOrEmpty()) {
                 item {
                     Column(
                         modifier = Modifier
@@ -532,7 +559,7 @@ fun ConnectionsRow(title: String, connections: List<GeoConnection>?, onAdd: () -
                     }
                 }
             } else {
-                items(connections) { conn ->
+                items(c) { conn ->
                     ConnectionCard(conn)
                 }
             }
@@ -817,7 +844,7 @@ fun RecentAlertsList(alerts: List<com.aarav.geowav.data.model.GeoAlert>) {
     Column(
         verticalArrangement = Arrangement.spacedBy(10.dp),
         modifier = Modifier
-        .fillMaxWidth().padding(bottom = 24.dp)
+        .fillMaxWidth().padding(bottom = 24.dp, top = 4.dp)
     ) {
         if (alerts.isEmpty()) {
             Column(
@@ -1089,8 +1116,8 @@ fun buildRelativeSubtitle(type: String, timestamp: Long): String {
         minutes < 60 -> "$minutes min${if (minutes > 1) "s" else ""} ago"
         hours < 24 -> "$hours hour${if (hours > 1) "s" else ""} ago"
         else -> {
-            val df = java.text.SimpleDateFormat("dd MMM, h:mm a", java.util.Locale.getDefault())
-            "$verb on ${df.format(java.util.Date(timestamp))}"
+            val df = java.text.SimpleDateFormat("dd MMMM y", java.util.Locale.getDefault())
+            "${df.format(java.util.Date(timestamp))}"
         }
     }
 }

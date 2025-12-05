@@ -188,8 +188,9 @@ fun AddPlaceScreen(
                         FilledTonalButton(
                             onClick = {
                                 placeViewModel.addPlace(finalPlace)
-                                Toast.makeText(context, "$placeName added to geofence", Toast.LENGTH_LONG).show()
                                 navigateToYourPlaces()
+                                Toast.makeText(context, "$placeName added to geofence", Toast.LENGTH_LONG).show()
+
                             },
                             modifier = Modifier.fillMaxWidth(),
                             colors = ButtonDefaults.buttonColors(

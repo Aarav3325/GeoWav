@@ -29,12 +29,16 @@ import androidx.compose.material.icons.filled.LocationOn
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.DatePickerDialog
+import androidx.compose.material3.DateRangePicker
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.FilterChipDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
+import androidx.compose.material3.rememberDateRangePickerState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -50,6 +54,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.aarav.geowav.R
 import com.aarav.geowav.data.geofence.ActivityFilter
+import com.aarav.geowav.domain.utils.toLocalDateInIndia
 import com.aarav.geowav.presentation.buildRelativeSubtitle
 import com.aarav.geowav.ui.theme.manrope
 import com.aarav.geowav.ui.theme.sora
@@ -81,7 +86,8 @@ fun ActivityScreen(
 //        }
 //    ) {
     Column(
-        modifier = Modifier.fillMaxSize()
+        modifier = Modifier
+            .fillMaxSize()
             .background(MaterialTheme.colorScheme.background)
         //.padding(it)
     ) {
@@ -102,15 +108,32 @@ fun ActivityScreen(
             onSetRangeClick = {
                 // TODO: open date range picker dialog
                 // After user picks dates:
+                activityViewModel.showDatePicker()
                 // activityViewModel.onFilterChanged(ActivityFilter.Between(from, to))
             }
         )
 
         ActivityContent(uiState)
+
+        if (uiState.showDatePicker) {
+            DateRangePickerModal(
+                onDateRangeSelected = { (from, to) ->
+                    if(from != null && to != null){
+                        val fromDate = from.toLocalDateInIndia()
+                        val toDate = to.toLocalDateInIndia()
+                        activityViewModel.onFilterChanged(ActivityFilter.Between(fromDate, toDate))
+                }
+
+                },
+                onDismiss = {
+                    activityViewModel.dismissDatePicker()
+                }
+            )
+        }
     }
-    //}
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun DateRangePickerModal(
     onDateRangeSelected: (Pair<Long?, Long?>) -> Unit,
@@ -156,6 +179,7 @@ fun DateRangePickerModal(
         )
     }
 }
+
 
 @Composable
 fun ActivityContent(
@@ -278,7 +302,7 @@ fun FilterRow(
         }
 
         item {
-            LogFilterChip("Set range", selectedFilter is ActivityFilter.Between) {
+            LogFilterChip("Select Range", selectedFilter is ActivityFilter.Between) {
                 onSetRangeClick()
             }
         }
