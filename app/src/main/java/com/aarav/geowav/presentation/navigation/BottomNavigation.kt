@@ -27,12 +27,9 @@ fun BottomNavigationBar(
 
     val currentRoute = navBackStackEntry?.destination?.route
 
-    //val currentRoute = navBackStackEntry?.destination?.route?.substringBefore("/")
 
     val navItems = listOf(NavItem.Home, NavItem.Activity, NavItem.YourPlaces)
 
-//    Log.i("NAV", navController.currentBackStack.value.toString())
-//    Log.i("NAV", navController.currentDestination.toString())
 
     NavigationBar(
         modifier = modifier,

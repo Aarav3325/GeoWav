@@ -1,4 +1,4 @@
-package com.aarav.geowav.presentation.map
+package com.aarav.geowav.presentation.place
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -34,7 +34,6 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.aarav.geowav.R
-import com.aarav.geowav.data.place.Place
 import com.aarav.geowav.presentation.components.GeofencePlaceCard
 import com.aarav.geowav.ui.theme.manrope
 import com.aarav.geowav.ui.theme.sora
@@ -49,50 +48,6 @@ fun YourPlacesScreen(
 
     val placesList by placeViewModel.allPlaces.collectAsState()
 
-    val new = listOf<Place>(
-//        Place(
-//            latitude = 40.7128,
-//            longitude = -74.0060,
-//            radius = 200F,
-//            placeId = "new_york",
-//            customName = "new_york",
-//            placeName = "new_york",
-//            address = "TODO()",
-//            addedOn = "06/11/25",
-//        )
-    )
-    //val empty = emptyList<Nothing>()
-//    Scaffold(
-//        modifier = Modifier.fillMaxSize(),
-//        topBar = {
-//            TopAppBar(
-//                title = {
-//                    Text(
-//                        text = "Your Places",
-//                        fontSize = 24.sp,
-//                        fontFamily = manrope,
-//                        fontWeight = FontWeight.SemiBold,
-//                        color = MaterialTheme.colorScheme.onBackground
-//                    )
-//                },
-//                navigationIcon = {
-////                    IconButton(
-////                        onClick = {
-////                            navigateToMap()
-////                        }
-////                    ) {
-////                        Icon(
-////                            imageVector = Icons.Default.ArrowBack,
-////                            contentDescription = null
-////                        )
-////                    }
-//                }
-//            )
-//        },
-//        floatingActionButton = {
-//            AddLocationFAB()
-//        }
-//    ) {
     Box(
         modifier = Modifier
             .background(MaterialTheme.colorScheme.background)
@@ -165,7 +120,6 @@ fun YourPlacesScreen(
             navigateToMap
         )
     }
-    //}
 }
 
 @Preview(showBackground = true)

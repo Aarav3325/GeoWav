@@ -34,7 +34,6 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -47,7 +46,6 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
-import androidx.lifecycle.viewmodel.compose.viewModel
 import com.aarav.geowav.R
 import com.aarav.geowav.domain.authentication.GoogleSignInClient
 import com.aarav.geowav.ui.theme.manrope
@@ -57,50 +55,36 @@ import kotlinx.coroutines.launch
 @Preview(showBackground = true)
 @Composable
 fun LoginScreen(
-    googleSignInClient: GoogleSignInClient,
-    navigateToMap: () -> Unit,
-    navigateToSignUp: () -> Unit
+    googleSignInClient: GoogleSignInClient, navigateToMap: () -> Unit, navigateToSignUp: () -> Unit
 ) {
-
-
-//    var googleSignInClient: GoogleSignInClient = GoogleSignInClient(LocalContext.current.applicationContext)
-//
-//    var isLoggedIn by rememberSaveable {
-//        mutableStateOf(googleSignInClient.isLoggedIn())
-//    }
 
 
     var show by remember { mutableStateOf(false) }
 
 
-//    val authViewModel : AuthViewModel = viewModel()
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(MaterialTheme.colorScheme.background) // Soft pink background
+            .background(MaterialTheme.colorScheme.background)
 
     ) {
 
-        if(show){
-            Dialog(
-                onDismissRequest = {},
-                content = {
-                    Card(
-                        shape = RoundedCornerShape(16.dp),
-                        modifier = Modifier
-                            .padding(16.dp)
-                            .fillMaxWidth()
-                            .height(100.dp)
+        if (show) {
+            Dialog(onDismissRequest = {}, content = {
+                Card(
+                    shape = RoundedCornerShape(16.dp),
+                    modifier = Modifier
+                        .padding(16.dp)
+                        .fillMaxWidth()
+                        .height(100.dp)
+                ) {
+                    Box(
+                        modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center
                     ) {
-                        Box(
-                            modifier = Modifier.fillMaxSize(),
-                            contentAlignment = Alignment.Center
-                        ){
-                            CircularProgressIndicator()
-                        }
+                        CircularProgressIndicator()
                     }
                 }
-            )
+            })
         }
 
         Column(
@@ -149,27 +133,14 @@ fun LoginScreen(
                                 navigateToMap()
                             }
                         }
-                    },
-//                    .clickable {
-//                        coroutine.launch {
-//                            val b = googleSignInClient.signIn()
-//                            if(b){
-//                                show = true
-//                                navigateToHome()
-//                            }
-//                        }
-//                    },
-                shape = RoundedCornerShape(12.dp),
-                colors = CardDefaults.cardColors(
+                    }, shape = RoundedCornerShape(12.dp), colors = CardDefaults.cardColors(
                     containerColor = MaterialTheme.colorScheme.inverseSurface
-                ),
-                elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
+                ), elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
             ) {
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.Center,
-                    modifier = Modifier
-                        .fillMaxSize()
+                    modifier = Modifier.fillMaxSize()
                 ) {
                     Icon(
                         painter = painterResource(id = R.drawable.google), // Add your Google icon
@@ -192,7 +163,7 @@ fun LoginScreen(
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            // Optional: email login (for later)
+
             Text(
                 text = "Or login with email",
                 fontSize = 14.sp,
@@ -205,32 +176,29 @@ fun LoginScreen(
             var email by remember {
                 mutableStateOf("")
             }
-            // Email Field (if you want)
+
             TextField(
-                value = email,
-                onValueChange = { email = it },
-                label = { Text("Email", fontFamily = sora, color = MaterialTheme.colorScheme.inverseSurface) },
-                modifier = Modifier
+                value = email, onValueChange = { email = it }, label = {
+                Text(
+                    "Email", fontFamily = sora, color = MaterialTheme.colorScheme.inverseSurface
+                )
+            }, modifier = Modifier
                     .fillMaxWidth()
-                    .padding(),
-                singleLine = true,
-                leadingIcon = {
-                    Icon(
-                        painter = painterResource(R.drawable.email),
-                        contentDescription = "email icon",
-                        modifier = Modifier.size(24.dp)
-                    )
-                },
-                colors = TextFieldDefaults.colors(
-                    focusedContainerColor = MaterialTheme.colorScheme.surfaceContainer,
-                    unfocusedContainerColor = MaterialTheme.colorScheme.surfaceContainer,
-                    focusedIndicatorColor = MaterialTheme.colorScheme.primary,
-                    unfocusedIndicatorColor = Color.Transparent,
-                    focusedLabelColor = MaterialTheme.colorScheme.primary,
-                    unfocusedLabelColor = Color.DarkGray,
-                    cursorColor = MaterialTheme.colorScheme.primary             // dark grey text
-                ),
-                shape = RoundedCornerShape(12.dp)
+                    .padding(), singleLine = true, leadingIcon = {
+                Icon(
+                    painter = painterResource(R.drawable.email),
+                    contentDescription = "email icon",
+                    modifier = Modifier.size(24.dp)
+                )
+            }, colors = TextFieldDefaults.colors(
+                focusedContainerColor = MaterialTheme.colorScheme.surfaceContainer,
+                unfocusedContainerColor = MaterialTheme.colorScheme.surfaceContainer,
+                focusedIndicatorColor = MaterialTheme.colorScheme.primary,
+                unfocusedIndicatorColor = Color.Transparent,
+                focusedLabelColor = MaterialTheme.colorScheme.primary,
+                unfocusedLabelColor = Color.DarkGray,
+                cursorColor = MaterialTheme.colorScheme.primary
+            ), shape = RoundedCornerShape(12.dp)
             )
             var password by remember {
                 mutableStateOf("")
@@ -240,58 +208,44 @@ fun LoginScreen(
             Spacer(modifier = Modifier.height(12.dp))
 
             TextField(
-                value = password,
-                onValueChange = { password = it },
-                label = { Text("Password", fontFamily = sora, color = MaterialTheme.colorScheme.inverseSurface) },
-                modifier = Modifier
+                value = password, onValueChange = { password = it }, label = {
+                Text(
+                    "Password",
+                    fontFamily = sora,
+                    color = MaterialTheme.colorScheme.inverseSurface
+                )
+            }, modifier = Modifier
                     .fillMaxWidth()
-                    .padding(),
-                leadingIcon = {
-                    Icon(
-                        painter = painterResource(R.drawable.password),
-                        contentDescription = "password icon",
-                        modifier = Modifier.size(24.dp)
-                    )
-                },
-                singleLine = true,
-                colors = TextFieldDefaults.colors(
-                    focusedContainerColor = MaterialTheme.colorScheme.surfaceContainer,
-                    unfocusedContainerColor = MaterialTheme.colorScheme.surfaceContainer,
-                    focusedIndicatorColor = MaterialTheme.colorScheme.primary,
-                    unfocusedIndicatorColor = Color.Transparent,
-                    focusedLabelColor = MaterialTheme.colorScheme.primary,
-                    unfocusedLabelColor = Color.DarkGray,
-                    cursorColor = MaterialTheme.colorScheme.primary                // dark grey text
-                ),
-                shape = RoundedCornerShape(12.dp)
+                    .padding(), leadingIcon = {
+                Icon(
+                    painter = painterResource(R.drawable.password),
+                    contentDescription = "password icon",
+                    modifier = Modifier.size(24.dp)
+                )
+            }, singleLine = true, colors = TextFieldDefaults.colors(
+                focusedContainerColor = MaterialTheme.colorScheme.surfaceContainer,
+                unfocusedContainerColor = MaterialTheme.colorScheme.surfaceContainer,
+                focusedIndicatorColor = MaterialTheme.colorScheme.primary,
+                unfocusedIndicatorColor = Color.Transparent,
+                focusedLabelColor = MaterialTheme.colorScheme.primary,
+                unfocusedLabelColor = Color.DarkGray,
+                cursorColor = MaterialTheme.colorScheme.primary
+            ), shape = RoundedCornerShape(12.dp)
             )
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            val context = LocalContext.current
-
-//            val loginSuccess by authViewModel.loginSuccess.observeAsState()
-//
-//            LaunchedEffect(loginSuccess) {
-//                if(loginSuccess == true){
-//                    navigateToHome()
-//                }
-//            }
-
             LaunchedEffect(show) {
-                if(show)
-                    navigateToMap()
+                if (show) navigateToMap()
             }
 
             Button(
                 onClick = {
                     googleSignInClient.signInWithEmailAndPassword(
-                        email,
-                        password
-                    ){
+                        email, password
+                    ) {
                         show = it
                     }
-                    //authViewModel.loginWithEmailAndPassword(email, password, context)
                 },
                 modifier = Modifier
                     .fillMaxWidth()
@@ -301,7 +255,8 @@ fun LoginScreen(
                     containerColor = MaterialTheme.colorScheme.primary,   // Vibrant pink/red (primary)
                     contentColor = MaterialTheme.colorScheme.onPrimary,          // Text color
                     disabledContainerColor = Color(0xFFFFC9D2), // Soft pink when disabled
-                    disabledContentColor = Color.White.copy(alpha = 0.6f))
+                    disabledContentColor = Color.White.copy(alpha = 0.6f)
+                )
             ) {
                 Text(
                     text = "Login",
@@ -317,7 +272,7 @@ fun LoginScreen(
             Row(
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.Center
-            ){
+            ) {
 
                 Text(
                     text = "New to GeoWav?",

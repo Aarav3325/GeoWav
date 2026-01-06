@@ -4,7 +4,6 @@ import android.content.Context
 import com.aarav.geowav.data.room.ConnectionDao
 import com.aarav.geowav.data.room.PlaceDatabase
 import com.aarav.geowav.data.room.PlacesDAO
-import com.aarav.geowav.presentation.map.PlaceVMProvider
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn

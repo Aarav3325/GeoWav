@@ -19,12 +19,9 @@ import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.lazy.rememberLazyListState
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Check
-import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.LocationOn
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -68,28 +65,11 @@ fun ActivityScreen(
 
     val uiState by activityViewModel.uiState.collectAsState()
 
-    val lazyState = rememberLazyListState()
-
-//    Scaffold(
-//        topBar = {
-//            TopAppBar(
-//                title = {
-//                    Text(
-//                        text = "Activity",
-//                        fontSize = 24.sp,
-//                        fontFamily = manrope,
-//                        fontWeight = FontWeight.SemiBold,
-//                        color = MaterialTheme.colorScheme.onBackground
-//                    )
-//                }
-//            )
-//        }
-//    ) {
     Column(
         modifier = Modifier
             .fillMaxSize()
             .background(MaterialTheme.colorScheme.background)
-        //.padding(it)
+
     ) {
         Text(
             text = "Activity",
@@ -100,35 +80,25 @@ fun ActivityScreen(
             modifier = Modifier.padding(top = 54.dp, start = 12.dp, end = 12.dp)
         )
 
-        FilterRow(
-            selectedFilter = uiState.currentFilter,
-            onFilterSelected = { filter ->
-                activityViewModel.onFilterChanged(filter)
-            },
-            onSetRangeClick = {
-                // TODO: open date range picker dialog
-                // After user picks dates:
-                activityViewModel.showDatePicker()
-                // activityViewModel.onFilterChanged(ActivityFilter.Between(from, to))
-            }
-        )
+        FilterRow(selectedFilter = uiState.currentFilter, onFilterSelected = { filter ->
+            activityViewModel.onFilterChanged(filter)
+        }, onSetRangeClick = {
+            activityViewModel.showDatePicker()
+        })
 
         ActivityContent(uiState)
 
         if (uiState.showDatePicker) {
-            DateRangePickerModal(
-                onDateRangeSelected = { (from, to) ->
-                    if(from != null && to != null){
-                        val fromDate = from.toLocalDateInIndia()
-                        val toDate = to.toLocalDateInIndia()
-                        activityViewModel.onFilterChanged(ActivityFilter.Between(fromDate, toDate))
+            DateRangePickerModal(onDateRangeSelected = { (from, to) ->
+                if (from != null && to != null) {
+                    val fromDate = from.toLocalDateInIndia()
+                    val toDate = to.toLocalDateInIndia()
+                    activityViewModel.onFilterChanged(ActivityFilter.Between(fromDate, toDate))
                 }
 
-                },
-                onDismiss = {
-                    activityViewModel.dismissDatePicker()
-                }
-            )
+            }, onDismiss = {
+                activityViewModel.dismissDatePicker()
+            })
         }
     }
 }
@@ -136,34 +106,28 @@ fun ActivityScreen(
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun DateRangePickerModal(
-    onDateRangeSelected: (Pair<Long?, Long?>) -> Unit,
-    onDismiss: () -> Unit
+    onDateRangeSelected: (Pair<Long?, Long?>) -> Unit, onDismiss: () -> Unit
 ) {
     val dateRangePickerState = rememberDateRangePickerState()
 
-    DatePickerDialog(
-        onDismissRequest = onDismiss,
-        confirmButton = {
-            TextButton(
-                onClick = {
-                    onDateRangeSelected(
-                        Pair(
-                            dateRangePickerState.selectedStartDateMillis,
-                            dateRangePickerState.selectedEndDateMillis
-                        )
+    DatePickerDialog(onDismissRequest = onDismiss, confirmButton = {
+        TextButton(
+            onClick = {
+                onDateRangeSelected(
+                    Pair(
+                        dateRangePickerState.selectedStartDateMillis,
+                        dateRangePickerState.selectedEndDateMillis
                     )
-                    onDismiss()
-                }
-            ) {
-                Text("OK")
-            }
-        },
-        dismissButton = {
-            TextButton(onClick = onDismiss) {
-                Text("Cancel")
-            }
+                )
+                onDismiss()
+            }) {
+            Text("OK")
         }
-    ) {
+    }, dismissButton = {
+        TextButton(onClick = onDismiss) {
+            Text("Cancel")
+        }
+    }) {
         DateRangePicker(
             state = dateRangePickerState,
             title = {
@@ -186,9 +150,7 @@ fun ActivityContent(
     uiState: ActivityUiState
 ) {
     Box(
-        modifier = Modifier
-            .fillMaxSize(),
-        contentAlignment = Alignment.Center
+        modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center
     ) {
         when {
             uiState.isLoading -> {
@@ -257,8 +219,7 @@ fun ActivityContent(
                     verticalArrangement = Arrangement.spacedBy(9.dp)
                 ) {
                     items(uiState.alerts) { alert ->
-                        // reuse your existing AlertItem(alert) from Home screen
-                        NewLog2(alert)
+                        NewLog(alert)
                     }
 
                     item {
@@ -311,18 +272,14 @@ fun FilterRow(
 
 @Composable
 fun LogFilterChip(
-    label: String,
-    selected: Boolean,
-    onClick: () -> Unit
+    label: String, selected: Boolean, onClick: () -> Unit
 ) {
     FilterChip(
         selected = selected,
         onClick = onClick,
         label = {
             Text(
-                label,
-                fontSize = 12.sp,
-                fontFamily = sora
+                label, fontSize = 12.sp, fontFamily = sora
             )
         },
         modifier = Modifier
@@ -351,148 +308,8 @@ fun LogFilterChip(
 }
 
 @Composable
-fun ActivityLog(alert: com.aarav.geowav.data.model.GeoAlert) {
-    val isEntry = alert.type == "enter"
-
-    // Semantic styling based on logic
-    // val icon = if (isEntry) Icons.Rounded.Login else Icons.Rounded.Logout
-    val (bgColor, iconTint) = if (isSystemInDarkTheme()) {
-        if (isEntry) 0xFF0F291E to 0xFFA3F2D6 else 0xFF2C1517 to 0xFFFFDAD6
-    } else {
-        if (isEntry) 0xFFECFDF5 to 0xFF059669 else 0xFFFFF1F2 to 0xFFE11D48
-    }
-
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .background(MaterialTheme.colorScheme.surface, RoundedCornerShape(12.dp))
-            .padding(12.dp),
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        // Icon Box
-        Box(
-            modifier = Modifier
-                .size(40.dp)
-                .clip(CircleShape)
-                .background(Color(bgColor)),
-            contentAlignment = Alignment.Center
-        ) {
-            Icon(
-                imageVector = Icons.Default.Info,
-                contentDescription = null,
-                tint = Color(iconTint),
-                modifier = Modifier.size(20.dp)
-            )
-        }
-
-        Spacer(modifier = Modifier.width(12.dp))
-
-        Column(modifier = Modifier.weight(1f)) {
-            Text(
-                text = alert.title,
-                style = MaterialTheme.typography.bodyMedium.copy(
-                    fontWeight = FontWeight.Bold,
-                    fontFamily = sora
-                ),
-                color = MaterialTheme.colorScheme.onSurface
-            )
-            Text(
-                text = alert.subtitle,
-                style = MaterialTheme.typography.bodySmall.copy(
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    fontFamily = manrope
-                ),
-                maxLines = 1
-            )
-        }
-
-        Text(
-            text = alert.time,
-            style = MaterialTheme.typography.labelSmall.copy(
-                color = MaterialTheme.colorScheme.outline,
-                fontFamily = sora
-            )
-        )
-    }
-}
-
-@Composable
-fun NewLog(alert: com.aarav.geowav.data.model.GeoAlert) {
-
-
-    val enter = Color(0xFF00513f)
-
-    Card(
-        shape = RoundedCornerShape(12.dp),
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(horizontal = 12.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = if (isSystemInDarkTheme()) {
-                if (alert.type.equals("enter")) Color(0xFF00513f) else Color(0xFF723339)
-            } else {
-                if (alert.type.equals("enter")) Color(0xFFa3f2d6) else Color(0xFFffdadb)
-            },
-            contentColor =
-                if (isSystemInDarkTheme()) {
-                    if (alert.type.equals("enter")) Color(0XFFa3f2d6) else Color(0xFFffdadb)
-                } else {
-                    if (alert.type.equals("enter")) Color(0xFF00513f) else Color(0xFF723339)
-                }
-        ),
-        elevation = CardDefaults.cardElevation(4.dp)
-    ) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(8.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Box(
-                modifier = Modifier
-                    .size(44.dp)
-                    .clip(RoundedCornerShape(8.dp))
-                    //.background(Color(0xFFBAFFDF)),
-                    .background(MaterialTheme.colorScheme.inverseSurface),
-                contentAlignment = Alignment.Center
-            ) {
-                Icon(
-                    Icons.Default.LocationOn,
-                    contentDescription = null,
-                    tint = MaterialTheme.colorScheme.inverseOnSurface
-                )
-            }
-            Spacer(modifier = Modifier.width(12.dp))
-            Column(modifier = Modifier.weight(1f)) {
-                Text(
-                    alert.title,
-                    fontSize = 14.sp,
-                    style = MaterialTheme.typography.bodyMedium.copy(
-                        fontWeight = FontWeight.SemiBold,
-                        fontFamily = sora
-                    )
-                )
-                Text(
-                    alert.subtitle,
-                    fontSize = 12.sp,
-                    style = MaterialTheme.typography.bodySmall.copy(fontFamily = sora),
-                    maxLines = 2
-                )
-            }
-            Text(
-                alert.time,
-                fontFamily = sora,
-                fontWeight = FontWeight.SemiBold,
-                fontSize = 14.sp
-            )
-        }
-    }
-}
-
-@Composable
-fun NewLog2(
-    alert: com.aarav.geowav.data.model.GeoAlert,
-    modifier: Modifier = Modifier
+fun NewLog(
+    alert: com.aarav.geowav.data.model.GeoAlert, modifier: Modifier = Modifier
 ) {
     val isEnter = alert.type.equals("enter", ignoreCase = true)
 
@@ -513,7 +330,6 @@ fun NewLog2(
         if (isEnter) Color(0xFF00513f) else Color(0xFF723339)
     }
 
-    // Use the Long readableTime (epoch millis) to compute "x mins ago"
 
     Card(
         shape = RoundedCornerShape(16.dp),
@@ -521,8 +337,7 @@ fun NewLog2(
             .fillMaxWidth()
             .padding(horizontal = 12.dp, vertical = 0.dp),
         colors = CardDefaults.cardColors(
-            containerColor = containerColor,
-            contentColor = contentColor
+            containerColor = containerColor, contentColor = contentColor
         ),
         elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
     ) {
@@ -532,7 +347,6 @@ fun NewLog2(
                 .padding(10.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            // Leading icon box
             Box(
                 modifier = Modifier
                     .size(44.dp)
@@ -549,25 +363,20 @@ fun NewLog2(
 
             Spacer(modifier = Modifier.width(12.dp))
 
-            // Text area
             Column(
                 modifier = Modifier.weight(1f)
             ) {
-                // Title: "Entered X" / "Left X"
                 Text(
                     text = alert.title,
                     fontSize = 14.sp,
                     style = MaterialTheme.typography.bodyMedium.copy(
-                        fontWeight = FontWeight.SemiBold,
-                        fontFamily = sora
+                        fontWeight = FontWeight.SemiBold, fontFamily = sora
                     ),
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis
                 )
 
                 Spacer(modifier = Modifier.height(2.dp))
-
-                // Subtitle like "Shree Satya Sai Vidyalaya" or "Geofence X • something"
                 Text(
                     text = relativeTime,
                     fontSize = 12.sp,
@@ -580,22 +389,19 @@ fun NewLog2(
 
                 Spacer(modifier = Modifier.height(6.dp))
 
-                // Row for type chip + relative time ("Left 10 mins ago")
                 Row(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Text(
-                        text = "TRIGGER TYPE :",           // e.g. "Left 10 mins ago"
+                        text = "TRIGGER TYPE :",
                         fontSize = 11.sp,
                         style = MaterialTheme.typography.labelSmall.copy(
-                            fontFamily = sora,
-                            fontWeight = FontWeight.Medium
+                            fontFamily = sora, fontWeight = FontWeight.Medium
                         )
                     )
 
                     Spacer(modifier = Modifier.width(8.dp))
 
-                    // Type chip (ENTER / EXIT)
                     TypeChip(isEnter = isEnter)
 
                 }
@@ -603,13 +409,11 @@ fun NewLog2(
 
             Spacer(modifier = Modifier.width(8.dp))
 
-            // Right side exact time: e.g. "10:45 AM"
             Column(
-                horizontalAlignment = Alignment.End,
-                verticalArrangement = Arrangement.Center
+                horizontalAlignment = Alignment.End, verticalArrangement = Arrangement.Center
             ) {
                 Text(
-                    text = alert.time, // your preformatted time string
+                    text = alert.time,
                     fontFamily = sora,
                     fontWeight = FontWeight.SemiBold,
                     fontSize = 13.sp,
@@ -635,8 +439,7 @@ private fun TypeChip(isEnter: Boolean) {
         modifier = Modifier
             .clip(RoundedCornerShape(8.dp))
             .background(bg)
-            .padding(horizontal = 8.dp, vertical = 2.dp),
-        contentAlignment = Alignment.Center
+            .padding(horizontal = 8.dp, vertical = 2.dp), contentAlignment = Alignment.Center
     ) {
         Text(
             text = label,

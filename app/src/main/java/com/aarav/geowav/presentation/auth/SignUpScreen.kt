@@ -15,7 +15,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.CutCornerShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
@@ -56,18 +55,8 @@ import kotlinx.coroutines.launch
 @Preview(showBackground = true)
 @Composable
 fun SignupScreen(
-    googleSignInClient: GoogleSignInClient,
-    navigateToHome: () -> Unit,
-    navigateToLogin: () -> Unit
-
-    //modifier: Modifier, navigateToLogin : () -> Unit, navigateToHome : () -> Unit
+    googleSignInClient: GoogleSignInClient, navigateToHome: () -> Unit, navigateToLogin: () -> Unit
 ) {
-
-    //val authViewmodel : AuthViewModel = viewModel()
-
-    val context = LocalContext.current.applicationContext
-
-//    val googleSignInClient = GoogleSignInClient(context)
 
     var show by remember { mutableStateOf(false) }
 
@@ -78,25 +67,21 @@ fun SignupScreen(
     ) {
 
         if (show) {
-            Dialog(
-                onDismissRequest = {},
-                content = {
-                    Card(
-                        shape = RoundedCornerShape(16.dp),
-                        modifier = Modifier
-                            .padding(16.dp)
-                            .fillMaxWidth()
-                            .height(100.dp)
+            Dialog(onDismissRequest = {}, content = {
+                Card(
+                    shape = RoundedCornerShape(16.dp),
+                    modifier = Modifier
+                        .padding(16.dp)
+                        .fillMaxWidth()
+                        .height(100.dp)
+                ) {
+                    Box(
+                        modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center
                     ) {
-                        Box(
-                            modifier = Modifier.fillMaxSize(),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            CircularProgressIndicator()
-                        }
+                        CircularProgressIndicator()
                     }
                 }
-            )
+            })
         }
 
         Column(
@@ -116,9 +101,6 @@ fun SignupScreen(
             )
 
             Spacer(modifier = Modifier.height(8.dp))
-
-            //Create your GeoWav account
-            //Stay synced with your circle
 
             Text(
                 text = "Create your GeoWav account",
@@ -195,9 +177,7 @@ fun SignupScreen(
                 onValueChange = { name = it },
                 label = {
                     Text(
-                        "Name",
-                        fontFamily = sora,
-                        color = MaterialTheme.colorScheme.inverseSurface
+                        "Name", fontFamily = sora, color = MaterialTheme.colorScheme.inverseSurface
                     )
                 },
                 leadingIcon = {
@@ -228,9 +208,7 @@ fun SignupScreen(
                 onValueChange = { email = it },
                 label = {
                     Text(
-                        "Email",
-                        fontFamily = sora,
-                        color = MaterialTheme.colorScheme.inverseSurface
+                        "Email", fontFamily = sora, color = MaterialTheme.colorScheme.inverseSurface
                     )
                 },
                 leadingIcon = {
@@ -265,7 +243,8 @@ fun SignupScreen(
                         fontFamily = sora,
                         color = MaterialTheme.colorScheme.inverseSurface
                     )
-                }, leadingIcon = {
+                },
+                leadingIcon = {
                     Icon(
                         painter = painterResource(R.drawable.password),
                         contentDescription = "password icon",
@@ -286,46 +265,17 @@ fun SignupScreen(
                 shape = RoundedCornerShape(12.dp)
             )
 
-            //Spacer(modifier = Modifier.height(12.dp))
-
-//            TextField(
-//                value = confirmPassword,
-//                onValueChange = { confirmPassword = it },
-//                label = { Text("Confirm Password", fontFamily = sora) },
-//                modifier = Modifier.fillMaxWidth(),
-//                singleLine = true,
-//                colors = TextFieldDefaults.colors(
-//                    focusedContainerColor = Color.White,
-//                    unfocusedContainerColor = Color.White,
-//                    focusedIndicatorColor = Color(0xFFEF476F),
-//                    unfocusedIndicatorColor = Color.Transparent,
-//                    focusedLabelColor = Color(0xFFEF476F),
-//                    unfocusedLabelColor = Color.DarkGray,
-//                    cursorColor = Color(0xFFEF476F)
-//                ),
-//                shape = RoundedCornerShape(12.dp)
-//            )
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            val context = LocalContext.current
-//            val signUpSuccess by authViewmodel.signUpSuccess.observeAsState()
-
             val scope = rememberCoroutineScope()
-//            LaunchedEffect(signUpSuccess) {
-//                Log.d("SIGNUP_SUCCESS", "signUpSuccess: $signUpSuccess")
-//                if (signUpSuccess == true) {
-//                    navigateToHome()
-//                }
-//            }
+
 
             LaunchedEffect(show) {
                 if (show) {
                     navigateToHome()
                 }
             }
-            // val userFlowVM : UserLearningFlowViewModel = hiltViewModel()
-
             Button(
                 onClick = {
                     scope.launch {
@@ -334,7 +284,6 @@ fun SignupScreen(
                         })
 
                     }
-                    //userFlowVM.setupProgressForNewUser()
                 },
                 modifier = Modifier
                     .fillMaxWidth()
@@ -378,8 +327,7 @@ fun SignupScreen(
                     onClick = {
                         navigateToLogin()
                         Toast.makeText(context, "Clicked", Toast.LENGTH_LONG).show()
-                    }
-                ) {
+                    }) {
                     Text(
                         text = "Login",
                         fontSize = 14.sp,
@@ -390,15 +338,6 @@ fun SignupScreen(
 
             }
 
-            //Spacer(modifier = Modifier.height(24.dp))
-
-//            Text(
-//                text = "Skip To Home",
-//                color = primaryLight,
-//                modifier = Modifier.clickable{
-//                    navigateToHome()
-//                }
-//            )
         }
     }
 }

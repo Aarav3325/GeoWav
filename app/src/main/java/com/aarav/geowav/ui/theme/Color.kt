@@ -1,7 +1,7 @@
 package com.aarav.geowav.ui.theme
 
 import androidx.compose.ui.graphics.Color
-//515B92
+
 val primaryLight = Color(0xFF515B92)
 val onPrimaryLight = Color(0xFFFFFFFF)
 val primaryContainerLight = Color(0xFFDEE0FF)

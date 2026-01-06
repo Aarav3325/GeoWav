@@ -27,9 +27,9 @@ class GeofenceWorker(
         val geofenceId = inputData.getString("geofenceId") ?: return Result.failure()
         val transitionTypeRaw = inputData.getString("transitionType") ?: return Result.failure()
         val transitionType = when (transitionTypeRaw.uppercase()) {
-            "ENTER" -> "enter"
-            "EXIT" -> "exit"
-            else -> transitionTypeRaw.lowercase() // fallback for unexpected values
+            "ENTER" -> "reached"
+            "EXIT" -> "left"
+            else -> transitionTypeRaw.lowercase()
         }
 
 
@@ -42,8 +42,6 @@ class GeofenceWorker(
         val latitude = inputData.getDouble("latitude", 0.0)
         val longitude = inputData.getDouble("longitude", 0.0)
 
-//        val phoneNumber = inputData.getString("phoneNumber") ?: return Result.failure()
-//        val userName = inputData.getString("userName") ?: return Result.failure()
 
         val activityData = mapOf(
             "geofenceId" to geofenceId,
@@ -54,10 +52,11 @@ class GeofenceWorker(
             "location" to mapOf(
                 "latitude" to latitude,
                 "longitude" to longitude
-            )    // nullable, include only if you use it
+            )
         )
 
 
+        // Changes - 1. phoneNumber field 2. fetch user name
 
         val templateRequest = TemplateMessageRequest(
             messaging_product = "whatsapp",

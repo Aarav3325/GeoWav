@@ -80,33 +80,11 @@ import com.aarav.geowav.ui.theme.sora
 import kotlinx.coroutines.launch
 import kotlin.text.equals
 
-
-// ---------- DATA CLASSES ----------
-
-data class GeoZone(
-    val id: String,
-    val name: String,
-    val inside: Boolean,
-    val radiusMeters: Int
-)
-
-data class GeoAlert(
-    val id: String,
-    val title: String,
-    val subtitle: String,
-    val time: String,
-    val type: String
-)
-
-// ---------- MAIN HOME SCREEN ----------
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun GeoWavHomeScreen(
     navigateToAuth: () -> Unit,
     googleSignInClient: GoogleSignInClient,
-    zones: List<GeoZone>,
-    alerts: List<GeoAlert>,
-    onViewMap: () -> Unit,
     onAddZone: () -> Unit,
     onShareLocation: () -> Unit,
     onOpenAlerts: () -> Unit,
@@ -160,7 +138,6 @@ fun GeoWavHomeScreen(
         label = "BackgroundColorAnimation"
     )
 
-    val context = LocalContext.current
     Scaffold(
         modifier = Modifier.fillMaxSize(),
         contentWindowInsets = WindowInsets(0),
@@ -227,7 +204,6 @@ fun GeoWavHomeScreen(
                     .background(MaterialTheme.colorScheme.background)
             ) {
 
-                // 🌅 Gradient Header Section
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -260,58 +236,6 @@ fun GeoWavHomeScreen(
                             )
                     )
 
-//                    Row(
-////                    horizontalArrangement = Arrangement.SpaceBetween,
-//                        modifier = Modifier
-//                            .fillMaxWidth()
-//                            .align(Alignment.TopStart)
-//                            .padding(start = 12.dp, end = 12.dp, top = 48.dp, bottom = 12.dp)
-//                    ) {
-//                        Text(
-//                            text = "GeoWav",
-//                            style = MaterialTheme.typography.headlineLarge.copy(
-//                                color = Color.Black
-//                            ),
-//                            fontFamily = manrope,
-//                            modifier = Modifier.weight(1.0f),
-//                            fontWeight = FontWeight.Bold
-//                        )
-//
-//                        IconButton(
-//                            onClick = {
-//                                scope.launch {
-//                                    SnackbarManager.showMessage("No Notifications")
-//                                }
-//                            }
-//                        ) {
-//                            Image(
-//                                painter = painterResource(R.drawable.bell),
-//                                contentDescription = "bell",
-//                                modifier = Modifier
-//                                    .size(28.dp),
-//                                colorFilter = ColorFilter.tint(Color.Black)
-//                            )
-//                        }
-//
-//                        Spacer(modifier = Modifier.width(10.dp))
-//
-//                        IconButton(
-//                            onClick = {
-//                                scope.launch {
-//                                    googleSignInClient.signOut()
-//                                    navigateToAuth()
-//                                }
-//                            }
-//                        ) {
-//                            Image(
-//                                painter = painterResource(R.drawable.gear_six),
-//                                contentDescription = "setting",
-//                                modifier = Modifier.size(28.dp),
-//                                colorFilter = ColorFilter.tint(Color.Black)
-//                            )
-//                        }
-//                    }
-
 
                     ProfileCard(
                         googleSignInClient,
@@ -319,28 +243,6 @@ fun GeoWavHomeScreen(
                             .align(Alignment.Center)
                             .padding(top = 92.dp)
                     )
-
-//                Row(
-//                    modifier = Modifier
-//                        .align(Alignment.TopEnd)
-//                        .padding(16.dp),
-//                    horizontalArrangement = Arrangement.spacedBy(12.dp)
-//                ) {
-//                    IconButton(onClick = {  }) {
-//                        Icon(
-//                            Icons.Outlined.Notifications,
-//                            contentDescription = null,
-//                            tint = MaterialTheme.colorScheme.onPrimaryContainer
-//                        )
-//                    }
-//                    IconButton(onClick = {  }) {
-//                        Icon(
-//                            Icons.Outlined.Settings,
-//                            contentDescription = null,
-//                            tint = MaterialTheme.colorScheme.onPrimaryContainer
-//                        )
-//                    }
-//                }
                 }
 
                 Column(
@@ -348,26 +250,18 @@ fun GeoWavHomeScreen(
                         .padding(horizontal = 12.dp)
                         .background(MaterialTheme.colorScheme.background)
                 ) {
-//                CurrentLocationCard(
-//                    city = "Ahmedabad, Gujarat",
-//                    lastUpdated = "2 mins ago",
-//                    onViewMap = onViewMap
-//                )
 
-                    // 👥 Your Circle
                     ConnectionsRow(
                         title = "Your Circle",
                         connections = allConnection,
                         onAdd = onAddZone
                     )
 
-                    // 🏠 Active Zones
                     ActiveZonesSection(
                         zones = allPlaces,
                         onZoneClick = {}
                     )
 
-                    // ⚡ Quick Actions
                     if(allPlaces.isEmpty()){
                         QuickActionsRow(
                             onAddZone = onAddZone,
@@ -376,7 +270,6 @@ fun GeoWavHomeScreen(
                         )
                     }
 
-                    // 🔔 Recent Alerts
                     Row(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.SpaceBetween
@@ -403,10 +296,6 @@ fun GeoWavHomeScreen(
                     }
                     RecentAlertsList(finalRecentAlerts)
                 }
-
-
-                // 📍 Current Location Card
-
             }
         }
     }
@@ -414,7 +303,6 @@ fun GeoWavHomeScreen(
 
 }
 
-// ---------- CURRENT LOCATION CARD ----------
 @Composable
 fun CurrentLocationCard(city: String, lastUpdated: String, onViewMap: () -> Unit) {
 
@@ -483,14 +371,9 @@ fun CurrentLocationCard(city: String, lastUpdated: String, onViewMap: () -> Unit
     }
 }
 
-// ---------- CONNECTIONS ----------
 @Composable
 fun ConnectionsRow(title: String, connections: List<GeoConnection>?, onAdd: () -> Unit) {
 
-    val Primary = MaterialTheme.colorScheme.primary
-    val Secondary = MaterialTheme.colorScheme.secondary
-    val Accent = MaterialTheme.colorScheme.tertiary
-    val Success = MaterialTheme.colorScheme.surfaceTint
     Column(
         modifier = Modifier.padding(top = 6.dp)
     ) {
@@ -518,25 +401,14 @@ fun ConnectionsRow(title: String, connections: List<GeoConnection>?, onAdd: () -
                 )
             }
         }
-        val c = listOf(
-            GeoConnection(
-            12,
-            "7575866812",
-            "Anushree"
-            ),
-            GeoConnection(
-                10,
-                "9558030582",
-                "Akshat"
-            )
-        )
+
 
         LazyRow(
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(0.dp),
             modifier = Modifier.padding(top = 8.dp)
         ) {
-            if (c.isNullOrEmpty()) {
+            if (connections.isNullOrEmpty()) {
                 item {
                     Column(
                         modifier = Modifier
@@ -559,7 +431,7 @@ fun ConnectionsRow(title: String, connections: List<GeoConnection>?, onAdd: () -
                     }
                 }
             } else {
-                items(c) { conn ->
+                items(connections) { conn ->
                     ConnectionCard(conn)
                 }
             }
@@ -571,10 +443,6 @@ fun ConnectionsRow(title: String, connections: List<GeoConnection>?, onAdd: () -
 @Composable
 fun ConnectionCard(conn: GeoConnection) {
 
-    val Primary = MaterialTheme.colorScheme.primary
-    val Secondary = MaterialTheme.colorScheme.secondary
-    val Accent = MaterialTheme.colorScheme.tertiary
-    val Success = MaterialTheme.colorScheme.surfaceTint
     Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.width(88.dp)) {
         Box(
             modifier = Modifier
@@ -600,13 +468,6 @@ fun ConnectionCard(conn: GeoConnection) {
                 fontSize = 24.sp,
                 modifier = Modifier.align(Alignment.Center)
             )
-//            Box(
-//                modifier = Modifier
-//                    .size(14.dp)
-//                    .clip(CircleShape)
-//                    .background(if (conn.isOnline) Success else Color.Gray)
-//                    .align(Alignment.BottomEnd)
-//            )
         }
         Spacer(modifier = Modifier.height(8.dp))
         Text(
@@ -622,10 +483,6 @@ fun ConnectionCard(conn: GeoConnection) {
 @Composable
 fun AddConnectionCard(onClick: () -> Unit) {
 
-    val Primary = MaterialTheme.colorScheme.primary
-    val Accent = MaterialTheme.colorScheme.secondary
-    val Tertiary = MaterialTheme.colorScheme.tertiary
-    val Success = MaterialTheme.colorScheme.surfaceTint
     Column(
         horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier
             .width(84.dp)
@@ -655,7 +512,6 @@ fun AddConnectionCard(onClick: () -> Unit) {
     }
 }
 
-// ---------- ZONES ----------
 @Composable
 fun ActiveZonesSection(zones: List<Place>, onZoneClick: (_root_ide_package_.com.aarav.geowav.data.place.Place) -> Unit) {
     Column(
@@ -702,11 +558,6 @@ fun ActiveZonesSection(zones: List<Place>, onZoneClick: (_root_ide_package_.com.
 @Composable
 fun ZoneCard(zone: Place, onClick: () -> Unit) {
 
-    val Primary = MaterialTheme.colorScheme.primary
-    val Secondary = MaterialTheme.colorScheme.secondary
-    val Tertiary = MaterialTheme.colorScheme.tertiary
-    val Success = MaterialTheme.colorScheme.surfaceTint
-    //val statusColor = if (zone.inside) Secondary else Tertiary
     Card(
         modifier = Modifier
             .fillMaxWidth()
@@ -776,13 +627,10 @@ fun ZoneCard(zone: Place, onClick: () -> Unit) {
     }
 }
 
-// ---------- QUICK ACTIONS ----------
 @Composable
 fun QuickActionsRow(onAddZone: () -> Unit, onShare: () -> Unit, onAlerts: () -> Unit) {
     Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
         QuickActionButton(Icons.Default.Add, "Add Zone", onAddZone)
-//        QuickActionButton(Icons.Default.Share, "Share", onShare)
-//        QuickActionButton(Icons.Default.Notifications, "Alerts", onAlerts)
     }
 }
 
@@ -793,10 +641,6 @@ fun QuickActionButton(
     onClick: () -> Unit
 ) {
 
-    val Primary = MaterialTheme.colorScheme.primary
-    val Secondary = MaterialTheme.colorScheme.secondary
-    val Accent = MaterialTheme.colorScheme.tertiary
-    val Success = MaterialTheme.colorScheme.surfaceTint
     FilledTonalButton(
         colors = ButtonDefaults.buttonColors(
             containerColor = MaterialTheme.colorScheme.surfaceContainer
@@ -806,7 +650,6 @@ fun QuickActionButton(
             .fillMaxWidth()
             .wrapContentHeight(),
         onClick = onClick
-        //modifier = Modifier.clickable { onClick() },
     ) {
         Column(
             modifier = Modifier
@@ -833,14 +676,9 @@ fun QuickActionButton(
     }
 }
 
-// ---------- ALERTS ----------
 @Composable
 fun RecentAlertsList(alerts: List<com.aarav.geowav.data.model.GeoAlert>) {
 
-    val Primary = MaterialTheme.colorScheme.primary
-    val Secondary = MaterialTheme.colorScheme.secondary
-    val Accent = MaterialTheme.colorScheme.tertiary
-    val Success = MaterialTheme.colorScheme.surfaceTint
     Column(
         verticalArrangement = Arrangement.spacedBy(10.dp),
         modifier = Modifier
@@ -880,7 +718,6 @@ fun AlertItem(alert: com.aarav.geowav.data.model.GeoAlert) {
 
     val type = if (alert.type.equals("ENTER", ignoreCase = true)) "enter" else "exit"
 
-    val enter = Color(0xFF00513f)
 
     val relativeTime = buildRelativeSubtitle(type, alert.readableTime)
 
@@ -949,53 +786,6 @@ fun AlertItem(alert: com.aarav.geowav.data.model.GeoAlert) {
     }
 }
 
-// ---------- PREVIEW ----------
-@Preview(showBackground = true)
-@Composable
-fun GeoWavHomePreview() {
-//    val sampleConnections = listOf(
-//        GeoConnection("1", "Anushree"),
-//        GeoConnection("2", "Akshat"),
-//        GeoConnection("3", "Mummy")
-//    )
-
-    val sampleZones = listOf(
-        GeoZone("z1", "Home", true, 200),
-        GeoZone("z2", "Office", false, 300)
-    )
-
-    val sampleAlerts = listOf(
-        GeoAlert(
-            "a1",
-            "Entered Home",
-            "200m • Sending auto updates to your circle",
-            "5:42 PM",
-            "enter"
-        ),
-        GeoAlert("a2", "Left Office", "You left Office • 3 mins ago", "3:12 PM", "exit"),
-        GeoAlert(
-            "a2",
-            "Entered Office",
-            "300m • Sending auto updates to your circle",
-            "9:15 AM",
-            "enter"
-        ),
-        GeoAlert("a2", "Left Home", "10 mins ago", "8:46 AM", "exit")
-    )
-
-
-//    GeoWavTheme {
-//        GeoWavHomeScreen(
-//            connections = sampleConnections,
-//            zones = sampleZones,
-//            alerts = sampleAlerts,
-//            onViewMap = {},
-//            onAddZone = {},
-//            onShareLocation = {},
-//            onOpenAlerts = {}
-//        )
-//    }
-}
 
 @Composable
 fun ProfileCard(googleSignInClient: GoogleSignInClient, modifier: Modifier = Modifier) {

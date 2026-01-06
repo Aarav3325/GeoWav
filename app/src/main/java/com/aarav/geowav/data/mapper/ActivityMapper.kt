@@ -34,7 +34,6 @@ fun FirebaseActivity.toGeoAlert(id: String): GeoAlert? {
 
     val relativeTime = buildRelativeSubtitle(type, ts)
 
-//    val subtitle = "$title $relativeTime"
 
     return GeoAlert(
         id = id,

@@ -1,6 +1,5 @@
 package com.aarav.geowav.presentation.onboard
 
-import android.Manifest
 import android.content.SharedPreferences
 import android.util.Log
 import androidx.compose.animation.AnimatedVisibility
@@ -40,37 +39,27 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.ColorFilter
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.core.content.edit
 import com.aarav.geowav.R
 import com.aarav.geowav.presentation.components.PermissionAlertDialog
 import com.aarav.geowav.ui.theme.manrope
 import com.aarav.geowav.ui.theme.sora
 import com.google.accompanist.permissions.ExperimentalPermissionsApi
-import com.google.accompanist.permissions.rememberMultiplePermissionsState
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
-import androidx.core.content.edit
 
 @OptIn(ExperimentalPermissionsApi::class)
 @Composable
 fun OnboardingScreen(
     navigateToAuth: () -> Unit,
     sharedPreferences: SharedPreferences
-)
-{
-
-//    val fineLocationPermission = rememberMultiplePermissionsState(
-//        permissions = listOf(Manifest.permission.ACCESS_FINE_LOCATION)
-//    )
-//    val backgroundPermission = rememberMultiplePermissionsState(
-//        permissions = listOf(Manifest.permission.ACCESS_BACKGROUND_LOCATION)
-//    )
+) {
 
     var showLocationDialog by remember {
         mutableStateOf(false)
@@ -78,13 +67,9 @@ fun OnboardingScreen(
 
     var permissionsGranted by remember { mutableStateOf(false) }
 
-//    val isFineLocationPermissionGranted = fineLocationPermission.allPermissionsGranted
-//    val isBackgroundLocationPermissionGranted = backgroundPermission.allPermissionsGranted
-
     var isOnboarded by remember {
         mutableStateOf(false)
     }
-
 
 
     val pages = listOf(
@@ -122,7 +107,7 @@ fun OnboardingScreen(
     }
 
     LaunchedEffect(permissionsGranted) {
-        if(permissionsGranted){
+        if (permissionsGranted) {
             sharedPreferences.edit(commit = true) {
                 putBoolean("isOnboarded", true)
                 //editor.apply()
@@ -150,47 +135,61 @@ fun OnboardingScreen(
 
         }
 
-        val context = LocalContext.current
-
         // Indicator + Button
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(16.dp).padding(bottom = 36.dp),
+                .padding(16.dp)
+                .padding(bottom = 36.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Row(
-                modifier = Modifier.fillMaxWidth().wrapContentHeight(),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .wrapContentHeight(),
                 verticalAlignment = Alignment.CenterVertically
             ) {
 
                 val last = pagerState.currentPage == pages.lastIndex
 
-               AnimatedVisibility(pagerState.currentPage != pages.lastIndex) {
+                AnimatedVisibility(pagerState.currentPage != pages.lastIndex) {
 
-                   TextButton(
-                       onClick = {
-                               scope.launch { pagerState.animateScrollToPage(pagerState.pageCount - 1, animationSpec = TweenSpec(durationMillis = 400)) }
-                       },
-                       shape = RoundedCornerShape(12.dp),
-                       colors = ButtonDefaults.textButtonColors(contentColor = MaterialTheme.colorScheme.onBackground),
-                       modifier = Modifier.wrapContentWidth().height(48.dp)
-                   ) {
-                       Text(
-                           text = "Skip",
-                           fontSize = 14.sp,
-                           textAlign = TextAlign.Center,
-                           fontFamily = manrope,
-                           color = MaterialTheme.colorScheme.onBackground,
-                           fontWeight = FontWeight.SemiBold
-                       )
-                   }
-                   
-               }
+                    TextButton(
+                        onClick = {
+                            scope.launch {
+                                pagerState.animateScrollToPage(
+                                    pagerState.pageCount - 1,
+                                    animationSpec = TweenSpec(durationMillis = 400)
+                                )
+                            }
+                        },
+                        shape = RoundedCornerShape(12.dp),
+                        colors = ButtonDefaults.textButtonColors(contentColor = MaterialTheme.colorScheme.onBackground),
+                        modifier = Modifier
+                            .wrapContentWidth()
+                            .height(48.dp)
+                    ) {
+                        Text(
+                            text = "Skip",
+                            fontSize = 14.sp,
+                            textAlign = TextAlign.Center,
+                            fontFamily = manrope,
+                            color = MaterialTheme.colorScheme.onBackground,
+                            fontWeight = FontWeight.SemiBold
+                        )
+                    }
 
-                AnimatedVisibility(modifier = Modifier.weight(1.0f),
-                    visible = pagerState.currentPage != pages.lastIndex) {
-                     DotsIndicator(modifier = Modifier.weight(1.0f),pagerState.currentPage, pages.size)
+                }
+
+                AnimatedVisibility(
+                    modifier = Modifier.weight(1.0f),
+                    visible = pagerState.currentPage != pages.lastIndex
+                ) {
+                    DotsIndicator(
+                        modifier = Modifier.weight(1.0f),
+                        pagerState.currentPage,
+                        pages.size
+                    )
 
                 }
 
@@ -206,20 +205,27 @@ fun OnboardingScreen(
                 FilledTonalButton(
                     onClick = {
                         if (pagerState.currentPage == pages.lastIndex) {
-                            //navigateToSignUp()
                             clickState = !clickState
                             showLocationDialog = true
-                            //navigateToAuth()
-//                        val intent = Intent(context, HomeScreenActivity::class.java)
-//                        context.startActivity(intent)
-//                        Toast.makeText(context, "OnBoardCompleted", Toast.LENGTH_LONG).show()
                         } else {
-                            scope.launch { pagerState.animateScrollToPage(pagerState.currentPage + 1, animationSpec = TweenSpec(durationMillis = 350)) }
+                            scope.launch {
+                                pagerState.animateScrollToPage(
+                                    pagerState.currentPage + 1,
+                                    animationSpec = TweenSpec(durationMillis = 350)
+                                )
+                            }
                         }
                     },
                     shape = RoundedCornerShape(18.dp),
-                    colors = ButtonDefaults.filledTonalButtonColors(containerColor = MaterialTheme.colorScheme.primary, contentColor = MaterialTheme.colorScheme.onPrimary),
-                    modifier = if(last) Modifier.fillMaxWidth().height(48.dp) else Modifier.height(48.dp)
+                    colors = ButtonDefaults.filledTonalButtonColors(
+                        containerColor = MaterialTheme.colorScheme.primary,
+                        contentColor = MaterialTheme.colorScheme.onPrimary
+                    ),
+                    modifier = if (last) Modifier
+                        .fillMaxWidth()
+                        .height(48.dp) else Modifier.height(
+                        48.dp
+                    )
                 ) {
                     AnimatedVisibility(!clickState) {
                         Text(
@@ -249,26 +255,16 @@ fun OnboardingScreen(
 @Composable
 fun OnboardingPageContent(
     page: OnBoardingPage
-){
-
-//    Row(
-//        modifier = Modifier.padding(12.dp)
-//    ) {
-//        Text(
-//            text = "GeoWav",
-//            fontSize = 36.sp,
-//            fontFamily = sora,
-//            color = MaterialTheme.colorScheme.onBackground,
-//            fontWeight = FontWeight.Bold
-//        )
-//    }
+) {
 
     Column(
-        modifier = Modifier.padding(12.dp).fillMaxSize(),
+        modifier = Modifier
+            .padding(12.dp)
+            .fillMaxSize(),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
     ) {
-                Text(
+        Text(
             text = "GeoWav",
             fontSize = 36.sp,
             fontFamily = manrope,
@@ -280,16 +276,20 @@ fun OnboardingPageContent(
 
         Box(
             modifier = Modifier.fillMaxWidth()
-        ){
+        ) {
             Surface(
-                modifier = Modifier.size(154.dp).align(Alignment.Center),
+                modifier = Modifier
+                    .size(154.dp)
+                    .align(Alignment.Center),
                 color = MaterialTheme.colorScheme.tertiaryContainer,
                 shape = CircleShape,
             ) {
                 Image(
                     painter = painterResource(id = page.imageRes),
                     contentDescription = "navigation arrow",
-                    modifier = Modifier.size(24.dp).padding(24.dp),
+                    modifier = Modifier
+                        .size(24.dp)
+                        .padding(24.dp),
                     colorFilter = ColorFilter.tint(MaterialTheme.colorScheme.onTertiaryContainer)
                 )
             }
@@ -333,7 +333,8 @@ fun DotsIndicator(
         repeat(totalDots) { index ->
 
             val width = if (index == currentPage) 25.dp else 15.dp
-            val color = if (index == currentPage) MaterialTheme.colorScheme.onBackground else MaterialTheme.colorScheme.inversePrimary
+            val color =
+                if (index == currentPage) MaterialTheme.colorScheme.onBackground else MaterialTheme.colorScheme.inversePrimary
             Box(
                 modifier = Modifier
                     .padding(4.dp)

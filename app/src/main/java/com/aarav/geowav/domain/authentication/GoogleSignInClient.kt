@@ -32,8 +32,6 @@ class GoogleSignInClient @Inject constructor(
     @Inject
     lateinit var credentialManager: CredentialManager
 
-//    @Inject
-//    lateinit var firebaseAuth: FirebaseAuth
 
     fun isLoggedIn(): Boolean {
         return firebaseAuth.currentUser != null

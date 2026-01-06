@@ -1,7 +1,5 @@
 package com.aarav.geowav.domain.utils
 
-import android.os.Build
-import androidx.annotation.RequiresApi
 import com.aarav.geowav.data.geofence.ActivityFilter
 import java.time.Instant
 import java.time.LocalDate
@@ -9,12 +7,14 @@ import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 
 private val indiaZone: ZoneId = ZoneId.of("Asia/Kolkata")
-private val dateTimeFormatter: DateTimeFormatter = DateTimeFormatter.ofPattern("dd/MM/yyyy").withZone(indiaZone)
+private val dateTimeFormatter: DateTimeFormatter =
+    DateTimeFormatter.ofPattern("dd/MM/yyyy").withZone(indiaZone)
 
 fun Long.toLocalDateInIndia(): LocalDate =
     Instant.ofEpochMilli(this)
         .atZone(indiaZone)
         .toLocalDate()
+
 fun LocalDate.startOfDayMillis(): Long = atStartOfDay(indiaZone).toInstant().toEpochMilli()
 
 fun LocalDate.endOfDayMillis(): Long =
@@ -40,7 +40,7 @@ fun rangeForFilter(filter: ActivityFilter): TimeRange {
             TimeRange(sevenDaysAgo.startOfDayMillis(), today.endOfDayMillis())
         }
 
-        is ActivityFilter.Between ->{
+        is ActivityFilter.Between -> {
             TimeRange(filter.from.startOfDayMillis(), filter.to.endOfDayMillis())
         }
     }

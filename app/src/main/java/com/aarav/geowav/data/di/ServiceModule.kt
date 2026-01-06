@@ -80,5 +80,4 @@ object ServiceModule {
         return context.getSharedPreferences("geowav", Context.MODE_PRIVATE)
     }
 
-
 }

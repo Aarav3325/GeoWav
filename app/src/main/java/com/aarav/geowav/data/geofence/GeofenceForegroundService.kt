@@ -56,10 +56,8 @@ class GeofenceForegroundService : Service() {
 
     override fun onCreate() {
         super.onCreate()
-        // ⚡ 1. Start foreground immediately (within 5 seconds!)
         startForegroundService()
 
-        // ⚙️ 2. Then start observing geofence data
         if (googleSignInClient.isLoggedIn()) {
             observePlaces()
         }
@@ -88,7 +86,7 @@ class GeofenceForegroundService : Service() {
 
         val geofencingRequest = GeofencingRequest.Builder().setInitialTrigger(
             GeofencingRequest.INITIAL_TRIGGER_ENTER
-                    //or GeofencingRequest.INITIAL_TRIGGER_EXIT
+            //or GeofencingRequest.INITIAL_TRIGGER_EXIT
         )
             .addGeofences(geofenceList)
             .build()
@@ -106,24 +104,41 @@ class GeofenceForegroundService : Service() {
             geofencingClient.removeGeofences(pendingIntent)
                 .addOnSuccessListener {
                     geofencingClient.addGeofences(geofencingRequest, pendingIntent)
-                        .addOnSuccessListener { Log.d("GeofenceService", "Geofences added ${geofencingRequest.geofences.size}") }
-                        .addOnFailureListener { Log.e("GeofenceService", "Failed to add geofences", it) }
+                        .addOnSuccessListener {
+                            Log.d(
+                                "GeofenceService",
+                                "Geofences added ${geofencingRequest.geofences.size}"
+                            )
+                        }
+                        .addOnFailureListener {
+                            Log.e(
+                                "GeofenceService",
+                                "Failed to add geofences",
+                                it
+                            )
+                        }
                 }
-                .addOnFailureListener { Log.e("GeofenceService", "Failed to remove old geofences", it) }
+                .addOnFailureListener {
+                    Log.e(
+                        "GeofenceService",
+                        "Failed to remove old geofences",
+                        it
+                    )
+                }
         }
     }
 
     private fun startForegroundService() {
         val channelId = "geo_channel"
         val channelName = "Geofence Alerts"
-        val notificationManager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+        val notificationManager =
+            getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
 
-        // Create channel for Android 8+
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             val channel = NotificationChannel(
                 channelId,
                 channelName,
-                NotificationManager.IMPORTANCE_LOW // Use LOW for persistent service
+                NotificationManager.IMPORTANCE_LOW
             )
             notificationManager.createNotificationChannel(channel)
         }
@@ -131,36 +146,14 @@ class GeofenceForegroundService : Service() {
         val notification = NotificationCompat.Builder(this, channelId)
             .setContentTitle("GeoWav Active")
             .setContentText("Monitoring geofence events")
-            .setSmallIcon(com.google.android.libraries.places.R.drawable.location_on_icon) // MUST have a valid icon
+            .setSmallIcon(R.drawable.navigation_arrow)
             .setOngoing(true) // Prevent swiping away
-            .setPriority(NotificationCompat.PRIORITY_LOW) // Match channel importance
+            .setPriority(NotificationCompat.PRIORITY_LOW)
             .build()
 
         startForeground(1, notification)
     }
 
-
-    //    @RequiresPermission(Manifest.permission.ACCESS_FINE_LOCATION)
-//    private fun registerAllPlaces(places: List<Place>, context : Context) {
-//
-//        for (place in places) {
-//            val geofence = geofenceHelper.createGeofence(place.placeId, place.latitude, place.longitude, place.radius)
-//            val request = geofenceHelper.createGeofencingRequest(geofence)
-//            val pendingIntent = geofenceHelper.getGeofencePendingIntent(context)
-//            geofencingClient.addGeofences(request, pendingIntent)
-//                .addOnSuccessListener {
-//                    Log.d("MYTAG", "${place.placeId} added")
-//                }
-//                .addOnFailureListener {
-//                    Log.e("MYTAG", "error in adding geofence")
-//                }
-//        }
-////        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
-////            geofencingClient.addGeofences(geofencingRequest, pendingIntent)
-////                .addOnSuccessListener { Log.d("GeofenceService", "Geofence added") }
-////                .addOnFailureListener { Log.e("GeofenceService", "Failed to add geofence", it) }
-////        }
-//    }
     override fun onDestroy() {
         super.onDestroy()
         job.cancel()

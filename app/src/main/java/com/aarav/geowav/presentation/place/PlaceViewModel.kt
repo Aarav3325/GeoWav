@@ -1,17 +1,15 @@
-package com.aarav.geowav.presentation.map
+package com.aarav.geowav.presentation.place
 
 import android.content.Context
-import android.view.View
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.aarav.geowav.data.place.Place
-import com.aarav.geowav.domain.repository.PlaceRepository
 import com.aarav.geowav.domain.place.PlaceRepositoryImpl
-import com.google.android.libraries.places.api.Places
 import com.google.android.libraries.places.api.model.AutocompletePrediction
 import com.google.android.libraries.places.api.model.AutocompleteSessionToken
 import com.google.android.libraries.places.api.net.FetchPlaceRequest
 import com.google.android.libraries.places.api.net.FindAutocompletePredictionsRequest
+import com.google.android.libraries.places.api.net.PlacesClient
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -23,7 +21,10 @@ import java.util.Locale
 import javax.inject.Inject
 
 @HiltViewModel
-class PlaceViewModel @Inject constructor(val placeRepository: PlaceRepositoryImpl) : ViewModel() {
+class PlaceViewModel @Inject constructor(
+    val placeRepository: PlaceRepositoryImpl,
+    val placesClient: PlacesClient
+) : ViewModel() {
     val allPlaces: StateFlow<List<Place>> = placeRepository.getPlaces()
         .stateIn(
             viewModelScope,
@@ -43,7 +44,11 @@ class PlaceViewModel @Inject constructor(val placeRepository: PlaceRepositoryImp
         }
     }
 
-    fun searchPlaces(context: Context, query: String, onResult: (List<AutocompletePrediction>) -> Unit) {
+    fun searchPlaces(
+        context: Context,
+        query: String,
+        onResult: (List<AutocompletePrediction>) -> Unit
+    ) {
         val token = AutocompleteSessionToken.newInstance()
 
         val request = FindAutocompletePredictionsRequest.builder()
@@ -51,7 +56,6 @@ class PlaceViewModel @Inject constructor(val placeRepository: PlaceRepositoryImp
             .setSessionToken(token)
             .build()
 
-        val placesClient = Places.createClient(context)
 
         placesClient.findAutocompletePredictions(request)
             .addOnSuccessListener { response ->
@@ -63,30 +67,30 @@ class PlaceViewModel @Inject constructor(val placeRepository: PlaceRepositoryImp
             }
     }
 
-    fun fetchPlace(placeId : String, context: Context,
-                   onPlaceSelected: (com.google.android.libraries.places.api.model.Place) -> Unit){
-        //val placeId = placeId
+    fun fetchPlace(
+        placeId: String, context: Context,
+        onPlaceSelected: (com.google.android.libraries.places.api.model.Place) -> Unit
+    ) {
+
         val fields = listOf(
             com.google.android.libraries.places.api.model.Place.Field.ID,
-            com.google.android.libraries.places.api.model.Place.Field.DISPLAY_NAME, com.google.android.libraries.places.api.model.Place.Field.LOCATION,
-            com.google.android.libraries.places.api.model.Place.Field.SHORT_FORMATTED_ADDRESS)
-        val placesClient = Places.createClient(context)
+            com.google.android.libraries.places.api.model.Place.Field.DISPLAY_NAME,
+            com.google.android.libraries.places.api.model.Place.Field.LOCATION,
+            com.google.android.libraries.places.api.model.Place.Field.SHORT_FORMATTED_ADDRESS
+        )
+
         val request = FetchPlaceRequest.builder(placeId, fields).build()
 
         placesClient.fetchPlace(request)
             .addOnSuccessListener { response ->
                 onPlaceSelected(response.place)
             }
-
-
     }
 
     fun getFormattedDate(): String {
         val formatter = SimpleDateFormat("dd MMM yyyy", Locale.getDefault())
         return formatter.format(Date())
     }
-
-
 
 
 }

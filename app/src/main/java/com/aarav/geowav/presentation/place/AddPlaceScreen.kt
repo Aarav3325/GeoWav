@@ -1,10 +1,9 @@
-package com.aarav.geowav.presentation.map
+package com.aarav.geowav.presentation.place
 
 import android.util.Log
 import android.widget.Toast
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.Image
-import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Arrangement
@@ -46,9 +45,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.dropShadow
-import androidx.compose.ui.draw.shadow
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.graphics.graphicsLayer
@@ -67,12 +63,11 @@ import com.aarav.geowav.presentation.components.RadiusChipGroup
 import com.aarav.geowav.ui.theme.GeoWavTheme
 import com.aarav.geowav.ui.theme.manrope
 import com.aarav.geowav.ui.theme.sora
-import com.aarav.geowav.ui.theme.*
-import com.aarav.geowav.ui.theme.surfaceContainerLightMediumContrast
+import com.aarav.geowav.ui.theme.surfaceContainerHighDark
+import com.aarav.geowav.ui.theme.surfaceContainerLight
 import com.google.android.gms.maps.model.CameraPosition
 import com.google.android.gms.maps.model.LatLng
 import com.google.android.libraries.places.api.model.Place
-import com.google.android.libraries.places.api.model.kotlin.place
 import com.google.maps.android.compose.GoogleMap
 import com.google.maps.android.compose.MapUiSettings
 import com.google.maps.android.compose.Marker
@@ -87,7 +82,6 @@ fun AddPlaceScreen(
     placeId: String,
     navigateToMaps: () -> Unit,
     navigateToYourPlaces: () -> Unit,
-    mapViewModel: MapViewModel,
     placeViewModel: PlaceViewModel
 ) {
 
@@ -101,22 +95,19 @@ fun AddPlaceScreen(
     }
 
     var latlng by remember {
-        mutableStateOf<LatLng>(LatLng(0.0,0.0))
+        mutableStateOf<LatLng>(LatLng(0.0, 0.0))
     }
 
     val context = LocalContext.current
 
-//    LaunchedEffect(Unit) {
-//        mapViewModel.fetchUserLocation()
-//    }
 
 
     LaunchedEffect(selectedPlace) {
         placeViewModel.fetchPlace(
             placeId,
             context
-        ){
-            place -> selectedPlace = place
+        ) { place ->
+            selectedPlace = place
             placeName = place.displayName ?: ""
             latlng = LatLng(
                 place.location?.latitude ?: 0.0,
@@ -170,26 +161,37 @@ fun AddPlaceScreen(
             bottomBar = {
                 Card(
                     elevation = CardDefaults.cardElevation(4.dp),
-                    modifier = Modifier.padding(top = 3.dp).graphicsLayer {
-                        shadowElevation = 16f
-                        shape = RoundedCornerShape(0.dp)
+                    modifier = Modifier
+                        .padding(top = 3.dp)
+                        .graphicsLayer {
+                            shadowElevation = 16f
+                            shape = RoundedCornerShape(0.dp)
 //                        clip = true
-                        ambientShadowColor = Color.White.copy(alpha = 0.25f)
-                        spotShadowColor = Color.White.copy(alpha = 0.25f)
-                    },
+                            ambientShadowColor = Color.White.copy(alpha = 0.25f)
+                            spotShadowColor = Color.White.copy(alpha = 0.25f)
+                        },
                     colors = CardDefaults.cardColors(
-                        containerColor = if(!isSystemInDarkTheme()) surfaceContainerLight else surfaceContainerHighDark,
+                        containerColor = if (!isSystemInDarkTheme()) surfaceContainerLight else surfaceContainerHighDark,
                         contentColor = MaterialTheme.colorScheme.onSurface
                     )
                 ) {
                     Row(
-                        modifier = Modifier.padding(start = 12.dp, end = 12.dp, top = 12.dp, bottom = 28.dp)
+                        modifier = Modifier.padding(
+                            start = 12.dp,
+                            end = 12.dp,
+                            top = 12.dp,
+                            bottom = 28.dp
+                        )
                     ) {
                         FilledTonalButton(
                             onClick = {
                                 placeViewModel.addPlace(finalPlace)
                                 navigateToYourPlaces()
-                                Toast.makeText(context, "$placeName added to geofence", Toast.LENGTH_LONG).show()
+                                Toast.makeText(
+                                    context,
+                                    "$placeName added to geofence",
+                                    Toast.LENGTH_LONG
+                                ).show()
 
                             },
                             modifier = Modifier.fillMaxWidth(),
@@ -245,7 +247,7 @@ fun AddPlaceScreen(
                         elevation = CardDefaults.cardElevation(4.dp),
                         shape = RoundedCornerShape(16.dp),
                         colors = CardDefaults.cardColors(
-                            containerColor = if(!isSystemInDarkTheme()) surfaceContainerLight else surfaceContainerHighDark,
+                            containerColor = if (!isSystemInDarkTheme()) surfaceContainerLight else surfaceContainerHighDark,
                             contentColor = MaterialTheme.colorScheme.onSurface
                         )
                     ) {
@@ -269,8 +271,7 @@ fun AddPlaceScreen(
                                 )
                             }
 
-                            selectedPlace?.let {
-                                    place ->
+                            selectedPlace?.let { place ->
                                 Text(
                                     text = place.displayName ?: "Place Name Unavailable",
                                     color = MaterialTheme.colorScheme.onSurface,
@@ -293,7 +294,9 @@ fun AddPlaceScreen(
                                 )
 
                                 Text(
-                                    text = "Lat: ${place.location?.latitude?.toString()?.take(7)}, Lng: ${place.location?.longitude?.toString()?.take(7)}",
+                                    text = "Lat: ${
+                                        place.location?.latitude?.toString()?.take(7)
+                                    }, Lng: ${place.location?.longitude?.toString()?.take(7)}",
                                     color = MaterialTheme.colorScheme.onSurface,
                                     fontSize = 14.sp,
                                     fontWeight = FontWeight.W500,
@@ -312,8 +315,7 @@ fun AddPlaceScreen(
                         placeHolder = "Enter name",
                         infoText = "Customize this place",
                         name = placeName,
-                        onValueChange = {
-                                place ->
+                        onValueChange = { place ->
                             placeName = place
                         }
                     )
@@ -323,8 +325,7 @@ fun AddPlaceScreen(
                     RadiusChipGroup(
                         chips = chips,
                         selectedRadius = selectedRadius
-                    ) {
-                            radius ->
+                    ) { radius ->
                         selectedRadius = radius
 
                         Log.i("MYTAG", "Selected Radius : $selectedRadius")
@@ -350,8 +351,6 @@ fun AddPlaceScreen(
 
                         CustomChip("EXIT")
                     }
-                    // Move camera when latlng changes
-
 
 
                     val cameraPositionState = rememberCameraPositionState {
@@ -395,7 +394,8 @@ fun AddPlaceScreen(
                             scrollGesturesEnabledDuringRotateOrZoom = false,
                             tiltGesturesEnabled = false,
                             zoomControlsEnabled = false,
-                            zoomGesturesEnabled = false)
+                            zoomGesturesEnabled = false
+                        )
                     ) {
                         Marker(
                             state = MarkerState(
@@ -412,11 +412,9 @@ fun AddPlaceScreen(
                     Spacer(modifier = Modifier.height(16.dp))
 
 
-               // placeViewModel.deletePlace(finalPlace)
-
                 }
             }
-            }
+        }
 
     }
 }

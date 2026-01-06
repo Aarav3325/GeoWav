@@ -1,6 +1,5 @@
 package com.aarav.geowav.ui.theme
 
-import android.app.Activity
 import android.os.Build
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material3.MaterialTheme
@@ -12,7 +11,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.Font
 import androidx.compose.ui.text.font.FontFamily
-import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import com.aarav.geowav.R
 
@@ -271,18 +269,10 @@ fun GeoWavTheme(
 val manrope = FontFamily(
     Font(R.font.manrope_light, FontWeight.Light),
     Font(R.font.manrope_regular, FontWeight.Normal),
-    //Font(R.font.sora_italic, FontWeight.Normal, FontStyle.Italic),
     Font(R.font.manrope_medium, FontWeight.Medium),
-    //Font(R.font.sora_medium_italic, FontWeight.Medium, FontStyle.Italic),
     Font(R.font.manrope_semi_bold, FontWeight.SemiBold),
-    //Font(R.font.sora_semi_bold_italic, FontWeight.SemiBold, FontStyle.Italic),
     Font(R.font.manrope_bold, FontWeight.Bold),
-    //Font(R.font.sora_extra_bold_italic, FontWeight.Bold, FontStyle.Italic),
     Font(R.font.manrope_extra_bold, FontWeight.ExtraBold),
-    //Font(R.font.sora_extra_bold_italic, FontWeight.ExtraBold, FontStyle.Italic),
-    //Font(R.font.sora_black, FontWeight.Black),
-//    Font(R.font.sora_black_italic, FontWeight.Black, FontStyle.Italic),
-//    Font(R.font.sora_light_italic, FontWeight.Light, FontStyle.Italic)
 )
 
 val sora = FontFamily(

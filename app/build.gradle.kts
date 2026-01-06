@@ -9,7 +9,7 @@ plugins {
 }
 
 android {
-        namespace = "com.aarav.geowav"
+    namespace = "com.aarav.geowav"
     compileSdk = 36
 
     defaultConfig {
@@ -89,6 +89,7 @@ dependencies {
     // Navigation
     implementation("androidx.constraintlayout:constraintlayout-compose:1.1.1")
     implementation("androidx.navigation:navigation-compose:2.9.5")
+
 
     //Places
     implementation("com.google.android.libraries.places:places:5.0.0")

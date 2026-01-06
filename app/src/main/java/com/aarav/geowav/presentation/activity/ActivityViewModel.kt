@@ -4,7 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.aarav.geowav.data.geofence.ActivityFilter
 import com.aarav.geowav.data.model.GeoAlert
-import com.aarav.geowav.data.repository.GeoActivityRepositoryImpl
+import com.aarav.geowav.domain.repository.GeoActivityRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -18,7 +18,7 @@ import javax.inject.Inject
 
 @HiltViewModel
 class ActivityViewModel
-@Inject constructor(val activityRepository: GeoActivityRepositoryImpl) : ViewModel() {
+@Inject constructor(val activityRepository: GeoActivityRepository) : ViewModel() {
     private val _uiState = MutableStateFlow(ActivityUiState())
     val uiState: StateFlow<ActivityUiState> = _uiState.asStateFlow()
 

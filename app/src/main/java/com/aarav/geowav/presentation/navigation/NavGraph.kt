@@ -1,5 +1,3 @@
-package com.aarav.geowav.presentation.navigation
-
 import android.content.SharedPreferences
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
@@ -13,18 +11,17 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.navArgument
 import com.aarav.geowav.domain.authentication.GoogleSignInClient
-import com.aarav.geowav.presentation.GeoAlert
 import com.aarav.geowav.presentation.GeoWavHomeScreen
-import com.aarav.geowav.presentation.GeoZone
 import com.aarav.geowav.presentation.activity.ActivityScreen
 import com.aarav.geowav.presentation.auth.LoginScreen
 import com.aarav.geowav.presentation.auth.SignupScreen
-import com.aarav.geowav.presentation.map.AddPlaceScreen
 import com.aarav.geowav.presentation.map.MapScreen
 import com.aarav.geowav.presentation.map.MapViewModel
-import com.aarav.geowav.presentation.map.PlaceViewModel
-import com.aarav.geowav.presentation.map.YourPlacesScreen
+import com.aarav.geowav.presentation.navigation.NavRoute
 import com.aarav.geowav.presentation.onboard.OnboardingScreen
+import com.aarav.geowav.presentation.place.AddPlaceScreen
+import com.aarav.geowav.presentation.place.PlaceViewModel
+import com.aarav.geowav.presentation.place.YourPlacesScreen
 
 @Composable
 fun NavGraph(
@@ -55,9 +52,7 @@ fun NavGraph(
 
         AddNewPlaceScreen(
             navHostController,
-            this,
-            mapViewModel,
-            placesViewModel
+            this
         )
 
         AddYourPlacesScreen(
@@ -112,7 +107,13 @@ fun AddMapsScreen(
             location,
             placesViewModel,
             navigateToAddPlace = { id ->
-                navController.navigate(NavRoute.AddPlace.createRoute(id))
+                navController.navigate(NavRoute.AddPlace.createRoute(id)) {
+                    popUpTo(navController.graph.findStartDestination().id) {
+                        saveState = true
+                    }
+                    launchSingleTop = true
+                    restoreState = true
+                }
             },
             navigateToHome = {
                 navController.navigateUp()
@@ -124,8 +125,6 @@ fun AddMapsScreen(
 fun AddNewPlaceScreen(
     navController: NavController,
     navGraphBuilder: NavGraphBuilder,
-    mapViewModel: MapViewModel,
-    placesViewModel: PlaceViewModel
 ) {
     navGraphBuilder.composable(
         route = NavRoute.AddPlace.path.plus("/{placeId}"),
@@ -151,8 +150,7 @@ fun AddNewPlaceScreen(
                     restoreState = true
                 }
             },
-            mapViewModel,
-            placesViewModel
+            placeViewModel = hiltViewModel()
         )
 
     }
@@ -243,36 +241,6 @@ fun AddHomeScreen(
         route = NavRoute.HomeScreen.path
     ) {
 
-//        val sampleConnections = listOf(
-//            GeoConnection("1", "Anushree", true),
-//            GeoConnection("2", "Akshat", true),
-//            GeoConnection("3", "Mummy", false)
-//        )
-
-        val sampleZones = listOf(
-            GeoZone("z1", "Home", true, 200),
-            GeoZone("z2", "Office", false, 300)
-        )
-
-        val sampleAlerts = listOf(
-            GeoAlert(
-                "a1",
-                "Entered Home",
-                "200m • Sending auto updates to your circle",
-                "5:42 PM",
-                "enter"
-            ),
-            GeoAlert("a2", "Left Office", "You left Office • 3 mins ago", "3:12 PM", "exit"),
-            GeoAlert(
-                "a2",
-                "Entered Office",
-                "300m • Sending auto updates to your circle",
-                "9:15 AM",
-                "enter"
-            ),
-            GeoAlert("a2", "Left Home", "10 mins ago", "8:46 AM", "exit")
-        )
-
         GeoWavHomeScreen(
             navigateToAuth = {
                 navController.navigate(NavRoute.Login.path) {
@@ -284,9 +252,6 @@ fun AddHomeScreen(
                 }
             },
             googleSignInClient,
-            zones = sampleZones,
-            alerts = sampleAlerts,
-            onViewMap = {},
             onAddZone = {
                 navController.navigate(NavRoute.MapScreen.path)
             },
