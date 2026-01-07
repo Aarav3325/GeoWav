@@ -31,6 +31,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -58,56 +59,49 @@ import kotlinx.coroutines.launch
 @Composable
 fun OnboardingScreen(
     navigateToAuth: () -> Unit,
-    sharedPreferences: SharedPreferences
+    sharedPreferences: SharedPreferences,
+    onBoardVM: OnBoardVM,
 ) {
 
-    var showLocationDialog by remember {
-        mutableStateOf(false)
-    }
-
-    var permissionsGranted by remember { mutableStateOf(false) }
-
-    var isOnboarded by remember {
-        mutableStateOf(false)
-    }
+    val uiState by onBoardVM.uiState.collectAsState()
 
 
-    val pages = listOf(
-        OnBoardingPage(
-            "Stay Connected in Real-Time",
-            "GeoWav keeps you updated about your friends and loved ones with live location sharing. See who’s nearby and never miss a moment.",
-            R.drawable.gps
-        ),
-        OnBoardingPage(
-            "Smart Geofences & Alerts",
-            "Set places that matter — home, school, or office. Get notified when someone arrives or leaves, automatically and effortlessly.",
-            R.drawable.navigation_arrow
-        ),
-        OnBoardingPage(
-            "Your Safety, Our Priority",
-            "GeoWav values privacy and security. Your location is shared only with people you trust. Stay safe while staying connected.",
-            R.drawable.vault
-        ),
-    )
+    val showLocationDialog = uiState.showPermissionDialog
+
+
+//    var permissionsGranted by remember { mutableStateOf(false) }
+//
+//    var isOnboarded by remember {
+//        mutableStateOf(false)
+//    }
+
+    val pages = uiState.pages
 
     val pagerState = rememberPagerState(
         initialPage = 0,
         pageCount = { pages.size }
     )
+
+    LaunchedEffect(pagerState.currentPage) {
+        onBoardVM.onPageChanged(pagerState.currentPage)
+    }
+
+
     val scope = rememberCoroutineScope()
 
-    AnimatedVisibility(showLocationDialog) {
+    AnimatedVisibility(uiState.showPermissionDialog) {
         PermissionAlertDialog(
-            showDialog = showLocationDialog,
-            onDismiss = { showLocationDialog = false },
+            showDialog = uiState.showPermissionDialog,
+            onDismiss = { onBoardVM.onPermissionDialogDismiss() },
             onPermissionsGranted = {
-                permissionsGranted = true
+                onBoardVM.onFineLocationResult(true)
+                onBoardVM.onBackgroundLocationResult(true)
             }
         )
     }
 
-    LaunchedEffect(permissionsGranted) {
-        if (permissionsGranted) {
+    LaunchedEffect(uiState.allPermissionsGranted) {
+        if (uiState.allPermissionsGranted) {
             sharedPreferences.edit(commit = true) {
                 putBoolean("isOnboarded", true)
                 //editor.apply()
@@ -150,15 +144,14 @@ fun OnboardingScreen(
                 verticalAlignment = Alignment.CenterVertically
             ) {
 
-                val last = pagerState.currentPage == pages.lastIndex
 
-                AnimatedVisibility(pagerState.currentPage != pages.lastIndex) {
+                AnimatedVisibility(uiState.currentPage != pages.lastIndex) {
 
                     TextButton(
                         onClick = {
                             scope.launch {
                                 pagerState.animateScrollToPage(
-                                    pagerState.pageCount - 1,
+                                    pages.lastIndex,
                                     animationSpec = TweenSpec(durationMillis = 400)
                                 )
                             }
@@ -183,7 +176,7 @@ fun OnboardingScreen(
 
                 AnimatedVisibility(
                     modifier = Modifier.weight(1.0f),
-                    visible = pagerState.currentPage != pages.lastIndex
+                    visible = uiState.currentPage != pages.lastIndex
                 ) {
                     DotsIndicator(
                         modifier = Modifier.weight(1.0f),
@@ -204,9 +197,9 @@ fun OnboardingScreen(
 
                 FilledTonalButton(
                     onClick = {
-                        if (pagerState.currentPage == pages.lastIndex) {
+                        if (uiState.currentPage == pages.lastIndex) {
                             clickState = !clickState
-                            showLocationDialog = true
+                            onBoardVM.onContinueClicked()
                         } else {
                             scope.launch {
                                 pagerState.animateScrollToPage(
@@ -221,7 +214,7 @@ fun OnboardingScreen(
                         containerColor = MaterialTheme.colorScheme.primary,
                         contentColor = MaterialTheme.colorScheme.onPrimary
                     ),
-                    modifier = if (last) Modifier
+                    modifier = if (uiState.currentPage == pages.lastIndex) Modifier
                         .fillMaxWidth()
                         .height(48.dp) else Modifier.height(
                         48.dp
@@ -229,7 +222,7 @@ fun OnboardingScreen(
                 ) {
                     AnimatedVisibility(!clickState) {
                         Text(
-                            text = if (pagerState.currentPage == pages.lastIndex) "Grant Permissions" else "Next",
+                            text = if (uiState.currentPage == pages.lastIndex) "Grant Permissions" else "Next",
                             fontSize = 14.sp,
                             textAlign = TextAlign.Center,
                             fontFamily = manrope,

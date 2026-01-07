@@ -228,7 +228,8 @@ fun AddOnBoard(
             navigateToAuth = {
                 navController.navigate(NavRoute.SignUp.path)
             },
-            sharedPreferences
+            sharedPreferences,
+            onBoardVM = hiltViewModel()
         )
     }
 }
