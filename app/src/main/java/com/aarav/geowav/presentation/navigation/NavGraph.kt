@@ -186,7 +186,7 @@ fun AddSignUpScreen(
         route = NavRoute.SignUp.path
     ) {
         SignupScreen(
-            googleSignInClient,
+            signUpVM = hiltViewModel(),
             navigateToHome = {
                 navController.navigate(NavRoute.HomeScreen.path)
             },
@@ -206,7 +206,7 @@ fun AddLoginScreen(
         route = NavRoute.Login.path
     ) {
         LoginScreen(
-            googleSignInClient,
+            loginVM = hiltViewModel(),
             navigateToMap = {
                 navController.navigate(NavRoute.HomeScreen.path)
             },

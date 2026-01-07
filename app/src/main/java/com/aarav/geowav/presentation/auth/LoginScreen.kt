@@ -23,6 +23,7 @@ import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -30,6 +31,7 @@ import androidx.compose.material3.TextField
 import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -40,27 +42,27 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.PasswordVisualTransformation
+import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import com.aarav.geowav.R
-import com.aarav.geowav.domain.authentication.GoogleSignInClient
+import com.aarav.geowav.presentation.components.MyAlertDialog
 import com.aarav.geowav.ui.theme.manrope
 import com.aarav.geowav.ui.theme.sora
-import kotlinx.coroutines.launch
 
 @Preview(showBackground = true)
 @Composable
 fun LoginScreen(
-    googleSignInClient: GoogleSignInClient, navigateToMap: () -> Unit, navigateToSignUp: () -> Unit
+    loginVM: LoginVM, navigateToMap: () -> Unit, navigateToSignUp: () -> Unit
 ) {
 
-
-    var show by remember { mutableStateOf(false) }
-
+    val uiState by loginVM.uiState.collectAsState()
 
     Box(
         modifier = Modifier
@@ -69,7 +71,7 @@ fun LoginScreen(
 
     ) {
 
-        if (show) {
+        if (uiState.isLoading) {
             Dialog(onDismissRequest = {}, content = {
                 Card(
                     shape = RoundedCornerShape(16.dp),
@@ -85,6 +87,20 @@ fun LoginScreen(
                     }
                 }
             })
+        }
+
+        LaunchedEffect(uiState.isSignInSuccessful) {
+            if (uiState.isSignInSuccessful) navigateToMap()
+        }
+
+        MyAlertDialog(
+            shouldShowDialog = uiState.showErrorDialog,
+            onDismissRequest = { loginVM.clearError() },
+            title = "Error",
+            message = uiState.error ?: "An unknown error occurred",
+            confirmButtonText = "Dismiss"
+        ) {
+            loginVM.clearError()
         }
 
         Column(
@@ -117,22 +133,20 @@ fun LoginScreen(
 
             Spacer(modifier = Modifier.height(40.dp))
 
-            val coroutine = rememberCoroutineScope()
-
-
             // Google Login Button
             Card(
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(56.dp)
                     .clickable {
-                        coroutine.launch {
-                            val b = googleSignInClient.signIn()
-                            if (b) {
-                                show = true
-                                navigateToMap()
-                            }
-                        }
+                        loginVM.signInWithGoogle()
+//                        coroutine.launch {
+//                            val b = googleSignInClient.signIn()
+//                            if (b) {
+//                                show = true
+//                                navigateToMap()
+//                            }
+//                        }
                     }, shape = RoundedCornerShape(12.dp), colors = CardDefaults.cardColors(
                     containerColor = MaterialTheme.colorScheme.inverseSurface
                 ), elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
@@ -173,79 +187,128 @@ fun LoginScreen(
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            var email by remember {
-                mutableStateOf("")
-            }
 
             TextField(
-                value = email, onValueChange = { email = it }, label = {
-                Text(
-                    "Email", fontFamily = sora, color = MaterialTheme.colorScheme.inverseSurface
-                )
-            }, modifier = Modifier
+                value = uiState.email, onValueChange = { loginVM.updateEmail(it) }, label = {
+                    Text(
+                        "Email", fontFamily = sora, color = MaterialTheme.colorScheme.inverseSurface
+                    )
+                },
+                isError = uiState.emailError != null,
+                supportingText = {
+                    if(uiState.emailError != null){
+                        Text(
+                            text = uiState.emailError.toString(),
+                            style = TextStyle(
+                                fontSize = 14.sp,
+                                fontFamily = sora,
+                                fontWeight = FontWeight.Medium,
+                                color = MaterialTheme.colorScheme.error
+                            )
+                        )
+                    }
+                },
+                modifier = Modifier
                     .fillMaxWidth()
                     .padding(), singleLine = true, leadingIcon = {
-                Icon(
-                    painter = painterResource(R.drawable.email),
-                    contentDescription = "email icon",
-                    modifier = Modifier.size(24.dp)
-                )
-            }, colors = TextFieldDefaults.colors(
-                focusedContainerColor = MaterialTheme.colorScheme.surfaceContainer,
-                unfocusedContainerColor = MaterialTheme.colorScheme.surfaceContainer,
-                focusedIndicatorColor = MaterialTheme.colorScheme.primary,
-                unfocusedIndicatorColor = Color.Transparent,
-                focusedLabelColor = MaterialTheme.colorScheme.primary,
-                unfocusedLabelColor = Color.DarkGray,
-                cursorColor = MaterialTheme.colorScheme.primary
-            ), shape = RoundedCornerShape(12.dp)
+                    Icon(
+                        painter = painterResource(R.drawable.email),
+                        contentDescription = "email icon",
+                        modifier = Modifier.size(24.dp)
+                    )
+                }, colors = TextFieldDefaults.colors(
+                    focusedContainerColor = MaterialTheme.colorScheme.surfaceContainer,
+                    unfocusedContainerColor = MaterialTheme.colorScheme.surfaceContainer,
+                    focusedIndicatorColor = MaterialTheme.colorScheme.primary,
+                    unfocusedIndicatorColor = Color.Transparent,
+                    focusedLabelColor = MaterialTheme.colorScheme.primary,
+                    unfocusedLabelColor = Color.DarkGray,
+                    cursorColor = MaterialTheme.colorScheme.primary
+                ), shape = RoundedCornerShape(12.dp)
             )
-            var password by remember {
-                mutableStateOf("")
-            }
-
 
             Spacer(modifier = Modifier.height(12.dp))
 
             TextField(
-                value = password, onValueChange = { password = it }, label = {
-                Text(
-                    "Password",
-                    fontFamily = sora,
-                    color = MaterialTheme.colorScheme.inverseSurface
-                )
-            }, modifier = Modifier
+                value = uiState.password,
+                onValueChange = { loginVM.updatePassword(it) },  visualTransformation = if (uiState.isPasswordVisible)
+                    VisualTransformation.None
+                else
+                    PasswordVisualTransformation(),
+                trailingIcon = {
+                    val icon = if (uiState.isPasswordVisible)
+                        R.drawable.eye
+                    else
+                        R.drawable.eye_closed
+
+                    IconButton(onClick = {
+                        if (uiState.isPasswordVisible) {
+                            loginVM.hidePassword()
+                        } else {
+                            loginVM.showPassword()
+                        }
+                    }) {
+                        Icon(
+                            painter = painterResource(
+                                icon
+                            ),
+                            contentDescription = if (uiState.isPasswordVisible)
+                                "Hide password"
+                            else
+                                "Show password",
+                            modifier = Modifier.size(24.dp)
+                        )
+                    }
+                },
+                label = {
+                    Text(
+                        "Password",
+                        fontFamily = sora,
+                        color = MaterialTheme.colorScheme.inverseSurface
+                    )
+                },
+                isError = uiState.passwordError != null,
+                supportingText = {
+                    if(uiState.passwordError != null){
+                        Text(
+                            text = uiState.passwordError.toString(),
+                            style = TextStyle(
+                                fontSize = 14.sp,
+                                fontFamily = sora,
+                                fontWeight = FontWeight.Medium,
+                                color = MaterialTheme.colorScheme.error
+                            )
+                        )
+                    }
+                },
+                modifier = Modifier
                     .fillMaxWidth()
                     .padding(), leadingIcon = {
-                Icon(
-                    painter = painterResource(R.drawable.password),
-                    contentDescription = "password icon",
-                    modifier = Modifier.size(24.dp)
-                )
-            }, singleLine = true, colors = TextFieldDefaults.colors(
-                focusedContainerColor = MaterialTheme.colorScheme.surfaceContainer,
-                unfocusedContainerColor = MaterialTheme.colorScheme.surfaceContainer,
-                focusedIndicatorColor = MaterialTheme.colorScheme.primary,
-                unfocusedIndicatorColor = Color.Transparent,
-                focusedLabelColor = MaterialTheme.colorScheme.primary,
-                unfocusedLabelColor = Color.DarkGray,
-                cursorColor = MaterialTheme.colorScheme.primary
-            ), shape = RoundedCornerShape(12.dp)
+                    Icon(
+                        painter = painterResource(R.drawable.password),
+                        contentDescription = "password icon",
+                        modifier = Modifier.size(24.dp)
+                    )
+                }, singleLine = true, colors = TextFieldDefaults.colors(
+                    focusedContainerColor = MaterialTheme.colorScheme.surfaceContainer,
+                    unfocusedContainerColor = MaterialTheme.colorScheme.surfaceContainer,
+                    focusedIndicatorColor = MaterialTheme.colorScheme.primary,
+                    unfocusedIndicatorColor = Color.Transparent,
+                    focusedLabelColor = MaterialTheme.colorScheme.primary,
+                    unfocusedLabelColor = Color.DarkGray,
+                    cursorColor = MaterialTheme.colorScheme.primary
+                ), shape = RoundedCornerShape(12.dp)
             )
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            LaunchedEffect(show) {
-                if (show) navigateToMap()
-            }
+
 
             Button(
                 onClick = {
-                    googleSignInClient.signInWithEmailAndPassword(
-                        email, password
-                    ) {
-                        show = it
-                    }
+                    loginVM.signInWithEmailAndPassword(
+                        uiState.email, uiState.password
+                    )
                 },
                 modifier = Modifier
                     .fillMaxWidth()
@@ -298,7 +361,6 @@ fun LoginScreen(
                         fontFamily = sora
                     )
                 }
-
             }
         }
     }

@@ -99,58 +99,52 @@ class GoogleSignInClient @Inject constructor(
         firebaseAuth.signOut()
     }
 
-    fun signUpUsingEmailAndPassword(
+    suspend fun signUpUsingEmailAndPassword(
         username: String,
         email: String,
-        password: String,
-        onSignUpSuccess: (Boolean) -> Unit
-    ) {
+        password: String
+    ): Boolean {
+        return try {
 
-        val finalEmail = email.trim()
-        val finalPass = password.trim()
+            val finalEmail = email.trim()
+            val finalPass = password.trim()
 
-        if (finalPass.isNotBlank() && finalEmail.isNotBlank()) {
-            firebaseAuth.createUserWithEmailAndPassword(finalEmail, finalPass)
-                .addOnCompleteListener {
-                    if (it.isSuccessful) {
-                        Log.d(tag, "signUpUsingEmailAndPassword: Success")
-                        if (firebaseAuth.currentUser != null) {
+            if (finalEmail.isBlank() || finalPass.isBlank()) return false
 
-                            storeUserData(email, username)
+            firebaseAuth
+                .createUserWithEmailAndPassword(finalEmail, finalPass)
+                .await()
 
-                            onSignUpSuccess(true)
+            val user = firebaseAuth.currentUser ?: return false
 
-                        } else {
-                            Log.e(tag, "signUpUsingEmailAndPassword: Failed")
+            storeUserData(finalEmail, username)
 
-                            onSignUpSuccess(false)
-                        }
-                    }
-                }
+            true
+        } catch (e: Exception) {
+            Log.e(tag, "signUp failed", e)
+            false
         }
     }
 
-    fun signInWithEmailAndPassword(
-        email: String, password: String,
-        onSignInSuccess: (Boolean) -> Unit
-    ) {
-        val finalEmail = email.trim()
-        val finalPass = password.trim()
 
-        if (finalEmail.isNotBlank() && finalPass.isNotBlank()) {
-            firebaseAuth.signInWithEmailAndPassword(finalEmail, finalPass)
-                .addOnSuccessListener {
+    suspend fun signInWithEmailAndPassword(
+        email: String, password: String
+    ): Boolean {
+        try {
+            val finalEmail = email.trim()
+            val finalPass = password.trim()
 
-                    Log.d(tag, "signInUsingEmailAndPassword: Success")
-                    onSignInSuccess(true)
-                }
-                .addOnFailureListener {
-                    Log.e(tag, "signInUsingEmailAndPassword: Failed")
+            if (finalEmail.isBlank() || finalPass.isBlank()) return false
 
-                    onSignInSuccess(false)
-                }
+
+            firebaseAuth.signInWithEmailAndPassword(finalEmail, finalPass).await()
+            return true
+        } catch (e: Exception) {
+            Log.i(tag, e.message.toString())
+            return false
         }
     }
+
 
     fun storeUserData(email: String, username: String) {
         val userId = getUserId()

@@ -23,6 +23,7 @@ import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -30,35 +31,51 @@ import androidx.compose.material3.TextField
 import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.PasswordVisualTransformation
+import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import com.aarav.geowav.R
-import com.aarav.geowav.domain.authentication.GoogleSignInClient
+import com.aarav.geowav.presentation.components.MyAlertDialog
 import com.aarav.geowav.ui.theme.manrope
 import com.aarav.geowav.ui.theme.sora
-import kotlinx.coroutines.launch
 
 @Preview(showBackground = true)
 @Composable
 fun SignupScreen(
-    googleSignInClient: GoogleSignInClient, navigateToHome: () -> Unit, navigateToLogin: () -> Unit
+    signUpVM: SignUpVM, navigateToHome: () -> Unit, navigateToLogin: () -> Unit
 ) {
 
-    var show by remember { mutableStateOf(false) }
+
+    val uiState by signUpVM.uiState.collectAsState()
+
+    LaunchedEffect(uiState.isSignUpSuccessful) {
+        if (uiState.isSignUpSuccessful) {
+            navigateToHome()
+        }
+    }
+
+    MyAlertDialog(
+        shouldShowDialog = uiState.showErrorDialog,
+        onDismissRequest = { signUpVM.clearError() },
+        title = "Error",
+        message = uiState.error ?: "An unknown error occurred",
+        confirmButtonText = "Dismiss"
+    ) {
+        signUpVM.clearError()
+    }
 
     Box(
         modifier = Modifier
@@ -66,7 +83,7 @@ fun SignupScreen(
             .background(MaterialTheme.colorScheme.background)
     ) {
 
-        if (show) {
+        if (uiState.isLoading) {
             Dialog(onDismissRequest = {}, content = {
                 Card(
                     shape = RoundedCornerShape(16.dp),
@@ -113,21 +130,13 @@ fun SignupScreen(
 
             Spacer(modifier = Modifier.height(40.dp))
 
-            val coroutine = rememberCoroutineScope()
-
             // Google Signup
             Card(
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(56.dp)
                     .clickable {
-                        coroutine.launch {
-                            val b = googleSignInClient.signIn()
-                            if (b) {
-                                show = true
-                                navigateToHome()
-                            }
-                        }
+                        signUpVM.signInWithGoogle()
                     },
                 shape = RoundedCornerShape(12.dp),
                 colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.inverseSurface),
@@ -168,13 +177,9 @@ fun SignupScreen(
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            var email by remember { mutableStateOf("") }
-            var password by remember { mutableStateOf("") }
-            var name by remember { mutableStateOf("") }
-
             TextField(
-                value = name,
-                onValueChange = { name = it },
+                value = uiState.username,
+                onValueChange = { signUpVM.updateUsername(it) },
                 label = {
                     Text(
                         "Name", fontFamily = sora, color = MaterialTheme.colorScheme.inverseSurface
@@ -187,6 +192,20 @@ fun SignupScreen(
                         modifier = Modifier.size(24.dp)
                     )
                 },
+                isError = uiState.usernameError != null,
+                supportingText = {
+                    if (uiState.usernameError != null) {
+                        Text(
+                            text = uiState.usernameError.toString(),
+                            style = TextStyle(
+                                fontSize = 14.sp,
+                                fontFamily = sora,
+                                fontWeight = FontWeight.Medium,
+                                color = MaterialTheme.colorScheme.error
+                            )
+                        )
+                    }
+                },
                 modifier = Modifier.fillMaxWidth(),
                 singleLine = true,
                 colors = TextFieldDefaults.colors(
@@ -204,8 +223,8 @@ fun SignupScreen(
             Spacer(modifier = Modifier.height(12.dp))
 
             TextField(
-                value = email,
-                onValueChange = { email = it },
+                value = uiState.email,
+                onValueChange = { signUpVM.updateEmail(it) },
                 label = {
                     Text(
                         "Email", fontFamily = sora, color = MaterialTheme.colorScheme.inverseSurface
@@ -218,6 +237,20 @@ fun SignupScreen(
                         modifier = Modifier.size(24.dp)
                     )
                 },
+                isError = uiState.emailError != null,
+                supportingText = {
+                    if (uiState.emailError != null) {
+                        Text(
+                            text = uiState.emailError.toString(),
+                            style = TextStyle(
+                                fontSize = 14.sp,
+                                fontFamily = sora,
+                                fontWeight = FontWeight.Medium,
+                                color = MaterialTheme.colorScheme.error
+                            )
+                        )
+                    }
+                },
                 modifier = Modifier.fillMaxWidth(),
                 singleLine = true,
                 colors = TextFieldDefaults.colors(
@@ -235,8 +268,37 @@ fun SignupScreen(
             Spacer(modifier = Modifier.height(12.dp))
 
             TextField(
-                value = password,
-                onValueChange = { password = it },
+                value = uiState.password,
+                onValueChange = { signUpVM.updatePassword(it) },
+                visualTransformation = if (uiState.isPasswordVisible)
+                    VisualTransformation.None
+                else
+                    PasswordVisualTransformation(),
+                trailingIcon = {
+                    val icon = if (uiState.isPasswordVisible)
+                        R.drawable.eye
+                    else
+                        R.drawable.eye_closed
+
+                    IconButton(onClick = {
+                        if (uiState.isPasswordVisible) {
+                            signUpVM.hidePassword()
+                        } else {
+                            signUpVM.showPassword()
+                        }
+                    }) {
+                        Icon(
+                            painter = painterResource(
+                                icon
+                            ),
+                            contentDescription = if (uiState.isPasswordVisible)
+                                "Hide password"
+                            else
+                                "Show password",
+                            modifier = Modifier.size(24.dp)
+                        )
+                    }
+                },
                 label = {
                     Text(
                         "Password",
@@ -250,6 +312,20 @@ fun SignupScreen(
                         contentDescription = "password icon",
                         modifier = Modifier.size(24.dp)
                     )
+                },
+                isError = uiState.passwordError != null,
+                supportingText = {
+                    if (uiState.passwordError != null) {
+                        Text(
+                            text = uiState.passwordError.toString(),
+                            style = TextStyle(
+                                fontSize = 14.sp,
+                                fontFamily = sora,
+                                fontWeight = FontWeight.Medium,
+                                color = MaterialTheme.colorScheme.error
+                            )
+                        )
+                    }
                 },
                 modifier = Modifier.fillMaxWidth(),
                 singleLine = true,
@@ -268,22 +344,14 @@ fun SignupScreen(
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            val scope = rememberCoroutineScope()
 
-
-            LaunchedEffect(show) {
-                if (show) {
-                    navigateToHome()
-                }
-            }
             Button(
                 onClick = {
-                    scope.launch {
-                        googleSignInClient.signUpUsingEmailAndPassword(name, email, password, {
-                            show = it
-                        })
-
-                    }
+                    signUpVM.signUpWithEmailAndPassword(
+                        uiState.username,
+                        uiState.email,
+                        uiState.password
+                    )
                 },
                 modifier = Modifier
                     .fillMaxWidth()
