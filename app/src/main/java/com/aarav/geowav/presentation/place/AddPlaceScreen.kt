@@ -38,6 +38,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -57,7 +58,9 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.aarav.geowav.R
+import com.aarav.geowav.data.place.Place
 import com.aarav.geowav.presentation.components.CustomChip
+import com.aarav.geowav.presentation.components.MyAlertDialog
 import com.aarav.geowav.presentation.components.PlaceTextField
 import com.aarav.geowav.presentation.components.RadiusChipGroup
 import com.aarav.geowav.ui.theme.GeoWavTheme
@@ -67,13 +70,14 @@ import com.aarav.geowav.ui.theme.surfaceContainerHighDark
 import com.aarav.geowav.ui.theme.surfaceContainerLight
 import com.google.android.gms.maps.model.CameraPosition
 import com.google.android.gms.maps.model.LatLng
-import com.google.android.libraries.places.api.model.Place
 import com.google.maps.android.compose.GoogleMap
 import com.google.maps.android.compose.MapUiSettings
 import com.google.maps.android.compose.Marker
 import com.google.maps.android.compose.MarkerState
 import com.google.maps.android.compose.rememberCameraPositionState
-import kotlinx.coroutines.delay
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Preview(showBackground = true)
@@ -86,53 +90,49 @@ fun AddPlaceScreen(
 ) {
 
 
-    var selectedPlace by remember {
-        mutableStateOf<Place?>(null)
-    }
+    val uiState by placeViewModel.uiState.collectAsState()
+
+    val selectedPlace = uiState.selectedPlace
 
     var placeName by remember {
         mutableStateOf(selectedPlace?.displayName ?: "")
+    }
+
+    LaunchedEffect(selectedPlace) {
+        selectedPlace?.displayName?.let {
+            placeName = it
+        }
     }
 
     var latlng by remember {
         mutableStateOf<LatLng>(LatLng(0.0, 0.0))
     }
 
-    val context = LocalContext.current
-
-
-
     LaunchedEffect(selectedPlace) {
-        placeViewModel.fetchPlace(
-            placeId,
-            context
-        ) { place ->
-            selectedPlace = place
-            placeName = place.displayName ?: ""
-            latlng = LatLng(
-                place.location?.latitude ?: 0.0,
-                place.location?.longitude ?: 0.0
-            )
+        selectedPlace?.location?.let {
+            latlng = LatLng(it.latitude, it.longitude)
         }
     }
 
-    val chips = listOf(200F, 300F, 400F, 500F)
-    var selectedRadius by remember {
-        mutableStateOf(200F)
+    val context = LocalContext.current
+
+
+    LaunchedEffect(placeId) {
+        placeViewModel.fetchPlace(placeId)
     }
 
 
-    val finalPlace = com.aarav.geowav.data.place.Place(
-        placeId = placeId,
-        customName = placeName,
-        placeName = selectedPlace?.displayName ?: "Place Name Unavailable",
-        latitude = latlng.latitude,
-        longitude = latlng.longitude,
-        address = selectedPlace?.shortFormattedAddress ?: "Address Unavailable",
-        radius = selectedRadius,
-        triggerType = "ENTER_EXIT",
-        addedOn = placeViewModel.getFormattedDate()
-    )
+    MyAlertDialog(
+        shouldShowDialog = uiState.showErrorDialog,
+        onDismissRequest = {
+            placeViewModel.clearError()
+        },
+        title = "Unable To Fetch",
+        message = uiState.error ?: "Unable to fetch place details",
+        confirmButtonText = "Dismiss"
+    ) {
+        placeViewModel.clearError()
+    }
 
     GeoWavTheme {
         Scaffold(
@@ -185,6 +185,21 @@ fun AddPlaceScreen(
                     ) {
                         FilledTonalButton(
                             onClick = {
+
+                                val finalPlace = Place(
+                                    placeId = placeId,
+                                    customName = placeName,
+                                    placeName = selectedPlace?.displayName
+                                        ?: "Place Name Unavailable",
+                                    latitude = latlng.latitude,
+                                    longitude = latlng.longitude,
+                                    address = selectedPlace?.shortFormattedAddress
+                                        ?: "Address Unavailable",
+                                    radius = uiState.selectedRadius,
+                                    triggerType = "ENTER_EXIT",
+                                    addedOn = getFormattedDate()
+                                )
+
                                 placeViewModel.addPlace(finalPlace)
                                 navigateToYourPlaces()
                                 Toast.makeText(
@@ -213,16 +228,8 @@ fun AddPlaceScreen(
                 }
             }
         ) {
-            var showLoader by remember {
-                mutableStateOf(true)
-            }
 
-            LaunchedEffect(Unit) {
-                delay(1000)
-                showLoader = false
-            }
-
-            AnimatedVisibility(showLoader) {
+            AnimatedVisibility(uiState.isLoading) {
                 Box(
                     modifier = Modifier.fillMaxSize(),
                     contentAlignment = Alignment.Center
@@ -232,7 +239,7 @@ fun AddPlaceScreen(
             }
 
 
-            AnimatedVisibility(!showLoader) {
+            AnimatedVisibility(!uiState.isLoading) {
                 Column(
                     modifier = Modifier
                         .padding(it)
@@ -323,12 +330,12 @@ fun AddPlaceScreen(
                     Spacer(modifier = Modifier.height(16.dp))
 
                     RadiusChipGroup(
-                        chips = chips,
-                        selectedRadius = selectedRadius
+                        chips = uiState.chips,
+                        selectedRadius = uiState.selectedRadius
                     ) { radius ->
-                        selectedRadius = radius
+                        placeViewModel.onRadiusChange(radius)
 
-                        Log.i("MYTAG", "Selected Radius : $selectedRadius")
+                        Log.i("MYTAG", "Selected Radius : ${uiState.selectedRadius}")
                     }
 
                     Spacer(modifier = Modifier.height(0.dp))
@@ -397,16 +404,20 @@ fun AddPlaceScreen(
                             zoomGesturesEnabled = false
                         )
                     ) {
-                        Marker(
-                            state = MarkerState(
-                                latlng,
+
+                        if (latlng.latitude != 0.0 && latlng.longitude != 0.0) {
+                            Marker(
+                                state = MarkerState(
+                                    latlng,
 //                            LatLng(
 //                            selectedPlace?.location?.latitude ?: 0.0,
 //                            selectedPlace?.location?.longitude ?: 0.0
 //                        )
-                            ),
-                            title = selectedPlace?.displayName ?: ""
-                        )
+                                ),
+                                title = selectedPlace?.displayName ?: ""
+                            )
+                        }
+
                     }
 
                     Spacer(modifier = Modifier.height(16.dp))
@@ -417,4 +428,9 @@ fun AddPlaceScreen(
         }
 
     }
+}
+
+fun getFormattedDate(): String {
+    val formatter = SimpleDateFormat("dd MMM yyyy", Locale.getDefault())
+    return formatter.format(Date())
 }

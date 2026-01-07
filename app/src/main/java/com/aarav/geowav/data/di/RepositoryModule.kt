@@ -1,7 +1,9 @@
 package com.aarav.geowav.data.di
 
 import com.aarav.geowav.data.repository.GeoActivityRepositoryImpl
+import com.aarav.geowav.domain.place.PlaceRepositoryImpl
 import com.aarav.geowav.domain.repository.GeoActivityRepository
+import com.aarav.geowav.domain.repository.PlaceRepository
 import dagger.Binds
 import dagger.Module
 import dagger.hilt.InstallIn
@@ -15,4 +17,9 @@ abstract class RepositoryModule {
     abstract fun bindGeoActivityRepository(
         impl: GeoActivityRepositoryImpl
     ): GeoActivityRepository
+
+    @Binds
+    abstract fun bindPlacesRepository(
+        impl: PlaceRepositoryImpl
+    ): PlaceRepository
 }
