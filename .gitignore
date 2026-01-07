@@ -21,4 +21,6 @@ local.properties
 /newstore
 /app/google-services.json
 /keystore
-/app/src/main/res/values/strings.xml
+/hs_err_pid7676.log
+/hs_err_pid13824.log
+/hs_err_pid25540.log
