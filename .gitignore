@@ -20,3 +20,5 @@ local.properties
 /Screenshot_20251020_003126.png
 /newstore
 /app/google-services.json
+/keystore
+/app/src/main/res/values/strings.xml
