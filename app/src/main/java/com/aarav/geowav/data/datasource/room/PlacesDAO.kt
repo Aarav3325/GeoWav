@@ -1,10 +1,10 @@
-package com.aarav.geowav.data.room
+package com.aarav.geowav.data.datasource.room
 
 import androidx.room.Dao
 import androidx.room.Delete
 import androidx.room.Insert
 import androidx.room.Query
-import com.aarav.geowav.data.place.Place
+import com.aarav.geowav.data.model.Place
 import kotlinx.coroutines.flow.Flow
 
 @Dao

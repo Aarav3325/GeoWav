@@ -1,4 +1,4 @@
-package com.aarav.geowav.data.room
+package com.aarav.geowav.data.datasource.room
 
 import androidx.room.Dao
 import androidx.room.Delete

@@ -1,13 +1,10 @@
 package com.aarav.geowav.presentation.map
 
 import android.app.Application
-import android.location.Location
 import androidx.lifecycle.AndroidViewModel
-import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.aarav.geowav.data.location.LocationManager
 import com.aarav.geowav.domain.repository.PlaceRepository
-import com.aarav.geowav.domain.utils.Resource
+import com.aarav.geowav.core.utils.Resource
 import com.google.android.libraries.places.api.model.AutocompletePrediction
 import com.google.android.libraries.places.api.model.Place
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -99,6 +96,9 @@ class MapViewModel @Inject constructor(application: Application,
 
 
     fun searchPlaces(query: String) {
+
+        if (_uiState.value.isLoading) return
+        if (_uiState.value.showErrorDialog) return
 
         viewModelScope.launch {
 

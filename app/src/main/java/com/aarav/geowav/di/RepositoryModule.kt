@@ -1,7 +1,7 @@
-package com.aarav.geowav.data.di
+package com.aarav.geowav.di
 
 import com.aarav.geowav.data.repository.GeoActivityRepositoryImpl
-import com.aarav.geowav.domain.place.PlaceRepositoryImpl
+import com.aarav.geowav.data.repository.PlaceRepositoryImpl
 import com.aarav.geowav.domain.repository.GeoActivityRepository
 import com.aarav.geowav.domain.repository.PlaceRepository
 import dagger.Binds

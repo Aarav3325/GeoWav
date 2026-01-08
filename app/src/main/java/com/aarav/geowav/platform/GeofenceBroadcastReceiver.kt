@@ -1,4 +1,4 @@
-package com.aarav.geowav.data.geofence
+package com.aarav.geowav.platform
 
 import android.app.NotificationChannel
 import android.app.NotificationManager
@@ -8,12 +8,12 @@ import android.content.Intent
 import android.os.Build
 import android.util.Log
 import androidx.core.app.NotificationCompat
+import androidx.work.OneTimeWorkRequestBuilder
 import androidx.work.WorkManager
+import androidx.work.workDataOf
 import com.aarav.geowav.R
 import com.google.android.gms.location.Geofence
 import com.google.android.gms.location.GeofencingEvent
-import com.google.firebase.auth.FirebaseAuth
-import com.google.firebase.database.FirebaseDatabase
 
 class GeofenceBroadcastReceiver : BroadcastReceiver() {
 
@@ -34,14 +34,14 @@ class GeofenceBroadcastReceiver : BroadcastReceiver() {
         geofencingEvent.triggeringGeofences?.forEach { geofence ->
             showNotification(context, "GeoWav", "${transitionType.uppercase()} ${geofence.requestId}")
 
-            val inputData = androidx.work.workDataOf(
+            val inputData = workDataOf(
                 "geofenceId" to geofence.requestId,
                 "transitionType" to transitionType,
                 "latitude" to geofence.latitude,
                 "longitude" to geofence.longitude,
             )
 
-            val workRequest = androidx.work.OneTimeWorkRequestBuilder<GeofenceWorker>()
+            val workRequest = OneTimeWorkRequestBuilder<GeofenceWorker>()
                 .setInputData(inputData)
                 .build()
             Log.i("MYTAG", "Enqueueing GeofenceWorker for ${geofence.requestId}")

@@ -1,4 +1,4 @@
-package com.aarav.geowav.presentation
+package com.aarav.geowav.presentation.home
 
 
 import androidx.compose.animation.animateColorAsState
@@ -70,8 +70,8 @@ import coil.compose.AsyncImage
 import coil.decode.SvgDecoder
 import com.aarav.geowav.R
 import com.aarav.geowav.data.model.GeoConnection
-import com.aarav.geowav.data.place.Place
-import com.aarav.geowav.domain.authentication.GoogleSignInClient
+import com.aarav.geowav.data.model.Place
+import com.aarav.geowav.data.authentication.GoogleSignInClient
 import com.aarav.geowav.presentation.components.SnackbarManager
 import com.aarav.geowav.presentation.home.HomeScreenVM
 import com.aarav.geowav.ui.theme.GeoWavTheme
@@ -520,7 +520,7 @@ fun AddConnectionCard(onClick: () -> Unit) {
 @Composable
 fun ActiveZonesSection(
     zones: List<Place>,
-    onZoneClick: (_root_ide_package_.com.aarav.geowav.data.place.Place) -> Unit
+    onZoneClick: (com.aarav.geowav.data.model.Place) -> Unit
 ) {
     Column(
         modifier = Modifier.padding(vertical = 12.dp)

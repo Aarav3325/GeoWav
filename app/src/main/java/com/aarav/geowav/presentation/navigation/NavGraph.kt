@@ -10,8 +10,8 @@ import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.navArgument
-import com.aarav.geowav.domain.authentication.GoogleSignInClient
-import com.aarav.geowav.presentation.GeoWavHomeScreen
+import com.aarav.geowav.data.authentication.GoogleSignInClient
+import com.aarav.geowav.presentation.home.GeoWavHomeScreen
 import com.aarav.geowav.presentation.activity.ActivityScreen
 import com.aarav.geowav.presentation.auth.LoginScreen
 import com.aarav.geowav.presentation.auth.SignupScreen

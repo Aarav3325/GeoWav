@@ -1,12 +1,11 @@
 package com.aarav.geowav.data.repository
 
-import com.aarav.geowav.data.geofence.ActivityFilter
+import com.aarav.geowav.core.utils.ActivityFilter
 import com.aarav.geowav.data.mapper.FirebaseActivity
 import com.aarav.geowav.data.mapper.toGeoAlert
 import com.aarav.geowav.data.model.GeoAlert
 import com.aarav.geowav.domain.repository.GeoActivityRepository
-import com.aarav.geowav.domain.utils.TimeRange
-import com.aarav.geowav.domain.utils.rangeForFilter
+import com.aarav.geowav.core.utils.rangeForFilter
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.database.DataSnapshot
 import com.google.firebase.database.DatabaseError

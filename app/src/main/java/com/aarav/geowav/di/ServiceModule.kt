@@ -1,10 +1,10 @@
-package com.aarav.geowav.data.di
+package com.aarav.geowav.di
 
 import android.content.Context
 import android.content.SharedPreferences
-import com.aarav.geowav.data.geofence.GeofenceHelper
-import com.aarav.geowav.data.location.LocationManager
-import com.aarav.geowav.data.retrofit.MessageAPI
+import com.aarav.geowav.platform.GeofenceHelper
+import com.aarav.geowav.platform.LocationManager
+import com.aarav.geowav.data.datasource.retrofit.MessageAPI
 import com.google.android.gms.location.FusedLocationProviderClient
 import com.google.android.gms.location.GeofencingClient
 import com.google.android.gms.location.LocationServices

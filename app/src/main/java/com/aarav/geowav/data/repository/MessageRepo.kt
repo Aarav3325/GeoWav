@@ -3,7 +3,7 @@ package com.aarav.geowav.data.repository
 import android.util.Log
 import com.aarav.geowav.data.model.TemplateMessageRequest
 import com.aarav.geowav.data.model.WhatsAppMessageResponse
-import com.aarav.geowav.data.retrofit.RetrofitInstance
+import com.aarav.geowav.data.datasource.retrofit.RetrofitInstance
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.database.FirebaseDatabase
 import retrofit2.Call

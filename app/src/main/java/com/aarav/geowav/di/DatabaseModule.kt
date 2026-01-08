@@ -1,9 +1,9 @@
-package com.aarav.geowav.data.di
+package com.aarav.geowav.di
 
 import android.content.Context
-import com.aarav.geowav.data.room.ConnectionDao
-import com.aarav.geowav.data.room.PlaceDatabase
-import com.aarav.geowav.data.room.PlacesDAO
+import com.aarav.geowav.data.datasource.room.ConnectionDao
+import com.aarav.geowav.data.datasource.room.PlaceDatabase
+import com.aarav.geowav.data.datasource.room.PlacesDAO
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn

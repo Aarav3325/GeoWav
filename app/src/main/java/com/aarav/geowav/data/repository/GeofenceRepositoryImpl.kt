@@ -4,8 +4,8 @@ import android.Manifest
 import android.content.Context
 import android.util.Log
 import androidx.annotation.RequiresPermission
-import com.aarav.geowav.data.geofence.GeofenceHelper
-import com.aarav.geowav.data.place.Place
+import com.aarav.geowav.platform.GeofenceHelper
+import com.aarav.geowav.data.model.Place
 import com.google.android.gms.location.GeofencingClient
 import dagger.hilt.android.qualifiers.ApplicationContext
 import javax.inject.Inject

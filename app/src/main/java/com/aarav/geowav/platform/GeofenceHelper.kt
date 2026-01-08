@@ -1,4 +1,4 @@
-package com.aarav.geowav.data.geofence
+package com.aarav.geowav.platform
 
 import android.app.PendingIntent
 import android.content.Context

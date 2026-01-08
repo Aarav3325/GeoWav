@@ -1,4 +1,4 @@
-package com.aarav.geowav.data.di
+package com.aarav.geowav.di
 
 import android.content.Context
 import androidx.credentials.CredentialManager

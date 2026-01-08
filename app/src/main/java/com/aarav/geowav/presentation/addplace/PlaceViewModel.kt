@@ -2,9 +2,9 @@ package com.aarav.geowav.presentation.addplace
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.aarav.geowav.data.place.Place
+import com.aarav.geowav.data.model.Place
 import com.aarav.geowav.domain.repository.PlaceRepository
-import com.aarav.geowav.domain.utils.Resource
+import com.aarav.geowav.core.utils.Resource
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted

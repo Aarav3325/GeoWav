@@ -1,4 +1,4 @@
-package com.aarav.geowav.data.geofence
+package com.aarav.geowav.platform
 
 import android.content.Context
 import android.util.Log

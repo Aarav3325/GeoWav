@@ -50,9 +50,9 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.aarav.geowav.R
-import com.aarav.geowav.data.geofence.ActivityFilter
-import com.aarav.geowav.domain.utils.toLocalDateInIndia
-import com.aarav.geowav.presentation.buildRelativeSubtitle
+import com.aarav.geowav.core.utils.ActivityFilter
+import com.aarav.geowav.core.utils.toLocalDateInIndia
+import com.aarav.geowav.presentation.home.buildRelativeSubtitle
 import com.aarav.geowav.ui.theme.manrope
 import com.aarav.geowav.ui.theme.sora
 

@@ -2,11 +2,11 @@ package com.aarav.geowav.presentation.home
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.aarav.geowav.data.geofence.ActivityFilter
+import com.aarav.geowav.core.utils.ActivityFilter
 import com.aarav.geowav.data.model.GeoConnection
 import com.aarav.geowav.data.repository.GeoActivityRepositoryImpl
 import com.aarav.geowav.data.repository.GeoConnectionRepositoryImpl
-import com.aarav.geowav.domain.place.PlaceRepositoryImpl
+import com.aarav.geowav.data.repository.PlaceRepositoryImpl
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.stateIn

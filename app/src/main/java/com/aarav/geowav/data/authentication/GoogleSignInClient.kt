@@ -1,4 +1,4 @@
-package com.aarav.geowav.domain.authentication
+package com.aarav.geowav.data.authentication
 
 import android.content.Context
 import android.net.Uri
@@ -53,10 +53,10 @@ class GoogleSignInClient @Inject constructor(
         val credential = result.credential
 
         if (credential is CustomCredential &&
-            credential.type == GoogleIdTokenCredential.TYPE_GOOGLE_ID_TOKEN_CREDENTIAL
+            credential.type == GoogleIdTokenCredential.Companion.TYPE_GOOGLE_ID_TOKEN_CREDENTIAL
         ) {
             try {
-                val tokenCredential = GoogleIdTokenCredential.createFrom(credential.data)
+                val tokenCredential = GoogleIdTokenCredential.Companion.createFrom(credential.data)
 
                 val authCredential = GoogleAuthProvider.getCredential(tokenCredential.idToken, null)
 

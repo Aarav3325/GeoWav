@@ -2,7 +2,7 @@ package com.aarav.geowav.presentation.yourplace
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.aarav.geowav.data.place.Place
+import com.aarav.geowav.data.model.Place
 import com.aarav.geowav.domain.repository.PlaceRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import jakarta.inject.Inject

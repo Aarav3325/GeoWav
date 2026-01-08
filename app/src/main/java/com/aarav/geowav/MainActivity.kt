@@ -28,9 +28,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
-import com.aarav.geowav.data.geofence.GeofenceForegroundService
-import com.aarav.geowav.data.location.LocationManager
-import com.aarav.geowav.domain.authentication.GoogleSignInClient
+import com.aarav.geowav.platform.GeofenceForegroundService
+import com.aarav.geowav.platform.LocationManager
+import com.aarav.geowav.data.authentication.GoogleSignInClient
 import com.aarav.geowav.presentation.components.SnackbarManager
 import com.aarav.geowav.presentation.navigation.BottomNavigationBar
 import com.aarav.geowav.presentation.navigation.NavRoute

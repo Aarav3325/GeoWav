@@ -1,11 +1,10 @@
-package com.aarav.geowav.data.geofence
+package com.aarav.geowav.platform
 
 import android.Manifest
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.app.PendingIntent
 import android.app.Service
-import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.os.Build
@@ -14,10 +13,10 @@ import android.util.Log
 import androidx.core.app.ActivityCompat
 import androidx.core.app.NotificationCompat
 import com.aarav.geowav.R
-import com.aarav.geowav.data.place.Place
+import com.aarav.geowav.data.model.Place
 import com.aarav.geowav.data.repository.GeofenceRepositoryImpl
-import com.aarav.geowav.domain.authentication.GoogleSignInClient
-import com.aarav.geowav.domain.place.PlaceRepositoryImpl
+import com.aarav.geowav.data.authentication.GoogleSignInClient
+import com.aarav.geowav.data.repository.PlaceRepositoryImpl
 import com.google.android.gms.location.Geofence
 import com.google.android.gms.location.GeofencingClient
 import com.google.android.gms.location.GeofencingRequest
@@ -132,7 +131,7 @@ class GeofenceForegroundService : Service() {
         val channelId = "geo_channel"
         val channelName = "Geofence Alerts"
         val notificationManager =
-            getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+            getSystemService(NOTIFICATION_SERVICE) as NotificationManager
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             val channel = NotificationChannel(

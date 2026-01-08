@@ -208,7 +208,8 @@ fun MapScreen(mapViewModel: MapViewModel,
             }
 
             LaunchedEffect(textFieldState.text) {
-                if (textFieldState.text.length > 2) {
+                if (textFieldState.text.length > 2 &&
+                    !uiState.showErrorDialog) {
 
                     delay(300) // debounce
                     mapViewModel.searchPlaces(textFieldState.text.toString())

@@ -1,7 +1,7 @@
 package com.aarav.geowav.domain.repository
 
-import com.aarav.geowav.data.place.Place
-import com.aarav.geowav.domain.utils.Resource
+import com.aarav.geowav.data.model.Place
+import com.aarav.geowav.core.utils.Resource
 import com.google.android.libraries.places.api.model.AutocompletePrediction
 import kotlinx.coroutines.flow.Flow
 

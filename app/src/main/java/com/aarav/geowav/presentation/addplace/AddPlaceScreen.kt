@@ -57,7 +57,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.aarav.geowav.R
-import com.aarav.geowav.data.place.Place
+import com.aarav.geowav.data.model.Place
 import com.aarav.geowav.presentation.components.CustomChip
 import com.aarav.geowav.presentation.components.MyAlertDialog
 import com.aarav.geowav.presentation.components.PlaceTextField

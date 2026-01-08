@@ -3,7 +3,7 @@ package com.aarav.geowav.presentation.auth
 import android.util.Patterns
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.aarav.geowav.domain.authentication.GoogleSignInClient
+import com.aarav.geowav.data.authentication.GoogleSignInClient
 import dagger.hilt.android.lifecycle.HiltViewModel
 import jakarta.inject.Inject
 import kotlinx.coroutines.Dispatchers

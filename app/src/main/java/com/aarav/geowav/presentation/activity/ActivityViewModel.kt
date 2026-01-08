@@ -2,7 +2,7 @@ package com.aarav.geowav.presentation.activity
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.aarav.geowav.data.geofence.ActivityFilter
+import com.aarav.geowav.core.utils.ActivityFilter
 import com.aarav.geowav.data.model.GeoAlert
 import com.aarav.geowav.domain.repository.GeoActivityRepository
 import dagger.hilt.android.lifecycle.HiltViewModel

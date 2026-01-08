@@ -1,7 +1,7 @@
 package com.aarav.geowav.data.repository
 
 import com.aarav.geowav.data.model.GeoConnection
-import com.aarav.geowav.data.room.ConnectionDao
+import com.aarav.geowav.data.datasource.room.ConnectionDao
 import com.aarav.geowav.domain.repository.GeoConnectionRepository
 import kotlinx.coroutines.flow.Flow
 import javax.inject.Inject

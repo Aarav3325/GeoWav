@@ -1,4 +1,4 @@
-package com.aarav.geowav.domain.utils
+package com.aarav.geowav.core.utils
 
 sealed class Resource<T>(
     val data: T? = null,

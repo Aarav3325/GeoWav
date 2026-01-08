@@ -1,21 +1,23 @@
-package com.aarav.geowav.domain.place
+package com.aarav.geowav.data.repository
 
 import android.Manifest
-import android.content.Context
+import android.util.Log
 import androidx.annotation.RequiresPermission
-import com.aarav.geowav.data.place.Place
-import com.aarav.geowav.data.room.PlacesDAO
+import com.aarav.geowav.data.model.Place
+import com.aarav.geowav.data.datasource.room.PlacesDAO
 import com.aarav.geowav.domain.repository.PlaceRepository
-import com.aarav.geowav.domain.utils.Resource
+import com.aarav.geowav.core.utils.Resource
 import com.google.android.libraries.places.api.model.AutocompletePrediction
 import com.google.android.libraries.places.api.model.AutocompleteSessionToken
 import com.google.android.libraries.places.api.net.FetchPlaceRequest
 import com.google.android.libraries.places.api.net.FindAutocompletePredictionsRequest
 import com.google.android.libraries.places.api.net.PlacesClient
 import dagger.Lazy
-import jakarta.inject.Provider
+import kotlinx.coroutines.TimeoutCancellationException
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.tasks.await
+import kotlinx.coroutines.withTimeout
+import java.io.IOException
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -45,27 +47,38 @@ class PlaceRepositoryImpl @Inject constructor(
         query: String,
     ): Resource<List<AutocompletePrediction>> {
         return try {
-            val token = AutocompleteSessionToken.newInstance()
+            withTimeout(5_000) { // 5 seconds
+                val token = AutocompleteSessionToken.newInstance()
+                val client = placesClient.get()
 
-            val client = placesClient.get()
+                val request = FindAutocompletePredictionsRequest.builder()
+                    .setQuery(query)
+                    .setSessionToken(token)
+                    .build()
 
-            val request = FindAutocompletePredictionsRequest.builder()
-                .setQuery(query)
-                .setSessionToken(token)
-                .build()
+                val response = client
+                    .findAutocompletePredictions(request)
+                    .await()
 
-
-            val response = client
-                .findAutocompletePredictions(request)
-                .await()
-
-            Resource.Success(response.autocompletePredictions)
-
-        } catch (e: CancellationException) {
-            throw e
-        } catch (e: Exception) {
-            Resource.Error(message = e.message ?: "Failed to search places")
+                Resource.Success(response.autocompletePredictions)
+            }
+        } catch (e: TimeoutCancellationException) {
+            Resource.Error(message = "Request timed out. Check your internet connection.")
         }
+        catch (e: CancellationException) {
+            Log.i("PlacesAPI", e.message.toString())
+            return Resource.Error(message = e.message ?: "no connection found")
+            throw e
+        } catch (e: IOException) {
+
+            Log.i("PlacesAPI", e.message.toString())
+            return Resource.Error(message = "No internet connection")
+        } catch (e: Exception) {
+            Log.i("PlacesAPI", e.message.toString())
+
+            return Resource.Error(message = e.message ?: "Failed to search places")
+        }
+
     }
 
     override suspend fun fetchPlace(
@@ -101,4 +114,3 @@ class PlaceRepositoryImpl @Inject constructor(
     }
 
 }
-

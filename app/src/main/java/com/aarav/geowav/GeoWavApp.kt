@@ -6,7 +6,7 @@ import androidx.annotation.RequiresPermission
 import androidx.hilt.work.HiltWorkerFactory
 import androidx.work.Configuration
 import com.aarav.geowav.data.repository.GeofenceRepositoryImpl
-import com.aarav.geowav.domain.place.PlaceRepositoryImpl
+import com.aarav.geowav.data.repository.PlaceRepositoryImpl
 import com.google.android.gms.location.FusedLocationProviderClient
 import com.google.android.gms.location.LocationServices
 import com.google.android.libraries.places.api.Places

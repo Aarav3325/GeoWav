@@ -1,4 +1,4 @@
-package com.aarav.geowav.data.retrofit
+package com.aarav.geowav.data.datasource.retrofit
 
 import com.aarav.geowav.data.model.TemplateMessageRequest
 import com.aarav.geowav.data.model.WhatsAppMessageResponse

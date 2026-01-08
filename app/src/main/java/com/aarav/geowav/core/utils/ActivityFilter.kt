@@ -1,6 +1,5 @@
-package com.aarav.geowav.data.geofence
+package com.aarav.geowav.core.utils
 
-import android.icu.util.LocaleData
 import java.time.LocalDate
 
 sealed class ActivityFilter{

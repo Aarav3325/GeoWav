@@ -1,6 +1,6 @@
-package com.aarav.geowav.domain.utils
+package com.aarav.geowav.core.utils
 
-import com.aarav.geowav.data.geofence.ActivityFilter
+import com.aarav.geowav.core.utils.ActivityFilter
 import java.time.Instant
 import java.time.LocalDate
 import java.time.ZoneId
