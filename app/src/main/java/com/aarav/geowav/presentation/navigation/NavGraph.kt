@@ -56,14 +56,12 @@ fun NavGraph(
 
         AddSignUpScreen(
             navHostController,
-            this,
-            googleSignInClient
+            this
         )
 
         AddLoginScreen(
             navHostController,
-            this,
-            googleSignInClient
+            this
         )
 
         AddOnBoard(
@@ -74,8 +72,7 @@ fun NavGraph(
 
         AddHomeScreen(
             navHostController,
-            this,
-            googleSignInClient
+            this
         )
 
         AddActivityScreen(
@@ -170,8 +167,7 @@ fun AddYourPlacesScreen(
 
 fun AddSignUpScreen(
     navController: NavController,
-    navGraphBuilder: NavGraphBuilder,
-    googleSignInClient: GoogleSignInClient
+    navGraphBuilder: NavGraphBuilder
 ) {
     navGraphBuilder.composable(
         route = NavRoute.SignUp.path
@@ -190,8 +186,7 @@ fun AddSignUpScreen(
 
 fun AddLoginScreen(
     navController: NavController,
-    navGraphBuilder: NavGraphBuilder,
-    googleSignInClient: GoogleSignInClient
+    navGraphBuilder: NavGraphBuilder
 ) {
     navGraphBuilder.composable(
         route = NavRoute.Login.path
@@ -226,8 +221,7 @@ fun AddOnBoard(
 }
 
 fun AddHomeScreen(
-    navController: NavController, navGraphBuilder: NavGraphBuilder,
-    googleSignInClient: GoogleSignInClient
+    navController: NavController, navGraphBuilder: NavGraphBuilder
 ) {
     navGraphBuilder.composable(
         route = NavRoute.HomeScreen.path
@@ -243,7 +237,6 @@ fun AddHomeScreen(
                     restoreState = true
                 }
             },
-            googleSignInClient,
             onAddZone = {
                 navController.navigate(NavRoute.MapScreen.path) {
                     popUpTo(navController.graph.findStartDestination().id) {

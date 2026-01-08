@@ -10,10 +10,10 @@ import kotlinx.coroutines.flow.Flow
 @Dao
 interface ConnectionDao {
     @Insert
-    fun addConnection(geoConnection: GeoConnection)
+    suspend fun addConnection(geoConnection: GeoConnection)
 
     @Delete
-    fun deleteConnection(geoConnection: GeoConnection)
+    suspend fun deleteConnection(geoConnection: GeoConnection)
 
     @Query("SELECT * FROM geo_connections")
     fun getAllConnections(): Flow<List<GeoConnection>>

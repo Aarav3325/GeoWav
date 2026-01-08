@@ -69,11 +69,10 @@ import coil.ImageLoader
 import coil.compose.AsyncImage
 import coil.decode.SvgDecoder
 import com.aarav.geowav.R
+import com.aarav.geowav.data.authentication.GoogleSignInClient
 import com.aarav.geowav.data.model.GeoConnection
 import com.aarav.geowav.data.model.Place
-import com.aarav.geowav.data.authentication.GoogleSignInClient
 import com.aarav.geowav.presentation.components.SnackbarManager
-import com.aarav.geowav.presentation.home.HomeScreenVM
 import com.aarav.geowav.ui.theme.GeoWavTheme
 import com.aarav.geowav.ui.theme.manrope
 import com.aarav.geowav.ui.theme.sora
@@ -83,7 +82,6 @@ import kotlinx.coroutines.launch
 @Composable
 fun GeoWavHomeScreen(
     navigateToAuth: () -> Unit,
-    googleSignInClient: GoogleSignInClient,
     onAddZone: () -> Unit,
     onShareLocation: () -> Unit,
     onOpenAlerts: () -> Unit,
@@ -92,14 +90,9 @@ fun GeoWavHomeScreen(
     modifier: Modifier = Modifier
 ) {
 
-    val allConnection by homeScreenVM.allConnections.collectAsState()
-
-    val recentAlerts by homeScreenVM.alerts.collectAsState()
-
-    val finalRecentAlerts = recentAlerts.take(4)
+    val uiState by homeScreenVM.uiState.collectAsState()
 
 
-    val allPlaces by homeScreenVM.allPlaces.collectAsState()
 
     val scope = rememberCoroutineScope()
 
@@ -171,10 +164,8 @@ fun GeoWavHomeScreen(
 
                     IconButton(
                         onClick = {
-                            scope.launch {
-                                googleSignInClient.signOut()
-                                navigateToAuth()
-                            }
+                            homeScreenVM.signOut()
+                            navigateToAuth()
                         }
                     ) {
                         Image(
@@ -237,7 +228,8 @@ fun GeoWavHomeScreen(
 
 
                     ProfileCard(
-                        googleSignInClient,
+                        avatar = uiState.userAvatar,
+                        userName = uiState.username,
                         modifier = Modifier
                             .align(Alignment.Center)
                             .padding(top = 92.dp)
@@ -252,16 +244,16 @@ fun GeoWavHomeScreen(
 
                     ConnectionsRow(
                         title = "Your Circle",
-                        connections = allConnection,
+                        connections = uiState.connectionsList,
                         onAdd = onAddZone
                     )
 
                     ActiveZonesSection(
-                        zones = allPlaces,
+                        zones = uiState.placesList,
                         onZoneClick = {}
                     )
 
-                    if (allPlaces.isEmpty()) {
+                    if (uiState.placesList.isEmpty()) {
                         QuickActionsRow(
                             onAddZone = onAddZone,
                             onShare = onShareLocation,
@@ -296,7 +288,7 @@ fun GeoWavHomeScreen(
                         }
                     }
 
-                    RecentAlertsList(finalRecentAlerts)
+                    RecentAlertsList(uiState.alertsList.take(5))
                 }
             }
         }
@@ -309,9 +301,7 @@ fun GeoWavHomeScreen(
 fun CurrentLocationCard(city: String, lastUpdated: String, onViewMap: () -> Unit) {
 
     val Primary = MaterialTheme.colorScheme.primary
-    val Secondary = MaterialTheme.colorScheme.secondary
     val Accent = MaterialTheme.colorScheme.tertiary
-    val Success = MaterialTheme.colorScheme.surfaceTint
     Card(
         shape = RoundedCornerShape(14.dp),
         elevation = CardDefaults.cardElevation(6.dp),
@@ -798,7 +788,7 @@ fun AlertItem(alert: com.aarav.geowav.data.model.GeoAlert) {
 
 
 @Composable
-fun ProfileCard(googleSignInClient: GoogleSignInClient, modifier: Modifier = Modifier) {
+fun ProfileCard(avatar: String?, userName: String?, modifier: Modifier = Modifier) {
     Card(
         modifier = modifier
             .fillMaxWidth()
@@ -827,7 +817,7 @@ fun ProfileCard(googleSignInClient: GoogleSignInClient, modifier: Modifier = Mod
                 )
 
                 Text(
-                    text = googleSignInClient.getUserName(),
+                    text = userName ?: "",
                     fontFamily = manrope,
                     fontSize = 32.sp,
                     color = Color.Black,
@@ -838,27 +828,17 @@ fun ProfileCard(googleSignInClient: GoogleSignInClient, modifier: Modifier = Mod
             }
 
 
-            val uri by rememberSaveable {
-                mutableStateOf(
-                    googleSignInClient.getUserProfile()
-                )
-            }
-
-            val avatar by rememberSaveable {
-                mutableStateOf(uri.toString().isBlank())
-            }
-
             val isDark = isSystemInDarkTheme()
 
-            val imageUrl = rememberSaveable(avatar, isDark) {
-                if (avatar) {
+            val imageUrl = remember(avatar, isDark) {
+                if (avatar.isNullOrBlank()) {
                     if (isDark) {
                         "https://storage.googleapis.com/geowav-bucket-1/user_dark_theme.svg"
                     } else {
                         "https://storage.googleapis.com/geowav-bucket-1/user_light_theme.svg"
                     }
                 } else {
-                    uri
+                    avatar
                 }
             }
 

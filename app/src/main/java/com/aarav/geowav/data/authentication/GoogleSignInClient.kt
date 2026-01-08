@@ -15,7 +15,10 @@ import com.google.android.libraries.identity.googleid.GoogleIdTokenCredential
 import com.google.android.libraries.identity.googleid.GoogleIdTokenParsingException
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.GoogleAuthProvider
+import com.google.firebase.database.DataSnapshot
+import com.google.firebase.database.DatabaseError
 import com.google.firebase.database.FirebaseDatabase
+import com.google.firebase.database.ValueEventListener
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.tasks.await
@@ -171,8 +174,39 @@ class GoogleSignInClient @Inject constructor(
     }
 
     fun getUserName(): String {
-        return firebaseAuth.currentUser?.displayName ?: ""
+        //return firebaseAuth.currentUser?.displayName ?: ""
+
+        val currentUser = firebaseAuth.currentUser
+
+        Log.i("Provider", currentUser?.displayName.toString())
+        currentUser?.let {
+            if (it.displayName?.isNotEmpty() == true) {
+                return it.displayName ?: ""
+            } else {
+
+                var username: String = ""
+
+                userReference.child(it.uid).addValueEventListener(object : ValueEventListener {
+                    override fun onDataChange(snapshot: DataSnapshot) {
+                        val value = snapshot.child("username").getValue(String::class.java)
+
+                        value?.let {
+                            username = value
+                        }
+                    }
+
+                    override fun onCancelled(error: DatabaseError) {
+                    }
+
+                })
+
+                return username
+            }
+        }
+
+        return ""
     }
+
 
     fun getUserProfile(): Uri {
         return firebaseAuth.currentUser?.photoUrl ?: Uri.EMPTY

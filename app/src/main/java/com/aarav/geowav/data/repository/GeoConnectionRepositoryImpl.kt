@@ -9,11 +9,11 @@ import javax.inject.Inject
 class GeoConnectionRepositoryImpl @Inject constructor(
     val connectionDao: ConnectionDao
 ) : GeoConnectionRepository {
-    override fun addNewConnection(connection: GeoConnection) {
+    override suspend fun addNewConnection(connection: GeoConnection) {
         connectionDao.addConnection(connection)
     }
 
-    override fun deleteConnection(connection: GeoConnection) {
+    override suspend fun deleteConnection(connection: GeoConnection) {
         connectionDao.deleteConnection(connection)
     }
 

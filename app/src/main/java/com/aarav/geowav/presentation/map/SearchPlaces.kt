@@ -5,8 +5,10 @@ import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -44,7 +46,6 @@ import com.google.android.libraries.places.api.model.AutocompletePrediction
 @Composable
 fun NewSearch(
     predictions: List<AutocompletePrediction>,
-    context: Context,
     expanded: Boolean,
     modifier: Modifier = Modifier,
     onExpandedChange: (Boolean) -> Unit,
@@ -53,9 +54,6 @@ fun NewSearch(
     textFieldState: TextFieldState,
     onPlaceSelected: (String) -> Unit
 ) {
-
-
-    // Fetch predictions based on query
 
 
     Box(
@@ -165,8 +163,10 @@ fun NewSearch(
                     Icon(
                         painter = painterResource(R.drawable.gps),
                         contentDescription = "",
-                        tint = MaterialTheme.colorScheme.onPrimary
+                        tint = MaterialTheme.colorScheme.primaryContainer
                     )
+
+                    Spacer(modifier = Modifier.height(24.dp))
 
                     Text(
                         text = "No Places Found",

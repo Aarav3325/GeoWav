@@ -85,15 +85,11 @@ fun MapScreen(mapViewModel: MapViewModel,
         Log.i("MYTAG", "${location?.first} and ${location?.second}")
     }
 
-    var placeSheetState = rememberModalBottomSheetState(
+    val placeSheetState = rememberModalBottomSheetState(
         skipPartiallyExpanded = false
     )
 
     val textFieldState = rememberTextFieldState()
-
-
-
-    val context = LocalContext.current
 
 
     val scope = rememberCoroutineScope()
@@ -245,7 +241,6 @@ fun MapScreen(mapViewModel: MapViewModel,
 
             NewSearch(
                 predictions = uiState.predictions,
-                context = context,
                 expanded = uiState.isSearchExpanded,
                 modifier = Modifier.align(Alignment.TopCenter),
                 onExpandedChange = {
