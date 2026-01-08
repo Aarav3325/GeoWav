@@ -23,11 +23,15 @@ import javax.inject.Singleton
 @InstallIn(SingletonComponent::class)
 object ServiceModule {
 
+
     @Provides
     @Singleton
-    fun providePlacesClient(@ApplicationContext context: Context): PlacesClient {
+    fun providePlacesClient(
+        @ApplicationContext context: Context
+    ): PlacesClient {
         return Places.createClient(context)
     }
+
 
     @Provides
     @Singleton

@@ -1,4 +1,4 @@
-package com.aarav.geowav.presentation.place
+package com.aarav.geowav.presentation.yourplace
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -22,6 +22,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
@@ -42,11 +43,14 @@ import com.aarav.geowav.ui.theme.sora
 @Preview(showBackground = true)
 @Composable
 fun YourPlacesScreen(
-    placeViewModel: PlaceViewModel,
+    yourPlacesVM: YourPlacesVM,
     navigateToMap: () -> Unit
 ) {
+    val uiState by yourPlacesVM.uiState.collectAsState()
 
-    val placesList by placeViewModel.allPlaces.collectAsState()
+    LaunchedEffect(uiState.placesList) {
+        yourPlacesVM.getPlaces()
+    }
 
     Box(
         modifier = Modifier
@@ -68,7 +72,7 @@ fun YourPlacesScreen(
                 modifier = Modifier.padding(top = 54.dp)
             )
 
-            if (placesList.isEmpty()) {
+            if (uiState.placesList.isEmpty()) {
                 Box(
                     modifier = Modifier.fillMaxSize()
                 ) {
@@ -107,8 +111,10 @@ fun YourPlacesScreen(
                     .fillMaxSize()
                     .padding(top = 8.dp, bottom = 12.dp)
             ) {
-                items(placesList) { place ->
-                    GeofencePlaceCard(place, placeViewModel)
+                items(uiState.placesList) { place ->
+                    GeofencePlaceCard(place) {
+                        yourPlacesVM.deletePlace(place)
+                    }
                 }
             }
         }

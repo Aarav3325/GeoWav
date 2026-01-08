@@ -39,7 +39,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.aarav.geowav.R
 import com.aarav.geowav.data.place.Place
-import com.aarav.geowav.presentation.place.PlaceViewModel
 import com.aarav.geowav.ui.theme.GeoWavTheme
 import com.aarav.geowav.ui.theme.manrope
 import com.aarav.geowav.ui.theme.sora
@@ -50,7 +49,7 @@ import kotlin.math.roundToInt
 @Composable
 fun GeofencePlaceCard(
     place: Place,
-    placeViewModel: PlaceViewModel
+    onDeleteClick: (Place) -> Unit
 ) {
     GeoWavTheme {
         Card(
@@ -107,7 +106,7 @@ fun GeofencePlaceCard(
                     modifier = Modifier
                         .size(36.dp)
                         .clickable {
-                            placeViewModel.deletePlace(place)
+                            onDeleteClick(place)
                         },
                     color = MaterialTheme.colorScheme.errorContainer,
                     shape = CircleShape,

@@ -29,15 +29,13 @@ import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
+import com.aarav.geowav.presentation.components.MyAlertDialog
 import com.aarav.geowav.presentation.components.PlaceModalSheet
-import com.aarav.geowav.presentation.place.NewSearch
-import com.aarav.geowav.presentation.place.PlaceViewModel
 import com.aarav.geowav.ui.theme.manrope
 import com.aarav.geowav.ui.theme.*
 import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.model.CameraPosition
 import com.google.android.gms.maps.model.LatLng
-import com.google.android.libraries.places.api.model.Place
 import com.google.maps.android.compose.*
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -46,11 +44,12 @@ import kotlinx.coroutines.launch
 @Composable
 fun MapScreen(mapViewModel: MapViewModel,
               location : Pair<Double, Double>?,
-              placesViewModel : PlaceViewModel,
               navigateToAddPlace: (String) -> Unit,
               navigateToHome: () -> Unit,
               modifier: Modifier = Modifier) {
 
+
+    val uiState by mapViewModel.uiState.collectAsState()
 
     val cameraPositionState = rememberCameraPositionState()
 
@@ -64,6 +63,7 @@ fun MapScreen(mapViewModel: MapViewModel,
             compassEnabled = true))
     }
 
+    val selectedPlace = uiState.selectedPlace
 
     location?.let { (lat, lng) ->
         LaunchedEffect(lat, lng) {
@@ -71,26 +71,18 @@ fun MapScreen(mapViewModel: MapViewModel,
         }
     }
 
-
-    var showMarker by remember {
-        mutableStateOf(false)
+    MyAlertDialog(
+        shouldShowDialog = uiState.showErrorDialog,
+        onDismissRequest = { mapViewModel.clearError() },
+        title = "Error",
+        message = uiState.error ?: "Unable to fetch place details",
+        confirmButtonText = "Dismiss"
+    ) {
+        mapViewModel.clearError()
     }
 
     LaunchedEffect(location) {
         Log.i("MYTAG", "${location?.first} and ${location?.second}")
-    }
-
-
-//        LaunchedEffect(place) {
-//                cameraPositionState.animate(
-//                    CameraUpdateFactory.newLatLngZoom(LatLng(place?.location?.latitude ?: 0.0, place?.location?.latitude ?: 0.0), 16f)
-//                )
-////            delay(2000)
-////            onPlaceSelected(true)
-//    }
-
-    var showPlaceModalSheet by remember {
-        mutableStateOf(false)
     }
 
     var placeSheetState = rememberModalBottomSheetState(
@@ -99,15 +91,9 @@ fun MapScreen(mapViewModel: MapViewModel,
 
     val textFieldState = rememberTextFieldState()
 
-    var expanded by remember {
-        mutableStateOf(false)
-    }
+
 
     val context = LocalContext.current
-
-    var selectedPlace by remember {
-        mutableStateOf<Place?>(null)
-    }
 
 
     val scope = rememberCoroutineScope()
@@ -117,7 +103,7 @@ fun MapScreen(mapViewModel: MapViewModel,
         topBar = {
             TopAppBar(
                 colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = if(!isSystemInDarkTheme()) surfaceContainerLowestLightHighContrast else _root_ide_package_.com.aarav.geowav.ui.theme.surfaceContainerLowDarkHighContrast,
+                    containerColor = if(!isSystemInDarkTheme()) surfaceContainerLowestLightHighContrast else surfaceContainerLowDarkHighContrast,
                 ),
                 title = {
                     Text(
@@ -204,7 +190,7 @@ fun MapScreen(mapViewModel: MapViewModel,
                        )
                    }*/
 
-                if (selectedPlace != null) {
+                if (uiState.selectedPlace != null) {
                     Marker(
                         state = MarkerState(
                             position = LatLng(
@@ -213,7 +199,7 @@ fun MapScreen(mapViewModel: MapViewModel,
                             )
                         ),
                         onClick = {
-                            showPlaceModalSheet = true
+                            mapViewModel.showBottomSheet()
                             return@Marker true
                         },
                         title = selectedPlace?.displayName
@@ -221,52 +207,55 @@ fun MapScreen(mapViewModel: MapViewModel,
                 }
             }
 
+            LaunchedEffect(textFieldState.text) {
+                if (textFieldState.text.length > 2) {
 
+                    delay(300) // debounce
+                    mapViewModel.searchPlaces(textFieldState.text.toString())
+                }
+            }
 
 
 
             PlaceModalSheet(
                 place = selectedPlace,
                 sheetState = placeSheetState,
-                showSheet = showPlaceModalSheet,
+                showSheet = uiState.isBottomSheetShowing,
                 onAddPlaceBtnClick = navigateToAddPlace,
                 clearSearch = {
                     textFieldState.clearText()
                 },
                 onDismissRequest = {
-                    showPlaceModalSheet = false
+                    mapViewModel.dismissBottomSheet()
                 }
             )
 
+            LaunchedEffect(selectedPlace) {
+                selectedPlace?.let {
+                    cameraPositionState.animate(
+                        CameraUpdateFactory.newLatLngZoom(
+                            LatLng(
+                                it.location?.latitude ?: 0.0, it.location?.longitude ?: 0.0
+                            ), 16f
+                        )
+                    )
+                }
+            }
+
             NewSearch(
+                predictions = uiState.predictions,
                 context = context,
-                expanded = expanded,
+                expanded = uiState.isSearchExpanded,
                 modifier = Modifier.align(Alignment.TopCenter),
                 onExpandedChange = {
-                    expanded = it
+                    mapViewModel.onExpandChange(it)
                 },
+                isLoading = uiState.isLoading,
+                onQueryChange = { textFieldState.edit { replace(0, length, it) } },
                 onPlaceSelected = { place ->
-                    selectedPlace = place
-                    scope.launch {
-                        selectedPlace?.let {
-                            cameraPositionState.animate(
-                                CameraUpdateFactory.newLatLngZoom(
-                                    LatLng(
-                                        it.location?.latitude ?: 0.0, it.location?.longitude ?: 0.0
-                                    ), 16f
-                                )
-                            )
-                        }
-
-                        delay(1000)
-                    }
-                    showPlaceModalSheet = true
-                    Log.d(
-                        "PLACE",
-                        "Selected: ${place.displayName} at ${place.location}"
-                    )
+                    mapViewModel.fetchPlace(place)
+                    textFieldState.clearText()
                 },
-                placeViewModel = placesViewModel,
                 textFieldState = textFieldState
             )
             /*

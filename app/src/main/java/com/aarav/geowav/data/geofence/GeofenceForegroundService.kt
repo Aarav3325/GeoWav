@@ -107,7 +107,7 @@ class GeofenceForegroundService : Service() {
                         .addOnSuccessListener {
                             Log.d(
                                 "GeofenceService",
-                                "Geofences added ${geofencingRequest.geofences.size}"
+                                "Geofences added ${geofencingRequest.geofences}"
                             )
                         }
                         .addOnFailureListener {

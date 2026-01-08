@@ -4,6 +4,7 @@ import NavGraph
 import android.Manifest
 import android.content.Intent
 import android.content.SharedPreferences
+import android.location.Location
 import android.os.Build
 import android.os.Bundle
 import androidx.activity.ComponentActivity
@@ -19,25 +20,26 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
-import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.aarav.geowav.data.geofence.GeofenceForegroundService
+import com.aarav.geowav.data.location.LocationManager
 import com.aarav.geowav.domain.authentication.GoogleSignInClient
 import com.aarav.geowav.presentation.components.SnackbarManager
-import com.aarav.geowav.presentation.map.MapViewModel
 import com.aarav.geowav.presentation.navigation.BottomNavigationBar
 import com.aarav.geowav.presentation.navigation.NavRoute
-import com.aarav.geowav.presentation.place.PlaceViewModel
 import com.aarav.geowav.ui.theme.GeoWavTheme
 import com.google.accompanist.permissions.ExperimentalPermissionsApi
 import com.google.accompanist.permissions.isGranted
 import com.google.accompanist.permissions.rememberPermissionState
+import com.google.android.gms.location.FusedLocationProviderClient
+import com.google.android.gms.location.LocationServices
 import dagger.hilt.android.AndroidEntryPoint
 import javax.inject.Inject
 
@@ -49,7 +51,15 @@ class MainActivity : ComponentActivity() {
     lateinit var googleSignInClient: GoogleSignInClient
 
     @Inject
+    lateinit var fusedClient: FusedLocationProviderClient
+
+    @Inject
     lateinit var sharedPreferences: SharedPreferences
+
+    @Inject
+    lateinit var locationManager : LocationManager
+
+
 
     @RequiresPermission(Manifest.permission.ACCESS_FINE_LOCATION)
     @OptIn(ExperimentalPermissionsApi::class, ExperimentalMaterial3Api::class)
@@ -57,16 +67,23 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
 
+        fusedClient = LocationServices.getFusedLocationProviderClient(this)
+
+
+
         setContent {
 
-            val mapViewModel: MapViewModel = hiltViewModel()
-            val placesViewModel: PlaceViewModel = hiltViewModel()
+            var location by remember {
+                mutableStateOf<Location?>(null)
+            }
 
 
-            val location by mapViewModel.currentLocation.collectAsState()
+            LaunchedEffect(location) {
+                    locationManager.getLocationUpdates().collect {
+                        location = it
+                    }
 
-            mapViewModel.startLocationUpdates()
-
+            }
 
             val context = LocalContext.current
 
@@ -139,12 +156,13 @@ class MainActivity : ComponentActivity() {
                         sharedPreferences,
                         location1,
                         googleSignInClient,
-                        mapViewModel,
-                        placesViewModel,
                         modifier = Modifier.padding(it)
                     )
                 }
             }
         }
     }
+
+
+
 }

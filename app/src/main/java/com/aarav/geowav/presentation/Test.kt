@@ -16,7 +16,6 @@ import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -52,6 +51,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -78,7 +78,6 @@ import com.aarav.geowav.ui.theme.GeoWavTheme
 import com.aarav.geowav.ui.theme.manrope
 import com.aarav.geowav.ui.theme.sora
 import kotlinx.coroutines.launch
-import kotlin.text.equals
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -157,7 +156,7 @@ fun GeoWavHomeScreen(
                     IconButton(
                         onClick = {
                             scope.launch {
-                               // Toast.makeText(context, "Welcome to GeoWav", Toast.LENGTH_LONG).show()
+                                // Toast.makeText(context, "Welcome to GeoWav", Toast.LENGTH_LONG).show()
                                 SnackbarManager.showMessage("No Notifications")
                             }
                         }
@@ -262,7 +261,7 @@ fun GeoWavHomeScreen(
                         onZoneClick = {}
                     )
 
-                    if(allPlaces.isEmpty()){
+                    if (allPlaces.isEmpty()) {
                         QuickActionsRow(
                             onAddZone = onAddZone,
                             onShare = onShareLocation,
@@ -271,7 +270,10 @@ fun GeoWavHomeScreen(
                     }
 
                     Row(
-                        modifier = Modifier.fillMaxWidth(),
+                        modifier = Modifier
+                            .padding(vertical = 6.dp)
+                            .fillMaxWidth(),
+                        verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.SpaceBetween
                     ) {
                         Text(
@@ -282,7 +284,6 @@ fun GeoWavHomeScreen(
                                 fontFamily = manrope
                             ),
                             fontSize = 16.sp,
-                            modifier = Modifier.padding(vertical = 12.dp)
                         )
 
                         TextButton(onClick = navigateToActivity) {
@@ -294,6 +295,7 @@ fun GeoWavHomeScreen(
                             )
                         }
                     }
+
                     RecentAlertsList(finalRecentAlerts)
                 }
             }
@@ -424,10 +426,12 @@ fun ConnectionsRow(title: String, connections: List<GeoConnection>?, onAdd: () -
                             colorFilter = ColorFilter.tint(MaterialTheme.colorScheme.secondary)
                         )
 
-                        Text("No connections yet",
+                        Text(
+                            "No connections yet",
                             fontFamily = sora,
                             color = MaterialTheme.colorScheme.onBackground,
-                            fontSize = 16.sp)
+                            fontSize = 16.sp
+                        )
                     }
                 }
             } else {
@@ -486,7 +490,8 @@ fun AddConnectionCard(onClick: () -> Unit) {
     Column(
         horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier
             .width(84.dp)
-            .padding(start = 8.dp)) {
+            .padding(start = 8.dp)
+    ) {
         Box(
             modifier = Modifier
                 .size(64.dp)
@@ -513,7 +518,10 @@ fun AddConnectionCard(onClick: () -> Unit) {
 }
 
 @Composable
-fun ActiveZonesSection(zones: List<Place>, onZoneClick: (_root_ide_package_.com.aarav.geowav.data.place.Place) -> Unit) {
+fun ActiveZonesSection(
+    zones: List<Place>,
+    onZoneClick: (_root_ide_package_.com.aarav.geowav.data.place.Place) -> Unit
+) {
     Column(
         modifier = Modifier.padding(vertical = 12.dp)
     ) {
@@ -528,10 +536,9 @@ fun ActiveZonesSection(zones: List<Place>, onZoneClick: (_root_ide_package_.com.
         )
         Spacer(modifier = Modifier.height(12.dp))
         Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
-            if(zones.isNotEmpty()){
+            if (zones.isNotEmpty()) {
                 zones.forEach { zone -> ZoneCard(zone = zone, onClick = { onZoneClick(zone) }) }
-            }
-            else{
+            } else {
                 Column(
                     modifier = Modifier
                         .fillMaxWidth(),
@@ -545,10 +552,12 @@ fun ActiveZonesSection(zones: List<Place>, onZoneClick: (_root_ide_package_.com.
                         colorFilter = ColorFilter.tint(MaterialTheme.colorScheme.secondary)
                     )
 
-                    Text("No Zones are addded yet",
+                    Text(
+                        "No Zones are addded yet",
                         fontFamily = sora,
                         color = MaterialTheme.colorScheme.onBackground,
-                        fontSize = 16.sp)
+                        fontSize = 16.sp
+                    )
                 }
             }
         }
@@ -592,9 +601,9 @@ fun ZoneCard(zone: Place, onClick: () -> Unit) {
                 Spacer(modifier = Modifier.width(12.dp))
                 Column {
                     Text(
-                        if(zone.customName.toString().isNotEmpty()){
+                        if (zone.customName.toString().isNotEmpty()) {
                             zone.customName
-                        }else{
+                        } else {
                             zone.placeName
                         },
                         fontSize = 14.sp,
@@ -614,7 +623,7 @@ fun ZoneCard(zone: Place, onClick: () -> Unit) {
                     )
                 }
             }
-            TextButton(onClick = {  }) {
+            TextButton(onClick = { }) {
                 Text(
                     "Active",
                     fontSize = 14.sp,
@@ -682,14 +691,15 @@ fun RecentAlertsList(alerts: List<com.aarav.geowav.data.model.GeoAlert>) {
     Column(
         verticalArrangement = Arrangement.spacedBy(10.dp),
         modifier = Modifier
-        .fillMaxWidth().padding(bottom = 24.dp, top = 4.dp)
+            .fillMaxWidth()
+            .padding(bottom = 24.dp, top = 4.dp)
     ) {
         if (alerts.isEmpty()) {
             Column(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.Center
-            ){
+            ) {
                 Image(
                     painter = painterResource(R.drawable.link_break),
                     contentDescription = "break",
@@ -828,19 +838,19 @@ fun ProfileCard(googleSignInClient: GoogleSignInClient, modifier: Modifier = Mod
             }
 
 
-            val uri by remember {
+            val uri by rememberSaveable {
                 mutableStateOf(
                     googleSignInClient.getUserProfile()
                 )
             }
 
-            val avatar by remember {
+            val avatar by rememberSaveable {
                 mutableStateOf(uri.toString().isBlank())
             }
 
             val isDark = isSystemInDarkTheme()
 
-            val imageUrl = remember(avatar, isDark) {
+            val imageUrl = rememberSaveable(avatar, isDark) {
                 if (avatar) {
                     if (isDark) {
                         "https://storage.googleapis.com/geowav-bucket-1/user_dark_theme.svg"
@@ -898,7 +908,7 @@ fun buildRelativeSubtitle(type: String, timestamp: Long): String {
 
     val verb = when (type) {
         "enter" -> "Reached"
-        else    -> "Left"
+        else -> "Left"
     }
 
     return when {

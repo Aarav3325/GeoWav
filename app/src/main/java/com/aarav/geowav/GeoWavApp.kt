@@ -10,6 +10,7 @@ import com.aarav.geowav.domain.place.PlaceRepositoryImpl
 import com.google.android.gms.location.FusedLocationProviderClient
 import com.google.android.gms.location.LocationServices
 import com.google.android.libraries.places.api.Places
+import com.google.android.libraries.places.api.net.PlacesClient
 import dagger.hilt.android.HiltAndroidApp
 import javax.inject.Inject
 
@@ -32,13 +33,13 @@ class GeoWavApp : Application(), Configuration.Provider {
             .setWorkerFactory(workerFactory)
             .build()
 
-    @RequiresPermission(allOf = [Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION])
+
     override fun onCreate() {
         super.onCreate()
 
-        fusedClient = LocationServices.getFusedLocationProviderClient(this)
 
-
-        Places.initializeWithNewPlacesApiEnabled(applicationContext, getString(R.string.maps_api))
+        if(!Places.isInitialized()){
+            Places.initializeWithNewPlacesApiEnabled(applicationContext, getString(R.string.maps_api))
+        }
     }
 }

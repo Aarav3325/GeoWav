@@ -12,6 +12,8 @@ import com.google.android.libraries.places.api.model.AutocompleteSessionToken
 import com.google.android.libraries.places.api.net.FetchPlaceRequest
 import com.google.android.libraries.places.api.net.FindAutocompletePredictionsRequest
 import com.google.android.libraries.places.api.net.PlacesClient
+import dagger.Lazy
+import jakarta.inject.Provider
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.tasks.await
 import java.text.SimpleDateFormat
@@ -22,7 +24,7 @@ import kotlin.coroutines.cancellation.CancellationException
 
 class PlaceRepositoryImpl @Inject constructor(
     private val placesDAO: PlacesDAO,
-    private val placesClient: PlacesClient
+    private val placesClient: Lazy<PlacesClient>
 ) : PlaceRepository {
 
 
@@ -45,12 +47,15 @@ class PlaceRepositoryImpl @Inject constructor(
         return try {
             val token = AutocompleteSessionToken.newInstance()
 
+            val client = placesClient.get()
+
             val request = FindAutocompletePredictionsRequest.builder()
                 .setQuery(query)
                 .setSessionToken(token)
                 .build()
 
-            val response = placesClient
+
+            val response = client
                 .findAutocompletePredictions(request)
                 .await()
 
@@ -74,9 +79,11 @@ class PlaceRepositoryImpl @Inject constructor(
                 com.google.android.libraries.places.api.model.Place.Field.SHORT_FORMATTED_ADDRESS
             )
 
+            val client = placesClient.get()
+
             val request = FetchPlaceRequest.builder(placeId, fields).build()
 
-            val response = placesClient.fetchPlace(request).await()
+            val response = client.fetchPlace(request).await()
 
             Resource.Success(response.place)
         }

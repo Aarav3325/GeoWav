@@ -16,12 +16,10 @@ import com.aarav.geowav.presentation.activity.ActivityScreen
 import com.aarav.geowav.presentation.auth.LoginScreen
 import com.aarav.geowav.presentation.auth.SignupScreen
 import com.aarav.geowav.presentation.map.MapScreen
-import com.aarav.geowav.presentation.map.MapViewModel
 import com.aarav.geowav.presentation.navigation.NavRoute
 import com.aarav.geowav.presentation.onboard.OnboardingScreen
-import com.aarav.geowav.presentation.place.AddPlaceScreen
-import com.aarav.geowav.presentation.place.PlaceViewModel
-import com.aarav.geowav.presentation.place.YourPlacesScreen
+import com.aarav.geowav.presentation.addplace.AddPlaceScreen
+import com.aarav.geowav.presentation.yourplace.YourPlacesScreen
 
 @Composable
 fun NavGraph(
@@ -29,8 +27,6 @@ fun NavGraph(
     sharedPreferences: SharedPreferences,
     location: Pair<Double, Double>?,
     googleSignInClient: GoogleSignInClient,
-    mapViewModel: MapViewModel,
-    placesViewModel: PlaceViewModel,
     modifier: Modifier
 ) {
     val isLoggedIn = googleSignInClient.isLoggedIn()
@@ -45,9 +41,7 @@ fun NavGraph(
         AddMapsScreen(
             navHostController,
             this,
-            location,
-            mapViewModel,
-            placesViewModel
+            location
         )
 
         AddNewPlaceScreen(
@@ -57,8 +51,7 @@ fun NavGraph(
 
         AddYourPlacesScreen(
             navHostController,
-            this,
-            placesViewModel
+            this
         )
 
         AddSignUpScreen(
@@ -96,16 +89,14 @@ fun NavGraph(
 fun AddMapsScreen(
     navController: NavController,
     navGraphBuilder: NavGraphBuilder,
-    location: Pair<Double, Double>?,
-    mapViewModel: MapViewModel, placesViewModel: PlaceViewModel
+    location: Pair<Double, Double>?
 ) {
     navGraphBuilder.composable(
         route = NavRoute.MapScreen.path
     ) {
         MapScreen(
-            mapViewModel,
+            mapViewModel = hiltViewModel(),
             location,
-            placesViewModel,
             navigateToAddPlace = { id ->
                 navController.navigate(NavRoute.AddPlace.createRoute(id)) {
                     popUpTo(navController.graph.findStartDestination().id) {
@@ -157,13 +148,13 @@ fun AddNewPlaceScreen(
 }
 
 fun AddYourPlacesScreen(
-    navController: NavController, navGraphBuilder: NavGraphBuilder, placesViewModel: PlaceViewModel
+    navController: NavController, navGraphBuilder: NavGraphBuilder
 ) {
     navGraphBuilder.composable(
         route = NavRoute.YourPlaces.path
     ) {
         YourPlacesScreen(
-            placesViewModel,
+            yourPlacesVM = hiltViewModel(),
             navigateToMap = {
                 navController.navigate(NavRoute.MapScreen.path) {
                     popUpTo(navController.graph.findStartDestination().id) {
@@ -254,7 +245,13 @@ fun AddHomeScreen(
             },
             googleSignInClient,
             onAddZone = {
-                navController.navigate(NavRoute.MapScreen.path)
+                navController.navigate(NavRoute.MapScreen.path) {
+                    popUpTo(navController.graph.findStartDestination().id) {
+                        saveState = true
+                    }
+                    launchSingleTop = true
+                    restoreState = true
+                }
             },
             onShareLocation = {},
             onOpenAlerts = {},

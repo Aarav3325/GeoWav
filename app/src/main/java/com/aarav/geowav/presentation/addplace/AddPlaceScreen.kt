@@ -1,8 +1,7 @@
-package com.aarav.geowav.presentation.place
+package com.aarav.geowav.presentation.addplace
 
 import android.util.Log
 import android.widget.Toast
-import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.border
 import androidx.compose.foundation.isSystemInDarkTheme
@@ -63,6 +62,7 @@ import com.aarav.geowav.presentation.components.CustomChip
 import com.aarav.geowav.presentation.components.MyAlertDialog
 import com.aarav.geowav.presentation.components.PlaceTextField
 import com.aarav.geowav.presentation.components.RadiusChipGroup
+import com.aarav.geowav.presentation.addplace.PlaceViewModel
 import com.aarav.geowav.ui.theme.GeoWavTheme
 import com.aarav.geowav.ui.theme.manrope
 import com.aarav.geowav.ui.theme.sora
@@ -229,7 +229,7 @@ fun AddPlaceScreen(
             }
         ) {
 
-            AnimatedVisibility(uiState.isLoading) {
+            if(uiState.isLoading) {
                 Box(
                     modifier = Modifier.fillMaxSize(),
                     contentAlignment = Alignment.Center
@@ -239,7 +239,7 @@ fun AddPlaceScreen(
             }
 
 
-            AnimatedVisibility(!uiState.isLoading) {
+            if(!uiState.isLoading) {
                 Column(
                     modifier = Modifier
                         .padding(it)
