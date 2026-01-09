@@ -28,6 +28,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
@@ -37,7 +38,7 @@ import com.aarav.geowav.platform.LocationManager
 import com.aarav.geowav.presentation.components.SnackbarManager
 import com.aarav.geowav.presentation.navigation.BottomNavigationBar
 import com.aarav.geowav.presentation.navigation.NavRoute
-import com.aarav.geowav.ui.theme.GeoWavTheme
+import com.aarav.geowav.presentation.theme.GeoWavTheme
 import com.google.accompanist.permissions.ExperimentalPermissionsApi
 import com.google.accompanist.permissions.isGranted
 import com.google.accompanist.permissions.rememberPermissionState
@@ -153,7 +154,7 @@ class MainActivity : ComponentActivity() {
                         },
                         modifier = Modifier.fillMaxSize(),
                         contentWindowInsets = WindowInsets(0),
-                        containerColor = androidx.compose.ui.graphics.Color.Transparent,
+                        containerColor = Color.Transparent,
                         bottomBar = {
                             AnimatedVisibility(isBottomBarVisible) {
                                 BottomNavigationBar(navController)

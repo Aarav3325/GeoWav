@@ -1,4 +1,4 @@
-package com.aarav.geowav.ui.theme
+package com.aarav.geowav.presentation.theme
 
 import androidx.compose.ui.graphics.Color
 

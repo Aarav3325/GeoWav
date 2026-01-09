@@ -1,4 +1,4 @@
-package com.aarav.geowav.ui.theme
+package com.aarav.geowav.presentation.theme
 
 import androidx.compose.material3.Typography
 import androidx.compose.ui.text.TextStyle

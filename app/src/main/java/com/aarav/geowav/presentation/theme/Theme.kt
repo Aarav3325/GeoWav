@@ -1,4 +1,4 @@
-package com.aarav.geowav.ui.theme
+package com.aarav.geowav.presentation.theme
 
 import android.os.Build
 import androidx.compose.foundation.isSystemInDarkTheme

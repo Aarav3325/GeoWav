@@ -79,11 +79,11 @@ class GeofenceWorker(
         )
 
 
+        // Send message via WhatsApp Cloud API and register event in rtdb
         val messageRepo = MessageRepo()
         messageRepo.sendMessageSync(templateRequest, activityData)
 
         return Result.success()
-
 
     }
 }

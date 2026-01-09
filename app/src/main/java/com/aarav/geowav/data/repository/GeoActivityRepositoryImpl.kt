@@ -25,6 +25,7 @@ class GeoActivityRepositoryImpl
     private fun uid(): String =
         auth.currentUser?.uid ?: throw IllegalStateException("User not logged in")
 
+    // get alerts based on selected time range
     override fun observeAlerts(filter: ActivityFilter): Flow<List<GeoAlert>> = callbackFlow{
         val userID = uid()
         val timeRange = rangeForFilter(filter)

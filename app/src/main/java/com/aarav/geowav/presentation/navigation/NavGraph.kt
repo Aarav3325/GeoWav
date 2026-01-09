@@ -99,13 +99,7 @@ fun AddMapsScreen(
             mapViewModel = hiltViewModel(),
             location,
             navigateToAddPlace = { id ->
-                navController.navigate(NavRoute.AddPlace.createRoute(id)) {
-                    popUpTo(navController.graph.findStartDestination().id) {
-                        saveState = true
-                    }
-                    launchSingleTop = true
-                    restoreState = true
-                }
+                navController.navigate(NavRoute.AddPlace.createRoute(id))
             },
             navigateToHome = {
                 navController.navigateUp()
@@ -157,13 +151,7 @@ fun AddYourPlacesScreen(
         YourPlacesScreen(
             yourPlacesVM = hiltViewModel(),
             navigateToMap = {
-                navController.navigate(NavRoute.MapScreen.path) {
-                    popUpTo(navController.graph.findStartDestination().id) {
-                        saveState = true
-                    }
-                    launchSingleTop = true
-                    restoreState = true
-                }
+                navController.navigate(NavRoute.MapScreen.path)
             }
         )
     }
@@ -237,22 +225,10 @@ fun AddHomeScreen(
             isDarkThemeEnabled = isDarkThemeEnabled,
             onThemeChange = onThemeChange,
             navigateToAuth = {
-                navController.navigate(NavRoute.Login.path) {
-                    popUpTo(navController.graph.findStartDestination().id) {
-                        saveState = true
-                    }
-                    launchSingleTop = true
-                    restoreState = true
-                }
+                navController.navigate(NavRoute.Login.path)
             },
             onAddZone = {
-                navController.navigate(NavRoute.MapScreen.path) {
-                    popUpTo(navController.graph.findStartDestination().id) {
-                        saveState = true
-                    }
-                    launchSingleTop = true
-                    restoreState = true
-                }
+                navController.navigate(NavRoute.MapScreen.path)
             },
             onShareLocation = {},
             onOpenAlerts = {},

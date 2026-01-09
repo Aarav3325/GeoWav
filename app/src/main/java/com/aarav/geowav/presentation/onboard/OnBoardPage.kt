@@ -47,10 +47,9 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.content.edit
-import com.aarav.geowav.R
 import com.aarav.geowav.presentation.components.PermissionAlertDialog
-import com.aarav.geowav.ui.theme.manrope
-import com.aarav.geowav.ui.theme.sora
+import com.aarav.geowav.presentation.theme.manrope
+import com.aarav.geowav.presentation.theme.sora
 import com.google.accompanist.permissions.ExperimentalPermissionsApi
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch

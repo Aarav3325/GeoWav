@@ -69,9 +69,9 @@ import com.aarav.geowav.R
 import com.aarav.geowav.data.model.GeoConnection
 import com.aarav.geowav.data.model.Place
 import com.aarav.geowav.presentation.components.SnackbarManager
-import com.aarav.geowav.ui.theme.GeoWavTheme
-import com.aarav.geowav.ui.theme.manrope
-import com.aarav.geowav.ui.theme.sora
+import com.aarav.geowav.presentation.theme.GeoWavTheme
+import com.aarav.geowav.presentation.theme.manrope
+import com.aarav.geowav.presentation.theme.sora
 import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)

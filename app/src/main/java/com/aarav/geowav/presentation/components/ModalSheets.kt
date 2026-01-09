@@ -29,7 +29,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.aarav.geowav.R
-import com.aarav.geowav.ui.theme.sora
+import com.aarav.geowav.presentation.theme.sora
 import com.google.android.libraries.places.api.model.Place
 
 @OptIn(ExperimentalMaterial3Api::class)

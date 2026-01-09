@@ -43,6 +43,7 @@ class PlaceRepositoryImpl @Inject constructor(
         return placesDAO.getAllPlaces()
     }
 
+    // Places API Implementation - used to search places and fetch place details
     override suspend fun searchPlaces(
         query: String,
     ): Resource<List<AutocompletePrediction>> {
@@ -81,6 +82,7 @@ class PlaceRepositoryImpl @Inject constructor(
 
     }
 
+    // Places API Implementation - used to fetch details of a particular place using palceId
     override suspend fun fetchPlace(
         placeId: String
     ): Resource<com.google.android.libraries.places.api.model.Place> {
@@ -106,11 +108,6 @@ class PlaceRepositoryImpl @Inject constructor(
         catch (e: Exception){
             return Resource.Error(message = e.message ?: "Unable to fetch place details")
         }
-    }
-
-    fun getFormattedDate(): String {
-        val formatter = SimpleDateFormat("dd MMM yyyy", Locale.getDefault())
-        return formatter.format(Date())
     }
 
 }

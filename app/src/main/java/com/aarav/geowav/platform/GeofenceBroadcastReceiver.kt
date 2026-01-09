@@ -17,6 +17,7 @@ import com.google.android.gms.location.GeofencingEvent
 
 class GeofenceBroadcastReceiver : BroadcastReceiver() {
 
+    // detect geofence activity and send notification to connection via Whatsapp Cloud API
     override fun onReceive(context: Context, intent: Intent) {
 
         val geofencingEvent = GeofencingEvent.fromIntent(intent) ?: return

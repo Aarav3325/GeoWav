@@ -32,14 +32,17 @@ class GoogleSignInClient @Inject constructor(
 
     private val userReference = firebaseDatabase.getReference("users")
 
+    // To implement Google Sign In
     @Inject
     lateinit var credentialManager: CredentialManager
 
 
+    // Check if user is logged in
     fun isLoggedIn(): Boolean {
         return firebaseAuth.currentUser != null
     }
 
+    // google sign in
     suspend fun signIn(): Boolean {
         try {
             val result = buildCredentialRequest()
@@ -52,6 +55,7 @@ class GoogleSignInClient @Inject constructor(
         }
     }
 
+    // handle credential response from credential manager
     private suspend fun handleSignIn(result: GetCredentialResponse): Boolean {
         val credential = result.credential
 
@@ -80,6 +84,7 @@ class GoogleSignInClient @Inject constructor(
         }
     }
 
+    // request user credentials
     private suspend fun buildCredentialRequest(): GetCredentialResponse {
         val request = GetCredentialRequest.Builder()
             .addCredentialOption(
@@ -94,6 +99,7 @@ class GoogleSignInClient @Inject constructor(
         return credentialManager.getCredential(request = request, context = context)
     }
 
+    // log out current user
     suspend fun signOut() {
         credentialManager.clearCredentialState(
             ClearCredentialStateRequest()
@@ -102,6 +108,7 @@ class GoogleSignInClient @Inject constructor(
         firebaseAuth.signOut()
     }
 
+    // firebase sign up using email
     suspend fun signUpUsingEmailAndPassword(
         username: String,
         email: String,
@@ -130,6 +137,7 @@ class GoogleSignInClient @Inject constructor(
     }
 
 
+    // firebase sign in using email
     suspend fun signInWithEmailAndPassword(
         email: String, password: String
     ): Boolean {
@@ -148,7 +156,7 @@ class GoogleSignInClient @Inject constructor(
         }
     }
 
-
+   // store details of new user in rtdb
     fun storeUserData(email: String, username: String) {
         val userId = getUserId()
 
@@ -169,10 +177,12 @@ class GoogleSignInClient @Inject constructor(
         }
     }
 
+    // get user by id
     fun getUserId(): String {
         return firebaseAuth.currentUser?.uid ?: ""
     }
 
+    // get username of current user
     fun getUserName(): String {
         //return firebaseAuth.currentUser?.displayName ?: ""
 
@@ -208,7 +218,10 @@ class GoogleSignInClient @Inject constructor(
     }
 
 
+    // get profile picture of current user
     fun getUserProfile(): Uri {
+        /* profile pic is available for users with google account else return empty uri
+        * which is then handled by ui to show default profile pic */
         return firebaseAuth.currentUser?.photoUrl ?: Uri.EMPTY
     }
 }

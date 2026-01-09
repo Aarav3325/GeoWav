@@ -62,12 +62,11 @@ import com.aarav.geowav.presentation.components.CustomChip
 import com.aarav.geowav.presentation.components.MyAlertDialog
 import com.aarav.geowav.presentation.components.PlaceTextField
 import com.aarav.geowav.presentation.components.RadiusChipGroup
-import com.aarav.geowav.presentation.addplace.PlaceViewModel
-import com.aarav.geowav.ui.theme.GeoWavTheme
-import com.aarav.geowav.ui.theme.manrope
-import com.aarav.geowav.ui.theme.sora
-import com.aarav.geowav.ui.theme.surfaceContainerHighDark
-import com.aarav.geowav.ui.theme.surfaceContainerLight
+import com.aarav.geowav.presentation.theme.GeoWavTheme
+import com.aarav.geowav.presentation.theme.manrope
+import com.aarav.geowav.presentation.theme.sora
+import com.aarav.geowav.presentation.theme.surfaceContainerHighDark
+import com.aarav.geowav.presentation.theme.surfaceContainerLight
 import com.google.android.gms.maps.model.CameraPosition
 import com.google.android.gms.maps.model.LatLng
 import com.google.maps.android.compose.GoogleMap

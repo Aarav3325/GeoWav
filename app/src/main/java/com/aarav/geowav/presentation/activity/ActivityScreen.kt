@@ -53,8 +53,8 @@ import com.aarav.geowav.R
 import com.aarav.geowav.core.utils.ActivityFilter
 import com.aarav.geowav.core.utils.toLocalDateInIndia
 import com.aarav.geowav.presentation.home.buildRelativeSubtitle
-import com.aarav.geowav.ui.theme.manrope
-import com.aarav.geowav.ui.theme.sora
+import com.aarav.geowav.presentation.theme.manrope
+import com.aarav.geowav.presentation.theme.sora
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable

@@ -1,6 +1,5 @@
 package com.aarav.geowav.presentation.map
 
-import android.content.Context
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -37,9 +36,9 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.aarav.geowav.R
 import com.aarav.geowav.presentation.components.SearchItem
-import com.aarav.geowav.ui.theme.sora
-import com.aarav.geowav.ui.theme.surfaceContainerLowDarkHighContrast
-import com.aarav.geowav.ui.theme.surfaceContainerLowestLightHighContrast
+import com.aarav.geowav.presentation.theme.sora
+import com.aarav.geowav.presentation.theme.surfaceContainerLowDarkHighContrast
+import com.aarav.geowav.presentation.theme.surfaceContainerLowestLightHighContrast
 import com.google.android.libraries.places.api.model.AutocompletePrediction
 
 @OptIn(ExperimentalMaterial3Api::class)

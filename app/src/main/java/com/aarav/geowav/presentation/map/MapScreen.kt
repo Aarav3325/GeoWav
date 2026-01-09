@@ -26,13 +26,13 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.ColorFilter
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import com.aarav.geowav.presentation.components.MyAlertDialog
 import com.aarav.geowav.presentation.components.PlaceModalSheet
-import com.aarav.geowav.ui.theme.manrope
-import com.aarav.geowav.ui.theme.*
+import com.aarav.geowav.presentation.theme.manrope
+import com.aarav.geowav.presentation.theme.surfaceContainerLowDarkHighContrast
+import com.aarav.geowav.presentation.theme.surfaceContainerLowestLightHighContrast
 import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.model.CameraPosition
 import com.google.android.gms.maps.model.LatLng

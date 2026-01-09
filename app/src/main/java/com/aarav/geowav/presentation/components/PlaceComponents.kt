@@ -39,9 +39,9 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.aarav.geowav.R
 import com.aarav.geowav.data.model.Place
-import com.aarav.geowav.ui.theme.GeoWavTheme
-import com.aarav.geowav.ui.theme.manrope
-import com.aarav.geowav.ui.theme.sora
+import com.aarav.geowav.presentation.theme.GeoWavTheme
+import com.aarav.geowav.presentation.theme.manrope
+import com.aarav.geowav.presentation.theme.sora
 import com.google.android.libraries.places.api.model.AutocompletePrediction
 import kotlin.math.roundToInt
 

@@ -36,8 +36,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.aarav.geowav.R
 import com.aarav.geowav.presentation.components.GeofencePlaceCard
-import com.aarav.geowav.ui.theme.manrope
-import com.aarav.geowav.ui.theme.sora
+import com.aarav.geowav.presentation.theme.manrope
+import com.aarav.geowav.presentation.theme.sora
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Preview(showBackground = true)

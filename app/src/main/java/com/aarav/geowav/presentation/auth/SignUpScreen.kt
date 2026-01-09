@@ -49,8 +49,8 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import com.aarav.geowav.R
 import com.aarav.geowav.presentation.components.MyAlertDialog
-import com.aarav.geowav.ui.theme.manrope
-import com.aarav.geowav.ui.theme.sora
+import com.aarav.geowav.presentation.theme.manrope
+import com.aarav.geowav.presentation.theme.sora
 
 @Preview(showBackground = true)
 @Composable

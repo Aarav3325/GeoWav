@@ -16,7 +16,7 @@ import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.compose.currentBackStackEntryAsState
-import com.aarav.geowav.ui.theme.sora
+import com.aarav.geowav.presentation.theme.sora
 
 @Composable
 fun BottomNavigationBar(
