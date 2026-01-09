@@ -6,7 +6,6 @@ import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
-import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -48,10 +47,8 @@ import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -69,7 +66,6 @@ import coil.ImageLoader
 import coil.compose.AsyncImage
 import coil.decode.SvgDecoder
 import com.aarav.geowav.R
-import com.aarav.geowav.data.authentication.GoogleSignInClient
 import com.aarav.geowav.data.model.GeoConnection
 import com.aarav.geowav.data.model.Place
 import com.aarav.geowav.presentation.components.SnackbarManager
@@ -81,6 +77,8 @@ import kotlinx.coroutines.launch
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun GeoWavHomeScreen(
+    isDarkThemeEnabled: Boolean,
+    onThemeChange: () -> Unit,
     navigateToAuth: () -> Unit,
     onAddZone: () -> Unit,
     onShareLocation: () -> Unit,
@@ -91,7 +89,6 @@ fun GeoWavHomeScreen(
 ) {
 
     val uiState by homeScreenVM.uiState.collectAsState()
-
 
 
     val scope = rememberCoroutineScope()
@@ -105,19 +102,19 @@ fun GeoWavHomeScreen(
 // Animate colors smoothly
     val textColor by animateColorAsState(
         targetValue = if (useDarkIcons) {
-            if (isSystemInDarkTheme()) {
+            if (isDarkThemeEnabled) {
                 Color.White
             } else {
                 Color.Black
             }
         } else {
-            if (isSystemInDarkTheme()) {
+            if (isDarkThemeEnabled) {
                 Color.Black
             } else {
                 Color.Black
             }
         },
-        animationSpec = tween(durationMillis = 800), // smooth 0.5s fade
+        animationSpec = tween(durationMillis = 800), // smooth 0.8s fade
         label = "TextColorAnimation"
     )
 
@@ -163,10 +160,11 @@ fun GeoWavHomeScreen(
                     }
 
                     IconButton(
-                        onClick = {
-                            homeScreenVM.signOut()
-                            navigateToAuth()
-                        }
+                        onClick = onThemeChange
+//                        onClick = {
+//                            homeScreenVM.signOut()
+//                            navigateToAuth()
+//                        }
                     ) {
                         Image(
                             painter = painterResource(R.drawable.gear_six),
@@ -201,8 +199,9 @@ fun GeoWavHomeScreen(
                         .background(MaterialTheme.colorScheme.background)
                 ) {
 
+
                     Image(
-                        painter = if (isSystemInDarkTheme()) painterResource(R.drawable.dark_bg_geowav_new_2) else painterResource(
+                        painter = if (isDarkThemeEnabled) painterResource(R.drawable.dark_bg_geowav_new_2) else painterResource(
                             R.drawable.light_bg_geowav_new
                         ),
                         contentDescription = "bg",
@@ -232,7 +231,8 @@ fun GeoWavHomeScreen(
                         userName = uiState.username,
                         modifier = Modifier
                             .align(Alignment.Center)
-                            .padding(top = 92.dp)
+                            .padding(top = 92.dp),
+                        isDarkThemeEnabled = isDarkThemeEnabled
                     )
                 }
 
@@ -288,7 +288,7 @@ fun GeoWavHomeScreen(
                         }
                     }
 
-                    RecentAlertsList(uiState.alertsList.take(5))
+                    RecentAlertsList(uiState.alertsList.take(5), isDarkThemeEnabled)
                 }
             }
         }
@@ -676,7 +676,10 @@ fun QuickActionButton(
 }
 
 @Composable
-fun RecentAlertsList(alerts: List<com.aarav.geowav.data.model.GeoAlert>) {
+fun RecentAlertsList(
+    alerts: List<com.aarav.geowav.data.model.GeoAlert>,
+    isDarkThemeEnabled: Boolean
+) {
 
     Column(
         verticalArrangement = Arrangement.spacedBy(10.dp),
@@ -708,13 +711,13 @@ fun RecentAlertsList(alerts: List<com.aarav.geowav.data.model.GeoAlert>) {
                 )
             }
         } else {
-            alerts.forEach { alert -> AlertItem(alert) }
+            alerts.forEach { alert -> AlertItem(alert, isDarkThemeEnabled) }
         }
     }
 }
 
 @Composable
-fun AlertItem(alert: com.aarav.geowav.data.model.GeoAlert) {
+fun AlertItem(alert: com.aarav.geowav.data.model.GeoAlert, isDarkThemeEnabled: Boolean) {
 
     val type = if (alert.type.equals("ENTER", ignoreCase = true)) "enter" else "exit"
 
@@ -725,13 +728,13 @@ fun AlertItem(alert: com.aarav.geowav.data.model.GeoAlert) {
         shape = RoundedCornerShape(12.dp),
         modifier = Modifier.fillMaxWidth(),
         colors = CardDefaults.cardColors(
-            containerColor = if (isSystemInDarkTheme()) {
+            containerColor = if (isDarkThemeEnabled) {
                 if (alert.type.equals("enter")) Color(0xFF00513f) else Color(0xFF723339)
             } else {
                 if (alert.type.equals("enter")) Color(0xFFa3f2d6) else Color(0xFFffdadb)
             },
             contentColor =
-                if (isSystemInDarkTheme()) {
+                if (isDarkThemeEnabled) {
                     if (alert.type.equals("enter")) Color(0XFFa3f2d6) else Color(0xFFffdadb)
                 } else {
                     if (alert.type.equals("enter")) Color(0xFF00513f) else Color(0xFF723339)
@@ -788,25 +791,30 @@ fun AlertItem(alert: com.aarav.geowav.data.model.GeoAlert) {
 
 
 @Composable
-fun ProfileCard(avatar: String?, userName: String?, modifier: Modifier = Modifier) {
+fun ProfileCard(
+    avatar: String?,
+    userName: String?,
+    modifier: Modifier = Modifier,
+    isDarkThemeEnabled: Boolean
+) {
     Card(
         modifier = modifier
             .fillMaxWidth()
             .wrapContentHeight()
-            .padding(16.dp),
+            .padding(horizontal = 0.dp),
         colors = CardDefaults.cardColors(
             containerColor = Color.Transparent
         ),
         shape = RoundedCornerShape(12.dp),
     ) {
         Row(
-            modifier = Modifier.fillMaxSize(),
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(horizontal = 16.dp),
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Column(
-//                verticalArrangement = Arrangement.spacedBy(4.dp)
-            ) {
+            Column {
                 Text(
                     text = "Welcome,",
                     fontFamily = sora,
@@ -828,11 +836,9 @@ fun ProfileCard(avatar: String?, userName: String?, modifier: Modifier = Modifie
             }
 
 
-            val isDark = isSystemInDarkTheme()
-
-            val imageUrl = remember(avatar, isDark) {
+            val imageUrl = remember(avatar, isDarkThemeEnabled) {
                 if (avatar.isNullOrBlank()) {
-                    if (isDark) {
+                    if (isDarkThemeEnabled) {
                         "https://storage.googleapis.com/geowav-bucket-1/user_dark_theme.svg"
                     } else {
                         "https://storage.googleapis.com/geowav-bucket-1/user_light_theme.svg"

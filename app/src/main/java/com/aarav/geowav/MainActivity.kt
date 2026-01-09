@@ -12,6 +12,8 @@ import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.annotation.RequiresPermission
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.Crossfade
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
@@ -23,14 +25,15 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
+import com.aarav.geowav.data.authentication.GoogleSignInClient
 import com.aarav.geowav.platform.GeofenceForegroundService
 import com.aarav.geowav.platform.LocationManager
-import com.aarav.geowav.data.authentication.GoogleSignInClient
 import com.aarav.geowav.presentation.components.SnackbarManager
 import com.aarav.geowav.presentation.navigation.BottomNavigationBar
 import com.aarav.geowav.presentation.navigation.NavRoute
@@ -57,8 +60,7 @@ class MainActivity : ComponentActivity() {
     lateinit var sharedPreferences: SharedPreferences
 
     @Inject
-    lateinit var locationManager : LocationManager
-
+    lateinit var locationManager: LocationManager
 
 
     @RequiresPermission(Manifest.permission.ACCESS_FINE_LOCATION)
@@ -79,90 +81,106 @@ class MainActivity : ComponentActivity() {
 
 
             LaunchedEffect(location) {
-                    locationManager.getLocationUpdates().collect {
-                        location = it
-                    }
+                locationManager.getLocationUpdates().collect {
+                    location = it
+                }
 
+            }
+
+            var isDarkThemeEnabled by rememberSaveable {
+                mutableStateOf(false)
             }
 
             val context = LocalContext.current
 
-            GeoWavTheme {
+            Crossfade(
+                targetState = isDarkThemeEnabled,
+                animationSpec = tween(800),
+                label = "ThemeFade"
+            ) { isDark ->
+                GeoWavTheme(
+                    darkTheme = isDark
+                ) {
 
-                val fineLocationPermission =
-                    rememberPermissionState(Manifest.permission.ACCESS_FINE_LOCATION)
-                val backgroundLocationPermission =
-                    rememberPermissionState(Manifest.permission.ACCESS_BACKGROUND_LOCATION)
+                    val fineLocationPermission =
+                        rememberPermissionState(Manifest.permission.ACCESS_FINE_LOCATION)
+                    val backgroundLocationPermission =
+                        rememberPermissionState(Manifest.permission.ACCESS_BACKGROUND_LOCATION)
 
-                val permissionsGranted =
-                    fineLocationPermission.status.isGranted && backgroundLocationPermission.status.isGranted
-
-
-
-                if (permissionsGranted) {
-                    val intent = Intent(context, GeofenceForegroundService::class.java)
-                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                        context.startForegroundService(intent)
-                    } else {
-                        context.startService(intent)
-                    }
-                }
+                    val permissionsGranted =
+                        fineLocationPermission.status.isGranted && backgroundLocationPermission.status.isGranted
 
 
-                val navController = rememberNavController()
 
-                val navBackStackEntry by navController.currentBackStackEntryAsState()
-                val currentRoute = navBackStackEntry?.destination?.route
-
-                val showBottomRoutes = listOf(
-                    NavRoute.HomeScreen.path,
-                    NavRoute.ActivityScreen.path,
-                    NavRoute.YourPlaces.path
-                )
-
-
-                val isBottomBarVisible = currentRoute in showBottomRoutes
-
-
-                val snackbarHostState = remember {
-                    SnackbarHostState()
-                }
-
-                LaunchedEffect(snackbarHostState) {
-                    SnackbarManager.bind(snackbarHostState)
-                }
-
-
-                Scaffold(
-                    snackbarHost = {
-                        //SnackbarManager.bind(snackbarHostState)
-                        SnackbarHost(snackbarHostState)
-                    },
-                    modifier = Modifier.fillMaxSize(),
-                    contentWindowInsets = WindowInsets(0),
-                    containerColor = androidx.compose.ui.graphics.Color.Transparent,
-                    bottomBar = {
-                        AnimatedVisibility(isBottomBarVisible) {
-                            BottomNavigationBar(navController)
+                    if (permissionsGranted) {
+                        val intent = Intent(context, GeofenceForegroundService::class.java)
+                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                            context.startForegroundService(intent)
+                        } else {
+                            context.startService(intent)
                         }
                     }
-                ) {
-                    val location1 =
-                        location?.let { it.latitude to it.longitude } ?: (0.0 to 0.0)
 
 
-                    NavGraph(
-                        navController,
-                        sharedPreferences,
-                        location1,
-                        googleSignInClient,
-                        modifier = Modifier.padding(it)
+                    val navController = rememberNavController()
+
+                    val navBackStackEntry by navController.currentBackStackEntryAsState()
+                    val currentRoute = navBackStackEntry?.destination?.route
+
+                    val showBottomRoutes = listOf(
+                        NavRoute.HomeScreen.path,
+                        NavRoute.ActivityScreen.path,
+                        NavRoute.YourPlaces.path
                     )
+
+
+                    val isBottomBarVisible = currentRoute in showBottomRoutes
+
+
+                    val snackbarHostState = remember {
+                        SnackbarHostState()
+                    }
+
+                    LaunchedEffect(snackbarHostState) {
+                        SnackbarManager.bind(snackbarHostState)
+                    }
+
+
+                    Scaffold(
+                        snackbarHost = {
+                            //SnackbarManager.bind(snackbarHostState)
+                            SnackbarHost(snackbarHostState)
+                        },
+                        modifier = Modifier.fillMaxSize(),
+                        contentWindowInsets = WindowInsets(0),
+                        containerColor = androidx.compose.ui.graphics.Color.Transparent,
+                        bottomBar = {
+                            AnimatedVisibility(isBottomBarVisible) {
+                                BottomNavigationBar(navController)
+                            }
+                        }
+                    ) {
+                        val location1 =
+                            location?.let { it.latitude to it.longitude } ?: (0.0 to 0.0)
+
+
+                        NavGraph(
+                            isDarkThemeEnabled = isDark,
+                            onThemeChange = {
+                                isDarkThemeEnabled = !isDarkThemeEnabled
+                            },
+                            navController,
+                            sharedPreferences,
+                            location1,
+                            googleSignInClient,
+                            modifier = Modifier.padding(it)
+                        )
+                    }
                 }
             }
+
+
         }
     }
-
-
 
 }

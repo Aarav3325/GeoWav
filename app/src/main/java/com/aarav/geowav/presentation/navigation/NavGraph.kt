@@ -23,6 +23,8 @@ import com.aarav.geowav.presentation.yourplace.YourPlacesScreen
 
 @Composable
 fun NavGraph(
+    isDarkThemeEnabled: Boolean,
+    onThemeChange: () -> Unit,
     navHostController: NavHostController,
     sharedPreferences: SharedPreferences,
     location: Pair<Double, Double>?,
@@ -71,6 +73,8 @@ fun NavGraph(
         )
 
         AddHomeScreen(
+            isDarkThemeEnabled,
+            onThemeChange,
             navHostController,
             this
         )
@@ -221,6 +225,8 @@ fun AddOnBoard(
 }
 
 fun AddHomeScreen(
+    isDarkThemeEnabled: Boolean,
+    onThemeChange: () -> Unit,
     navController: NavController, navGraphBuilder: NavGraphBuilder
 ) {
     navGraphBuilder.composable(
@@ -228,6 +234,8 @@ fun AddHomeScreen(
     ) {
 
         GeoWavHomeScreen(
+            isDarkThemeEnabled = isDarkThemeEnabled,
+            onThemeChange = onThemeChange,
             navigateToAuth = {
                 navController.navigate(NavRoute.Login.path) {
                     popUpTo(navController.graph.findStartDestination().id) {
