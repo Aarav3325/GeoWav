@@ -145,7 +145,7 @@ fun LoginScreen(
 //                        }
                     }, shape = RoundedCornerShape(12.dp), colors = CardDefaults.cardColors(
                     containerColor = MaterialTheme.colorScheme.inverseSurface
-                ), elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
+                    ), elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
             ) {
                 Row(
                     verticalAlignment = Alignment.CenterVertically,

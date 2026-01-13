@@ -1,10 +1,13 @@
 package com.aarav.geowav.presentation.components
 
 import android.Manifest
+import android.graphics.drawable.Icon
 import android.widget.Toast
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.ButtonDefaults
@@ -12,6 +15,7 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -152,7 +156,6 @@ fun PermissionAlertDialog(
 }
 
 
-@Preview(showBackground = true)
 @Composable
 fun MyAlertDialog(
     modifier: Modifier = Modifier,
@@ -182,7 +185,7 @@ fun MyAlertDialog(
                 Text(
                     text = title,
                     fontFamily = manrope,
-                    color = MaterialTheme.colorScheme.tertiary,
+                    color = MaterialTheme.colorScheme.onBackground,
                     fontSize = 16.sp,
                     fontWeight = FontWeight.SemiBold
                 )
@@ -202,6 +205,68 @@ fun MyAlertDialog(
                     fontSize = 12.sp,
                     color = MaterialTheme.colorScheme.onBackground
                 )
+            }
+        )
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+fun AboutDialog(
+    showAboutDialog: Boolean,
+    confirmButtonText: String,
+    onConfirmClick: () -> Unit,
+    title: String,
+    icon: Int,
+    message: String,
+    modifier: Modifier = Modifier
+) {
+    if(showAboutDialog) {
+        AlertDialog(
+            containerColor = MaterialTheme.colorScheme.surfaceTint,
+            modifier = modifier,
+            onDismissRequest = onConfirmClick,
+            confirmButton = {
+                FilledTonalButton(onClick = onConfirmClick,
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = MaterialTheme.colorScheme.primaryContainer,
+                        contentColor = MaterialTheme.colorScheme.onPrimaryContainer
+                    )) {
+                    Text(confirmButtonText, fontFamily = manrope)
+                }
+            },
+            text = {
+                Text(
+                    text = message,
+                    fontFamily = sora,
+                    textAlign = TextAlign.Center,
+                    fontSize = 12.sp,
+                    color = MaterialTheme.colorScheme.background,
+                    modifier = Modifier.fillMaxWidth()
+                )
+            },
+            title = {
+                Text(
+                    text = title,
+                    fontFamily = manrope,
+                    color = MaterialTheme.colorScheme.background,
+                    fontSize = 16.sp,
+                    fontWeight = FontWeight.SemiBold
+                )
+            },
+            icon = {
+                Surface(
+                    color = MaterialTheme.colorScheme.primary,
+                    shape = CircleShape
+                ) {
+                    Icon(
+                        painter = painterResource(icon),
+                        contentDescription = "info icon",
+                        tint = MaterialTheme.colorScheme.onPrimary,
+                        modifier = Modifier.size(56.dp)
+                    )
+                }
             }
         )
     }

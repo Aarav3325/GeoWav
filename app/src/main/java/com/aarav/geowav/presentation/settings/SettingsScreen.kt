@@ -1,144 +1,292 @@
 package com.aarav.geowav.presentation.settings
 
-import android.content.pm.PackageManager
+import android.Manifest
 import android.os.Build
 import androidx.annotation.RequiresApi
+import com.aarav.geowav.R
+import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ColumnScope
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.filled.Check
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.FilterChip
+import androidx.compose.material3.FilterChipDefaults
+import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Surface
+import androidx.compose.material3.Switch
+import androidx.compose.material3.SwitchDefaults
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
+import androidx.compose.material3.TopAppBar
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import com.aarav.geowav.presentation.components.AboutDialog
+import com.aarav.geowav.presentation.theme.manrope
+import com.aarav.geowav.presentation.theme.sora
+import com.google.accompanist.permissions.ExperimentalPermissionsApi
+import com.google.accompanist.permissions.isGranted
+import com.google.accompanist.permissions.rememberPermissionState
 
 
 enum class TriggerType { ENTER, EXIT }
 enum class ThemeMode { SYSTEM, LIGHT, DARK }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SettingsScreen(
+    settingsVM: SettingsVM,
+    themeMode: ThemeMode,
+    onThemeChange: (ThemeMode) -> Unit,
     hasLocationPermission: Boolean,
     notificationsEnabled: Boolean,
     triggerType: TriggerType,
-    themeMode: ThemeMode,
     appVersion: String,
+    navigateToHome: () -> Unit,
     onOpenLocationSettings: () -> Unit,
     onToggleNotifications: (Boolean) -> Unit,
     onTriggerTypeChange: (TriggerType) -> Unit,
-    onThemeChange: (ThemeMode) -> Unit,
     onAboutClick: () -> Unit,
     onTermsClick: () -> Unit,
     onLogout: () -> Unit,
     onDeleteAccount: () -> Unit
 ) {
-    var showDeleteDialog by remember { mutableStateOf(false) }
 
-    LazyColumn(
+    val uiState by settingsVM.uiState.collectAsState()
+
+    var showAboutDialog by remember {
+        mutableStateOf(false)
+    }
+
+    val isPermissionGranted =
+        CheckBackgroundPermission() && CheckFineLocationPermission()
+
+    LaunchedEffect(Unit) {
+        settingsVM.updateLocationPermission(isPermissionGranted)
+    }
+
+    AboutDialog(
+        showAboutDialog = showAboutDialog,
+        confirmButtonText = "Close",
+        onConfirmClick = {
+            showAboutDialog = false
+        },
+        icon = R.drawable.new_logo,
+        title = "GeoWav",
+        message = "GeoWav is a mobile application that helps users stay connected with their loved ones by sharing meaningful updates in a simple and reliable way. The app focuses on personal communication, supports offline usage, and securely synchronizes data using cloud services, providing a smooth and dependable user experience.",
+    )
+
+    Scaffold(
         modifier = Modifier.fillMaxSize(),
-        contentPadding = PaddingValues(16.dp),
-        verticalArrangement = Arrangement.spacedBy(20.dp)
+        containerColor = MaterialTheme.colorScheme.background,
+        topBar = {
+            TopAppBar(
+                title = {
+                    Text(
+                        text = "Settings",
+                        fontSize = 24.sp,
+                        fontFamily = manrope,
+                        fontWeight = FontWeight.SemiBold,
+                        color = MaterialTheme.colorScheme.onBackground,
+                    )
+                },
+                navigationIcon = {
+                    IconButton(
+                        onClick = {
+                            navigateToHome()
+                        }
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.ArrowBack,
+                            contentDescription = "back arrow",
+                            tint = MaterialTheme.colorScheme.onBackground
+                        )
+                    }
+                }
+            )
+        }
     ) {
+        LazyColumn(
+            modifier = Modifier
+                .padding(it)
+                .fillMaxSize()
+                .background(MaterialTheme.colorScheme.background)
+                ,
+            contentPadding = PaddingValues(16.dp),
+            verticalArrangement = Arrangement.spacedBy(24.dp)
+        ) {
 
-        // 🧭 Location
-        item {
-            Section(title = "Location") {
-                SettingItem(
-                    title = "Location Access",
-                    subtitle = "Manage location permission",
-                    onClick = onOpenLocationSettings
-                )
+            // 🧭 Location
+            item {
+                Section(title = "Location") {
+                    SettingItem(
+                        title = "Location Access",
+                        subtitle = "Manage location permission",
+                        onClick = onOpenLocationSettings
+                    )
 
-                TriggerTypeSelector(
-                    enabled = hasLocationPermission && notificationsEnabled,
-                    selected = triggerType,
-                    onSelected = onTriggerTypeChange
-                )
+                    HorizontalDivider(
+                        modifier = Modifier.padding(horizontal = 16.dp),
+                        thickness = 0.5.dp,
+                        color = MaterialTheme.colorScheme.outlineVariant
+                    )
+
+                    TriggerTypeSelector(
+                        enabled = hasLocationPermission && notificationsEnabled,
+                        selected = triggerType,
+                        onSelected = onTriggerTypeChange
+                    )
+                }
             }
-        }
 
-        // 🎨 Appearance
-        item {
-            Section(title = "Appearance") {
-                ThemeSelector(
-                    selected = themeMode,
-                    onSelected = onThemeChange
-                )
+            // 🎨 Appearance
+            item {
+                Section(title = "Appearance") {
+                    ThemeSelector(
+                        selected = themeMode,
+                        onSelected = onThemeChange
+                    )
+                }
             }
-        }
 
-        // 🔔 Notifications
-        item {
-            Section(title = "Notifications") {
-                SwitchItem(
-                    title = "Enable Notifications",
-                    checked = notificationsEnabled,
-                    onCheckedChange = onToggleNotifications
-                )
+            // 🔔 Notifications
+            item {
+                Section(title = "Notifications") {
+                    SwitchItem(
+                        title = "Enable Notifications",
+                        checked = uiState.notificationsEnabled,
+                        onCheckedChange = {
+                            settingsVM.updateNotificationsEnabled(it)
+                        }
+                    )
+                }
             }
-        }
 
-        // ℹ️ About
-        item {
-            Section(title = "About") {
-                SettingItem(
-                    title = "App Version",
-                    subtitle = appVersion,
-                    enabled = false
-                )
-                SettingItem(
-                    title = "About GeoWav",
-                    onClick = onAboutClick
-                )
-                SettingItem(
-                    title = "Terms & Privacy Policy",
-                    onClick = onTermsClick
-                )
+            // ℹ️ About
+            item {
+                Section(title = "About") {
+                    SettingItem(
+                        title = "App Version",
+                        subtitle = uiState.appVersion,
+                        enabled = true
+                    )
+
+                    HorizontalDivider(
+                        modifier = Modifier.padding(horizontal = 16.dp),
+                        thickness = 0.5.dp,
+                        color = MaterialTheme.colorScheme.outlineVariant
+                    )
+
+                    SettingItem(
+                        title = "About GeoWav",
+                        onClick = {
+                            showAboutDialog = true
+                        }
+                    )
+
+                    HorizontalDivider(
+                        modifier = Modifier.padding(horizontal = 16.dp),
+                        thickness = 0.5.dp,
+                        color = MaterialTheme.colorScheme.outlineVariant
+                    )
+
+                    SettingItem(
+                        title = "Terms & Privacy Policy",
+                        onClick = onTermsClick
+                    )
+                }
             }
-        }
 
-        // 👤 Account
-        item {
-            Section(title = "Account") {
-                SettingItem(
-                    title = "Logout",
-                    onClick = onLogout
-                )
+            // 👤 Account
+            item {
+                Section(title = "Account") {
+                    SettingItem(
+                        title = "Logout",
+                        onClick = {
+                            settingsVM.logout()
+                            onLogout()
+                        }
+                    )
 
-                SettingItem(
-                    title = "Delete Account",
-                    titleColor = MaterialTheme.colorScheme.error,
-                    onClick = { showDeleteDialog = true }
-                )
+                    HorizontalDivider(
+                        modifier = Modifier.padding(horizontal = 16.dp),
+                        thickness = 0.5.dp,
+                        color = MaterialTheme.colorScheme.outlineVariant
+                    )
+
+                    SettingItem(
+                        title = "Delete Account",
+                        titleColor = MaterialTheme.colorScheme.error,
+                        onClick = {
+                            settingsVM.showDeleteDialog()
+                        }
+                    )
+                }
             }
         }
     }
 
-    if (showDeleteDialog) {
+
+
+    if (uiState.showDeleteDialog) {
         AlertDialog(
-            onDismissRequest = { showDeleteDialog = false },
-            title = { Text("Delete account?") },
+            onDismissRequest = {
+                settingsVM.dismissDeleteDialog()
+            },
+            title = { Text("Delete account?", fontFamily = manrope, fontWeight = FontWeight.Bold) },
             text = {
-                Text("This action is permanent and cannot be undone.")
+                Text("This action is permanent and cannot be undone.", fontFamily = sora)
             },
             confirmButton = {
                 TextButton(
                     onClick = {
-                        showDeleteDialog = false
+                        settingsVM.dismissDeleteDialog()
                         onDeleteAccount()
                     }
                 ) {
-                    Text("Delete", color = MaterialTheme.colorScheme.error)
+                    Text(
+                        "Delete",
+                        color = MaterialTheme.colorScheme.error,
+                        fontFamily = manrope,
+                        fontWeight = FontWeight.SemiBold
+                    )
                 }
             },
             dismissButton = {
-                TextButton(onClick = { showDeleteDialog = false }) {
-                    Text("Cancel")
+                TextButton(onClick = {
+                    settingsVM.dismissDeleteDialog()
+                }) {
+                    Text("Cancel", fontFamily = manrope, fontWeight = FontWeight.SemiBold)
                 }
             }
         )
@@ -153,14 +301,19 @@ fun Section(
     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
         Text(
             text = title,
-            style = MaterialTheme.typography.labelLarge,
-            color = MaterialTheme.colorScheme.primary
+            fontFamily = manrope,
+            fontWeight = FontWeight.Bold,
+            style = MaterialTheme.typography.titleMedium,
+            color = MaterialTheme.colorScheme.primary,
+            modifier = Modifier.padding(horizontal = 4.dp)
         )
         Surface(
-            shape = MaterialTheme.shapes.large,
-            tonalElevation = 2.dp
+            shape = MaterialTheme.shapes.extraLarge,
+            tonalElevation = 2.dp,
+            color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f),
+            border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f))
         ) {
-            Column(modifier = Modifier.padding(12.dp)) {
+            Column {
                 content()
             }
         }
@@ -178,19 +331,25 @@ fun SettingItem(
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .let {
-                if (onClick != null && enabled)
-                    it.clickable { onClick() }
-                else it
-            }
-            .padding(vertical = 10.dp)
+            .then(
+                if (onClick != null && enabled) Modifier.clickable { onClick() } else Modifier
+            )
+            .padding(vertical = 16.dp, horizontal = 16.dp)
     ) {
-        Text(title, color = titleColor)
+        Text(
+            text = title,
+            color = if (enabled) titleColor else titleColor.copy(alpha = 0.5f),
+            fontFamily = manrope,
+            fontWeight = FontWeight.SemiBold,
+            style = MaterialTheme.typography.bodyLarge
+        )
         subtitle?.let {
             Text(
                 it,
                 style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                fontFamily = sora,
+                modifier = Modifier.padding(top = 4.dp)
             )
         }
     }
@@ -203,12 +362,28 @@ fun SwitchItem(
     onCheckedChange: (Boolean) -> Unit
 ) {
     Row(
-        modifier = Modifier.fillMaxWidth(),
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable { onCheckedChange(!checked) }
+            .padding(horizontal = 16.dp, vertical = 12.dp),
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically
     ) {
-        Text(title)
-        Switch(checked = checked, onCheckedChange = onCheckedChange)
+        Text(
+            text = title,
+            fontFamily = manrope,
+            color = MaterialTheme.colorScheme.onSurface,
+            fontWeight = FontWeight.SemiBold,
+            style = MaterialTheme.typography.bodyLarge
+        )
+        Switch(
+            checked = checked,
+            onCheckedChange = onCheckedChange,
+            colors = SwitchDefaults.colors(
+                checkedThumbColor = MaterialTheme.colorScheme.primary,
+                checkedTrackColor = MaterialTheme.colorScheme.primaryContainer
+            )
+        )
     }
 }
 
@@ -219,23 +394,23 @@ fun TriggerTypeSelector(
     selected: TriggerType,
     onSelected: (TriggerType) -> Unit
 ) {
-    Column {
+    Column(
+        modifier = Modifier.padding(horizontal = 16.dp, vertical = 16.dp)
+    ) {
         Text(
-            "Trigger Type",
+            text = "Trigger Type",
+            fontFamily = manrope,
+            fontWeight = FontWeight.SemiBold,
+            style = MaterialTheme.typography.bodyLarge,
             color = if (enabled)
                 MaterialTheme.colorScheme.onSurface
             else
-                MaterialTheme.colorScheme.onSurfaceVariant
+                MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f)
         )
-
-        Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-            RadioOption("Enter", selected == TriggerType.ENTER, enabled) {
-                onSelected(TriggerType.ENTER)
-            }
-            RadioOption("Exit", selected == TriggerType.EXIT, enabled) {
-                onSelected(TriggerType.EXIT)
-            }
-        }
+        Spacer(modifier = Modifier.height(12.dp))
+        TriggerTypeChipRow(
+            enabled = enabled
+        )
     }
 }
 
@@ -244,37 +419,28 @@ fun ThemeSelector(
     selected: ThemeMode,
     onSelected: (ThemeMode) -> Unit
 ) {
-    Column {
-        Text("Dark Mode")
-        ThemeMode.values().forEach {
-            RadioOption(
-                text = it.name.lowercase().replaceFirstChar(Char::uppercase),
-                selected = selected == it,
-                enabled = true
-            ) { onSelected(it) }
-        }
-    }
-}
-
-@Composable
-fun RadioOption(
-    text: String,
-    selected: Boolean,
-    enabled: Boolean,
-    onClick: () -> Unit
-) {
-    Row(
-        verticalAlignment = Alignment.CenterVertically,
+    Column(
         modifier = Modifier
-            .alpha(if (enabled) 1f else 0.5f)
-            .clickable(enabled = enabled) { onClick() }
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp, vertical = 16.dp)
     ) {
-        RadioButton(
-            selected = selected,
-            onClick = null,
-            enabled = enabled
+        Text(
+            text = "Appearance Mode",
+            fontFamily = manrope,
+            fontWeight = FontWeight.SemiBold,
+            color = MaterialTheme.colorScheme.onSurface,
+            style = MaterialTheme.typography.bodyLarge
         )
-        Text(text)
+        Spacer(modifier = Modifier.height(12.dp))
+        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            ThemeMode.entries.forEach { mode ->
+                ThemeChips(
+                    label = mode.name.lowercase().replaceFirstChar(Char::uppercase),
+                    selected = selected == mode,
+                    onClick = { onSelected(mode) }
+                )
+            }
+        }
     }
 }
 
@@ -282,45 +448,130 @@ fun RadioOption(
 @Preview(showBackground = true)
 @Composable
 fun SettingsScreenPreview() {
+//        SettingsScreen(
+//            hasLocationPermission = true,
+//            notificationsEnabled = true,
+//            triggerType = TriggerType.ENTER,
+//            themeMode = ThemeMode.SYSTEM,
+//            appVersion = "1.0.0",
+//            onOpenLocationSettings = {},
+//            onToggleNotifications = {},
+//            onTriggerTypeChange = {},
+//            onThemeChange = {},
+//            onAboutClick = {},
+//            onTermsClick = {},
+//            onLogout = {},
+//            onDeleteAccount = {}
+//        )
+}
 
-    MaterialTheme {
-
-        val context = LocalContext.current
-        val packageManager = context.packageManager
-        val packageName = context.packageName
-
-        val packageInfo = if (Build.VERSION.SDK_INT >= 33) {
-            packageManager.getPackageInfo(
-                packageName,
-                PackageManager.PackageInfoFlags.of(0)
+@Composable
+fun TriggerTypeChips(
+    label: String,
+    selected: Boolean,
+    enabled: Boolean = true,
+    onClick: () -> Unit
+) {
+    FilterChip(
+        selected = selected,
+        onClick = onClick,
+        enabled = enabled,
+        leadingIcon = if (selected) {
+            {
+                Icon(
+                    imageVector = Icons.Default.Check,
+                    contentDescription = null,
+                    modifier = Modifier.size(FilterChipDefaults.IconSize)
+                )
+            }
+        } else null,
+        label = {
+            Text(
+                text = label,
+                fontFamily = sora,
+                fontWeight = FontWeight.Medium
             )
-        } else {
-            @Suppress("DEPRECATION")
-            packageManager.getPackageInfo(packageName, 0)
-        }
+        },
+        colors = FilterChipDefaults.filterChipColors(
+            selectedContainerColor = MaterialTheme.colorScheme.primaryContainer,
+            selectedLabelColor = MaterialTheme.colorScheme.onPrimaryContainer,
+            containerColor = MaterialTheme.colorScheme.surface,
+            labelColor = MaterialTheme.colorScheme.onSurfaceVariant
+        )
+    )
+}
 
-        val versionName = packageInfo.versionName ?: "0.0.0"
+@Composable
+fun TriggerTypeChipRow(
+    enabled: Boolean
+) {
+    Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+        TriggerTypeChips(
+            label = "Enter",
+            selected = true,
+            enabled = enabled,
+            onClick = { }
+        )
 
-
-        val parts = versionName.split(".")
-        val major = parts.getOrNull(0)?.toIntOrNull() ?: 0
-        val minor = parts.getOrNull(1)?.toIntOrNull() ?: 0
-        val patch = parts.getOrNull(2)?.toIntOrNull() ?: 0
-
-        SettingsScreen(
-            hasLocationPermission = true,
-            notificationsEnabled = true,
-            triggerType = TriggerType.ENTER,
-            themeMode = ThemeMode.SYSTEM,
-            appVersion = versionName,
-            onOpenLocationSettings = {},
-            onToggleNotifications = {},
-            onTriggerTypeChange = {},
-            onThemeChange = {},
-            onAboutClick = {},
-            onTermsClick = {},
-            onLogout = {},
-            onDeleteAccount = {}
+        TriggerTypeChips(
+            label = "Exit",
+            selected = true,
+            enabled = enabled,
+            onClick = { }
         )
     }
+}
+
+
+@Composable
+fun ThemeChips(
+    label: String,
+    selected: Boolean,
+    enabled: Boolean = true,
+    onClick: () -> Unit
+) {
+    FilterChip(
+        selected = selected,
+        onClick = onClick,
+        enabled = enabled,
+        leadingIcon = if (selected) {
+            {
+                Icon(
+                    imageVector = Icons.Default.Check,
+                    contentDescription = null,
+                    modifier = Modifier.size(FilterChipDefaults.IconSize)
+                )
+            }
+        } else null,
+        label = {
+            Text(
+                text = label,
+                fontFamily = sora,
+                fontWeight = FontWeight.Medium
+            )
+        },
+        colors = FilterChipDefaults.filterChipColors(
+            selectedContainerColor = MaterialTheme.colorScheme.primaryContainer,
+            selectedLabelColor = MaterialTheme.colorScheme.onPrimaryContainer,
+            containerColor = MaterialTheme.colorScheme.surface,
+            labelColor = MaterialTheme.colorScheme.onSurfaceVariant
+        )
+    )
+}
+
+@OptIn(ExperimentalPermissionsApi::class)
+@Composable
+fun CheckFineLocationPermission(): Boolean {
+    val permissionState = rememberPermissionState(Manifest.permission.ACCESS_FINE_LOCATION)
+
+    return permissionState.status.isGranted
+}
+
+@Composable
+@OptIn(ExperimentalPermissionsApi::class)
+fun CheckBackgroundPermission(): Boolean {
+    val permissionState =
+        rememberPermissionState(Manifest.permission.ACCESS_BACKGROUND_LOCATION)
+
+    return permissionState.status.isGranted
 }

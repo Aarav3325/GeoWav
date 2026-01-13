@@ -36,6 +36,8 @@ fun BottomNavigationBar(
         containerColor = MaterialTheme.colorScheme.surfaceContainer,
         tonalElevation = 8.dp,
     ) {
+
+
         navItems.forEachIndexed { index, destination ->
             val isSelected = currentRoute?.startsWith(destination.path) == true
 

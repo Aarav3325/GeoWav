@@ -59,6 +59,7 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -78,12 +79,12 @@ import kotlinx.coroutines.launch
 @Composable
 fun GeoWavHomeScreen(
     isDarkThemeEnabled: Boolean,
-    onThemeChange: () -> Unit,
     navigateToAuth: () -> Unit,
     onAddZone: () -> Unit,
     onShareLocation: () -> Unit,
     onOpenAlerts: () -> Unit,
     homeScreenVM: HomeScreenVM,
+    navigateToSettings: () -> Unit,
     navigateToActivity: () -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -160,11 +161,12 @@ fun GeoWavHomeScreen(
                     }
 
                     IconButton(
-                        onClick = onThemeChange
-//                        onClick = {
+//                        onClick = onThemeChange
+                        onClick = {
+                            navigateToSettings()
 //                            homeScreenVM.signOut()
 //                            navigateToAuth()
-//                        }
+                        }
                     ) {
                         Image(
                             painter = painterResource(R.drawable.gear_six),
@@ -289,6 +291,51 @@ fun GeoWavHomeScreen(
                     }
 
                     RecentAlertsList(uiState.alertsList.take(5), isDarkThemeEnabled)
+
+
+                    Column(
+                        modifier = Modifier.fillMaxWidth().padding(vertical = 24.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.spacedBy(12.dp)
+                    ) {
+                        Surface(
+                            color = MaterialTheme.colorScheme.primary,
+                            shape = CircleShape
+                        ) {
+                            Icon(
+                                painter = painterResource(R.drawable.new_logo),
+                                contentDescription = "logo",
+                                modifier = Modifier.size(56.dp),
+                            )
+                        }
+
+                        Text(
+                            text = "GeoWav",
+                            color = MaterialTheme.colorScheme.onBackground,
+                            fontSize = 24.sp,
+                            fontFamily = manrope,
+                            fontWeight = FontWeight.Bold
+                        )
+
+//                        Row(
+//                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+//                        ) {
+//                            Text(
+//                                text = "Made With Love",
+//                                color = MaterialTheme.colorScheme.onBackground,
+//                                fontSize = 16.sp,
+//                                fontFamily = manrope,
+//                                fontWeight = FontWeight.Bold
+//                            )
+//
+//                            Icon(
+//                                painter = painterResource(R.drawable.heart_fill),
+//                                contentDescription = "logo",
+//                                modifier = Modifier.size(24.dp),
+//                                tint = MaterialTheme.colorScheme.error
+//                            )
+//                        }
+                    }
                 }
             }
         }
@@ -394,13 +441,20 @@ fun ConnectionsRow(title: String, connections: List<GeoConnection>?, onAdd: () -
             }
         }
 
+        val connectionItem = GeoConnection(
+            id = 1,
+            phoneNumber = "9558030582",
+            name = "Test Number"
+        )
+
+        val demoList = listOf<GeoConnection>(connectionItem)
 
         LazyRow(
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(0.dp),
             modifier = Modifier.padding(top = 8.dp)
         ) {
-            if (connections.isNullOrEmpty()) {
+            if (demoList.isNullOrEmpty()) {
                 item {
                     Column(
                         modifier = Modifier
@@ -425,7 +479,7 @@ fun ConnectionsRow(title: String, connections: List<GeoConnection>?, onAdd: () -
                     }
                 }
             } else {
-                items(connections) { conn ->
+                items(demoList) { conn ->
                     ConnectionCard(conn)
                 }
             }
@@ -467,6 +521,7 @@ fun ConnectionCard(conn: GeoConnection) {
         Text(
             conn.name.toString(),
             fontSize = 14.sp,
+            textAlign = TextAlign.Center,
             color = MaterialTheme.colorScheme.onBackground,
             style = MaterialTheme.typography.bodyMedium.copy(fontFamily = sora),
             maxLines = 1

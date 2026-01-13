@@ -19,12 +19,16 @@ import com.aarav.geowav.presentation.map.MapScreen
 import com.aarav.geowav.presentation.navigation.NavRoute
 import com.aarav.geowav.presentation.onboard.OnboardingScreen
 import com.aarav.geowav.presentation.addplace.AddPlaceScreen
+import com.aarav.geowav.presentation.settings.SettingsScreen
+import com.aarav.geowav.presentation.settings.ThemeMode
+import com.aarav.geowav.presentation.settings.TriggerType
 import com.aarav.geowav.presentation.yourplace.YourPlacesScreen
 
 @Composable
 fun NavGraph(
     isDarkThemeEnabled: Boolean,
-    onThemeChange: () -> Unit,
+    themeMode: ThemeMode,
+    onThemeChange: (ThemeMode) -> Unit,
     navHostController: NavHostController,
     sharedPreferences: SharedPreferences,
     location: Pair<Double, Double>?,
@@ -74,12 +78,19 @@ fun NavGraph(
 
         AddHomeScreen(
             isDarkThemeEnabled,
-            onThemeChange,
             navHostController,
             this
         )
 
         AddActivityScreen(
+            isDarkThemeEnabled,
+            navHostController,
+            this
+        )
+
+        AddSettingsScreen(
+            themeMode,
+            onThemeChange,
             navHostController,
             this
         )
@@ -129,11 +140,10 @@ fun AddNewPlaceScreen(
             },
             navigateToYourPlaces = {
                 navController.navigate(NavRoute.YourPlaces.path) {
-                    popUpTo(navController.graph.findStartDestination().id) {
-                        saveState = true
+                    popUpTo(NavRoute.MapScreen.path) {
+                        inclusive = true   // removes AddPlace AND Map
                     }
                     launchSingleTop = true
-                    restoreState = true
                 }
             },
             placeViewModel = hiltViewModel()
@@ -214,7 +224,6 @@ fun AddOnBoard(
 
 fun AddHomeScreen(
     isDarkThemeEnabled: Boolean,
-    onThemeChange: () -> Unit,
     navController: NavController, navGraphBuilder: NavGraphBuilder
 ) {
     navGraphBuilder.composable(
@@ -223,7 +232,6 @@ fun AddHomeScreen(
 
         GeoWavHomeScreen(
             isDarkThemeEnabled = isDarkThemeEnabled,
-            onThemeChange = onThemeChange,
             navigateToAuth = {
                 navController.navigate(NavRoute.Login.path)
             },
@@ -233,6 +241,9 @@ fun AddHomeScreen(
             onShareLocation = {},
             onOpenAlerts = {},
             homeScreenVM = hiltViewModel(),
+            navigateToSettings = {
+                navController.navigate(NavRoute.Settings.path)
+            },
             navigateToActivity = {
                 navController.navigate(NavRoute.ActivityScreen.path) {
                     popUpTo(navController.graph.findStartDestination().id) {
@@ -247,13 +258,54 @@ fun AddHomeScreen(
 }
 
 fun AddActivityScreen(
+    isDarkThemeEnabled: Boolean,
     navController: NavController, navGraphBuilder: NavGraphBuilder
 ) {
     navGraphBuilder.composable(
         route = NavRoute.ActivityScreen.path
     ) {
         ActivityScreen(
+            isDarkThemeEnabled,
             activityViewModel = hiltViewModel()
+        )
+    }
+}
+
+fun AddSettingsScreen(
+    themeMode: ThemeMode,
+    onThemeChange: (ThemeMode) -> Unit,
+    navController: NavController, navGraphBuilder: NavGraphBuilder
+) {
+    navGraphBuilder.composable(
+        route = NavRoute.Settings.path
+    ) {
+        SettingsScreen(
+            settingsVM = hiltViewModel(),
+            themeMode = themeMode,
+            onThemeChange = onThemeChange,
+            hasLocationPermission = true,
+            notificationsEnabled = true,
+            triggerType = TriggerType.ENTER,
+            appVersion = "1.0.0",
+            navigateToHome = {
+                navController.navigateUp()
+//                navController.navigate(NavRoute.HomeScreen.path) {
+//                    popUpTo(navController.graph.findStartDestination().id) {
+//                        saveState = true
+//                    }
+//                    launchSingleTop = true
+//                    restoreState = true
+//                }
+            },
+            onOpenLocationSettings = {},
+            onToggleNotifications = {},
+            onTriggerTypeChange = {},
+            onAboutClick = {},
+            onTermsClick = {},
+            onLogout = {
+                navController.navigate(NavRoute.Login.path)
+            },
+            onDeleteAccount = {}
         )
     }
 }

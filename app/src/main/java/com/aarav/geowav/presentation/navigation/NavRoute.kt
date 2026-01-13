@@ -16,4 +16,5 @@ sealed class NavRoute(val path: String) {
     object SignUp : NavRoute("signUp")
     object Login : NavRoute("login")
     object OnBoard : NavRoute("onBoard")
+    object Settings : NavRoute("settings")
 }

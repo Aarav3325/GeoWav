@@ -59,6 +59,7 @@ import com.aarav.geowav.presentation.theme.sora
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ActivityScreen(
+    isDarkThemeEnabled: Boolean,
     activityViewModel: ActivityViewModel
 ) {
 
@@ -86,7 +87,7 @@ fun ActivityScreen(
             activityViewModel.showDatePicker()
         })
 
-        ActivityContent(uiState)
+        ActivityContent(isDarkThemeEnabled, uiState)
 
         if (uiState.showDatePicker) {
             DateRangePickerModal(onDateRangeSelected = { (from, to) ->
@@ -147,6 +148,7 @@ fun DateRangePickerModal(
 
 @Composable
 fun ActivityContent(
+    isDarkThemeEnabled: Boolean,
     uiState: ActivityUiState
 ) {
     Box(
@@ -219,7 +221,7 @@ fun ActivityContent(
                     verticalArrangement = Arrangement.spacedBy(9.dp)
                 ) {
                     items(uiState.alerts) { alert ->
-                        NewLog(alert)
+                        NewLog(isDarkThemeEnabled, alert)
                     }
 
                     item {
@@ -309,6 +311,7 @@ fun LogFilterChip(
 
 @Composable
 fun NewLog(
+    isDarkThemeEnabled: Boolean,
     alert: com.aarav.geowav.data.model.GeoAlert, modifier: Modifier = Modifier
 ) {
     val isEnter = alert.type.equals("enter", ignoreCase = true)
@@ -318,13 +321,13 @@ fun NewLog(
 
     val relativeTime = buildRelativeSubtitle(type, alert.readableTime)
 
-    val containerColor = if (isSystemInDarkTheme()) {
+    val containerColor = if (isDarkThemeEnabled) {
         if (isEnter) Color(0xFF00513f) else Color(0xFF723339)
     } else {
         if (isEnter) Color(0xFFa3f2d6) else Color(0xFFffdadb)
     }
 
-    val contentColor = if (isSystemInDarkTheme()) {
+    val contentColor = if (isDarkThemeEnabled) {
         if (isEnter) Color(0XFFa3f2d6) else Color(0xFFffdadb)
     } else {
         if (isEnter) Color(0xFF00513f) else Color(0xFF723339)

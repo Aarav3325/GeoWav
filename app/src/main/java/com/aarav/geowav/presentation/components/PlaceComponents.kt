@@ -51,7 +51,6 @@ fun GeofencePlaceCard(
     place: Place,
     onDeleteClick: (Place) -> Unit
 ) {
-    GeoWavTheme {
         Card(
             modifier = Modifier
                 .fillMaxWidth()
@@ -160,7 +159,6 @@ fun GeofencePlaceCard(
                 )
             }
         }
-    }
 }
 
 @Composable
@@ -294,7 +292,6 @@ fun RadiusChipGroup(
     onRadiusSelected: (Float) -> Unit
 ) {
 
-    GeoWavTheme {
         Column {
             Text(
                 text = "Select Radius",
@@ -327,7 +324,6 @@ fun RadiusChipGroup(
                 }
             }
         }
-    }
 }
 
 @Preview(showBackground = true)

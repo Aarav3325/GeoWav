@@ -133,7 +133,6 @@ fun AddPlaceScreen(
         placeViewModel.clearError()
     }
 
-    GeoWavTheme {
         Scaffold(
             containerColor = MaterialTheme.colorScheme.background,
             topBar = {
@@ -425,8 +424,6 @@ fun AddPlaceScreen(
                 }
             }
         }
-
-    }
 }
 
 fun getFormattedDate(): String {

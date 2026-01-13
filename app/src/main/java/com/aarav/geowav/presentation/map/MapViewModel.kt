@@ -24,24 +24,6 @@ class MapViewModel @Inject constructor(application: Application,
     private var _uiState = MutableStateFlow<MapScreenUiState>(MapScreenUiState())
     val uiState: StateFlow<MapScreenUiState> = _uiState.asStateFlow()
 
-//    fun fetchUserLocation(){
-//        viewModelScope.launch {
-//            val loc = locationManager.getLastKnownLocation()
-//            loc?.let {
-//                _currentLocation.value = Pair(it.latitude, it.longitude)
-//            }
-//        }
-//    }
-
-//    fun onPlaceSelected(place: Place) {
-//        _uiState.update {
-//            it.copy(
-//                selectedPlace = place,
-//                isBottomSheetShowing = true
-//            )
-//        }
-//    }
-
     fun showBottomSheet() {
         if (_uiState.value.selectedPlace != null){
             _uiState.update {
