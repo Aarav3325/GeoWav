@@ -444,7 +444,7 @@ fun ConnectionsRow(title: String, connections: List<GeoConnection>?, onAdd: () -
         val connectionItem = GeoConnection(
             id = 1,
             phoneNumber = "9558030582",
-            name = "Test Number"
+            name = "Test"
         )
 
         val demoList = listOf<GeoConnection>(connectionItem)

@@ -24,8 +24,6 @@ class GeoWavApp : Application(), Configuration.Provider {
     @Inject
     lateinit var placeRepo: PlaceRepositoryImpl
 
-    private lateinit var fusedClient: FusedLocationProviderClient
-
     @Inject
     lateinit var workerFactory: HiltWorkerFactory
     override val workManagerConfiguration: Configuration

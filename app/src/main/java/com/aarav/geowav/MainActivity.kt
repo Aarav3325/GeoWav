@@ -21,8 +21,6 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Scaffold
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.setValue
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.runtime.LaunchedEffect
@@ -30,7 +28,6 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -45,7 +42,6 @@ import com.aarav.geowav.presentation.MainVM
 import com.aarav.geowav.presentation.components.SnackbarManager
 import com.aarav.geowav.presentation.navigation.BottomNavigationBar
 import com.aarav.geowav.presentation.navigation.NavRoute
-import com.aarav.geowav.presentation.settings.SettingsVM
 import com.aarav.geowav.presentation.settings.ThemeMode
 import com.aarav.geowav.presentation.theme.GeoWavTheme
 import com.google.accompanist.permissions.ExperimentalPermissionsApi
@@ -71,7 +67,6 @@ class MainActivity : ComponentActivity() {
 
     @Inject
     lateinit var locationManager: LocationManager
-
 
 
     @RequiresPermission(Manifest.permission.ACCESS_FINE_LOCATION)
@@ -112,9 +107,7 @@ class MainActivity : ComponentActivity() {
 
 
             Crossfade(
-                targetState = isDarkTheme,
-                animationSpec = tween(800),
-                label = "ThemeFade"
+                targetState = isDarkTheme, animationSpec = tween(800), label = "ThemeFade"
             ) { isDark ->
                 GeoWavTheme(
                     darkTheme = isDark
@@ -176,8 +169,7 @@ class MainActivity : ComponentActivity() {
                             AnimatedVisibility(isBottomBarVisible) {
                                 BottomNavigationBar(navController)
                             }
-                        }
-                    ) {
+                        }) {
                         val location1 =
                             location?.let { it.latitude to it.longitude } ?: (0.0 to 0.0)
 

@@ -146,7 +146,6 @@ fun SettingsScreen(
             verticalArrangement = Arrangement.spacedBy(24.dp)
         ) {
 
-            // 🧭 Location
             item {
                 Section(title = "Location") {
                     SettingItem(
@@ -169,7 +168,6 @@ fun SettingsScreen(
                 }
             }
 
-            // 🎨 Appearance
             item {
                 Section(title = "Appearance") {
                     ThemeSelector(
@@ -179,7 +177,6 @@ fun SettingsScreen(
                 }
             }
 
-            // 🔔 Notifications
             item {
                 Section(title = "Notifications") {
                     SwitchItem(
@@ -192,7 +189,6 @@ fun SettingsScreen(
                 }
             }
 
-            // ℹ️ About
             item {
                 Section(title = "About") {
                     SettingItem(
@@ -227,7 +223,6 @@ fun SettingsScreen(
                 }
             }
 
-            // 👤 Account
             item {
                 Section(title = "Account") {
                     SettingItem(
