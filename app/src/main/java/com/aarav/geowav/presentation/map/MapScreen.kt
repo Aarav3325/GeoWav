@@ -1,7 +1,6 @@
 package com.aarav.geowav.presentation.map
 
 import android.util.Log
-import com.aarav.geowav.R
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Box
@@ -22,12 +21,20 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.rememberModalBottomSheetState
-import androidx.compose.runtime.*
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
+import com.aarav.geowav.R
 import com.aarav.geowav.presentation.components.MyAlertDialog
 import com.aarav.geowav.presentation.components.PlaceModalSheet
 import com.aarav.geowav.presentation.theme.manrope
@@ -36,17 +43,25 @@ import com.aarav.geowav.presentation.theme.surfaceContainerLowestLightHighContra
 import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.model.CameraPosition
 import com.google.android.gms.maps.model.LatLng
-import com.google.maps.android.compose.*
+import com.google.maps.android.compose.GoogleMap
+import com.google.maps.android.compose.MapProperties
+import com.google.maps.android.compose.MapUiSettings
+import com.google.maps.android.compose.Marker
+import com.google.maps.android.compose.MarkerState
+import com.google.maps.android.compose.rememberCameraPositionState
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun MapScreen(mapViewModel: MapViewModel,
-              location : Pair<Double, Double>?,
-              navigateToAddPlace: (String) -> Unit,
-              navigateToHome: () -> Unit,
-              modifier: Modifier = Modifier) {
+fun MapScreen(
+    isDarkThemeEnabled: Boolean,
+    mapViewModel: MapViewModel,
+    location: Pair<Double, Double>?,
+    navigateToAddPlace: (String) -> Unit,
+    navigateToHome: () -> Unit,
+    modifier: Modifier = Modifier
+) {
 
 
     val uiState by mapViewModel.uiState.collectAsState()
@@ -58,9 +73,13 @@ fun MapScreen(mapViewModel: MapViewModel,
     }
 
     var uiSettings by remember {
-        mutableStateOf(MapUiSettings(myLocationButtonEnabled = false,
-            zoomControlsEnabled = false,
-            compassEnabled = true))
+        mutableStateOf(
+            MapUiSettings(
+                myLocationButtonEnabled = false,
+                zoomControlsEnabled = false,
+                compassEnabled = true
+            )
+        )
     }
 
     val selectedPlace = uiState.selectedPlace
@@ -91,7 +110,6 @@ fun MapScreen(mapViewModel: MapViewModel,
 
     val textFieldState = rememberTextFieldState()
 
-
     val scope = rememberCoroutineScope()
 
     Scaffold(
@@ -99,7 +117,7 @@ fun MapScreen(mapViewModel: MapViewModel,
         topBar = {
             TopAppBar(
                 colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = if(!isSystemInDarkTheme()) surfaceContainerLowestLightHighContrast else surfaceContainerLowDarkHighContrast,
+                    containerColor = if (!isDarkThemeEnabled) surfaceContainerLowestLightHighContrast else surfaceContainerLowDarkHighContrast,
                 ),
                 title = {
                     Text(
@@ -143,8 +161,7 @@ fun MapScreen(mapViewModel: MapViewModel,
                 )
             }
         }
-    ) {
-            innerPadding ->
+    ) { innerPadding ->
         Box(
             modifier = Modifier
                 .fillMaxSize()
@@ -205,7 +222,8 @@ fun MapScreen(mapViewModel: MapViewModel,
 
             LaunchedEffect(textFieldState.text) {
                 if (textFieldState.text.length > 2 &&
-                    !uiState.showErrorDialog) {
+                    !uiState.showErrorDialog
+                ) {
 
                     delay(300) // debounce
                     mapViewModel.searchPlaces(textFieldState.text.toString())
@@ -240,6 +258,7 @@ fun MapScreen(mapViewModel: MapViewModel,
             }
 
             NewSearch(
+                isDarkThemeEnabled,
                 predictions = uiState.predictions,
                 expanded = uiState.isSearchExpanded,
                 modifier = Modifier.align(Alignment.TopCenter),
@@ -261,8 +280,6 @@ fun MapScreen(mapViewModel: MapViewModel,
                 }
             }
             */
-
-
 
 
         }

@@ -6,7 +6,7 @@ import retrofit2.converter.gson.GsonConverterFactory
 object RetrofitInstance {
     private const val BASE_URL = "https://graph.facebook.com/v22.0/"
 
-    fun getMessagesAPI(): MessageAPI {
+    fun getMessagesAPI(): com.aarav.geowav.data.datasource.retrofit.MessageAPI {
         return Retrofit.Builder()
             .baseUrl(BASE_URL)
             .addConverterFactory(GsonConverterFactory.create())

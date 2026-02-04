@@ -7,6 +7,7 @@ import android.content.SharedPreferences
 import android.location.Location
 import android.os.Build
 import android.os.Bundle
+import android.provider.Settings
 import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -39,10 +40,12 @@ import com.aarav.geowav.data.authentication.GoogleSignInClient
 import com.aarav.geowav.platform.GeofenceForegroundService
 import com.aarav.geowav.platform.LocationManager
 import com.aarav.geowav.presentation.MainVM
+import com.aarav.geowav.presentation.components.LocationPermissionDialog
 import com.aarav.geowav.presentation.components.SnackbarManager
 import com.aarav.geowav.presentation.navigation.BottomNavigationBar
 import com.aarav.geowav.presentation.navigation.NavRoute
 import com.aarav.geowav.presentation.settings.ThemeMode
+import com.aarav.geowav.presentation.settings.openAppSettings
 import com.aarav.geowav.presentation.theme.GeoWavTheme
 import com.google.accompanist.permissions.ExperimentalPermissionsApi
 import com.google.accompanist.permissions.isGranted
@@ -121,6 +124,8 @@ class MainActivity : ComponentActivity() {
                     val permissionsGranted =
                         fineLocationPermission.status.isGranted && backgroundLocationPermission.status.isGranted
 
+                    Log.i("MYTAG", "permissions $permissionsGranted")
+
 
 
                     if (permissionsGranted) {
@@ -130,6 +135,14 @@ class MainActivity : ComponentActivity() {
                         } else {
                             context.startService(intent)
                         }
+                    }
+                    else {
+                        LocationPermissionDialog(
+                            true,
+                            onConfirmClick = {
+                                openAppSettings(context, Settings.ACTION_LOCATION_SOURCE_SETTINGS)
+                            }
+                        )
                     }
 
 

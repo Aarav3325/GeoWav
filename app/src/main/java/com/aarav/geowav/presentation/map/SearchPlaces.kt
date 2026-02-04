@@ -44,6 +44,7 @@ import com.google.android.libraries.places.api.model.AutocompletePrediction
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun NewSearch(
+    isDarkThemeEnabled: Boolean,
     predictions: List<AutocompletePrediction>,
     expanded: Boolean,
     modifier: Modifier = Modifier,
@@ -53,7 +54,6 @@ fun NewSearch(
     textFieldState: TextFieldState,
     onPlaceSelected: (String) -> Unit
 ) {
-
 
     Box(
         modifier = modifier
@@ -65,7 +65,7 @@ fun NewSearch(
             shadowElevation = 16.dp,
             shape = RoundedCornerShape(16.dp),
             colors = SearchBarDefaults.colors(
-                containerColor = if (!isSystemInDarkTheme()) surfaceContainerLowestLightHighContrast else surfaceContainerLowDarkHighContrast,
+                containerColor = if (!isDarkThemeEnabled) surfaceContainerLowestLightHighContrast else surfaceContainerLowDarkHighContrast,
                 dividerColor = MaterialTheme.colorScheme.primary
             ),
             expanded = expanded,

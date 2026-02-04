@@ -82,6 +82,7 @@ import java.util.Locale
 @Preview(showBackground = true)
 @Composable
 fun AddPlaceScreen(
+    isDarkThemeEnabled: Boolean,
     placeId: String,
     navigateToMaps: () -> Unit,
     navigateToYourPlaces: () -> Unit,
@@ -169,7 +170,7 @@ fun AddPlaceScreen(
                             spotShadowColor = Color.White.copy(alpha = 0.25f)
                         },
                     colors = CardDefaults.cardColors(
-                        containerColor = if (!isSystemInDarkTheme()) surfaceContainerLight else surfaceContainerHighDark,
+                        containerColor = if (!isDarkThemeEnabled) surfaceContainerLight else surfaceContainerHighDark,
                         contentColor = MaterialTheme.colorScheme.onSurface
                     )
                 ) {
@@ -252,7 +253,7 @@ fun AddPlaceScreen(
                         elevation = CardDefaults.cardElevation(4.dp),
                         shape = RoundedCornerShape(16.dp),
                         colors = CardDefaults.cardColors(
-                            containerColor = if (!isSystemInDarkTheme()) surfaceContainerLight else surfaceContainerHighDark,
+                            containerColor = if (!isDarkThemeEnabled) surfaceContainerLight else surfaceContainerHighDark,
                             contentColor = MaterialTheme.colorScheme.onSurface
                         )
                     ) {

@@ -10,8 +10,10 @@ import android.content.pm.PackageManager
 import android.os.Build
 import android.os.IBinder
 import android.util.Log
+import androidx.annotation.RequiresPermission
 import androidx.core.app.ActivityCompat
 import androidx.core.app.NotificationCompat
+import androidx.core.content.PermissionChecker
 import com.aarav.geowav.R
 import com.aarav.geowav.data.model.Place
 import com.aarav.geowav.data.repository.GeofenceRepositoryImpl
@@ -127,6 +129,7 @@ class GeofenceForegroundService : Service() {
         }
     }
 
+    @RequiresPermission(Manifest.permission.ACCESS_FINE_LOCATION)
     private fun startForegroundService() {
         val channelId = "geo_channel"
         val channelName = "Geofence Alerts"
@@ -150,7 +153,12 @@ class GeofenceForegroundService : Service() {
             .setPriority(NotificationCompat.PRIORITY_LOW)
             .build()
 
-        startForeground(1, notification)
+
+        val permission = PermissionChecker.checkSelfPermission(applicationContext, Manifest.permission.ACCESS_FINE_LOCATION)
+
+        if(permission == PackageManager.PERMISSION_GRANTED) {
+            startForeground(1, notification)
+        }
     }
 
     override fun onDestroy() {

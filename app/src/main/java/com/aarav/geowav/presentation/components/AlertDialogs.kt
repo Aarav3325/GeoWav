@@ -3,12 +3,15 @@ package com.aarav.geowav.presentation.components
 import android.Manifest
 import android.graphics.drawable.Icon
 import android.widget.Toast
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.LocationOn
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -25,6 +28,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
@@ -271,3 +275,128 @@ fun AboutDialog(
         )
     }
 }
+
+@Composable
+fun LocationPermissionDialog(
+    showDialog: Boolean,
+    onConfirmClick: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    if (showDialog) {
+        AlertDialog(
+            containerColor = MaterialTheme.colorScheme.surfaceTint,
+            modifier = modifier,
+            onDismissRequest = onConfirmClick,
+            confirmButton = {
+                FilledTonalButton(
+                    onClick = onConfirmClick,
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = MaterialTheme.colorScheme.primaryContainer,
+                        contentColor = MaterialTheme.colorScheme.onPrimaryContainer
+                    )
+                ) {
+                    Text(
+                        text = "Enable Location",
+                        fontFamily = manrope
+                    )
+                }
+            },
+            title = {
+                Text(
+                    text = "Location access required",
+                    fontFamily = manrope,
+                    color = MaterialTheme.colorScheme.background,
+                    fontSize = 16.sp,
+                    fontWeight = FontWeight.SemiBold
+                )
+            },
+            text = {
+                Text(
+                    text = "GeoWav needs location access to detect entry, exit, and safety alerts even when the app is not open.",
+                    fontFamily = sora,
+                    textAlign = TextAlign.Center,
+                    fontSize = 12.sp,
+                    color = MaterialTheme.colorScheme.background,
+                    modifier = Modifier.fillMaxWidth()
+                )
+            },
+            icon = {
+                Surface(
+                    color = MaterialTheme.colorScheme.primary,
+                    shape = CircleShape
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.LocationOn,
+                        contentDescription = "location icon",
+                        tint = MaterialTheme.colorScheme.onPrimary,
+                        modifier = Modifier.size(56.dp)
+                    )
+                }
+            }
+        )
+    }
+}
+
+@Composable
+fun TermsAndConditionsDialog(
+    showDialog: Boolean,
+    onAcceptClick: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    if (showDialog) {
+        AlertDialog(
+            containerColor = MaterialTheme.colorScheme.surfaceTint,
+            modifier = modifier,
+            onDismissRequest = onAcceptClick,
+            confirmButton = {
+                FilledTonalButton(
+                    onClick = onAcceptClick,
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = MaterialTheme.colorScheme.primaryContainer,
+                        contentColor = MaterialTheme.colorScheme.onPrimaryContainer
+                    )
+                ) {
+                    Text(
+                        text = "Accept & Continue",
+                        fontFamily = manrope
+                    )
+                }
+            },
+            title = {
+                Text(
+                    text = "Terms & Conditions",
+                    fontFamily = manrope,
+                    color = MaterialTheme.colorScheme.background,
+                    fontSize = 16.sp,
+                    fontWeight = FontWeight.SemiBold
+                )
+            },
+            text = {
+                Text(
+                    text = "By continuing, you agree to GeoWav’s Terms & Conditions and Privacy Policy. GeoWav uses location data to provide safety alerts and location-based features.",
+                    fontFamily = sora,
+                    textAlign = TextAlign.Center,
+                    fontSize = 12.sp,
+                    color = MaterialTheme.colorScheme.background,
+                    modifier = Modifier.fillMaxWidth()
+                )
+            },
+            icon = {
+                Surface(
+                    color = MaterialTheme.colorScheme.primary,
+                    shape = CircleShape
+                ) {
+                    Image(
+                        painter = painterResource(R.drawable.files),
+                        contentDescription = "terms icon",
+                        colorFilter = ColorFilter.tint(MaterialTheme.colorScheme.onPrimary),
+                        modifier = Modifier.size(56.dp)
+                    )
+                }
+            }
+        )
+    }
+}
+

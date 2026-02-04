@@ -45,12 +45,14 @@ fun NavGraph(
         else if (!isLoggedIn && isOnboarded) NavRoute.Login.path else NavRoute.SignUp.path
     ) {
         AddMapsScreen(
+            isDarkThemeEnabled,
             navHostController,
             this,
             location
         )
 
         AddNewPlaceScreen(
+            isDarkThemeEnabled,
             navHostController,
             this
         )
@@ -99,6 +101,7 @@ fun NavGraph(
 }
 
 fun AddMapsScreen(
+    isDarkThemeEnabled: Boolean,
     navController: NavController,
     navGraphBuilder: NavGraphBuilder,
     location: Pair<Double, Double>?
@@ -107,6 +110,7 @@ fun AddMapsScreen(
         route = NavRoute.MapScreen.path
     ) {
         MapScreen(
+            isDarkThemeEnabled,
             mapViewModel = hiltViewModel(),
             location,
             navigateToAddPlace = { id ->
@@ -120,6 +124,7 @@ fun AddMapsScreen(
 }
 
 fun AddNewPlaceScreen(
+    isDarkThemeEnabled: Boolean,
     navController: NavController,
     navGraphBuilder: NavGraphBuilder,
 ) {
@@ -134,6 +139,7 @@ fun AddNewPlaceScreen(
         val placeId = it.arguments?.get("placeId").toString()
 
         AddPlaceScreen(
+            isDarkThemeEnabled,
             placeId,
             navigateToMaps = {
                 navController.navigateUp()

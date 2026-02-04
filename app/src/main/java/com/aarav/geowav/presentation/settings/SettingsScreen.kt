@@ -1,7 +1,11 @@
 package com.aarav.geowav.presentation.settings
 
 import android.Manifest
+import android.content.Context
+import android.content.Intent
 import android.os.Build
+import android.provider.Settings
+import android.util.Log
 import androidx.annotation.RequiresApi
 import com.aarav.geowav.R
 import androidx.compose.foundation.BorderStroke
@@ -47,11 +51,13 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.aarav.geowav.presentation.components.AboutDialog
+import com.aarav.geowav.presentation.components.TermsAndConditionsDialog
 import com.aarav.geowav.presentation.theme.manrope
 import com.aarav.geowav.presentation.theme.sora
 import com.google.accompanist.permissions.ExperimentalPermissionsApi
@@ -62,7 +68,7 @@ import com.google.accompanist.permissions.rememberPermissionState
 enum class TriggerType { ENTER, EXIT }
 enum class ThemeMode { SYSTEM, LIGHT, DARK }
 
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalPermissionsApi::class)
 @Composable
 fun SettingsScreen(
     settingsVM: SettingsVM,
@@ -82,10 +88,32 @@ fun SettingsScreen(
     onDeleteAccount: () -> Unit
 ) {
 
+    val context = LocalContext.current
+
     val uiState by settingsVM.uiState.collectAsState()
 
     var showAboutDialog by remember {
         mutableStateOf(false)
+    }
+    var tc by remember {
+        mutableStateOf(false)
+    }
+
+    val notificationPermission = rememberPermissionState(Manifest.permission.POST_NOTIFICATIONS)
+
+    val fineLocation = rememberPermissionState(Manifest.permission.ACCESS_FINE_LOCATION)
+    val background = rememberPermissionState(Manifest.permission.ACCESS_BACKGROUND_LOCATION)
+
+    LaunchedEffect(notificationPermission.status) {
+        settingsVM.updateNotificationsEnabled(notificationPermission.status.isGranted)
+    }
+    LaunchedEffect(fineLocation.status, background.status) {
+        if(fineLocation.status.isGranted && background.status.isGranted) {
+            settingsVM.updateLocationPermission(true)
+        }
+        else {
+            settingsVM.updateLocationPermission(false)
+        }
     }
 
     val isPermissionGranted =
@@ -94,6 +122,13 @@ fun SettingsScreen(
     LaunchedEffect(Unit) {
         settingsVM.updateLocationPermission(isPermissionGranted)
     }
+
+    TermsAndConditionsDialog(
+        showDialog = tc,
+        onAcceptClick = {
+            tc = false
+        }
+    )
 
     AboutDialog(
         showAboutDialog = showAboutDialog,
@@ -105,6 +140,7 @@ fun SettingsScreen(
         title = "GeoWav",
         message = "GeoWav is a mobile application that helps users stay connected with their loved ones by sharing meaningful updates in a simple and reliable way. The app focuses on personal communication, supports offline usage, and securely synchronizes data using cloud services, providing a smooth and dependable user experience.",
     )
+
 
     Scaffold(
         modifier = Modifier.fillMaxSize(),
@@ -151,7 +187,9 @@ fun SettingsScreen(
                     SettingItem(
                         title = "Location Access",
                         subtitle = "Manage location permission",
-                        onClick = onOpenLocationSettings
+                        onClick = {
+                            openAppSettings(context, Settings.ACTION_LOCATION_SOURCE_SETTINGS)
+                        }
                     )
 
                     HorizontalDivider(
@@ -177,13 +215,15 @@ fun SettingsScreen(
                 }
             }
 
+
             item {
                 Section(title = "Notifications") {
                     SwitchItem(
                         title = "Enable Notifications",
                         checked = uiState.notificationsEnabled,
                         onCheckedChange = {
-                            settingsVM.updateNotificationsEnabled(it)
+                            openAppSettings(context, Settings.ACTION_APP_NOTIFICATION_SETTINGS)
+                            Log.i("MYTAG", "Notification : ${notificationPermission.status.isGranted}")
                         }
                     )
                 }
@@ -218,10 +258,13 @@ fun SettingsScreen(
 
                     SettingItem(
                         title = "Terms & Privacy Policy",
-                        onClick = onTermsClick
+                        onClick = {
+                            tc = true
+                        }
                     )
                 }
             }
+
 
             item {
                 Section(title = "Account") {
@@ -314,6 +357,18 @@ fun Section(
         }
     }
 }
+
+fun openAppSettings(context: Context,
+                                appAction: String
+) {
+    val intent = Intent().apply {
+        action = appAction
+        putExtra(Settings.EXTRA_APP_PACKAGE, context.packageName)
+        putExtra(Settings.EXTRA_CHANNEL_ID, context.applicationInfo.uid)
+    }
+    context.startActivity(intent)
+}
+
 
 @Composable
 fun SettingItem(

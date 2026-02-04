@@ -614,8 +614,7 @@ fun ZoneCard(zone: Place, onClick: () -> Unit) {
 
     Card(
         modifier = Modifier
-            .fillMaxWidth()
-            .wrapContentHeight(),
+            .fillMaxWidth(),
         colors = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.surfaceContainer
         ),
@@ -624,12 +623,12 @@ fun ZoneCard(zone: Place, onClick: () -> Unit) {
     ) {
         Row(
             modifier = Modifier
-                .fillMaxSize()
+                .fillMaxWidth()
                 .padding(8.dp),
             verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.SpaceBetween
         ) {
-            Row(verticalAlignment = Alignment.CenterVertically) {
+            Row(verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier.fillMaxWidth()) {
                 Box(
                     modifier = Modifier
                         .size(44.dp)
@@ -644,7 +643,9 @@ fun ZoneCard(zone: Place, onClick: () -> Unit) {
                     )
                 }
                 Spacer(modifier = Modifier.width(12.dp))
-                Column {
+                Column(
+                    modifier = Modifier.weight(1f)
+                ) {
                     Text(
                         if (zone.customName.toString().isNotEmpty()) {
                             zone.customName
@@ -667,16 +668,17 @@ fun ZoneCard(zone: Place, onClick: () -> Unit) {
                         fontSize = 12.sp
                     )
                 }
+                TextButton(onClick = { }) {
+                    Text(
+                        "Active",
+                        fontSize = 14.sp,
+                        fontFamily = sora,
+                        fontWeight = FontWeight.SemiBold,
+                        color = MaterialTheme.colorScheme.tertiary
+                    )
+                }
             }
-            TextButton(onClick = { }) {
-                Text(
-                    "Active",
-                    fontSize = 14.sp,
-                    fontFamily = sora,
-                    fontWeight = FontWeight.SemiBold,
-                    color = MaterialTheme.colorScheme.tertiary
-                )
-            }
+
         }
     }
 }
