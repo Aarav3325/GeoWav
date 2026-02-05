@@ -127,6 +127,7 @@ class MainActivity : ComponentActivity() {
                     Log.i("MYTAG", "permissions $permissionsGranted")
 
 
+                    val isOnboarded = sharedPreferences.getBoolean("isOnboarded", false)
 
                     if (permissionsGranted) {
                         val intent = Intent(context, GeofenceForegroundService::class.java)
@@ -135,14 +136,15 @@ class MainActivity : ComponentActivity() {
                         } else {
                             context.startService(intent)
                         }
-                    }
-                    else {
-                        LocationPermissionDialog(
-                            true,
-                            onConfirmClick = {
-                                openAppSettings(context, Settings.ACTION_LOCATION_SOURCE_SETTINGS)
-                            }
-                        )
+                    } else {
+                        if(isOnboarded) {
+                            LocationPermissionDialog(
+                                true,
+                                onConfirmClick = {
+                                    openAppSettings(context, Settings.ACTION_LOCATION_SOURCE_SETTINGS)
+                                }
+                            )
+                        }
                     }
 
 

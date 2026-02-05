@@ -414,7 +414,7 @@ fun CurrentLocationCard(city: String, lastUpdated: String, onViewMap: () -> Unit
 fun ConnectionsRow(title: String, connections: List<GeoConnection>?, onAdd: () -> Unit) {
 
     Column(
-        modifier = Modifier.padding(top = 6.dp)
+        modifier = Modifier.padding(top = 6.dp, bottom = 8.dp)
     ) {
         Row(
             modifier = Modifier.fillMaxWidth(),
@@ -568,7 +568,7 @@ fun ActiveZonesSection(
     onZoneClick: (com.aarav.geowav.data.model.Place) -> Unit
 ) {
     Column(
-        modifier = Modifier.padding(vertical = 12.dp)
+        modifier = Modifier.padding(vertical = 16.dp)
     ) {
         Text(
             "Active Zones",

@@ -23,7 +23,7 @@ fun FirebaseActivity.toGeoAlert(id: String): GeoAlert? {
     val readable = readableTime ?: ""
 
     val ts = timestamp ?: return null
-    val type = if (transition.equals("ENTER", ignoreCase = true)) "enter" else "exit"
+    val type = if (transition.equals("reached", ignoreCase = true)) "enter" else "exit"
 
     val zoneLabel = geofenceId
 
