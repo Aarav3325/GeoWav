@@ -53,6 +53,8 @@ import com.google.accompanist.permissions.rememberPermissionState
 import com.google.android.gms.location.FusedLocationProviderClient
 import com.google.android.gms.location.LocationServices
 import dagger.hilt.android.AndroidEntryPoint
+import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.distinctUntilChanged
 import javax.inject.Inject
 
 @AndroidEntryPoint
@@ -87,12 +89,21 @@ class MainActivity : ComponentActivity() {
                 mutableStateOf<Location?>(null)
             }
 
-
             LaunchedEffect(location) {
-                locationManager.getLocationUpdates().collect {
+                locationManager.getLocationUpdates().distinctUntilChanged().collectLatest {
                     location = it
+
+                    Log.i("LOCATION", "lat: ${location?.latitude}, long: ${location?.longitude}")
+
                 }
 
+
+//                if (location == null) {
+//                    Log.i("LOCATION", "null")
+//
+//                } else {
+//                    Log.i("LOCATION", "lat: ${location?.latitude}, long: ${location?.longitude}")
+//                }
             }
 
             val mainVM: MainVM = hiltViewModel()
@@ -137,11 +148,14 @@ class MainActivity : ComponentActivity() {
                             context.startService(intent)
                         }
                     } else {
-                        if(isOnboarded) {
+                        if (isOnboarded) {
                             LocationPermissionDialog(
                                 true,
                                 onConfirmClick = {
-                                    openAppSettings(context, Settings.ACTION_LOCATION_SOURCE_SETTINGS)
+                                    openAppSettings(
+                                        context,
+                                        Settings.ACTION_LOCATION_SOURCE_SETTINGS
+                                    )
                                 }
                             )
                         }

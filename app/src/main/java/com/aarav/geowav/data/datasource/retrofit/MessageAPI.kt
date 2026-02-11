@@ -11,7 +11,7 @@ interface MessageAPI {
 
     @Headers(
         "Content-Type: application/json",
-        "Authorization: Bearer EAAMtbQLe21UBQsZCS9bhCqSovqIO74ZBcIC3wcck42H2l53HhfRZBa54KsnMdnh5Fsv1aNcTcSJa6bNryMH0aZBv4IwI7OPfA0uSJQjaiFuZAun34qFNKqf400ZCpv1LqZCFiaHFVkea8OOQvetHSxSiwV89J1aBAeZAZBYue0fZAqZAjFReVBhYePEcurPRrFF9PtctVHzquYzWCZBbJd4K8dFS4S88p4RznPNtliYeSDj19ZCXcuDPAhL5ZBihG3ZByOUSjr9SSQt66eQxCE7qK1WA9nSp6ppWW5FoMSOJIZCMlOEZD")
+        "Authorization: Bearer EAAMtbQLe21UBQpA9VbBOKmcptDtZAMp6O8HSpkNZB4sgXDCPx9jSYvPeGtZCCaL3j5wlfdVZAla66gjWjIfsZB71dLEZAHfwZArOoBiXq3XsvJMbzp7BesCKQGiQda5ssBl7yvfhT1pzZA1gVjoOgfaZBdGXZCdddqDKBlwX1fBxLxjgLGWgtZCJZC5ofv8UJfitY4bxIp1TLQRs0pNrR89GK0KQsYtsR7ppHaZAY5HCyWswalNjst6jZAKoqXJxnmHSdNQKGf3wDRPu1N3nSBQ8yyhO2ECU28RiptRZAVaj23ZBwAZDZD")
     @POST("886176277923495/messages")
 
     fun postMessage(@Body request: TemplateMessageRequest) : Call<WhatsAppMessageResponse>
