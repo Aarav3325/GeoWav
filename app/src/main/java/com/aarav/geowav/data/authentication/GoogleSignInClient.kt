@@ -156,7 +156,7 @@ class GoogleSignInClient @Inject constructor(
         }
     }
 
-   // store details of new user in rtdb
+    // store details of new user in rtdb
     fun storeUserData(email: String, username: String) {
         val userId = getUserId()
 
@@ -174,6 +174,10 @@ class GoogleSignInClient @Inject constructor(
                 .addOnFailureListener {
                     Log.e(tag, "userReference: Success")
                 }
+
+            userReference.child("user_lookup")
+                .child(email)
+                .setValue(userId)
         }
     }
 

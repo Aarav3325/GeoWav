@@ -21,24 +21,29 @@ class LocationSharingVM
     val sharedPreferences: SharedPreferences
 ) : ViewModel() {
 
-    private var _uiState: MutableStateFlow<SharingUiState> =
-        MutableStateFlow(SharingUiState(getLiveLocationState()))
-    val uiState: StateFlow<SharingUiState> = _uiState.asStateFlow()
+    private var _uiState: MutableStateFlow<LiveLocationUiState> =
+        MutableStateFlow(LiveLocationUiState(readServiceState()))
+    val uiState: StateFlow<LiveLocationUiState> = _uiState.asStateFlow()
 
-    fun getLiveLocationState(): LiveLocationState {
+    fun readServiceState(): LiveLocationState {
         return when (
-            sharedPreferences.getString("live_location_state", null)
+            sharedPreferences.getString("live_location_state", "NOT_SHARING")
         ) {
-            "Sharing" -> LiveLocationState.Sharing
+            "SHARING" -> LiveLocationState.Sharing(
+                visibleCount = 0,
+                lastUpdatedText = "Updating..."
+            )
+
+            "ERROR" -> LiveLocationState.Error("Failed to share live location")
             "NotSharing" -> LiveLocationState.NotSharing
             else -> LiveLocationState.NotSharing
         }
     }
 
-    fun startLiveLocationSharing() {
+    fun startSharing() {
         _uiState.update {
             it.copy(
-                sharingState = LiveLocationState.Sharing
+                isLoading = true,
             )
         }
 
@@ -47,19 +52,34 @@ class LocationSharingVM
     }
 
     fun stopLiveLocationSharing() {
+
+        _uiState.update {
+            it.copy(
+                isLoading = true
+            )
+        }
+
         val intent = Intent(context, LiveLocationService::class.java)
         context.stopService(intent)
 
-
         _uiState.value = _uiState.value.copy(
-            sharingState = LiveLocationState.NotSharing,
             showStoppedDialog = true,
             isLoading = false
         )
     }
+
+    fun refreshState() {
+        _uiState.update {
+            it.copy(
+                sharingState = readServiceState(),
+                isLoading = false
+            )
+        }
+    }
+
 }
 
-data class SharingUiState(
+data class LiveLocationUiState(
     val sharingState: LiveLocationState,
     val isLoading: Boolean = false,
     val showStoppedDialog: Boolean = false

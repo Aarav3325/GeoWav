@@ -1,7 +1,6 @@
 package com.aarav.geowav.presentation.components
 
 import android.Manifest
-import android.graphics.drawable.Icon
 import android.widget.Toast
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Column
@@ -28,6 +27,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
@@ -175,12 +175,14 @@ fun MyAlertDialog(
             modifier = modifier,
             onDismissRequest = onDismissRequest,
             confirmButton = {
-                FilledTonalButton(onClick = onConfirmClick,
+                FilledTonalButton(
+                    onClick = onConfirmClick,
                     modifier = Modifier.fillMaxWidth(),
                     colors = ButtonDefaults.buttonColors(
                         containerColor = MaterialTheme.colorScheme.primaryContainer,
                         contentColor = MaterialTheme.colorScheme.onPrimaryContainer
-                    )) {
+                    )
+                ) {
                     Text(confirmButtonText, fontFamily = manrope)
                 }
             },
@@ -225,18 +227,20 @@ fun AboutDialog(
     message: String,
     modifier: Modifier = Modifier
 ) {
-    if(showAboutDialog) {
+    if (showAboutDialog) {
         AlertDialog(
             containerColor = MaterialTheme.colorScheme.surfaceTint,
             modifier = modifier,
             onDismissRequest = onConfirmClick,
             confirmButton = {
-                FilledTonalButton(onClick = onConfirmClick,
+                FilledTonalButton(
+                    onClick = onConfirmClick,
                     modifier = Modifier.fillMaxWidth(),
                     colors = ButtonDefaults.buttonColors(
                         containerColor = MaterialTheme.colorScheme.primaryContainer,
                         contentColor = MaterialTheme.colorScheme.onPrimaryContainer
-                    )) {
+                    )
+                ) {
                     Text(confirmButtonText, fontFamily = manrope)
                 }
             },
@@ -399,4 +403,84 @@ fun TermsAndConditionsDialog(
         )
     }
 }
+
+@Composable
+fun EmergencyShareDialog(
+    showDialog: Boolean,
+    onConfirm: () -> Unit,
+    onDismiss: () -> Unit
+) {
+    if (showDialog) {
+        AlertDialog(
+            containerColor = MaterialTheme.colorScheme.errorContainer,
+            onDismissRequest = onDismiss,
+            title = {
+                Text(
+                    text = "Emergency Live Location Sharing",
+                    fontFamily = manrope,
+                    color = MaterialTheme.colorScheme.onErrorContainer,
+                    fontSize = 16.sp,
+                    fontWeight = FontWeight.SemiBold
+                )
+            },
+            text = {
+                Text(
+                    text = "This will share your live location with all loved ones for 15 minutes.",
+                    fontFamily = sora,
+                    textAlign = TextAlign.Center,
+                    fontSize = 12.sp,
+                    color = MaterialTheme.colorScheme.onErrorContainer,
+                    modifier = Modifier.fillMaxWidth()
+                )
+            },
+            confirmButton = {
+                TextButton(
+                    onClick = onConfirm,
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = MaterialTheme.colorScheme.error,
+                        contentColor = MaterialTheme.colorScheme.onError
+                    )
+                ) {
+                    Text(
+                        text = "Start Emergency Share",
+                        fontFamily = manrope,
+                        fontSize = 12.sp,
+                        fontWeight = FontWeight.SemiBold
+                    )
+                }
+            },
+            dismissButton = {
+                TextButton(
+                    onClick = onDismiss,
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = Color.Transparent,
+                        contentColor = MaterialTheme.colorScheme.error
+                    )
+                ) {
+                    Text(
+                        text = "Cancel",
+                        fontFamily = manrope,
+                        fontSize = 12.sp,
+                        fontWeight = FontWeight.SemiBold
+                    )
+                }
+            },
+            icon = {
+                Surface(
+                    color = MaterialTheme.colorScheme.error,
+                    shape = CircleShape
+                ) {
+                    Image(
+                        painter = painterResource(R.drawable.emergency),
+                        contentDescription = "emergency icon",
+                        colorFilter = ColorFilter.tint(MaterialTheme.colorScheme.onError),
+                        modifier = Modifier.size(34.dp)
+                            .padding(4.dp)
+                    )
+                }
+            }
+        )
+    }
+}
+
 

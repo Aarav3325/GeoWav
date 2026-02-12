@@ -65,7 +65,7 @@ class LiveLocationService : Service() {
             return START_NOT_STICKY
         }
 
-        setSharingState(LiveLocationState.Sharing)
+//        setSharingState(LiveLocationState.Sharing)
         startForeground(1, createNotification())
         startLocationUpdates()
 
@@ -115,27 +115,27 @@ class LiveLocationService : Service() {
 //            .launchIn(serviceScope)
 //    }
 
-    private suspend fun sendLocation(location: Location) {
-        val userId = googleSignInClient.getUserId()
-
-        val isActive = liveLocationSharingRepository
-            .isLiveLocationActive(userId)
-
-        if (!isActive) {
-            liveLocationSharingRepository.startSharing(
-                userId,
-                location.latitude,
-                location.longitude
-            )
-            setSharingState(LiveLocationState.Sharing)
-        } else {
-            liveLocationSharingRepository.updateLocation(
-                userId,
-                location.latitude,
-                location.longitude
-            )
-        }
-    }
+//    private suspend fun sendLocation(location: Location) {
+//        val userId = googleSignInClient.getUserId()
+//
+//        val isActive = liveLocationSharingRepository
+//            .isLiveLocationActive(userId)
+//
+//        if (!isActive) {
+//            liveLocationSharingRepository.startSharing(
+//                userId,
+//                location.latitude,
+//                location.longitude
+//            )
+//            setSharingState(LiveLocationState.Sharing)
+//        } else {
+//            liveLocationSharingRepository.updateLocation(
+//                userId,
+//                location.latitude,
+//                location.longitude
+//            )
+//        }
+//    }
 
 
     @SuppressLint("MissingPermission")
@@ -154,7 +154,7 @@ class LiveLocationService : Service() {
 
                 serviceScope.launch {
                     try {
-                        sendLocation(location)
+//                        sendLocation(location)
                     } catch (e: Exception) {
                         setSharingState(
                             LiveLocationState.Error("Failed to share live location")

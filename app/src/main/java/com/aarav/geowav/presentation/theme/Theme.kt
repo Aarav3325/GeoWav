@@ -261,7 +261,6 @@ fun GeoWavTheme(
 
     MaterialTheme(
         colorScheme = colorScheme,
-        typography = Typography,
         content = content
     )
 }
