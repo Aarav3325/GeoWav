@@ -19,6 +19,7 @@ import com.aarav.geowav.presentation.map.MapScreen
 import com.aarav.geowav.presentation.navigation.NavRoute
 import com.aarav.geowav.presentation.onboard.OnboardingScreen
 import com.aarav.geowav.presentation.addplace.AddPlaceScreen
+import com.aarav.geowav.presentation.circle.CircleScreen
 import com.aarav.geowav.presentation.settings.SettingsScreen
 import com.aarav.geowav.presentation.settings.ThemeMode
 import com.aarav.geowav.presentation.settings.TriggerType
@@ -86,6 +87,11 @@ fun NavGraph(
 
         AddActivityScreen(
             isDarkThemeEnabled,
+            navHostController,
+            this
+        )
+
+        AddCircleScreen(
             navHostController,
             this
         )
@@ -250,6 +256,9 @@ fun AddHomeScreen(
             navigateToSettings = {
                 navController.navigate(NavRoute.Settings.path)
             },
+            navigateToCircle = {
+                navController.navigate(NavRoute.Circle.path)
+            },
             navigateToActivity = {
                 navController.navigate(NavRoute.ActivityScreen.path) {
                     popUpTo(navController.graph.findStartDestination().id) {
@@ -273,6 +282,19 @@ fun AddActivityScreen(
         ActivityScreen(
             isDarkThemeEnabled,
             activityViewModel = hiltViewModel()
+        )
+    }
+}
+
+fun AddCircleScreen(
+    navController: NavController,
+    navGraphBuilder: NavGraphBuilder
+) {
+    navGraphBuilder.composable(
+        route = NavRoute.Circle.path
+    ) {
+        CircleScreen(
+            viewModel = hiltViewModel()
         )
     }
 }

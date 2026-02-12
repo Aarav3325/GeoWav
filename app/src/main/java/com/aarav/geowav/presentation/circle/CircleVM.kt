@@ -1,10 +1,13 @@
 package com.aarav.geowav.presentation.circle
 
+import android.util.Patterns
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.aarav.geowav.core.utils.Resource
+import com.aarav.geowav.core.utils.encodeEmail
+import com.aarav.geowav.data.authentication.GoogleSignInClient
+import com.aarav.geowav.data.model.CircleMember
 import com.aarav.geowav.domain.repository.CircleRepository
-import com.aarav.geowav.presentation.locationsharing.LovedOneUi
 import com.google.firebase.auth.FirebaseAuth
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -20,7 +23,8 @@ import javax.inject.Inject
 class CircleVM
 @Inject constructor(
     val circleRepository: CircleRepository,
-    val firebaseAuth: FirebaseAuth
+    val firebaseAuth: FirebaseAuth,
+    val googleSignInClient: GoogleSignInClient
 ) : ViewModel() {
 
     private val currentUserId: String
@@ -35,6 +39,46 @@ class CircleVM
     private val _events = MutableSharedFlow<CircleUiEvent>()
     val events = _events.asSharedFlow()
 
+    private var hasInteractedWithName = false
+    private var hasInteractedWithEmail = false
+
+    fun updateName(name: String) {
+        hasInteractedWithName = true
+        _uiState.update {
+            it.copy(
+                name = name
+            )
+        }
+        validateInput()
+    }
+
+
+    fun updateEmail(email: String) {
+        hasInteractedWithName = true
+        _uiState.update {
+            it.copy(
+                email = email
+            )
+        }
+        validateInput()
+    }
+
+    fun validateInput() {
+        val name = _uiState.value.name
+        val email = _uiState.value.email
+
+        val isNameValid = name.length >= 2
+        val isEmailValid = Patterns.EMAIL_ADDRESS.matcher(email).matches()
+
+        _uiState.update {
+            it.copy(
+                isInputValid = isNameValid && isEmailValid,
+                nameError = if (!isNameValid && hasInteractedWithName) "Name should be at least 2 characters" else null,
+                emailError = if (!isEmailValid && hasInteractedWithEmail) "Invalid email" else null
+            )
+        }
+
+    }
 
     fun loadLovedOnes() {
         if (currentUserId.isEmpty()) return
@@ -73,8 +117,8 @@ class CircleVM
     }
 
 
-    fun sendInvite(email: String) {
-        val trimmedEmail = email.trim().lowercase()
+    fun sendInvite(email: String, receiverName: String) {
+        val trimmedEmail = encodeEmail(email)
 
         if (trimmedEmail.isEmpty()) {
             emitError("Email cannot be empty")
@@ -92,60 +136,50 @@ class CircleVM
         }
 
         viewModelScope.launch {
-            _uiState.update {
-                it.copy(
-                    isLoading = true
-                )
+            _uiState.update { it.copy(isLoading = true) }
+
+            val currentUser = googleSignInClient.findUserByUserId(currentUserId)
+            if (currentUser == null) {
+                _uiState.update { it.copy(isLoading = false) }
+                emitError("Unable to send invite")
+                return@launch
             }
 
-
-            val findResult = circleRepository.findUserByEmail(email)
-            if (findResult == null) {
-                _uiState.update {
-                    it.copy(
-                        isLoading = false
-                    )
-                }
+            val receiverUid = circleRepository.findUserByEmail(trimmedEmail)
+            if (receiverUid == null) {
+                _uiState.update { it.copy(isLoading = false) }
                 emitError("User with email $trimmedEmail not found")
                 return@launch
-            } else {
-                when (
-                    val result = circleRepository.sendCircleInvite(
-                        currentUserId,
-                        currentUserEmail,
-                        findResult
-                    )
-                ) {
-                    is Resource.Success -> {
-                        _uiState.update {
-                            it.copy(
-                                isLoading = false
-                            )
-                        }
+            }
 
-                        _events.emit(CircleUiEvent.InviteSent)
-                    }
+            val alias = receiverName.trim().ifEmpty { null }
 
-                    is Resource.Error -> {
-                        _uiState.update {
-                            it.copy(
-                                isLoading = false
-                            )
-                        }
-
-                        emitError(result.message ?: "Failed to send invite")
-                    }
-
-                    else -> {}
+            when (
+                val result = circleRepository.sendCircleInvite(
+                    senderUid = currentUserId,
+                    senderEmail = currentUser.email,
+                    senderProfileName = currentUser.username,
+                    receiverUid = receiverUid,
+                    alias = alias ?: ""
+                )
+            ) {
+                is Resource.Success -> {
+                    _uiState.update { it.copy(isLoading = false) }
+                    _events.emit(CircleUiEvent.InviteSent)
                 }
+
+                is Resource.Error -> {
+                    _uiState.update { it.copy(isLoading = false) }
+                    emitError(result.message ?: "Failed to send invite")
+                }
+
+                else -> Unit
             }
         }
     }
 
     fun acceptInvite(
-        senderUid: String,
-        senderName: String,
-        receiverName: String
+        senderUid: String
     ) {
         if (currentUserId.isEmpty()) {
             emitError("User not authenticated")
@@ -153,29 +187,40 @@ class CircleVM
         }
 
         viewModelScope.launch {
-            _uiState.update { it.copy(isLoading = true) }
+            _uiState.update {
+                it.copy(acceptingInviteId = senderUid)
+            }
+
+            val receiver = googleSignInClient.findUserByUserId(currentUserId)
+            if (receiver == null) {
+                _uiState.update { it.copy(isLoading = false) }
+                emitError("Unable to accept invite")
+                return@launch
+            }
+
+            val sender = googleSignInClient.findUserByUserId(senderUid)
+            if (sender == null) {
+                _uiState.update { it.copy(isLoading = false) }
+                emitError("Unable to accept invite")
+                return@launch
+            }
 
             when (
                 val result = circleRepository.acceptInvite(
                     receiverUid = currentUserId,
                     senderUid = senderUid,
-                    senderName = senderName,
-                    receiverName = receiverName
+                    senderProfileName = sender.username,
+                    receiverProfileName = receiver.username
                 )
             ) {
                 is Resource.Success -> {
-                    _uiState.update { it.copy(isLoading = false) }
-
-                    // refresh loved ones so UI updates
+                    _uiState.update { it.copy(acceptingInviteId = null) }
                     loadLovedOnes()
-
-                    _events.emit(
-                        CircleUiEvent.ShowError("Invite accepted")
-                    )
+                    _events.emit(CircleUiEvent.InviteAccepted)
                 }
 
                 is Resource.Error -> {
-                    _uiState.update { it.copy(isLoading = false) }
+                    _uiState.update { it.copy(acceptingInviteId = null) }
                     emitError(result.message ?: "Failed to accept invite")
                 }
 
@@ -184,6 +229,7 @@ class CircleVM
         }
     }
 
+
     fun rejectInvite(senderUid: String) {
         if (currentUserId.isEmpty()) {
             emitError("User not authenticated")
@@ -191,7 +237,7 @@ class CircleVM
         }
 
         viewModelScope.launch {
-            _uiState.update { it.copy(isLoading = true) }
+            _uiState.update { it.copy(rejectingInviteId = senderUid) }
 
             when (
                 val result = circleRepository.rejectInvite(
@@ -200,7 +246,7 @@ class CircleVM
                 )
             ) {
                 is Resource.Success -> {
-                    _uiState.update { it.copy(isLoading = false) }
+                    _uiState.update { it.copy(rejectingInviteId = null) }
 
                     _events.emit(
                         CircleUiEvent.ShowError("Invite rejected")
@@ -208,7 +254,7 @@ class CircleVM
                 }
 
                 is Resource.Error -> {
-                    _uiState.update { it.copy(isLoading = false) }
+                    _uiState.update { it.copy(rejectingInviteId = null) }
                     emitError(result.message ?: "Failed to reject invite")
                 }
 
@@ -226,12 +272,20 @@ class CircleVM
 }
 
 data class CircleUiState(
-    val lovedOnes: List<LovedOneUi> = emptyList(),
-    val isLoading: Boolean = false
+    val lovedOnes: List<CircleMember> = emptyList(),
+    val isLoading: Boolean = false,
+    val acceptingInviteId: String? = null,
+    val rejectingInviteId: String? = null,
+    val name: String = "",
+    val email: String = "",
+    val nameError: String? = null,
+    val emailError: String? = null,
+    val isInputValid: Boolean = false
 )
 
 sealed class CircleUiEvent {
     object InviteSent : CircleUiEvent()
+    object InviteAccepted : CircleUiEvent()
     data class ShowError(val message: String) : CircleUiEvent()
 }
 

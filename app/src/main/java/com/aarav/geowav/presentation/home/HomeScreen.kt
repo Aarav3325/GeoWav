@@ -6,6 +6,7 @@ import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -85,6 +86,7 @@ fun GeoWavHomeScreen(
     onOpenAlerts: () -> Unit,
     homeScreenVM: HomeScreenVM,
     navigateToSettings: () -> Unit,
+    navigateToCircle: () -> Unit,
     navigateToActivity: () -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -247,7 +249,7 @@ fun GeoWavHomeScreen(
                     ConnectionsRow(
                         title = "Your Circle",
                         connections = uiState.connectionsList,
-                        onAdd = onAddZone
+                        onAdd = navigateToCircle
                     )
 
                     ActiveZonesSection(
@@ -294,7 +296,9 @@ fun GeoWavHomeScreen(
 
 
                     Column(
-                        modifier = Modifier.fillMaxWidth().padding(vertical = 24.dp),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(vertical = 24.dp),
                         horizontalAlignment = Alignment.CenterHorizontally,
                         verticalArrangement = Arrangement.spacedBy(12.dp)
                     ) {
@@ -534,6 +538,9 @@ fun AddConnectionCard(onClick: () -> Unit) {
 
     Column(
         horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier
+            .clickable {
+                onClick()
+            }
             .width(84.dp)
             .padding(start = 8.dp)
     ) {
@@ -627,8 +634,10 @@ fun ZoneCard(zone: Place, onClick: () -> Unit) {
                 .padding(8.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            Row(verticalAlignment = Alignment.CenterVertically,
-                modifier = Modifier.fillMaxWidth()) {
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier.fillMaxWidth()
+            ) {
                 Box(
                     modifier = Modifier
                         .size(44.dp)

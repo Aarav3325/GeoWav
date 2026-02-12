@@ -186,6 +186,15 @@ class GoogleSignInClient @Inject constructor(
         return firebaseAuth.currentUser?.uid ?: ""
     }
 
+    suspend fun findUserByUserId(userId: String): User? {
+        val snapshot = userReference.child(userId)
+            .get()
+            .await()
+
+        return snapshot.getValue(User::class.java)
+    }
+
+
     // get username of current user
     fun getUserName(): String {
         //return firebaseAuth.currentUser?.displayName ?: ""

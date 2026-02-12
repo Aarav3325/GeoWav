@@ -1,7 +1,7 @@
 package com.aarav.geowav.domain.repository
 
 import com.aarav.geowav.core.utils.Resource
-import com.aarav.geowav.presentation.locationsharing.LovedOneUi
+import com.aarav.geowav.data.model.CircleMember
 
 interface CircleRepository {
 
@@ -10,19 +10,24 @@ interface CircleRepository {
     suspend fun sendCircleInvite(
         senderUid: String,
         senderEmail: String,
-        receiverUid: String
+        senderProfileName: String,
+        receiverUid: String,
+        alias: String
     ): Resource<Unit>
 
     suspend fun acceptInvite(
-        receiverUid: String, senderUid: String, senderName: String, receiverName: String
+        receiverUid: String,
+        senderUid: String,
+        senderProfileName: String,
+        receiverProfileName: String
     ): Resource<Unit>
 
     suspend fun rejectInvite(
         receiverUid: String,
         senderUid: String
-    )
+    ): Resource<Unit>
 
     suspend fun getAcceptedLovedOnes(
         userId: String
-    ): Resource<List<LovedOneUi>>
+    ): Resource<List<CircleMember>>
 }
