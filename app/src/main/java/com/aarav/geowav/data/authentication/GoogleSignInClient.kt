@@ -175,9 +175,9 @@ class GoogleSignInClient @Inject constructor(
                     Log.e(tag, "userReference: Success")
                 }
 
-            userReference.child("user_lookup")
-                .child(email)
-                .setValue(userId)
+//            userReference.child("user_lookup")
+//                .child(email)
+//                .setValue(userId)
         }
     }
 
