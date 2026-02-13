@@ -26,4 +26,5 @@ data class EmergencyInfo(
     val startedAt: Long = 0L,
     val endsAt: Long = 0L,
     val duration: Long = 0L,
+    val viewers: Set<String> = emptySet()
 )

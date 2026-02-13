@@ -16,6 +16,8 @@ import com.aarav.geowav.platform.LiveLocationService
 import com.google.firebase.auth.FirebaseAuth
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -63,14 +65,21 @@ class LocationSharingVM
         _uiState.update {
             it.copy(sharingState = recovered)
         }
+
+        observeEmergency()
     }
 
+    private var emergencyTimerJob: Job? = null
+
     private fun observeEmergency() {
-        if (!currentUserId.isEmpty()) return
+        if (currentUserId.isEmpty()) return
 
         viewModelScope.launch {
             emergencySharingRepository.observeEmergency(currentUserId)
                 .collect { info ->
+
+                    // Cancel previous timer
+                    emergencyTimerJob?.cancel()
 
                     if (info == null) {
                         _uiState.update {
@@ -79,34 +88,61 @@ class LocationSharingVM
                                 sharingState = readServiceState()
                             )
                         }
-                    } else {
-                        _uiState.update {
-                            it.copy(
-                                emergencyEndsAt = info.endsAt,
-                                sharingState = LiveLocationState.EmergencySharing(
-                                    remainingTime = formatRemaining(info.endsAt)
+                        return@collect
+                    }
+
+                    emergencyTimerJob = viewModelScope.launch {
+                        while (true) {
+                            val remaining = formatRemaining(info.endsAt)
+
+                            _uiState.update {
+                                it.copy(
+                                    emergencyEndsAt = info.endsAt,
+                                    sharingState =
+                                        LiveLocationState.EmergencySharing(remaining)
                                 )
-                            )
+                            }
+
+                            if (remaining == "00:00") break
+                            delay(1_000)
                         }
                     }
                 }
         }
     }
 
+
     fun startEmergency(duration: Int = 30) {
-        if(!currentUserId.isEmpty()) return
+        if(currentUserId.isEmpty()) return
 
         viewModelScope.launch {
+
+            _uiState.update {
+                it.copy(
+                    isEmergencyLoading = true
+                )
+            }
+
             try {
-                _uiState.update {
-                    it.copy(
-                        isEmergencyLoading = true
-                    )
-                }
+
+                val endsAt = System.currentTimeMillis() + duration * 60_000
 
                 val viewerIds = _uiState.value.lovedOnes.map { it.id }
 
-                emergencySharingRepository.startEmergency(currentUserId, duration * 60 * 1000L, viewerIds)
+                emergencySharingRepository.startEmergency(currentUserId, endsAt, viewerIds)
+
+                val intent = Intent(context, LiveLocationService::class.java)
+                context.startForegroundService(intent)
+
+            // It should be updates by observeFunction or else i am done
+//                _uiState.update {
+//                    it.copy(
+//                        emergencyEndsAt = endsAt,
+//                        sharingState = LiveLocationState.EmergencySharing(
+//                            remainingTime = "30:00"
+//                        )
+//                    )
+//                }
             }
             catch (e: Exception) {
                 emitError("Failed to start emergency sharing")
@@ -122,17 +158,24 @@ class LocationSharingVM
     }
 
     fun stopEmergency() {
-        if(!currentUserId.isEmpty()) return
+        if(currentUserId.isEmpty()) return
 
         viewModelScope.launch {
+            _uiState.update {
+                it.copy(
+                    isEmergencyLoading = true,
+                    sharingState = LiveLocationState.NotSharing
+                )
+            }
+
             try {
-                _uiState.update {
-                    it.copy(
-                        isEmergencyLoading = true
-                    )
-                }
 
                 emergencySharingRepository.stopEmergency(currentUserId)
+
+                val intent = Intent(context, LiveLocationService::class.java).apply {
+                    action = ACTION_STOP
+                }
+                context.startService(intent)
             }
             catch (e: Exception) {
                 emitError("Failed to stop emergency sharing")

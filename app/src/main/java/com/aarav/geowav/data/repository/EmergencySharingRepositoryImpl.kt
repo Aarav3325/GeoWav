@@ -24,11 +24,8 @@ class EmergencySharingRepositoryImpl
         duration: Long,
         viewers: List<String>
     ) {
-        val ref = rootRef
-            .child("emergency_sharing")
-            .child(currentUserId)
 
-        val updates = viewers.associateWith { true }
+        val viewerMap = viewers.associateWith { true }
 
         val now = System.currentTimeMillis()
 
@@ -36,13 +33,14 @@ class EmergencySharingRepositoryImpl
             "active" to true,
             "startedAt" to now,
             "endsAt" to now + duration,
+            "viewers" to viewerMap
         )
 
-        ref.setValue(data).await()
-
-        val viewerRef = rootRef.child("emergency_permissions")
+        rootRef
+            .child("emergency_sharing")
             .child(currentUserId)
-        viewerRef.updateChildren(updates).await()
+            .setValue(data)
+            .await()
     }
 
     override suspend fun stopEmergency(currentUserId: String) {
@@ -51,12 +49,6 @@ class EmergencySharingRepositoryImpl
             .child(currentUserId)
             .removeValue()
             .await()
-
-        rootRef
-            .child("emergency_permissions")
-            .child(currentUserId)
-            .removeValue().await()
-
     }
 
     override suspend fun isEmergencyActive(currentUserId: String): Boolean {
@@ -86,13 +78,27 @@ class EmergencySharingRepositoryImpl
                 }
 
                 val active = snapshot.child("active").getValue(Boolean::class.java) ?: false
-
                 if (!active) {
                     trySend(null)
                     return
                 }
 
-                val info = snapshot.getValue(EmergencyInfo::class.java)
+                val startedAt = snapshot.child("startedAt").getValue(Long::class.java) ?: 0L
+                val endsAt = snapshot.child("endsAt").getValue(Long::class.java) ?: 0L
+                val duration = snapshot.child("duration").getValue(Long::class.java) ?: 0L
+
+                val viewers = snapshot.child("viewers")
+                    .children
+                    .mapNotNull { it.key }
+                    .toSet()
+
+                val info = EmergencyInfo(
+                    startedAt = startedAt,
+                    endsAt = endsAt,
+                    duration = duration,
+                    viewers = viewers
+                )
+
                 trySend(info)
             }
 
@@ -102,9 +108,8 @@ class EmergencySharingRepositoryImpl
         }
 
         ref.addValueEventListener(listener)
-        awaitClose {
-            ref.removeEventListener(listener)
-        }
+        awaitClose { ref.removeEventListener(listener) }
     }
+
 
 }

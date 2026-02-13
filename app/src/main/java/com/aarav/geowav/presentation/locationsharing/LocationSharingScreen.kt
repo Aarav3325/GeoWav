@@ -61,7 +61,6 @@ import com.aarav.geowav.data.model.CircleMember
 import com.aarav.geowav.presentation.components.EmergencyShareDialog
 import com.aarav.geowav.presentation.theme.manrope
 import com.aarav.geowav.presentation.theme.sora
-import kotlinx.coroutines.delay
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -114,11 +113,14 @@ fun LocationSharingScreen(
     ) { padding ->
         LocationSharingContent(
             modifier = Modifier.padding(padding),
-            uiState,
-            viewModel::onViewerToggle,
+            locationUiState = uiState,
+            onToggleChange = viewModel::onViewerToggle,
             onStartSharing = viewModel::startSharing,
-            onStopSharing = viewModel::stopLiveLocationSharing
+            onStopSharing = viewModel::stopLiveLocationSharing,
+            onStartEmergency = viewModel::startEmergency,
+            onStopEmergency = viewModel::stopEmergency
         )
+
     }
 }
 
@@ -128,14 +130,12 @@ fun LocationSharingContent(
     locationUiState: LiveLocationUiState,
     onToggleChange: (String, Boolean) -> Unit,
     onStartSharing: () -> Unit,
-    onStopSharing: () -> Unit
+    onStopSharing: () -> Unit,
+    onStartEmergency: (Int) -> Unit,
+    onStopEmergency: () -> Unit
 ) {
 
     var showEmergencyDialog by remember {
-        mutableStateOf(false)
-    }
-
-    var emergencyMode by remember {
         mutableStateOf(false)
     }
 
@@ -145,7 +145,7 @@ fun LocationSharingContent(
     EmergencyShareDialog(
         showEmergencyDialog,
         onConfirm = {
-            emergencyMode = true
+            onStartEmergency(30)
             showEmergencyDialog = false
         },
         onDismiss = { showEmergencyDialog = false }
@@ -176,6 +176,7 @@ fun LocationSharingContent(
                     isEmergencyActive,
                     onStartSharing,
                     onStopSharing,
+                    onStopEmergency
                 )
             }
 
@@ -194,7 +195,11 @@ fun LocationSharingContent(
             }
 
             item {
-                EmergencyShareButton(!emergencyMode) {
+                EmergencyShareButton(
+                    enabled = !isEmergencyActive &&
+                            !locationUiState.isEmergencyLoading &&
+                            locationUiState.sharingState is LiveLocationState.NotSharing
+                ) {
                     showEmergencyDialog = true
                 }
             }
@@ -232,7 +237,8 @@ fun StatusCard(
     liveLocationState: LiveLocationState,
     isEmergencyActive: Boolean,
     onStart: () -> Unit,
-    onStop: () -> Unit
+    onStop: () -> Unit,
+    onEmergencyStop: () -> Unit,
 ) {
     val containerColor = when (liveLocationState) {
         LiveLocationState.NotSharing ->
@@ -387,7 +393,10 @@ fun StatusCard(
                     //verticalArrangement = Arrangement.spacedBy(4.dp),
                 ) {
                     Text(
-                        "Emergency location sharing is disabled",
+                        if (isEmergencyActive)
+                            "Emergency location sharing is active"
+                        else
+                            "Emergency location sharing is disabled",
                         fontFamily = manrope,
                         fontSize = 12.sp,
                         fontWeight = FontWeight.SemiBold,
@@ -415,6 +424,10 @@ fun StatusCard(
 
                 LiveLocationState.NotSharing -> {
                     StartSharingButton(onStart)
+                }
+
+                is LiveLocationState.EmergencySharing -> {
+                    StopEmergencyButton(onEmergencyStop)
                 }
 
                 else -> {}
@@ -868,21 +881,20 @@ fun EmergencyShareButton(
         shape = RoundedCornerShape(16.dp),
         border = BorderStroke(
             1.5.dp,
-            if (enabled) MaterialTheme.colorScheme.error
-            else MaterialTheme.colorScheme.outline
-        ),
-        colors = ButtonDefaults.outlinedButtonColors(
-            containerColor = if (enabled)
+            if (enabled)
                 MaterialTheme.colorScheme.error
             else
-                MaterialTheme.colorScheme.outline,
-            contentColor =
-                MaterialTheme.colorScheme.onError
+                MaterialTheme.colorScheme.outline
+        ),
+        colors = ButtonDefaults.outlinedButtonColors(
+            contentColor = MaterialTheme.colorScheme.error,
+            disabledContentColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.38f)
         )
     ) {
         Icon(
             painter = painterResource(R.drawable.emergency),
-            contentDescription = null
+            contentDescription = null,
+            tint = MaterialTheme.colorScheme.error
         )
         Spacer(Modifier.width(10.dp))
         Text(
@@ -891,6 +903,36 @@ fun EmergencyShareButton(
         )
     }
 }
+
+@Composable
+fun StopEmergencyButton(
+    onClick: () -> Unit
+) {
+    FilledTonalButton(
+        onClick = onClick,
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp, vertical = 8.dp)
+            .height(52.dp),
+        shape = RoundedCornerShape(16.dp),
+        colors = ButtonDefaults.buttonColors(
+            containerColor = MaterialTheme.colorScheme.error,
+            contentColor = MaterialTheme.colorScheme.onError
+        )
+    ) {
+        Icon(
+            painter = painterResource(R.drawable.emergency),
+            contentDescription = null
+        )
+        Spacer(Modifier.width(10.dp))
+        Text(
+            text = "Stop Emergency",
+            fontWeight = FontWeight.SemiBold
+        )
+    }
+}
+
+
 
 @Composable
 fun StopSharingButton(

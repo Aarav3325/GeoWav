@@ -24,6 +24,7 @@ import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
@@ -67,7 +68,8 @@ import com.aarav.geowav.presentation.theme.sora
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun CircleScreen(
-    viewModel: CircleVM
+    viewModel: CircleVM,
+    back: () -> Unit
 ) {
     val uiState by viewModel.uiState.collectAsState()
 
@@ -104,6 +106,19 @@ fun CircleScreen(
                         fontWeight = FontWeight.Bold,
                         modifier = Modifier
                     )
+                },
+                navigationIcon = {
+                    IconButton(
+                        onClick = {
+                            back()
+                        }
+                    ) {
+                        Icon(
+                            painter = painterResource(R.drawable.back),
+                            contentDescription = null,
+                            modifier = Modifier.size(24.dp)
+                        )
+                    }
                 }
             )
         },
@@ -722,12 +737,13 @@ fun PendingInviteRow(
     }
 }
 
-
-@Preview(showBackground = true)
-@Composable
-fun PreviewCircleScreen() {
-    GeoWavTheme(
-    ) {
-        CircleScreen(hiltViewModel())
-    }
-}
+//
+//
+//@Preview(showBackground = true)
+//@Composable
+//fun PreviewCircleScreen() {
+//    GeoWavTheme(
+//    ) {
+//        CircleScreen(hiltViewModel())
+//    }
+//}

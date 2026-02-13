@@ -20,7 +20,6 @@ import com.aarav.geowav.presentation.navigation.NavRoute
 import com.aarav.geowav.presentation.onboard.OnboardingScreen
 import com.aarav.geowav.presentation.addplace.AddPlaceScreen
 import com.aarav.geowav.presentation.circle.CircleScreen
-import com.aarav.geowav.presentation.circle.PreviewCircleScreen
 import com.aarav.geowav.presentation.locationsharing.LocationSharingScreen
 import com.aarav.geowav.presentation.settings.SettingsScreen
 import com.aarav.geowav.presentation.settings.ThemeMode
@@ -301,7 +300,10 @@ fun AddCircleScreen(
         route = NavRoute.Circle.path
     ) {
         CircleScreen(
-            viewModel = hiltViewModel()
+            viewModel = hiltViewModel(),
+            back = {
+                navController.popBackStack()
+            }
         )
     }
 }
