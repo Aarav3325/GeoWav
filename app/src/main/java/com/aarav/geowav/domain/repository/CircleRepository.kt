@@ -2,6 +2,7 @@ package com.aarav.geowav.domain.repository
 
 import com.aarav.geowav.core.utils.Resource
 import com.aarav.geowav.data.model.CircleMember
+import com.aarav.geowav.data.model.PendingInvite
 
 interface CircleRepository {
 
@@ -10,6 +11,7 @@ interface CircleRepository {
     suspend fun sendCircleInvite(
         senderUid: String,
         senderEmail: String,
+        receiverEmail: String,
         senderProfileName: String,
         receiverUid: String,
         alias: String
@@ -30,4 +32,8 @@ interface CircleRepository {
     suspend fun getAcceptedLovedOnes(
         userId: String
     ): Resource<List<CircleMember>>
+
+    suspend fun getPendingInvites(
+        userId: String
+    ): Resource<List<PendingInvite>>
 }

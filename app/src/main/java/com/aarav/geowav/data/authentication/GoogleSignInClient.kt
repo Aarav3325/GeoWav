@@ -196,39 +196,35 @@ class GoogleSignInClient @Inject constructor(
 
 
     // get username of current user
-    fun getUserName(): String {
-        //return firebaseAuth.currentUser?.displayName ?: ""
+    suspend fun getUserName(): String {
+        val currentUser = firebaseAuth.currentUser ?: return ""
 
-        val currentUser = firebaseAuth.currentUser
-
-        Log.i("Provider", currentUser?.displayName.toString())
-        currentUser?.let {
-            if (it.displayName?.isNotEmpty() == true) {
-                return it.displayName ?: ""
-            } else {
-
-                var username: String = ""
-
-                userReference.child(it.uid).addValueEventListener(object : ValueEventListener {
-                    override fun onDataChange(snapshot: DataSnapshot) {
-                        val value = snapshot.child("username").getValue(String::class.java)
-
-                        value?.let {
-                            username = value
-                        }
-                    }
-
-                    override fun onCancelled(error: DatabaseError) {
-                    }
-
-                })
-
-                return username
+        // 1️⃣ If displayName exists, return it immediately
+        currentUser.displayName?.let {
+            if (it.isNotEmpty()) {
+                Log.i("Provider", "name: $it")
+                return it
             }
         }
 
-        return ""
+        // 2️⃣ Otherwise fetch from database
+        return try {
+            val snapshot = userReference
+                .child(currentUser.uid)
+                .get()
+                .await()
+
+            val username = snapshot.child("username")
+                .getValue(String::class.java) ?: ""
+
+            Log.i("Provider", "username: $username")
+            username
+        } catch (e: Exception) {
+            Log.e("Provider", "Error fetching username", e)
+            ""
+        }
     }
+
 
 
     // get profile picture of current user

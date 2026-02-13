@@ -3,6 +3,7 @@ package com.aarav.geowav.data.repository
 import com.aarav.geowav.core.utils.Resource
 import com.aarav.geowav.core.utils.encodeEmail
 import com.aarav.geowav.data.model.CircleMember
+import com.aarav.geowav.data.model.PendingInvite
 import com.aarav.geowav.domain.repository.CircleRepository
 import com.google.firebase.database.FirebaseDatabase
 import kotlinx.coroutines.tasks.await
@@ -30,6 +31,7 @@ class CircleRepositoryImpl
     override suspend fun sendCircleInvite(
         senderUid: String,
         senderEmail: String,
+        receiverEmail: String,
         senderProfileName: String,
         receiverUid: String,
         alias: String
@@ -45,6 +47,7 @@ class CircleRepositoryImpl
                     "sentAt" to timestamp
                 ),
                 "circle/$senderUid/$receiverUid" to mapOf(
+                    "receiverEmail" to receiverEmail,
                     "status" to "pending",
                     "alias" to alias,
                     "addedAt" to timestamp
@@ -133,8 +136,9 @@ class CircleRepositoryImpl
                         profileName = child.child("profileName")
                             .getValue(String::class.java) ?: "Unknown",
                         alias = child.child("alias").getValue(String::class.java),
-                        selected = false
-                    )
+                        selected = false,
+                        receiverEmail = child.child("receiverEmail").getValue(String::class.java) ?: "",
+                        )
                 } else null
             }
 
@@ -142,6 +146,34 @@ class CircleRepositoryImpl
 
         } catch (e: Exception) {
             Resource.Error("Failed to load loved ones")
+        }
+    }
+
+    override suspend fun getPendingInvites(userId: String): Resource<List<PendingInvite>> {
+        return try {
+            val snapshot = rootRef
+                .child("circle_requests")
+                .child(userId)
+                .get()
+                .await()
+
+            val pendingInvites = snapshot.children.mapNotNull {
+                val status = it.child("status").getValue(String::class.java)
+                if (status == "pending") {
+                    PendingInvite(
+                        senderEmail = it.child("senderEmail").getValue(String::class.java) ?: "",
+                        senderProfileName = it.child("senderProfileName")
+                            .getValue(String::class.java),
+                        sentAt = it.child("sentAt").getValue(Long::class.java),
+                        status = "pending",
+                        senderId = it.key!!
+                    )
+                } else null
+            }
+
+            Resource.Success(pendingInvites)
+        } catch (e: Exception) {
+            Resource.Error("Failed to pending invites")
         }
     }
 }

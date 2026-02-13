@@ -20,6 +20,9 @@ import com.aarav.geowav.presentation.navigation.NavRoute
 import com.aarav.geowav.presentation.onboard.OnboardingScreen
 import com.aarav.geowav.presentation.addplace.AddPlaceScreen
 import com.aarav.geowav.presentation.circle.CircleScreen
+import com.aarav.geowav.presentation.circle.PreviewCircleScreen
+import com.aarav.geowav.presentation.locationsharing.LocationSharingScreen
+import com.aarav.geowav.presentation.locationsharing.PreviewLocationContent
 import com.aarav.geowav.presentation.settings.SettingsScreen
 import com.aarav.geowav.presentation.settings.ThemeMode
 import com.aarav.geowav.presentation.settings.TriggerType
@@ -92,6 +95,11 @@ fun NavGraph(
         )
 
         AddCircleScreen(
+            navHostController,
+            this
+        )
+
+        AddLocationSharingScreen(
             navHostController,
             this
         )
@@ -296,6 +304,17 @@ fun AddCircleScreen(
         CircleScreen(
             viewModel = hiltViewModel()
         )
+    }
+}
+
+fun AddLocationSharingScreen(
+    navController: NavController,
+    navGraphBuilder: NavGraphBuilder
+) {
+    navGraphBuilder.composable(
+        route = NavRoute.LocationSharing.path
+    ) {
+        PreviewLocationContent()
     }
 }
 

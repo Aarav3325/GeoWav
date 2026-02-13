@@ -426,7 +426,7 @@ fun EmergencyShareDialog(
             text = {
                 Text(
                     text = "This will share your live location with all loved ones for 15 minutes.",
-                    fontFamily = sora,
+                    fontFamily = manrope,
                     textAlign = TextAlign.Center,
                     fontSize = 12.sp,
                     color = MaterialTheme.colorScheme.onErrorContainer,

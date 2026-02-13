@@ -49,12 +49,14 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import com.aarav.geowav.R
 import com.aarav.geowav.data.model.CircleMember
+import com.aarav.geowav.data.model.PendingInvite
 import com.aarav.geowav.presentation.locationsharing.LovedOneUi
 import com.aarav.geowav.presentation.locationsharing.itemShape
 import com.aarav.geowav.presentation.theme.GeoWavTheme
@@ -88,6 +90,7 @@ fun CircleScreen(
 
     LaunchedEffect(Unit) {
         viewModel.loadLovedOnes()
+        viewModel.loadPendingInvites()
     }
 
     GeoWavTheme {
@@ -171,6 +174,7 @@ fun CircleContent(
 
         item {
             PendingInviteSection(
+                uiState.pendingInvites,
                 acceptingInviteId = uiState.acceptingInviteId,
                 rejectingInviteId = uiState.rejectingInviteId,
                 onAcceptInvite,
@@ -268,7 +272,7 @@ fun AddLovedOneCard(
 
 
 
-            Spacer(Modifier.height(12.dp))
+            Spacer(Modifier.height(6.dp))
 
             Text(
                 text = "Email",
@@ -323,7 +327,7 @@ fun AddLovedOneCard(
                 ), shape = RoundedCornerShape(12.dp)
             )
 
-            Spacer(Modifier.height(12.dp))
+            Spacer(Modifier.height(6.dp))
 
             SendInviteButton(!isLoading) {
                 onSendInvite(uiState.email, uiState.name)
@@ -426,14 +430,31 @@ fun MyCircleSection(
                 )
             }
 
+
             Spacer(Modifier.height(24.dp))
 
-            lovedOnesList.forEachIndexed { index, connection ->
-                LovedOneCardCircle(
-                    connection = connection,
-                    index = index,
-                    count = lovedOnesList.size
+            if(lovedOnesList.isEmpty()) {
+
+                Text(
+                    text = "Add loved ones to your circle",
+                    style = MaterialTheme.typography.titleMedium.copy(
+                        fontWeight = FontWeight.Normal,
+                        fontFamily = manrope
+                    ),
+                    textAlign = TextAlign.Center,
+                    modifier = Modifier.fillMaxWidth(),
+                    fontSize = 16.sp
                 )
+            }
+            else {
+
+                lovedOnesList.forEachIndexed { index, connection ->
+                    LovedOneCardCircle(
+                        connection = connection,
+                        index = index,
+                        count = lovedOnesList.size
+                    )
+                }
             }
         }
     }
@@ -441,20 +462,21 @@ fun MyCircleSection(
 
 @Composable
 fun PendingInviteSection(
+    pendingInvites: List<PendingInvite>,
     acceptingInviteId: String?,
     rejectingInviteId: String?,
     acceptInvite: (String) -> Unit,
     rejectInvite: (String) -> Unit
 ) {
 
-    val lovedOnes = listOf(
-        CircleMember(
-            "1",
-            "",
-            "Akshat",
-            true
-        )
-    )
+//    val lovedOnes = listOf(
+//        CircleMember(
+//            "1",
+//            "",
+//            "Akshat",
+//            true
+//        )
+//    )
 
     var expanded by remember { mutableStateOf(false) }
 
@@ -474,7 +496,9 @@ fun PendingInviteSection(
         ) {
             Row(
                 modifier = Modifier
-                    .clickable {
+                    .clickable(
+                        enabled = pendingInvites.isNotEmpty()
+                    ) {
                         expanded = !expanded
                     }
                     .fillMaxWidth()
@@ -500,28 +524,47 @@ fun PendingInviteSection(
                 )
             }
 
-            if (expanded) {
+            if(pendingInvites.isNotEmpty()) {
+                if (expanded) {
 
-                Column(
-                    modifier = Modifier.padding(
-                        start = 16.dp,
-                        end = 16.dp,
-                        bottom = 16.dp,
-                        top = 4.dp
-                    )
-                ) {
-                    lovedOnes.forEachIndexed { index, connection ->
-                        PendingInviteRow(
-                            acceptingInviteId,
-                            rejectingInviteId,
-                            connection,
-                            index = index,
-                            count = lovedOnes.size,
-                            onAccept = acceptInvite,
-                            onDecline = rejectInvite
+                    Column(
+                        modifier = Modifier.padding(
+                            start = 16.dp,
+                            end = 16.dp,
+                            bottom = 16.dp,
+                            top = 4.dp
                         )
+                    ) {
+                        pendingInvites.forEachIndexed { index, connection ->
+                            PendingInviteRow(
+                                acceptingInviteId,
+                                rejectingInviteId,
+                                connection,
+                                index = index,
+                                count = pendingInvites.size,
+                                onAccept = acceptInvite,
+                                onDecline = rejectInvite
+                            )
+                        }
                     }
                 }
+            }
+            else {
+
+                Spacer(Modifier.height(16.dp))
+
+                Text(
+                    text = "No Pending Invites",
+                    style = MaterialTheme.typography.titleMedium.copy(
+                        fontWeight = FontWeight.Normal,
+                        fontFamily = manrope
+                    ),
+                    textAlign = TextAlign.Center,
+                    modifier = Modifier.fillMaxWidth().padding(
+                        bottom = 16.dp,
+                    ),
+                    fontSize = 16.sp
+                )
             }
         }
     }
@@ -560,7 +603,7 @@ fun LovedOneCardCircle(
                 )
         ) {
             Text(
-                connection.alias?.take(1) ?: "",
+                connection.alias?.take(1) ?: connection.profileName.take(1),
                 color = MaterialTheme.colorScheme.onBackground,
                 style = MaterialTheme.typography.headlineSmall.copy(
                     fontWeight = FontWeight.Bold,
@@ -574,7 +617,7 @@ fun LovedOneCardCircle(
         Spacer(Modifier.width(12.dp))
 
         Text(
-            connection.alias ?: "",
+            connection.alias ?: connection.profileName,
             color = MaterialTheme.colorScheme.onBackground,
             style = MaterialTheme.typography.headlineSmall.copy(
                 fontWeight = FontWeight.Bold,
@@ -607,7 +650,7 @@ fun LovedOneCardCircle(
 fun PendingInviteRow(
     acceptingInviteId: String?,
     rejectingInviteId: String?,
-    connection: CircleMember,
+    connection: PendingInvite,
     index: Int,
     count: Int,
     onAccept: (String) -> Unit,
@@ -640,7 +683,7 @@ fun PendingInviteRow(
                 )
         ) {
             Text(
-                connection.alias?.take(1) ?: "",
+                connection.senderProfileName?.take(1) ?: "",
                 fontFamily = manrope,
                 fontWeight = FontWeight.Bold,
                 modifier = Modifier.align(Alignment.Center)
@@ -650,16 +693,16 @@ fun PendingInviteRow(
         Spacer(Modifier.width(12.dp))
 
         Text(
-            text = connection.alias ?: "",
+            text = connection.senderProfileName ?: "",
             fontFamily = manrope,
             fontWeight = FontWeight.Bold,
             modifier = Modifier.weight(1f)
         )
 
         TextButton(
-            enabled = acceptingInviteId != connection.id,
+            enabled = acceptingInviteId != connection.senderId,
             onClick = {
-                onAccept(connection.id)
+                onAccept(connection.senderId)
             }) {
             Text(
                 "Accept",
@@ -669,9 +712,9 @@ fun PendingInviteRow(
         }
 
         TextButton(
-            enabled = rejectingInviteId != connection.id,
+            enabled = rejectingInviteId != connection.senderId,
             onClick = {
-                onDecline(connection.id)
+                onDecline(connection.senderId)
             }) {
             Text(
                 "Decline",

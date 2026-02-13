@@ -77,12 +77,14 @@ class HomeScreenVM @Inject constructor(
 
 
     fun getUserProfile() {
-        _uiState.update {
-            it.copy(
-                username = googleSignInClient.getUserName(),
-                userAvatar = googleSignInClient.getUserProfile().toString()
-            )
-        }
+       viewModelScope.launch {
+           _uiState.update {
+               it.copy(
+                   username = googleSignInClient.getUserName(),
+                   userAvatar = googleSignInClient.getUserProfile().toString()
+               )
+           }
+       }
     }
 
     fun signOut() {

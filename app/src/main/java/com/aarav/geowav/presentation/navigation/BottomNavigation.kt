@@ -28,7 +28,7 @@ fun BottomNavigationBar(
     val currentRoute = navBackStackEntry?.destination?.route
 
 
-    val navItems = listOf(NavItem.Home, NavItem.Activity, NavItem.YourPlaces)
+    val navItems = listOf(NavItem.Home, NavItem.LocationSharing, NavItem.Activity, NavItem.YourPlaces)
 
 
     NavigationBar(

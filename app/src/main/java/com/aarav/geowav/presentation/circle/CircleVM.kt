@@ -7,6 +7,7 @@ import com.aarav.geowav.core.utils.Resource
 import com.aarav.geowav.core.utils.encodeEmail
 import com.aarav.geowav.data.authentication.GoogleSignInClient
 import com.aarav.geowav.data.model.CircleMember
+import com.aarav.geowav.data.model.PendingInvite
 import com.aarav.geowav.domain.repository.CircleRepository
 import com.google.firebase.auth.FirebaseAuth
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -116,12 +117,42 @@ class CircleVM
         }
     }
 
+    fun loadPendingInvites() {
+        if (currentUserId.isEmpty()) {
+            emitError("User not authenticated")
+            return
+        }
+
+        viewModelScope.launch {
+            when (val result = circleRepository.getPendingInvites(currentUserId)) {
+                is Resource.Success -> {
+                    _uiState.update {
+                        it.copy(
+                            pendingInvites = result.data ?: emptyList()
+                        )
+                    }
+                }
+
+                is Resource.Error -> {
+                    emitError(result.message ?: "Failed to load pending invites")
+                }
+
+                else -> {}
+            }
+        }
+    }
+
 
     fun sendInvite(email: String, receiverName: String) {
         val trimmedEmail = encodeEmail(email)
 
         if (trimmedEmail.isEmpty()) {
             emitError("Email cannot be empty")
+            return
+        }
+
+        if (receiverName.isEmpty()) {
+            emitError("Name cannot be empty")
             return
         }
 
@@ -134,6 +165,26 @@ class CircleVM
             emitError("User not authenticated")
             return
         }
+
+        val alreadyInvited = _uiState.value.pendingInvites.any {
+            it.senderEmail == email
+        }
+
+        val isAlreadyLovedOne = _uiState.value.lovedOnes.any {
+            it.receiverEmail == email
+        }
+
+
+        if (isAlreadyLovedOne) {
+            emitError("User is already added to your circle")
+            return
+        }
+
+        if (alreadyInvited) {
+            emitError("You have already invited this user")
+            return
+        }
+
 
         viewModelScope.launch {
             _uiState.update { it.copy(isLoading = true) }
@@ -158,6 +209,7 @@ class CircleVM
                 val result = circleRepository.sendCircleInvite(
                     senderUid = currentUserId,
                     senderEmail = currentUser.email,
+                    receiverEmail = email,
                     senderProfileName = currentUser.username,
                     receiverUid = receiverUid,
                     alias = alias ?: ""
@@ -216,6 +268,7 @@ class CircleVM
                 is Resource.Success -> {
                     _uiState.update { it.copy(acceptingInviteId = null) }
                     loadLovedOnes()
+                    loadPendingInvites()
                     _events.emit(CircleUiEvent.InviteAccepted)
                 }
 
@@ -248,6 +301,7 @@ class CircleVM
                 is Resource.Success -> {
                     _uiState.update { it.copy(rejectingInviteId = null) }
 
+                    loadPendingInvites()
                     _events.emit(
                         CircleUiEvent.ShowError("Invite rejected")
                     )
@@ -273,6 +327,7 @@ class CircleVM
 
 data class CircleUiState(
     val lovedOnes: List<CircleMember> = emptyList(),
+    val pendingInvites: List<PendingInvite> = emptyList(),
     val isLoading: Boolean = false,
     val acceptingInviteId: String? = null,
     val rejectingInviteId: String? = null,

@@ -170,7 +170,8 @@ class MainActivity : ComponentActivity() {
                     val showBottomRoutes = listOf(
                         NavRoute.HomeScreen.path,
                         NavRoute.ActivityScreen.path,
-                        NavRoute.YourPlaces.path
+                        NavRoute.YourPlaces.path,
+                        NavRoute.LocationSharing.path
                     )
 
 
