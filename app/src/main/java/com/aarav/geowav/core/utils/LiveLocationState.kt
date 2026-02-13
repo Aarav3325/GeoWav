@@ -19,3 +19,10 @@ sealed class LiveLocationState {
         val message: String
     ) : LiveLocationState()
 }
+
+enum class ServiceState {
+    NOT_SHARING,
+    STARTING,
+    SHARING,
+    ERROR
+}

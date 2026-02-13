@@ -1,5 +1,6 @@
 package com.aarav.geowav.presentation.circle
 
+import android.util.Log
 import android.util.Patterns
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -91,11 +92,14 @@ class CircleVM
                 )
             }
 
+
             when (val result =
                 circleRepository.getAcceptedLovedOnes(currentUserId)
             ) {
                 is Resource.Success -> {
                     _uiState.update {
+
+                        Log.i("Circle", "list: ${result.data}")
                         it.copy(
                             lovedOnes = result.data ?: emptyList(),
                             isLoading = false
@@ -124,20 +128,12 @@ class CircleVM
         }
 
         viewModelScope.launch {
-            when (val result = circleRepository.getPendingInvites(currentUserId)) {
-                is Resource.Success -> {
-                    _uiState.update {
-                        it.copy(
-                            pendingInvites = result.data ?: emptyList()
-                        )
-                    }
+            circleRepository.getPendingInvites(currentUserId).collect { pendingInvites ->
+                _uiState.update {
+                    it.copy(
+                        pendingInvites = pendingInvites
+                    )
                 }
-
-                is Resource.Error -> {
-                    emitError(result.message ?: "Failed to load pending invites")
-                }
-
-                else -> {}
             }
         }
     }

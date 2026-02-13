@@ -3,6 +3,7 @@ package com.aarav.geowav.domain.repository
 import com.aarav.geowav.core.utils.Resource
 import com.aarav.geowav.data.model.CircleMember
 import com.aarav.geowav.data.model.PendingInvite
+import kotlinx.coroutines.flow.Flow
 
 interface CircleRepository {
 
@@ -33,7 +34,7 @@ interface CircleRepository {
         userId: String
     ): Resource<List<CircleMember>>
 
-    suspend fun getPendingInvites(
+    fun getPendingInvites(
         userId: String
-    ): Resource<List<PendingInvite>>
+    ): Flow<List<PendingInvite>>
 }

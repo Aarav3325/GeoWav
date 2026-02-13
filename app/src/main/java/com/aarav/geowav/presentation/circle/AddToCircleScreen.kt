@@ -93,35 +93,33 @@ fun CircleScreen(
         viewModel.loadPendingInvites()
     }
 
-    GeoWavTheme {
-        Scaffold(
-            topBar = {
-                TopAppBar(
-                    title = {
-                        Text(
-                            text = "Your Circle",
-                            fontFamily = manrope,
-                            fontSize = 24.sp,
-                            fontWeight = FontWeight.Bold,
-                            modifier = Modifier
-                        )
-                    }
-                )
-            },
-            contentWindowInsets = WindowInsets(0, 0, 0, 0),
-            containerColor = MaterialTheme.colorScheme.background,
-            snackbarHost = { SnackbarHost(snackbarHostState) }
-        ) { padding ->
-            CircleContent(
-                modifier = Modifier.padding(padding),
-                uiState = uiState,
-                updateName = viewModel::updateName,
-                updateEmail = viewModel::updateEmail,
-                onSendInvite = viewModel::sendInvite,
-                onAcceptInvite = viewModel::acceptInvite,
-                onRejectInvite = viewModel::rejectInvite
+    Scaffold(
+        topBar = {
+            TopAppBar(
+                title = {
+                    Text(
+                        text = "Your Circle",
+                        fontFamily = manrope,
+                        fontSize = 24.sp,
+                        fontWeight = FontWeight.Bold,
+                        modifier = Modifier
+                    )
+                }
             )
-        }
+        },
+        contentWindowInsets = WindowInsets(0, 0, 0, 0),
+        containerColor = MaterialTheme.colorScheme.background,
+        snackbarHost = { SnackbarHost(snackbarHostState) }
+    ) { padding ->
+        CircleContent(
+            modifier = Modifier.padding(padding),
+            uiState = uiState,
+            updateName = viewModel::updateName,
+            updateEmail = viewModel::updateEmail,
+            onSendInvite = viewModel::sendInvite,
+            onAcceptInvite = viewModel::acceptInvite,
+            onRejectInvite = viewModel::rejectInvite
+        )
     }
 }
 
@@ -433,7 +431,7 @@ fun MyCircleSection(
 
             Spacer(Modifier.height(24.dp))
 
-            if(lovedOnesList.isEmpty()) {
+            if (lovedOnesList.isEmpty()) {
 
                 Text(
                     text = "Add loved ones to your circle",
@@ -445,8 +443,7 @@ fun MyCircleSection(
                     modifier = Modifier.fillMaxWidth(),
                     fontSize = 16.sp
                 )
-            }
-            else {
+            } else {
 
                 lovedOnesList.forEachIndexed { index, connection ->
                     LovedOneCardCircle(
@@ -524,7 +521,7 @@ fun PendingInviteSection(
                 )
             }
 
-            if(pendingInvites.isNotEmpty()) {
+            if (pendingInvites.isNotEmpty()) {
                 if (expanded) {
 
                     Column(
@@ -548,8 +545,7 @@ fun PendingInviteSection(
                         }
                     }
                 }
-            }
-            else {
+            } else {
 
                 Spacer(Modifier.height(16.dp))
 
@@ -560,9 +556,11 @@ fun PendingInviteSection(
                         fontFamily = manrope
                     ),
                     textAlign = TextAlign.Center,
-                    modifier = Modifier.fillMaxWidth().padding(
-                        bottom = 16.dp,
-                    ),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(
+                            bottom = 16.dp,
+                        ),
                     fontSize = 16.sp
                 )
             }

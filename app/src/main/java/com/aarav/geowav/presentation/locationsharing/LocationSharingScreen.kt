@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -20,16 +21,23 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Switch
 import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
+import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -48,18 +56,78 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.aarav.geowav.R
 import com.aarav.geowav.core.utils.LiveLocationState
+import com.aarav.geowav.data.model.CircleMember
 import com.aarav.geowav.presentation.components.EmergencyShareDialog
-import com.aarav.geowav.presentation.theme.GeoWavTheme
 import com.aarav.geowav.presentation.theme.manrope
 import com.aarav.geowav.presentation.theme.sora
+import kotlinx.coroutines.delay
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun LocationSharingScreen() {
+fun LocationSharingScreen(
+    viewModel: LocationSharingVM
+) {
 
+    val uiState by viewModel.uiState.collectAsState()
+
+
+    val snackbarHostState = remember { SnackbarHostState() }
+
+    LaunchedEffect(Unit) {
+        viewModel.loadLovedOnes()
+        viewModel.loadLocationPermission()
+
+    }
+
+//    LaunchedEffect(uiState.sharingState) {
+//        viewModel.refreshState()
+//    }
+
+    LaunchedEffect(Unit) {
+        viewModel.events.collect { event ->
+            when (event) {
+                is LiveLocationUiEvent.ShowError -> {
+                    snackbarHostState.showSnackbar(event.message)
+                }
+            }
+        }
+    }
+    Scaffold(
+        topBar = {
+            TopAppBar(
+                title = {
+                    Text(
+                        text = "Live Location Sharing",
+                        fontFamily = manrope,
+                        fontSize = 24.sp,
+                        fontWeight = FontWeight.Bold,
+                        modifier = Modifier
+                    )
+                }
+            )
+        },
+        contentWindowInsets = WindowInsets(0, 0, 0, 0),
+        containerColor = MaterialTheme.colorScheme.background,
+        snackbarHost = { SnackbarHost(snackbarHostState) }
+    ) { padding ->
+        LocationSharingContent(
+            modifier = Modifier.padding(padding),
+            uiState,
+            viewModel::onViewerToggle,
+            onStartSharing = viewModel::startSharing,
+            onStopSharing = viewModel::stopLiveLocationSharing
+        )
+    }
 }
 
 @Composable
-fun LocationSharingContent(locationUiState: LiveLocationUiState) {
+fun LocationSharingContent(
+    modifier: Modifier = Modifier,
+    locationUiState: LiveLocationUiState,
+    onToggleChange: (String, Boolean) -> Unit,
+    onStartSharing: () -> Unit,
+    onStopSharing: () -> Unit
+) {
 
     var showEmergencyDialog by remember {
         mutableStateOf(false)
@@ -79,26 +147,30 @@ fun LocationSharingContent(locationUiState: LiveLocationUiState) {
     )
 
     Column(
-        modifier = Modifier
+        modifier = modifier
     ) {
         LazyColumn(
             modifier = Modifier
                 .fillMaxSize()
                 .background(MaterialTheme.colorScheme.background)
         ) {
-            item {
-                Text(
-                    text = "Live Location Sharing",
-                    fontSize = 24.sp,
-                    fontFamily = manrope,
-                    fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.onBackground,
-                    modifier = Modifier.padding(top = 54.dp, start = 16.dp, end = 16.dp)
-                )
-            }
+//            item {
+//                Text(
+//                    text = "Live Location Sharing",
+//                    fontSize = 24.sp,
+//                    fontFamily = manrope,
+//                    fontWeight = FontWeight.Bold,
+//                    color = MaterialTheme.colorScheme.onBackground,
+//                    modifier = Modifier.padding(top = 54.dp, start = 16.dp, end = 16.dp)
+//                )
+//            }
 
             item {
-                StatusCard(locationUiState.sharingState)
+                StatusCard(
+                    locationUiState.sharingState,
+                    onStartSharing,
+                    onStopSharing
+                )
             }
 
             item {
@@ -106,7 +178,13 @@ fun LocationSharingContent(locationUiState: LiveLocationUiState) {
             }
 
             item {
-                LovedOnesCard(locationUiState.sharingState)
+                LovedOnesCard(
+                    locationUiState.lovedOnes,
+                    locationUiState.sharingState,
+                    locationUiState.selectedViewerIds,
+                    locationUiState.updatingViewerId,
+                    onToggleChange
+                )
             }
 
             item {
@@ -120,31 +198,35 @@ fun LocationSharingContent(locationUiState: LiveLocationUiState) {
 
 }
 
-@Preview(showBackground = true)
-@Composable
-fun PreviewLocationContent() {
-
-    val locationUiState = LiveLocationUiState(
-               sharingState = LiveLocationState.NotSharing
-//        sharingState = LiveLocationState.Sharing(
-//            visibleCount = 1,
-//            lastUpdatedText = "1s ago"
-//        )
-//        sharingState = LiveLocationState.EmergencySharing(
-//            remainingTime = "12:00"
-//        )
-    )
-
-    GeoWavTheme {
-        LocationSharingContent(locationUiState)
-    }
-
+//@Preview(showBackground = true)
+//@Composable
+//fun PreviewLocationContent() {
+//
+//    val locationUiState = LiveLocationUiState(
+//        sharingState = LiveLocationState.NotSharing
+////        sharingState = LiveLocationState.Sharing(
+////            visibleCount = 1,
+////            lastUpdatedText = "1s ago"
+////        )
+////        sharingState = LiveLocationState.EmergencySharing(
+////            remainingTime = "12:00"
+////        )
+//    )
+//
+//    GeoWavTheme {
 //        LocationSharingContent(locationUiState)
-}
+//    }
+//
+////        LocationSharingContent(locationUiState)
+//}
 
 @Preview
 @Composable
-fun StatusCard(liveLocationState: LiveLocationState) {
+fun StatusCard(
+    liveLocationState: LiveLocationState,
+    onStart: () -> Unit,
+    onStop: () -> Unit
+) {
     val containerColor = when (liveLocationState) {
         LiveLocationState.NotSharing ->
             MaterialTheme.colorScheme.surfaceContainerHigh
@@ -319,11 +401,11 @@ fun StatusCard(liveLocationState: LiveLocationState) {
 
             when (liveLocationState) {
                 is LiveLocationState.Sharing -> {
-                    StopSharingButton { }
+                    StopSharingButton(onStop)
                 }
 
                 LiveLocationState.NotSharing -> {
-                    StartSharingButton { }
+                    StartSharingButton(onStart)
                 }
 
                 else -> {}
@@ -390,8 +472,16 @@ fun MapPreviewCard() {
 
 @Composable
 fun LovedOnesCard(
-    locationState: LiveLocationState
+    lovedOnesList: List<CircleMember>,
+    locationState: LiveLocationState,
+    selectedViewerIds: Set<String>,
+    updatingViewerId: String? = null,
+    onToggleChange: (String, Boolean) -> Unit
 ) {
+
+    val toggleEnabled =
+        locationState is LiveLocationState.NotSharing ||
+                locationState is LiveLocationState.Sharing
 
     val lovedOnes = listOf(
         LovedOneUi(
@@ -457,14 +547,15 @@ fun LovedOnesCard(
                         "You are not sharing your live location with anyone currently",
                         color = MaterialTheme.colorScheme.onBackground,
                         style = MaterialTheme.typography.headlineSmall.copy(
-                            fontWeight = FontWeight.Bold,
+                            fontWeight = FontWeight.Normal,
                             fontFamily = manrope,
                             lineHeight = 20.sp
                         ),
-                        textAlign = TextAlign.Start,
-                        fontSize = 12.sp,
+                        textAlign = TextAlign.Center,
+                        fontSize = 14.sp,
                         modifier = Modifier
                             .fillMaxWidth()
+                            .padding(0.dp)
                     )
                 }
 
@@ -472,12 +563,23 @@ fun LovedOnesCard(
             }
 
             if (!expanded) {
-                CollapsedLovedOnes(
-                    lovedOnes
-                )
+                when (locationState) {
+                    is LiveLocationState.Sharing -> {
+                        CollapsedLovedOnes(
+                            lovedOnesList,
+                            selectedViewerIds
+                        )
+                    }
+
+                    else -> {}
+                }
             } else {
                 ExpandedLovedOnes(
-                    lovedOnes
+                    lovedOnesList,
+                    selectedViewerIds,
+                    updatingViewerId,
+                    onToggleChange,
+                    toggleEnabled
                 )
             }
         }
@@ -486,7 +588,11 @@ fun LovedOnesCard(
 
 @Composable
 fun ExpandedLovedOnes(
-    lovedOnes: List<LovedOneUi>
+    lovedOnes: List<CircleMember>,
+    selectedViewerIds: Set<String>,
+    updatingViewerId: String? = null,
+    onToggleChange: (String, Boolean) -> Unit,
+    toggleEnabled: Boolean
 ) {
     Column(
         modifier = Modifier.padding(vertical = 8.dp)
@@ -495,7 +601,11 @@ fun ExpandedLovedOnes(
             LovedOneCard(
                 connection,
                 index,
-                lovedOnes.size
+                lovedOnes.size,
+                selectedViewerIds,
+                updatingViewerId,
+                onToggleChange,
+                toggleEnabled
             )
         }
     }
@@ -503,28 +613,31 @@ fun ExpandedLovedOnes(
 
 @Composable
 private fun CollapsedLovedOnes(
-    lovedOnes: List<LovedOneUi>
+    lovedOnes: List<CircleMember>,
+    selectedViewerIds: Set<String>
 ) {
-    val selected = lovedOnes.filter { it.selected }
 
-    val text = when {
-        selected.isEmpty() ->
-            "No one"
+    val selected = lovedOnes.filter { it.id in selectedViewerIds }
 
-        selected.size <= 2 ->
-            selected.joinToString { it.name }
 
-        else ->
-            "${selected[0].name}, ${selected[1].name} +${selected.size - 2}"
-    }
+//    val text = when {
+//        selected.isEmpty() ->
+//            "No one"
+//
+//        selected.size <= 2 ->
+//            selected.joinToString { it.al }
+//
+//        else ->
+//            "${selected[0].name}, ${selected[1].name} +${selected.size - 2}"
+//    }
 
 
     Row(
         horizontalArrangement = Arrangement.spacedBy(6.dp),
         modifier = Modifier.padding(vertical = 8.dp)
     ) {
-        if (lovedOnes.size <= 2) {
-            lovedOnes.forEach { connection ->
+        if (selected.size <= 2) {
+            selected.forEach { connection ->
                 Box(
                     modifier = Modifier
                         .size(42.dp)
@@ -539,7 +652,7 @@ private fun CollapsedLovedOnes(
                         )
                 ) {
                     Text(
-                        connection.name.take(1),
+                        connection.alias?.take(1) ?: connection.profileName.take(1),
                         color = MaterialTheme.colorScheme.onBackground,
                         style = MaterialTheme.typography.headlineSmall.copy(
                             fontWeight = FontWeight.Bold,
@@ -551,7 +664,7 @@ private fun CollapsedLovedOnes(
                 }
             }
         } else {
-            lovedOnes.take(2).forEach {
+            selected.take(2).forEach {
 
                     connection ->
                 Box(
@@ -568,7 +681,7 @@ private fun CollapsedLovedOnes(
                         )
                 ) {
                     Text(
-                        connection.name.take(1),
+                        connection.alias?.take(1) ?: connection.profileName.take(1),
                         color = MaterialTheme.colorScheme.onBackground,
                         style = MaterialTheme.typography.headlineSmall.copy(
                             fontWeight = FontWeight.Bold,
@@ -594,7 +707,7 @@ private fun CollapsedLovedOnes(
                     )
             ) {
                 Text(
-                    "+${lovedOnes.size - 2}",
+                    "+${selected.size - 2}",
                     color = MaterialTheme.colorScheme.onBackground,
                     style = MaterialTheme.typography.headlineSmall.copy(
                         fontWeight = FontWeight.Bold,
@@ -618,12 +731,20 @@ data class LovedOneUi(
 @Preview(showBackground = true)
 @Composable
 fun LovedOneCard(
-    connection: LovedOneUi,
+    connection: CircleMember,
     index: Int,
-    count: Int
+    count: Int,
+    selectedViewerIds: Set<String>,
+    updatingViewerId: String? = null,
+    onToggleChange: (String, Boolean) -> Unit,
+    toggleEnabled: Boolean
 ) {
 
     val shape = itemShape(index, count)
+
+    val isSelected = selectedViewerIds.contains(connection.id)
+    val isUpdating = updatingViewerId == connection.id
+
 
     Row(
         modifier = Modifier
@@ -648,7 +769,7 @@ fun LovedOneCard(
                 )
         ) {
             Text(
-                connection.name.take(1),
+                connection.alias?.take(1) ?: connection.profileName.take(1) ?: "",
                 color = MaterialTheme.colorScheme.onBackground,
                 style = MaterialTheme.typography.headlineSmall.copy(
                     fontWeight = FontWeight.Bold,
@@ -662,7 +783,7 @@ fun LovedOneCard(
         Spacer(Modifier.width(12.dp))
 
         Text(
-            connection.name,
+            connection.alias ?: connection.profileName,
             color = MaterialTheme.colorScheme.onBackground,
             style = MaterialTheme.typography.headlineSmall.copy(
                 fontWeight = FontWeight.Bold,
@@ -673,8 +794,11 @@ fun LovedOneCard(
         )
 
         Switch(
-            checked = connection.selected,
-            onCheckedChange = {},
+            checked = isSelected,
+            enabled = toggleEnabled,
+            onCheckedChange = {
+                onToggleChange(connection.id, it)
+            },
             colors = SwitchDefaults.colors(
                 checkedTrackColor = MaterialTheme.colorScheme.primary
             )

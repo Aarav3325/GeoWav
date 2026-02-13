@@ -14,6 +14,7 @@ import androidx.core.app.NotificationCompat
 import androidx.core.content.edit
 import com.aarav.geowav.R
 import com.aarav.geowav.core.utils.LiveLocationState
+import com.aarav.geowav.core.utils.ServiceState
 import com.aarav.geowav.data.authentication.GoogleSignInClient
 import com.aarav.geowav.domain.repository.LiveLocationSharingRepository
 import com.google.android.gms.location.FusedLocationProviderClient
@@ -24,14 +25,18 @@ import com.google.android.gms.location.Priority
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
 import javax.inject.Inject
 
 
 @AndroidEntryPoint
 class LiveLocationService : Service() {
+
+    val ACTION_STOP = "ACTION_STOP_LIVE_LOCATION"
 
     @Inject
     lateinit var fusedLocationProviderClient: FusedLocationProviderClient
@@ -51,38 +56,70 @@ class LiveLocationService : Service() {
     @Inject
     lateinit var sharedPreferences: SharedPreferences
 
-    private fun setSharingState(state: LiveLocationState) {
-        sharedPreferences.edit {
-            putString("live_location_state", state::class.simpleName)
+    private fun setSharingState(state: ServiceState) {
+        sharedPreferences.edit(commit = true) {
+            putString("live_location_state", state.name)
         }
     }
 
+
     override fun onBind(intent: Intent?): IBinder? = null
 
-    override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
-        if (!googleSignInClient.isLoggedIn()) {
-            stopSelf()
-            return START_NOT_STICKY
+    override fun onStartCommand(
+        intent: Intent?,
+        flags: Int,
+        startId: Int
+    ): Int {
+
+        when (intent?.action) {
+            ACTION_STOP -> {
+
+                // 🔥 THIS WAS MISSING
+                setSharingState(ServiceState.NOT_SHARING)
+
+                stopForeground(STOP_FOREGROUND_REMOVE)
+
+                val manager = getSystemService(NotificationManager::class.java)
+                manager.cancel(1)
+
+                stopSelf()
+                return START_NOT_STICKY
+            }
         }
-
-//        setSharingState(LiveLocationState.Sharing)
-        startForeground(1, createNotification())
-        startLocationUpdates()
-
 
         return START_STICKY
     }
 
-//    override fun onCreate() {
-//        super.onCreate()
-//
-//        if (googleSignInClient.isLoggedIn()) {
-//            setSharingState(LiveLocationState.Starting)
-//            startForeground(1, createNotification())
-//            getLocationUpdates()
+
+
+//    override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
+//        if (!googleSignInClient.isLoggedIn()) {
+//            stopSelf()
+//            return START_NOT_STICKY
 //        }
 //
+////        setSharingState(LiveLocationState.Sharing)
+//        startForeground(1, createNotification())
+//        startLocationUpdates()
+//
+//
+//        return START_STICKY
 //    }
+
+    override fun onCreate() {
+        super.onCreate()
+
+        if (!googleSignInClient.isLoggedIn()) {
+            stopSelf()
+            return
+        }
+
+        setSharingState(ServiceState.STARTING)
+
+        startForeground(1, createNotification())
+        startLocationUpdates()
+
+    }
 
 //    private fun startLocationSharing() {
 //        var first = true
@@ -115,27 +152,27 @@ class LiveLocationService : Service() {
 //            .launchIn(serviceScope)
 //    }
 
-//    private suspend fun sendLocation(location: Location) {
-//        val userId = googleSignInClient.getUserId()
-//
-//        val isActive = liveLocationSharingRepository
-//            .isLiveLocationActive(userId)
-//
-//        if (!isActive) {
-//            liveLocationSharingRepository.startSharing(
-//                userId,
-//                location.latitude,
-//                location.longitude
-//            )
-//            setSharingState(LiveLocationState.Sharing)
-//        } else {
-//            liveLocationSharingRepository.updateLocation(
-//                userId,
-//                location.latitude,
-//                location.longitude
-//            )
-//        }
-//    }
+    private suspend fun sendLocation(location: Location) {
+        val userId = googleSignInClient.getUserId()
+
+        val isActive = liveLocationSharingRepository
+            .isLiveLocationActive(userId)
+
+        if (!isActive) {
+            liveLocationSharingRepository.startSharing(
+                userId,
+                location.latitude,
+                location.longitude
+            )
+            setSharingState(ServiceState.SHARING)
+        } else {
+            liveLocationSharingRepository.updateLocation(
+                userId,
+                location.latitude,
+                location.longitude
+            )
+        }
+    }
 
 
     @SuppressLint("MissingPermission")
@@ -154,11 +191,10 @@ class LiveLocationService : Service() {
 
                 serviceScope.launch {
                     try {
-//                        sendLocation(location)
+                        sendLocation(location)
                     } catch (e: Exception) {
-                        setSharingState(
-                            LiveLocationState.Error("Failed to share live location")
-                        )
+                        setSharingState(ServiceState.NOT_SHARING)
+                        stopForeground(STOP_FOREGROUND_REMOVE)
                         stopSelf()
                     }
                 }
@@ -216,19 +252,24 @@ class LiveLocationService : Service() {
 
     override fun onDestroy() {
 
-        fusedLocationProviderClient
-            .removeLocationUpdates(locationCallback)
+        stopForeground(STOP_FOREGROUND_REMOVE)
 
-        serviceScope.launch {
-            liveLocationSharingRepository
-                .stopSharingLiveLocation(googleSignInClient.getUserId())
+        if (::locationCallback.isInitialized) {
+            fusedLocationProviderClient.removeLocationUpdates(locationCallback)
         }
 
-        setSharingState(LiveLocationState.NotSharing)
-        serviceScope.cancel()
+        serviceScope.launch(NonCancellable) {
+            googleSignInClient.getUserId()?.let {
+                liveLocationSharingRepository.stopSharingLiveLocation(it)
+            }
+        }
 
+        serviceScope.cancel()
         super.onDestroy()
     }
+
+
+
 
 
 

@@ -22,7 +22,6 @@ import com.aarav.geowav.presentation.addplace.AddPlaceScreen
 import com.aarav.geowav.presentation.circle.CircleScreen
 import com.aarav.geowav.presentation.circle.PreviewCircleScreen
 import com.aarav.geowav.presentation.locationsharing.LocationSharingScreen
-import com.aarav.geowav.presentation.locationsharing.PreviewLocationContent
 import com.aarav.geowav.presentation.settings.SettingsScreen
 import com.aarav.geowav.presentation.settings.ThemeMode
 import com.aarav.geowav.presentation.settings.TriggerType
@@ -314,7 +313,9 @@ fun AddLocationSharingScreen(
     navGraphBuilder.composable(
         route = NavRoute.LocationSharing.path
     ) {
-        PreviewLocationContent()
+        LocationSharingScreen(
+            viewModel = hiltViewModel()
+        )
     }
 }
 

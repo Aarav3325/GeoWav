@@ -6,6 +6,7 @@ plugins {
     id("kotlin-kapt")
     id("com.google.dagger.hilt.android")
     id("com.google.gms.google-services")
+    id("com.google.firebase.crashlytics")
 }
 
 android {
@@ -59,6 +60,10 @@ dependencies {
 ////    implementation("com.google.firebase:firebase-inappmessaging-display")
 ////    implementation("com.google.firebase:firebase-ai")
 //    implementation("com.google.firebase:firebase-crashlytics-ndk")
+
+    // Crashlytics
+    implementation("com.google.firebase:firebase-crashlytics")
+    implementation("com.google.firebase:firebase-analytics")
 
     //Retrofit
     implementation("com.squareup.retrofit2:retrofit:3.0.0")

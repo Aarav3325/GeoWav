@@ -1,11 +1,18 @@
 package com.aarav.geowav.data.repository
 
+import android.util.Log
 import com.aarav.geowav.core.utils.Resource
 import com.aarav.geowav.core.utils.encodeEmail
 import com.aarav.geowav.data.model.CircleMember
 import com.aarav.geowav.data.model.PendingInvite
 import com.aarav.geowav.domain.repository.CircleRepository
+import com.google.firebase.database.DataSnapshot
+import com.google.firebase.database.DatabaseError
 import com.google.firebase.database.FirebaseDatabase
+import com.google.firebase.database.ValueEventListener
+import kotlinx.coroutines.channels.awaitClose
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.tasks.await
 import javax.inject.Inject
 
@@ -122,23 +129,30 @@ class CircleRepositoryImpl
         userId: String
     ): Resource<List<CircleMember>> {
         return try {
+
             val snapshot = rootRef
                 .child("circle")
                 .child(userId)
                 .get()
                 .await()
 
+
+
             val lovedOnes = snapshot.children.mapNotNull { child ->
+                Log.i("CircleRepositoryImpl", "getAcceptedLovedOnes: $child")
                 val status = child.child("status").getValue(String::class.java)
                 if (status == "accepted") {
+                    Log.i("CircleRepositoryImpl", "getAcceptedLovedOnes: $child")
+
                     CircleMember(
                         id = child.key!!,
                         profileName = child.child("profileName")
                             .getValue(String::class.java) ?: "Unknown",
                         alias = child.child("alias").getValue(String::class.java),
                         selected = false,
-                        receiverEmail = child.child("receiverEmail").getValue(String::class.java) ?: "",
-                        )
+                        receiverEmail = child.child("receiverEmail").getValue(String::class.java)
+                            ?: "",
+                    )
                 } else null
             }
 
@@ -149,31 +163,40 @@ class CircleRepositoryImpl
         }
     }
 
-    override suspend fun getPendingInvites(userId: String): Resource<List<PendingInvite>> {
-        return try {
-            val snapshot = rootRef
-                .child("circle_requests")
-                .child(userId)
-                .get()
-                .await()
+    override fun getPendingInvites(userId: String): Flow<List<PendingInvite>> = callbackFlow {
 
-            val pendingInvites = snapshot.children.mapNotNull {
-                val status = it.child("status").getValue(String::class.java)
-                if (status == "pending") {
-                    PendingInvite(
-                        senderEmail = it.child("senderEmail").getValue(String::class.java) ?: "",
-                        senderProfileName = it.child("senderProfileName")
-                            .getValue(String::class.java),
-                        sentAt = it.child("sentAt").getValue(Long::class.java),
-                        status = "pending",
-                        senderId = it.key!!
-                    )
-                } else null
+        val ref = rootRef.child("circle_requests").child(userId)
+
+        val listener = object : ValueEventListener {
+            override fun onDataChange(snapshot: DataSnapshot) {
+                val pendingInvites = snapshot.children.mapNotNull {
+                    val status = it.child("status").getValue(String::class.java)
+                    if (status == "pending") {
+                        PendingInvite(
+                            senderEmail = it.child("senderEmail").getValue(String::class.java)
+                                ?: "",
+                            senderProfileName = it.child("senderProfileName")
+                                .getValue(String::class.java),
+                            sentAt = it.child("sentAt").getValue(Long::class.java),
+                            status = "pending",
+                            senderId = it.key ?: return@mapNotNull null
+                        )
+                    } else null
+                }
+                trySend(pendingInvites)
             }
 
-            Resource.Success(pendingInvites)
-        } catch (e: Exception) {
-            Resource.Error("Failed to pending invites")
+            override fun onCancelled(error: DatabaseError) {
+                close(error.toException())
+            }
+        }
+
+        ref.addValueEventListener(listener)
+
+        awaitClose {
+            ref.removeEventListener(listener)
         }
     }
+
+
 }
