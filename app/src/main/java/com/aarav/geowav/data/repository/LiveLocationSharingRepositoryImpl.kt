@@ -77,6 +77,8 @@ class LiveLocationSharingRepositoryImpl
 //            "timestamp" to System.currentTimeMillis()
 //        )
 
+
+
         val updates = LocationUpdates(
             lat = lat,
             lng = long,

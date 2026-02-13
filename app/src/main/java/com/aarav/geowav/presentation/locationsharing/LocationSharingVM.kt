@@ -10,12 +10,12 @@ import com.aarav.geowav.core.utils.Resource
 import com.aarav.geowav.core.utils.ServiceState
 import com.aarav.geowav.data.model.CircleMember
 import com.aarav.geowav.domain.repository.CircleRepository
+import com.aarav.geowav.domain.repository.EmergencySharingRepository
 import com.aarav.geowav.domain.repository.LocationPermissionRepository
 import com.aarav.geowav.platform.LiveLocationService
 import com.google.firebase.auth.FirebaseAuth
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -33,7 +33,8 @@ class LocationSharingVM
     val sharedPreferences: SharedPreferences,
     val firebaseAuth: FirebaseAuth,
     val circleRepository: CircleRepository,
-    val locationPermissionRepository: LocationPermissionRepository
+    val locationPermissionRepository: LocationPermissionRepository,
+    val emergencySharingRepository: EmergencySharingRepository
 ) : ViewModel() {
 
 //
@@ -61,6 +62,88 @@ class LocationSharingVM
         val recovered = readServiceState()
         _uiState.update {
             it.copy(sharingState = recovered)
+        }
+    }
+
+    private fun observeEmergency() {
+        if (!currentUserId.isEmpty()) return
+
+        viewModelScope.launch {
+            emergencySharingRepository.observeEmergency(currentUserId)
+                .collect { info ->
+
+                    if (info == null) {
+                        _uiState.update {
+                            it.copy(
+                                emergencyEndsAt = null,
+                                sharingState = readServiceState()
+                            )
+                        }
+                    } else {
+                        _uiState.update {
+                            it.copy(
+                                emergencyEndsAt = info.endsAt,
+                                sharingState = LiveLocationState.EmergencySharing(
+                                    remainingTime = formatRemaining(info.endsAt)
+                                )
+                            )
+                        }
+                    }
+                }
+        }
+    }
+
+    fun startEmergency(duration: Int = 30) {
+        if(!currentUserId.isEmpty()) return
+
+        viewModelScope.launch {
+            try {
+                _uiState.update {
+                    it.copy(
+                        isEmergencyLoading = true
+                    )
+                }
+
+                val viewerIds = _uiState.value.lovedOnes.map { it.id }
+
+                emergencySharingRepository.startEmergency(currentUserId, duration * 60 * 1000L, viewerIds)
+            }
+            catch (e: Exception) {
+                emitError("Failed to start emergency sharing")
+            }
+            finally {
+                _uiState.update {
+                    it.copy(
+                        isEmergencyLoading = false
+                    )
+                }
+            }
+        }
+    }
+
+    fun stopEmergency() {
+        if(!currentUserId.isEmpty()) return
+
+        viewModelScope.launch {
+            try {
+                _uiState.update {
+                    it.copy(
+                        isEmergencyLoading = true
+                    )
+                }
+
+                emergencySharingRepository.stopEmergency(currentUserId)
+            }
+            catch (e: Exception) {
+                emitError("Failed to stop emergency sharing")
+            }
+            finally {
+                _uiState.update {
+                    it.copy(
+                        isEmergencyLoading = false
+                    )
+                }
+            }
         }
     }
 
@@ -102,76 +185,16 @@ class LocationSharingVM
 //        }
 //    }
 
-    fun loadLocationPermission() {
-        viewModelScope.launch {
-            locationPermissionRepository.getAllowedViewers(currentUserId)
-                .collect { viewers ->
-                    _uiState.update {
-                        it.copy(
-                            selectedViewerIds = viewers,
-                            sharingState = (it.sharingState as? LiveLocationState.Sharing)?.copy(
-                                visibleCount = viewers.size
-                            ) ?: it.sharingState
-                        )
-                    }
-                }
-        }
-    }
-
-    fun onViewerToggle(viewerId: String, enabled: Boolean) {
-        _uiState.update { state ->
-            val updated = if (enabled) {
-                state.selectedViewerIds + viewerId
-            } else {
-                state.selectedViewerIds - viewerId
-            }
-
-            state.copy(selectedViewerIds = updated)
-        }
-    }
-
-
-    fun loadLovedOnes() {
-
-        if (currentUserId.isEmpty()) return
-
-        viewModelScope.launch {
-            _uiState.update {
-                it.copy(
-                    isInitialLoading = true
-                )
-            }
-
-            when (val result =
-                circleRepository.getAcceptedLovedOnes(currentUserId)
-            ) {
-                is Resource.Success -> {
-                    _uiState.update {
-                        it.copy(
-                            lovedOnes = result.data ?: emptyList(),
-                            isInitialLoading = false
-                        )
-                    }
-                }
-
-                is Resource.Error -> {
-                    _uiState.update {
-                        it.copy(
-                            isInitialLoading = false
-                        )
-                    }
-                }
-
-                else -> {}
-            }
-        }
-    }
-
     fun startSharing() {
         val viewers = _uiState.value.selectedViewerIds
 
         if (viewers.isEmpty()) {
             emitError("Select at least one person to share location with")
+            return
+        }
+
+        if (_uiState.value.emergencyEndsAt != null) {
+            emitError("Cannot start sharing during emergency sharing")
             return
         }
 
@@ -259,10 +282,92 @@ class LocationSharingVM
         }
     }
 
+    fun loadLocationPermission() {
+        viewModelScope.launch {
+            locationPermissionRepository.getAllowedViewers(currentUserId)
+                .collect { viewers ->
+                    _uiState.update {
+                        it.copy(
+                            selectedViewerIds = viewers,
+                            sharingState = (it.sharingState as? LiveLocationState.Sharing)?.copy(
+                                visibleCount = viewers.size
+                            ) ?: it.sharingState
+                        )
+                    }
+                }
+        }
+    }
+
+    fun onViewerToggle(viewerId: String, enabled: Boolean) {
+
+        if (_uiState.value.emergencyEndsAt != null) {
+            emitError("Cannot change during emergency sharing")
+            return
+        }
+
+        _uiState.update { state ->
+            val updated = if (enabled) {
+                state.selectedViewerIds + viewerId
+            } else {
+                state.selectedViewerIds - viewerId
+            }
+
+            state.copy(selectedViewerIds = updated)
+        }
+    }
+
+
+    fun loadLovedOnes() {
+
+        if (currentUserId.isEmpty()) return
+
+        viewModelScope.launch {
+            _uiState.update {
+                it.copy(
+                    isInitialLoading = true
+                )
+            }
+
+            when (val result =
+                circleRepository.getAcceptedLovedOnes(currentUserId)
+            ) {
+                is Resource.Success -> {
+                    _uiState.update {
+                        it.copy(
+                            lovedOnes = result.data ?: emptyList(),
+                            isInitialLoading = false
+                        )
+                    }
+                }
+
+                is Resource.Error -> {
+                    _uiState.update {
+                        it.copy(
+                            isInitialLoading = false
+                        )
+                    }
+                }
+
+                else -> {}
+            }
+        }
+    }
+
     private fun emitError(message: String) {
         viewModelScope.launch {
             _events.emit(LiveLocationUiEvent.ShowError(message))
         }
+    }
+
+    private fun formatRemaining(endsAt: Long): String {
+        val diff = endsAt - System.currentTimeMillis()
+
+        if (diff <= 0) return "00:00"
+
+        val minutes = (diff / 1000) / 60
+        val seconds = (diff / 1000) % 60
+
+        return "%02d:%02d".format(minutes, seconds)
     }
 
 }
@@ -271,9 +376,11 @@ data class LiveLocationUiState(
     val sharingState: LiveLocationState,
     val selectedViewerIds: Set<String> = emptySet(),
     val lovedOnes: List<CircleMember> = emptyList(),
-    val isInitialLoading: Boolean = false,   // load loved ones
-    val isServiceActionLoading: Boolean = false, // start/stop sharing
+    val isInitialLoading: Boolean = false,
+    val isServiceActionLoading: Boolean = false,
     val updatingViewerId: String? = null,
+    val emergencyEndsAt: Long? = null,
+    val isEmergencyLoading: Boolean = false,
     val showStoppedDialog: Boolean = false
 )
 

@@ -74,7 +74,6 @@ class LiveLocationService : Service() {
         when (intent?.action) {
             ACTION_STOP -> {
 
-                // 🔥 THIS WAS MISSING
                 setSharingState(ServiceState.NOT_SHARING)
 
                 stopForeground(STOP_FOREGROUND_REMOVE)

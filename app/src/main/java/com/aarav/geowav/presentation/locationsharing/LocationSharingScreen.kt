@@ -1,5 +1,6 @@
 package com.aarav.geowav.presentation.locationsharing
 
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.animateContentSize
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
@@ -79,6 +80,7 @@ fun LocationSharingScreen(
 
     }
 
+
 //    LaunchedEffect(uiState.sharingState) {
 //        viewModel.refreshState()
 //    }
@@ -137,6 +139,9 @@ fun LocationSharingContent(
         mutableStateOf(false)
     }
 
+
+    val isEmergencyActive = locationUiState.emergencyEndsAt != null
+
     EmergencyShareDialog(
         showEmergencyDialog,
         onConfirm = {
@@ -168,8 +173,9 @@ fun LocationSharingContent(
             item {
                 StatusCard(
                     locationUiState.sharingState,
+                    isEmergencyActive,
                     onStartSharing,
-                    onStopSharing
+                    onStopSharing,
                 )
             }
 
@@ -224,6 +230,7 @@ fun LocationSharingContent(
 @Composable
 fun StatusCard(
     liveLocationState: LiveLocationState,
+    isEmergencyActive: Boolean,
     onStart: () -> Unit,
     onStop: () -> Unit
 ) {
@@ -301,51 +308,53 @@ fun StatusCard(
             modifier = Modifier
                 .padding(vertical = 8.dp)
         ) {
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 16.dp, vertical = 8.dp)
-            ) {
-                Surface(
-                    color = Color.White,
-                    shape = CircleShape,
-                    shadowElevation = 2.dp
-                ) {
-                    Icon(
-                        painter = painterResource(R.drawable.new_logo),
-                        contentDescription = null,
-                        tint = color,
-                        modifier = Modifier.size(32.dp)
-                    )
-                }
-
-                Spacer(Modifier.width(12.dp))
-
-
-                Column(
-                    Modifier.weight(1f),
-                    //verticalArrangement = Arrangement.spacedBy(4.dp),
-                ) {
-                    Text(
-                        title, fontWeight = FontWeight.SemiBold,
-                        fontFamily = manrope,
-                        fontSize = 12.sp,
-                    )
-                    Text(
-                        subtitle,
-                        style = MaterialTheme.typography.bodySmall, fontFamily = manrope
-                    )
-                }
-
-
-                Spacer(Modifier.width(6.dp))
-
-                Box(
+            AnimatedVisibility(!isEmergencyActive) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
                     modifier = Modifier
-                        .size(10.dp)
-                        .background(color, CircleShape)
-                )
+                        .fillMaxWidth()
+                        .padding(horizontal = 16.dp, vertical = 8.dp)
+                ) {
+                    Surface(
+                        color = Color.White,
+                        shape = CircleShape,
+                        shadowElevation = 2.dp
+                    ) {
+                        Icon(
+                            painter = painterResource(R.drawable.new_logo),
+                            contentDescription = null,
+                            tint = color,
+                            modifier = Modifier.size(32.dp)
+                        )
+                    }
+
+                    Spacer(Modifier.width(12.dp))
+
+
+                    Column(
+                        Modifier.weight(1f),
+                        //verticalArrangement = Arrangement.spacedBy(4.dp),
+                    ) {
+                        Text(
+                            title, fontWeight = FontWeight.SemiBold,
+                            fontFamily = manrope,
+                            fontSize = 12.sp,
+                        )
+                        Text(
+                            subtitle,
+                            style = MaterialTheme.typography.bodySmall, fontFamily = manrope
+                        )
+                    }
+
+
+                    Spacer(Modifier.width(6.dp))
+
+                    Box(
+                        modifier = Modifier
+                            .size(10.dp)
+                            .background(color, CircleShape)
+                    )
+                }
             }
 
             Row(

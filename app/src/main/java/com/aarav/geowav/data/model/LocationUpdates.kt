@@ -21,3 +21,9 @@ fun LocationUpdates.toMap(): Map<String, Any> {
         "timestamp" to timestamp,
     )
 }
+
+data class EmergencyInfo(
+    val startedAt: Long = 0L,
+    val endsAt: Long = 0L,
+    val duration: Long = 0L,
+)

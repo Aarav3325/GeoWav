@@ -1,11 +1,13 @@
 package com.aarav.geowav.di
 
 import com.aarav.geowav.data.repository.CircleRepositoryImpl
+import com.aarav.geowav.data.repository.EmergencySharingRepositoryImpl
 import com.aarav.geowav.data.repository.GeoActivityRepositoryImpl
 import com.aarav.geowav.data.repository.LiveLocationSharingRepositoryImpl
 import com.aarav.geowav.data.repository.LocationPermissionRepositoryImpl
 import com.aarav.geowav.data.repository.PlaceRepositoryImpl
 import com.aarav.geowav.domain.repository.CircleRepository
+import com.aarav.geowav.domain.repository.EmergencySharingRepository
 import com.aarav.geowav.domain.repository.GeoActivityRepository
 import com.aarav.geowav.domain.repository.LiveLocationSharingRepository
 import com.aarav.geowav.domain.repository.LocationPermissionRepository
@@ -43,4 +45,9 @@ abstract class RepositoryModule {
     abstract fun bindLocationPermissionRepository(
         locationPermissionRepositoryImpl: LocationPermissionRepositoryImpl
     ): LocationPermissionRepository
+
+    @Binds
+    abstract fun bindEmergencySharingRepository(
+        emergencySharingRepositoryImpl: EmergencySharingRepositoryImpl
+    ): EmergencySharingRepository
 }

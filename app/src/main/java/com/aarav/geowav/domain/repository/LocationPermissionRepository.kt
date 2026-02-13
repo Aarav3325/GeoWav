@@ -10,4 +10,6 @@ interface LocationPermissionRepository {
     suspend fun revokeViewer(currentUserId: String, viewerId: String)
 
     fun getAllowedViewers(currentUserId: String): Flow<Set<String>>
+
+    suspend fun allowAllLovedOnes(currentUserId: String, viewerIds: List<String>)
 }

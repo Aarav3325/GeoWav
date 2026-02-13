@@ -63,4 +63,19 @@ class LocationPermissionRepositoryImpl
         }
     }
 
+    override suspend fun allowAllLovedOnes(currentUserId: String, viewerIds: List<String>) {
+        val ref = rootRef
+            .child("location_sharing")
+            .child(currentUserId)
+
+        val updates = hashMapOf<String, Any>()
+
+        viewerIds.forEach {
+            updates[it] = true
+        }
+
+        ref.updateChildren(updates)
+            .await()
+    }
+
 }
