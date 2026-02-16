@@ -1,5 +1,6 @@
 package com.aarav.geowav.data.repository
 
+import android.util.Log
 import com.aarav.geowav.data.model.LocationMeta
 import com.aarav.geowav.data.model.LocationUpdates
 import com.aarav.geowav.data.model.toMap
@@ -106,6 +107,28 @@ class LiveLocationSharingRepositoryImpl
             .await()
 
         return snapshot.exists()
+    }
+
+    override fun getUpdatedTimestamp(userId: String): Flow<Long> = callbackFlow {
+        val ref = rootRef.child("live_location")
+            .child(userId)
+            .child("timestamp")
+
+        val listener = object : ValueEventListener {
+            override fun onDataChange(snapshot: DataSnapshot) {
+                val location = snapshot.getValue(Long::class.java)
+                Log.i("TIMESTAMP", location.toString())
+                location?.let { trySend(it) }
+            }
+
+            override fun onCancelled(error: DatabaseError) {
+                close(error.toException())
+            }
+
+        }
+
+        ref.addValueEventListener(listener)
+        awaitClose { ref.removeEventListener(listener) }
     }
 
 }

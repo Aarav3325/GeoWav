@@ -12,6 +12,7 @@ import com.aarav.geowav.core.utils.ServiceState
 import com.aarav.geowav.data.model.CircleMember
 import com.aarav.geowav.domain.repository.CircleRepository
 import com.aarav.geowav.domain.repository.EmergencySharingRepository
+import com.aarav.geowav.domain.repository.LiveLocationSharingRepository
 import com.aarav.geowav.domain.repository.LocationPermissionRepository
 import com.aarav.geowav.platform.LiveLocationService
 import com.google.firebase.auth.FirebaseAuth
@@ -37,7 +38,8 @@ class LocationSharingVM
     val firebaseAuth: FirebaseAuth,
     val circleRepository: CircleRepository,
     val locationPermissionRepository: LocationPermissionRepository,
-    val emergencySharingRepository: EmergencySharingRepository
+    val emergencySharingRepository: EmergencySharingRepository,
+    val locationLocationSharingRepository: LiveLocationSharingRepository
 ) : ViewModel() {
 
 //
@@ -56,6 +58,8 @@ class LocationSharingVM
     private val _events = MutableSharedFlow<LiveLocationUiEvent>()
     val events = _events.asSharedFlow()
 
+    private var timestampJob: Job? = null
+
 
     private val currentUserId: String
         get() = firebaseAuth.currentUser?.uid.orEmpty()
@@ -68,6 +72,11 @@ class LocationSharingVM
         }
 
         observeEmergency()
+        recoverActualSharingState()
+
+//        if(recovered !is LiveLocationState.NotSharing) {
+//            getLatestTimestamp()
+//        }
     }
 
     private var emergencyTimerJob: Job? = null
@@ -152,7 +161,7 @@ class LocationSharingVM
                     context.startForegroundService(intent)
                 }
 
-                // It should be updates by observeFunction or else i am done
+                // It should be updated by observe function or else i am done
 //                _uiState.update {
 //                    it.copy(
 //                        emergencyEndsAt = endsAt,
@@ -262,7 +271,7 @@ class LocationSharingVM
             ServiceState.SHARING.name ->
                 LiveLocationState.Sharing(
                     visibleCount = 0,
-                    lastUpdatedText = "Updating..."
+                    lastUpdatedText = System.currentTimeMillis()
                 )
 
 //            ServiceState.ERROR.name ->
@@ -271,6 +280,35 @@ class LocationSharingVM
             else -> LiveLocationState.NotSharing
         }
     }
+
+    private fun recoverActualSharingState() {
+        if (currentUserId.isEmpty()) return
+
+        viewModelScope.launch {
+            val isActive = locationLocationSharingRepository
+                .isLiveLocationActive(currentUserId)
+
+            _uiState.update {
+                if (isActive) {
+                    it.copy(
+                        sharingState = LiveLocationState.Sharing(
+                            visibleCount = it.selectedViewerIds.size,
+                            lastUpdatedText = System.currentTimeMillis()
+                        )
+                    )
+                } else {
+                    it.copy(
+                        sharingState = LiveLocationState.NotSharing
+                    )
+                }
+            }
+
+            if(isActive) {
+                getLatestTimestamp()
+            }
+        }
+    }
+
 
 //    fun readServiceState(): LiveLocationState {
 //        return when (
@@ -322,10 +360,12 @@ class LocationSharingVM
                     it.copy(
                         sharingState = LiveLocationState.Sharing(
                             visibleCount = viewers.size,
-                            lastUpdatedText = "Just now"
+                            lastUpdatedText = System.currentTimeMillis()
                         )
                     )
                 }
+
+                getLatestTimestamp()
 
             } catch (e: IOException) {
                 emitError("Failed to start sharing")
@@ -455,6 +495,37 @@ class LocationSharingVM
         }
     }
 
+    private fun stopTimestampListener() {
+        timestampJob?.cancel()
+        timestampJob = null
+    }
+
+
+    fun getLatestTimestamp() {
+
+        if (timestampJob != null) return
+        Log.i("TIMESTAMP", "Collector started")
+
+        viewModelScope.launch {
+            locationLocationSharingRepository
+                .getUpdatedTimestamp(currentUserId)
+                .collect { timestamp ->
+                    Log.i("TIMESTAMP", "Collected: $timestamp")
+
+                    _uiState.update { state ->
+                        state.copy(
+                            sharingState =
+                                (state.sharingState as? LiveLocationState.Sharing)
+                                    ?.copy(lastUpdatedText = timestamp)
+                                    ?: state.sharingState
+                        )
+                    }
+                }
+        }
+    }
+
+
+
     private fun emitError(message: String) {
         viewModelScope.launch {
             _events.emit(LiveLocationUiEvent.ShowError(message))
@@ -485,6 +556,7 @@ data class LiveLocationUiState(
     val updatingViewerId: String? = null,
     val emergencyEndsAt: Long? = null,
     val remaining: String? = null,
+    val lastUpdatedAt: String? = null,
     val isEmergencyLoading: Boolean = false,
     val showStoppedDialog: Boolean = false
 )

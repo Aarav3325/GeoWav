@@ -8,7 +8,7 @@ sealed class LiveLocationState {
 
     data class Sharing(
         val visibleCount: Int,
-        val lastUpdatedText: String
+        val lastUpdatedText: Long
     ) : LiveLocationState()
 
     data class EmergencySharing(

@@ -22,4 +22,6 @@ interface LiveLocationSharingRepository {
 
     suspend fun isLiveLocationActive(userId: String): Boolean
 
+    fun getUpdatedTimestamp(userId: String): Flow<Long>
+
 }

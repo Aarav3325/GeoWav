@@ -61,7 +61,7 @@ import com.aarav.geowav.data.model.CircleMember
 import com.aarav.geowav.presentation.components.EmergencyShareDialog
 import com.aarav.geowav.presentation.theme.manrope
 import com.aarav.geowav.presentation.theme.sora
-import okhttp3.internal.concurrent.formatDuration
+import kotlinx.coroutines.delay
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -183,7 +183,7 @@ fun LocationSharingContent(
             }
 
             item {
-                MapPreviewCard()
+                MapPreviewCard(locationUiState.sharingState)
             }
 
             item {
@@ -278,7 +278,8 @@ fun StatusCard(
 
         is LiveLocationState.Sharing -> {
             Triple(
-                "Sharing live location", if(liveLocationState.visibleCount > 1) "Sharing with: ${liveLocationState.visibleCount} people" else "Sharing with: 1 person",
+                "Sharing live location",
+                if (liveLocationState.visibleCount > 1) "Sharing with: ${liveLocationState.visibleCount} people" else "Sharing with: 1 person",
                 Color(0xFF2E7D32)
             )
         }
@@ -425,7 +426,9 @@ fun StatusCard(
                 val sharingState = liveLocationState as? LiveLocationState.EmergencySharing
 
                 Column(
-                    modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(vertical = 4.dp),
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
                     Text(
@@ -464,7 +467,9 @@ fun StatusCard(
 }
 
 @Composable
-fun MapPreviewCard() {
+fun MapPreviewCard(
+    liveLocationState: LiveLocationState
+) {
 //    GoogleMap(
 //        modifier = Modifier
 //            .fillMaxWidth()
@@ -499,6 +504,7 @@ fun MapPreviewCard() {
                     .align(Alignment.Center)
             )
 
+
             Surface(
                 shape = RoundedCornerShape(8.dp),
                 color = MaterialTheme.colorScheme.secondary,
@@ -506,14 +512,14 @@ fun MapPreviewCard() {
                     .padding(vertical = 8.dp, horizontal = 8.dp)
                     .align(Alignment.BottomEnd)
             ) {
-                Text(
-                    "Last updated 5s ago",
-                    fontFamily = sora,
-                    fontWeight = FontWeight.SemiBold,
-                    color = MaterialTheme.colorScheme.onSecondary,
-                    style = MaterialTheme.typography.labelSmall,
-                    modifier = Modifier.padding(vertical = 6.dp, horizontal = 12.dp)
-                )
+
+                if (liveLocationState !is LiveLocationState.NotSharing) {
+
+                    val state = liveLocationState as? LiveLocationState.Sharing
+                    if (state != null) {
+                        LastUpdatedText(state.lastUpdatedText)
+                    }
+                }
             }
         }
     }
@@ -960,7 +966,6 @@ fun StopEmergencyButton(
 }
 
 
-
 @Composable
 fun StopSharingButton(
     onClick: () -> Unit
@@ -1011,4 +1016,47 @@ fun StartSharingButton(
         )
     }
 }
+
+
+fun timeAgo(lastUpdatedAt: Long): String {
+    val now = System.currentTimeMillis()
+    val diffMillis = now - lastUpdatedAt
+
+    val seconds = diffMillis / 1000
+    val minutes = seconds / 60
+    val hours = minutes / 60
+
+    return when {
+        seconds < 60 -> "${seconds}s ago"
+        minutes < 60 -> "${minutes} mins ago"
+        hours < 24 -> "${hours} hrs ago"
+        else -> "${hours / 24} days ago"
+    }
+}
+
+@Composable
+fun LastUpdatedText(lastUpdatedAt: Long) {
+    var now by remember { mutableStateOf(System.currentTimeMillis()) }
+
+    LaunchedEffect(lastUpdatedAt) {
+        while (true) {
+            delay(1_000)
+            now = System.currentTimeMillis()
+        }
+    }
+    val text = remember(lastUpdatedAt, now) {
+        "Last updated ${timeAgo(lastUpdatedAt)}"
+    }
+    Text(
+        text,
+        fontFamily = sora,
+        fontWeight = FontWeight.SemiBold,
+        color = MaterialTheme.colorScheme.onSecondary,
+        style = MaterialTheme.typography.labelSmall,
+        modifier = Modifier.padding(vertical = 6.dp, horizontal = 12.dp)
+
+    )
+}
+
+
 
