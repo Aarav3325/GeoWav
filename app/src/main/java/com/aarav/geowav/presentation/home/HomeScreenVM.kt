@@ -1,17 +1,24 @@
 package com.aarav.geowav.presentation.home
 
+import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.aarav.geowav.core.utils.ActivityFilter
+import com.aarav.geowav.core.utils.Resource
+import com.aarav.geowav.core.utils.ViewerLocationState
 import com.aarav.geowav.data.authentication.GoogleSignInClient
+import com.aarav.geowav.data.model.CircleMember
 import com.aarav.geowav.data.model.GeoAlert
 import com.aarav.geowav.data.model.GeoConnection
 import com.aarav.geowav.data.model.Place
 import com.aarav.geowav.data.repository.GeoActivityRepositoryImpl
 import com.aarav.geowav.data.repository.GeoConnectionRepositoryImpl
 import com.aarav.geowav.data.repository.PlaceRepositoryImpl
+import com.aarav.geowav.domain.repository.CircleRepository
+import com.aarav.geowav.domain.repository.ViewerLocationRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -28,12 +35,65 @@ class HomeScreenVM @Inject constructor(
     private val googleSignInClient: GoogleSignInClient,
     private val connectionRepository: GeoConnectionRepositoryImpl,
     private val placeRepository: PlaceRepositoryImpl,
-    private val geoActivityRepositoryImpl: GeoActivityRepositoryImpl
+    private val geoActivityRepositoryImpl: GeoActivityRepositoryImpl,
+    private val circleRepository: CircleRepository,
+    private val viewerLocationRepository: ViewerLocationRepository
 ) : ViewModel() {
 
     private val _uiState: MutableStateFlow<HomeScreenUiState> =
         MutableStateFlow(HomeScreenUiState())
     val uiState: StateFlow<HomeScreenUiState> = _uiState.asStateFlow()
+
+    val viewerId = googleSignInClient.getUserId()
+
+    private var countdownJob: Job? = null
+
+    private val observerJobs = mutableMapOf<String, Job>()
+
+    fun observeUsers() {
+
+
+        val lovedOnes = _uiState.value.lovedOnes
+
+        Log.i("OBSERVE", "user: ${lovedOnes}")
+
+        lovedOnes.forEach {
+            val userId = it.id
+
+
+            if (observerJobs.contains(userId)) return
+
+            val job = viewModelScope.launch {
+                viewerLocationRepository.observeUserLocation(userId, viewerId)
+                    .collect { viewerState ->
+                        _uiState.update { state ->
+
+                            Log.i("OBSERVE", "user: ${userId}")
+                            state.copy(
+                                locations = state.locations + (userId to viewerState)
+                            )
+                        }
+                    }
+            }
+
+            observerJobs[userId] = job
+        }
+    }
+
+    fun cleanupRemovedUsers(activeUserIds: Set<String>) {
+        observerJobs.keys
+            .filter { it !in activeUserIds }
+            .forEach { userId ->
+                observerJobs.remove(userId)?.cancel()
+
+                _uiState.update {
+                    it.copy(
+                        locations = it.locations - userId
+                    )
+                }
+            }
+    }
+
 
     fun addConnection(connection: GeoConnection) {
         viewModelScope.launch {
@@ -56,6 +116,31 @@ class HomeScreenVM @Inject constructor(
     val alerts = geoActivityRepositoryImpl.observeAlerts(ActivityFilter.Today)
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
 
+    fun loadLovedOnes() {
+        Log.i("Circle", "list: called")
+        if (viewerId.isEmpty()) return
+
+        viewModelScope.launch {
+
+
+            when (val result =
+                circleRepository.getAcceptedLovedOnes(viewerId)
+            ) {
+                is Resource.Success -> {
+                    _uiState.update {
+
+                        Log.i("Circle", "list: ${result.data}")
+                        it.copy(
+                            lovedOnes = result.data ?: emptyList(),
+                        )
+                    }
+                }
+
+                else -> {}
+            }
+        }
+    }
+
 
     init {
         viewModelScope.launch {
@@ -77,23 +162,33 @@ class HomeScreenVM @Inject constructor(
 
 
     fun getUserProfile() {
-       viewModelScope.launch {
-           _uiState.update {
-               it.copy(
-                   username = googleSignInClient.getUserName(),
-                   userAvatar = googleSignInClient.getUserProfile().toString()
-               )
-           }
-       }
+        viewModelScope.launch {
+            _uiState.update {
+                it.copy(
+                    username = googleSignInClient.getUserName(),
+                    userAvatar = googleSignInClient.getUserProfile().toString()
+                )
+            }
+        }
     }
 
     fun signOut() {
+        observerJobs.values.forEach { it.cancel() }
+        observerJobs.clear()
+
         viewModelScope.launch {
-            withContext(Dispatchers.IO){
+            withContext(Dispatchers.IO) {
                 googleSignInClient.signOut()
             }
         }
     }
+
+    override fun onCleared() {
+        observerJobs.values.forEach { it.cancel() }
+        observerJobs.clear()
+        super.onCleared()
+    }
+
 
 
 }
@@ -101,7 +196,11 @@ class HomeScreenVM @Inject constructor(
 data class HomeScreenUiState(
     val placesList: List<Place> = emptyList(),
     val connectionsList: List<GeoConnection> = emptyList(),
+    val lovedOnes: List<CircleMember> = emptyList(),
+    val locations: Map<String, ViewerLocationState> = emptyMap(),
     val alertsList: List<GeoAlert> = emptyList(),
     val userAvatar: String? = null,
-    val username: String? = null
+    val username: String? = null,
+    val viewerState: ViewerLocationState? = ViewerLocationState.Blocked,
+    val remainingTime: String? = null
 )

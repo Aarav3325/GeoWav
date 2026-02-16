@@ -6,12 +6,14 @@ import com.aarav.geowav.data.repository.GeoActivityRepositoryImpl
 import com.aarav.geowav.data.repository.LiveLocationSharingRepositoryImpl
 import com.aarav.geowav.data.repository.LocationPermissionRepositoryImpl
 import com.aarav.geowav.data.repository.PlaceRepositoryImpl
+import com.aarav.geowav.data.repository.ViewerLocationRepositoryImpl
 import com.aarav.geowav.domain.repository.CircleRepository
 import com.aarav.geowav.domain.repository.EmergencySharingRepository
 import com.aarav.geowav.domain.repository.GeoActivityRepository
 import com.aarav.geowav.domain.repository.LiveLocationSharingRepository
 import com.aarav.geowav.domain.repository.LocationPermissionRepository
 import com.aarav.geowav.domain.repository.PlaceRepository
+import com.aarav.geowav.domain.repository.ViewerLocationRepository
 import dagger.Binds
 import dagger.Module
 import dagger.hilt.InstallIn
@@ -50,4 +52,9 @@ abstract class RepositoryModule {
     abstract fun bindEmergencySharingRepository(
         emergencySharingRepositoryImpl: EmergencySharingRepositoryImpl
     ): EmergencySharingRepository
+
+    @Binds
+    abstract fun bindViewerLocationRepository(
+        viewerLocationSharingRepositoryImpl: ViewerLocationRepositoryImpl
+    ): ViewerLocationRepository
 }

@@ -1,6 +1,7 @@
 package com.aarav.geowav.presentation.home
 
 
+import android.util.Log
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Image
@@ -46,6 +47,7 @@ import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
@@ -68,6 +70,7 @@ import coil.ImageLoader
 import coil.compose.AsyncImage
 import coil.decode.SvgDecoder
 import com.aarav.geowav.R
+import com.aarav.geowav.core.utils.ViewerLocationState
 import com.aarav.geowav.data.model.GeoConnection
 import com.aarav.geowav.data.model.Place
 import com.aarav.geowav.presentation.components.SnackbarManager
@@ -92,6 +95,21 @@ fun GeoWavHomeScreen(
 ) {
 
     val uiState by homeScreenVM.uiState.collectAsState()
+
+    LaunchedEffect(uiState.lovedOnes) {
+        if (uiState.lovedOnes.isNotEmpty()) {
+            Log.i("OBSERVE", "observe called")
+            homeScreenVM.observeUsers()
+            homeScreenVM.cleanupRemovedUsers(
+                uiState.lovedOnes.map { it.id }.toSet()
+            )
+        }
+    }
+
+    LaunchedEffect(Unit) {
+        homeScreenVM.loadLovedOnes()
+    }
+
 
 
     val scope = rememberCoroutineScope()
@@ -184,11 +202,30 @@ fun GeoWavHomeScreen(
             )
         }
     ) { innerPadding ->
+
+
         Box(
             modifier = Modifier
                 .fillMaxSize()
                 .background(MaterialTheme.colorScheme.background)
         ) {
+
+            uiState.locations.forEach {
+                    (ownerId, state) ->
+                when(state) {
+                    is ViewerLocationState.NormalSharing -> {
+                        Log.i("OBSERVE", "user: $ownerId, location: ${state.location}")
+                    }
+
+
+                    is ViewerLocationState.EmergencySharing -> {
+                        Log.i("OBSERVE", "user: $ownerId, location: ${state.location}, remaining: ${state.endsAt}")
+                    }
+
+                    ViewerLocationState.Blocked -> Unit
+                }
+            }
+
             Column(
                 modifier = modifier
                     .fillMaxSize()

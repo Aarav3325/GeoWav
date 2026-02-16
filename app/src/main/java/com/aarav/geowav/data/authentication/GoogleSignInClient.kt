@@ -199,7 +199,7 @@ class GoogleSignInClient @Inject constructor(
     suspend fun getUserName(): String {
         val currentUser = firebaseAuth.currentUser ?: return ""
 
-        // 1️⃣ If displayName exists, return it immediately
+        // If displayName exists, return it immediately
         currentUser.displayName?.let {
             if (it.isNotEmpty()) {
                 Log.i("Provider", "name: $it")
@@ -207,7 +207,7 @@ class GoogleSignInClient @Inject constructor(
             }
         }
 
-        // 2️⃣ Otherwise fetch from database
+        // Otherwise fetch from database
         return try {
             val snapshot = userReference
                 .child(currentUser.uid)

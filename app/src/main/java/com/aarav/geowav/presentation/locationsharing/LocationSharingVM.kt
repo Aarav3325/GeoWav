@@ -81,6 +81,7 @@ class LocationSharingVM
 
     private var emergencyTimerJob: Job? = null
 
+    // Observe emergency state from firebase
     private fun observeEmergency() {
         if (currentUserId.isEmpty()) return
 
@@ -119,7 +120,7 @@ class LocationSharingVM
                             }
 
                             if (remaining == "00:00") {
-                                stopEmergencyInternal()
+                                stopEmergencyInternal() // auto-stop service on timeout
                                 break
                             }
                             delay(1_000)
@@ -135,12 +136,13 @@ class LocationSharingVM
 
         viewModelScope.launch {
 
+            // set prev state to sharing if user was already sharing location
             val wasSharingBefore =
                 _uiState.value.sharingState is LiveLocationState.Sharing
 
             _uiState.update {
                 it.copy(
-                    previousSharingState = if(wasSharingBefore) it.sharingState else null,
+                    previousSharingState = if (wasSharingBefore) it.sharingState else null,
                     isEmergencyLoading = true
                 )
             }
@@ -153,9 +155,11 @@ class LocationSharingVM
 
                 emergencySharingRepository.startEmergency(currentUserId, endsAt, viewerIds)
 
+
                 val wasSharingBefore =
                     _uiState.value.previousSharingState is LiveLocationState.Sharing
 
+                // only start service if user was not sharing location before
                 if (!wasSharingBefore) {
                     val intent = Intent(context, LiveLocationService::class.java)
                     context.startForegroundService(intent)
@@ -200,6 +204,7 @@ class LocationSharingVM
                 val wasSharingBefore =
                     _uiState.value.previousSharingState is LiveLocationState.Sharing
 
+                // only stop service if user was not sharing location before
                 if (!wasSharingBefore) {
                     val intent = Intent(context, LiveLocationService::class.java).apply {
                         action = ACTION_STOP
@@ -252,6 +257,10 @@ class LocationSharingVM
                         previousSharingState = null
                     )
                 }
+
+                if (restoreState !is LiveLocationState.Sharing) {
+                    stopTimestampListener()
+                }
             } catch (e: Exception) {
                 emitError("Failed to auto-stop emergency sharing")
             }
@@ -259,6 +268,7 @@ class LocationSharingVM
     }
 
 
+    // recover state using preferences in case of app crash or kill for safe recover
     private fun readServiceState(): LiveLocationState {
         return when (
             sharedPreferences.getString(
@@ -281,6 +291,7 @@ class LocationSharingVM
         }
     }
 
+    // recover actual starting state from firebase in case or kill or crash
     private fun recoverActualSharingState() {
         if (currentUserId.isEmpty()) return
 
@@ -303,8 +314,10 @@ class LocationSharingVM
                 }
             }
 
-            if(isActive) {
+            if (isActive) {
                 getLatestTimestamp()
+            } else {
+                stopTimestampListener()
             }
         }
     }
@@ -325,7 +338,7 @@ class LocationSharingVM
 //        }
 //    }
 
-    fun startSharing() {
+    fun startLiveLocationSharing() {
         val viewers = _uiState.value.selectedViewerIds
 
         if (viewers.isEmpty()) {
@@ -378,7 +391,7 @@ class LocationSharingVM
     }
 
 
-//    fun startSharing() {
+//    fun startLiveLocationSharing() {
 //
 //        if (_uiState.value.selectedViewerIds.isEmpty()) {
 //            emitError("Select at least one person to share location with")
@@ -396,6 +409,8 @@ class LocationSharingVM
 //    }
 
     fun stopLiveLocationSharing() {
+
+        stopTimestampListener()
 
         _uiState.update {
             it.copy(
@@ -506,7 +521,7 @@ class LocationSharingVM
         if (timestampJob != null) return
         Log.i("TIMESTAMP", "Collector started")
 
-        viewModelScope.launch {
+        timestampJob = viewModelScope.launch {
             locationLocationSharingRepository
                 .getUpdatedTimestamp(currentUserId)
                 .collect { timestamp ->
@@ -523,7 +538,6 @@ class LocationSharingVM
                 }
         }
     }
-
 
 
     private fun emitError(message: String) {

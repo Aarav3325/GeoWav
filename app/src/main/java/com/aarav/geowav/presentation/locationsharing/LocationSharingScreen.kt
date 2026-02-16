@@ -116,7 +116,7 @@ fun LocationSharingScreen(
             modifier = Modifier.padding(padding),
             locationUiState = uiState,
             onToggleChange = viewModel::onViewerToggle,
-            onStartSharing = viewModel::startSharing,
+            onStartSharing = viewModel::startLiveLocationSharing,
             onStopSharing = viewModel::stopLiveLocationSharing,
             onStartEmergency = viewModel::startEmergency,
             onStopEmergency = viewModel::stopEmergency

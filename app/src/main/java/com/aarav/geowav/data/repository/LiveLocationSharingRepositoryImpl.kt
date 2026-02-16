@@ -116,9 +116,8 @@ class LiveLocationSharingRepositoryImpl
 
         val listener = object : ValueEventListener {
             override fun onDataChange(snapshot: DataSnapshot) {
-                val location = snapshot.getValue(Long::class.java)
-                Log.i("TIMESTAMP", location.toString())
-                location?.let { trySend(it) }
+                val timestamp = snapshot.getValue(Long::class.java)
+                timestamp?.let { trySend(it) }
             }
 
             override fun onCancelled(error: DatabaseError) {

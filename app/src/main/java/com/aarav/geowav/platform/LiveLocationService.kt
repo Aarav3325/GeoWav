@@ -128,7 +128,7 @@ class LiveLocationService : Service() {
 //                try {
 //                    if (first) {
 //                        liveLocationSharingRepository
-//                            .startSharing(
+//                            .startLiveLocationSharing(
 //                                googleSignInClient.getUserId(),
 //                                location.latitude,
 //                                location.longitude
