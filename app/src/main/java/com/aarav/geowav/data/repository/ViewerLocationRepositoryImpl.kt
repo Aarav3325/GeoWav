@@ -32,6 +32,7 @@ class ViewerLocationRepositoryImpl
             .child("live_location")
             .child(userId)
 
+        // Get location updates and send them to ui as flow based on sharing mode
         val locationListener = object : ValueEventListener {
             override fun onDataChange(snapshot: DataSnapshot) {
                 val location = snapshot.getValue(LocationUpdates::class.java) ?: return
@@ -68,6 +69,7 @@ class ViewerLocationRepositoryImpl
 
         locationRef.addValueEventListener(locationListener)
 
+        // Check if emergency sharing is active
         val emergencyRef = rootRef
             .child("emergency_sharing")
             .child(userId)
@@ -81,6 +83,7 @@ class ViewerLocationRepositoryImpl
                     .child(viewerId)
                     .getValue(Boolean::class.java) == true
 
+                // User appears in emergency sharing mode to listener
                 if(active && allowed && endsAt != null && System.currentTimeMillis() < endsAt){
                     currentMode = ShareMode.Emergency(endsAt)
                     return
@@ -89,12 +92,14 @@ class ViewerLocationRepositoryImpl
                 currentMode = ShareMode.Blocked
                 trySend(ViewerLocationState.Blocked)
 
+                // Fallback to normal permission check if emergency is not active
                 rootRef.child("location_sharing")
                     .child(userId)
                     .child(viewerId)
                     .get()
                     .addOnSuccessListener {
                         snap ->
+                        // normal location updates
                         if(snap.getValue(Boolean::class.java) == true) {
                             currentMode = ShareMode.Normal
                         }
@@ -109,6 +114,7 @@ class ViewerLocationRepositoryImpl
 
         emergencyRef.addValueEventListener(emergencyListener)
 
+        // final flow clean up
         awaitClose {
             locationRef.removeEventListener(locationListener)
             emergencyRef.removeEventListener(emergencyListener)

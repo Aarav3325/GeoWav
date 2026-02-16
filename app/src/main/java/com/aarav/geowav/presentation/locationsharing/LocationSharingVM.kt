@@ -131,6 +131,7 @@ class LocationSharingVM
     }
 
 
+    // start emergency mode
     fun startEmergency(duration: Int = 30) {
         if (currentUserId.isEmpty()) return
 
@@ -186,6 +187,7 @@ class LocationSharingVM
         }
     }
 
+    // stop emergency mode
     fun stopEmergency() {
         if (currentUserId.isEmpty()) return
 
@@ -225,6 +227,8 @@ class LocationSharingVM
         }
     }
 
+
+    // auto-stop emergency mode on time-out
     fun stopEmergencyInternal() {
 
         if (currentUserId.isEmpty()) return
@@ -338,6 +342,7 @@ class LocationSharingVM
 //        }
 //    }
 
+    // start location sharing - normal mode
     fun startLiveLocationSharing() {
         val viewers = _uiState.value.selectedViewerIds
 
@@ -408,6 +413,7 @@ class LocationSharingVM
 //        context.startForegroundService(intent)
 //    }
 
+    // stop location sharing
     fun stopLiveLocationSharing() {
 
         stopTimestampListener()
@@ -439,6 +445,7 @@ class LocationSharingVM
         }
     }
 
+    // load viewer ids - who all can observe current user's location
     fun loadLocationPermission() {
         viewModelScope.launch {
             locationPermissionRepository.getAllowedViewers(currentUserId)
@@ -455,6 +462,7 @@ class LocationSharingVM
         }
     }
 
+    // Allow viewer to observe location based on switch
     fun onViewerToggle(viewerId: String, enabled: Boolean) {
 
         if (_uiState.value.emergencyEndsAt != null) {
@@ -474,6 +482,7 @@ class LocationSharingVM
     }
 
 
+    // Load all loved ones
     fun loadLovedOnes() {
 
         if (currentUserId.isEmpty()) return
@@ -510,12 +519,14 @@ class LocationSharingVM
         }
     }
 
+    // clear timestamp job
     private fun stopTimestampListener() {
         timestampJob?.cancel()
         timestampJob = null
     }
 
 
+    // Get timestamp for last location update
     fun getLatestTimestamp() {
 
         if (timestampJob != null) return

@@ -1,8 +1,19 @@
 package com.aarav.geowav.presentation.home
 
 
+import android.graphics.Bitmap
+import android.graphics.Canvas
+import android.graphics.Paint
 import android.util.Log
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.EaseInOut
+import androidx.compose.animation.core.LinearOutSlowInEasing
+import androidx.compose.animation.core.RepeatMode
+import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -48,13 +59,20 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.State
 import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
+import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.scale
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
@@ -71,12 +89,23 @@ import coil.compose.AsyncImage
 import coil.decode.SvgDecoder
 import com.aarav.geowav.R
 import com.aarav.geowav.core.utils.ViewerLocationState
-import com.aarav.geowav.data.model.GeoConnection
+import com.aarav.geowav.data.model.CircleMember
 import com.aarav.geowav.data.model.Place
 import com.aarav.geowav.presentation.components.SnackbarManager
 import com.aarav.geowav.presentation.theme.GeoWavTheme
 import com.aarav.geowav.presentation.theme.manrope
 import com.aarav.geowav.presentation.theme.sora
+import com.google.android.gms.maps.CameraUpdateFactory
+import com.google.android.gms.maps.model.BitmapDescriptor
+import com.google.android.gms.maps.model.BitmapDescriptorFactory
+import com.google.android.gms.maps.model.LatLng
+import com.google.android.gms.maps.model.LatLngBounds
+import com.google.maps.android.compose.CameraMoveStartedReason
+import com.google.maps.android.compose.GoogleMap
+import com.google.maps.android.compose.Marker
+import com.google.maps.android.compose.MarkerState
+import com.google.maps.android.compose.rememberCameraPositionState
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -109,7 +138,6 @@ fun GeoWavHomeScreen(
     LaunchedEffect(Unit) {
         homeScreenVM.loadLovedOnes()
     }
-
 
 
     val scope = rememberCoroutineScope()
@@ -210,16 +238,18 @@ fun GeoWavHomeScreen(
                 .background(MaterialTheme.colorScheme.background)
         ) {
 
-            uiState.locations.forEach {
-                    (ownerId, state) ->
-                when(state) {
+            uiState.locations.forEach { (ownerId, state) ->
+                when (state) {
                     is ViewerLocationState.NormalSharing -> {
                         Log.i("OBSERVE", "user: $ownerId, location: ${state.location}")
                     }
 
 
                     is ViewerLocationState.EmergencySharing -> {
-                        Log.i("OBSERVE", "user: $ownerId, location: ${state.location}, remaining: ${state.endsAt}")
+                        Log.i(
+                            "OBSERVE",
+                            "user: $ownerId, location: ${state.location}, remaining: ${state.endsAt}"
+                        )
                     }
 
                     ViewerLocationState.Blocked -> Unit
@@ -232,6 +262,7 @@ fun GeoWavHomeScreen(
                     .verticalScroll(scroll)
                     .background(MaterialTheme.colorScheme.background)
             ) {
+
 
                 Box(
                     modifier = Modifier
@@ -283,9 +314,22 @@ fun GeoWavHomeScreen(
                         .background(MaterialTheme.colorScheme.background)
                 ) {
 
+                    val hasAnyLiveSharing = uiState.locations.values.any {
+                        it is ViewerLocationState.NormalSharing ||
+                                it is ViewerLocationState.EmergencySharing
+                    }
+
+                    AnimatedVisibility(hasAnyLiveSharing) {
+                        ObserveLiveLocationCard(uiState.locations)
+                    }
+
+//                    ObserveLiveLocationCard(
+//                        uiState.locations
+//                    )
+
                     ConnectionsRow(
                         title = "Your Circle",
-                        connections = uiState.connectionsList,
+                        connections = uiState.lovedOnes,
                         onAdd = navigateToCircle
                     )
 
@@ -386,6 +430,57 @@ fun GeoWavHomeScreen(
 }
 
 @Composable
+fun UserMarkerUi(
+    isEmergency: Boolean
+) {
+    val pulse by rememberInfiniteTransition().animateFloat(
+        initialValue = 0.9f,
+        targetValue = 1.2f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(800, easing = EaseInOut),
+            repeatMode = RepeatMode.Reverse
+        )
+    )
+
+    Box(
+        contentAlignment = Alignment.Center,
+        modifier = Modifier.size(48.dp)
+    ) {
+        // Emergency ring
+        if (isEmergency) {
+            Box(
+                modifier = Modifier
+                    .size(48.dp)
+                    .scale(pulse)
+                    .background(
+                        Color.Red.copy(alpha = 0.25f),
+                        CircleShape
+                    )
+            )
+        }
+
+        // Main marker
+        Box(
+            modifier = Modifier
+                .size(32.dp)
+                .background(
+                    if (isEmergency) Color.Red else MaterialTheme.colorScheme.primary,
+                    CircleShape
+                )
+                .border(2.dp, Color.White, CircleShape)
+        )
+    }
+}
+
+
+
+@Preview(showBackground = true)
+@Composable
+fun PreviewLocationCard() {
+
+}
+
+@Composable
 fun CurrentLocationCard(city: String, lastUpdated: String, onViewMap: () -> Unit) {
 
     val Primary = MaterialTheme.colorScheme.primary
@@ -452,7 +547,7 @@ fun CurrentLocationCard(city: String, lastUpdated: String, onViewMap: () -> Unit
 }
 
 @Composable
-fun ConnectionsRow(title: String, connections: List<GeoConnection>?, onAdd: () -> Unit) {
+fun ConnectionsRow(title: String, connections: List<CircleMember>, onAdd: () -> Unit) {
 
     Column(
         modifier = Modifier.padding(top = 6.dp, bottom = 8.dp)
@@ -482,20 +577,20 @@ fun ConnectionsRow(title: String, connections: List<GeoConnection>?, onAdd: () -
             }
         }
 
-        val connectionItem = GeoConnection(
-            id = 1,
-            phoneNumber = "9558030582",
-            name = "Test"
-        )
+//        val connectionItem = GeoConnection(
+//            id = 1,
+//            phoneNumber = "9558030582",
+//            name = "Test"
+//        )
 
-        val demoList = listOf<GeoConnection>(connectionItem)
+//        val demoList = listOf<GeoConnection>(connectionItem)
 
         LazyRow(
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(0.dp),
             modifier = Modifier.padding(top = 8.dp)
         ) {
-            if (demoList.isNullOrEmpty()) {
+            if (connections.isNullOrEmpty()) {
                 item {
                     Column(
                         modifier = Modifier
@@ -520,7 +615,7 @@ fun ConnectionsRow(title: String, connections: List<GeoConnection>?, onAdd: () -
                     }
                 }
             } else {
-                items(demoList) { conn ->
+                items(connections) { conn ->
                     ConnectionCard(conn)
                 }
             }
@@ -530,7 +625,7 @@ fun ConnectionsRow(title: String, connections: List<GeoConnection>?, onAdd: () -
 }
 
 @Composable
-fun ConnectionCard(conn: GeoConnection) {
+fun ConnectionCard(conn: CircleMember) {
 
     Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.width(88.dp)) {
         Box(
@@ -548,7 +643,7 @@ fun ConnectionCard(conn: GeoConnection) {
             contentAlignment = Alignment.BottomEnd
         ) {
             Text(
-                conn.name?.take(1).toString(),
+                conn.alias?.take(1).toString(),
                 color = MaterialTheme.colorScheme.onBackground,
                 style = MaterialTheme.typography.headlineSmall.copy(
                     fontWeight = FontWeight.W600,
@@ -560,7 +655,7 @@ fun ConnectionCard(conn: GeoConnection) {
         }
         Spacer(modifier = Modifier.height(8.dp))
         Text(
-            conn.name.toString(),
+            conn.profileName,
             fontSize = 14.sp,
             textAlign = TextAlign.Center,
             color = MaterialTheme.colorScheme.onBackground,

@@ -50,6 +50,7 @@ class HomeScreenVM @Inject constructor(
 
     private val observerJobs = mutableMapOf<String, Job>()
 
+    // Observe user live location updates
     fun observeUsers() {
 
 
@@ -80,6 +81,7 @@ class HomeScreenVM @Inject constructor(
         }
     }
 
+    // job clean up when location sharing is not active
     fun cleanupRemovedUsers(activeUserIds: Set<String>) {
         observerJobs.keys
             .filter { it !in activeUserIds }
@@ -116,6 +118,7 @@ class HomeScreenVM @Inject constructor(
     val alerts = geoActivityRepositoryImpl.observeAlerts(ActivityFilter.Today)
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
 
+    // Load all loved ones
     fun loadLovedOnes() {
         Log.i("Circle", "list: called")
         if (viewerId.isEmpty()) return
@@ -183,6 +186,7 @@ class HomeScreenVM @Inject constructor(
         }
     }
 
+    // clear jobs when vm is destroyed
     override fun onCleared() {
         observerJobs.values.forEach { it.cancel() }
         observerJobs.clear()
