@@ -538,9 +538,6 @@ fun AddConnectionCard(onClick: () -> Unit) {
 
     Column(
         horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier
-            .clickable {
-                onClick()
-            }
             .width(84.dp)
             .padding(start = 8.dp)
     ) {
@@ -549,7 +546,10 @@ fun AddConnectionCard(onClick: () -> Unit) {
                 .size(64.dp)
                 .clip(CircleShape)
                 .border(1.dp, MaterialTheme.colorScheme.tertiary, CircleShape)
-                .background(Color.Transparent),
+                .background(Color.Transparent)
+                .clickable {
+                    onClick()
+                },
             contentAlignment = Alignment.Center
         ) {
             Icon(

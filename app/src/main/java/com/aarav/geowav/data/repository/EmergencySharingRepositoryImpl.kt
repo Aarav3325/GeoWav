@@ -32,7 +32,7 @@ class EmergencySharingRepositoryImpl
         val data = mapOf(
             "active" to true,
             "startedAt" to now,
-            "endsAt" to now + duration,
+            "endsAt" to duration,
             "viewers" to viewerMap
         )
 

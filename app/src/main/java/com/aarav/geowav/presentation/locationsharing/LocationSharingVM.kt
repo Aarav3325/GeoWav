@@ -3,6 +3,7 @@ package com.aarav.geowav.presentation.locationsharing
 import android.content.Context
 import android.content.Intent
 import android.content.SharedPreferences
+import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.aarav.geowav.core.utils.LiveLocationState
@@ -80,12 +81,14 @@ class LocationSharingVM
 
                     // Cancel previous timer
                     emergencyTimerJob?.cancel()
+                    val restoreState = _uiState.value.previousSharingState
+                        ?: LiveLocationState.NotSharing
 
                     if (info == null) {
                         _uiState.update {
                             it.copy(
                                 emergencyEndsAt = null,
-                                sharingState = readServiceState()
+                                sharingState = restoreState,
                             )
                         }
                         return@collect
@@ -95,15 +98,21 @@ class LocationSharingVM
                         while (true) {
                             val remaining = formatRemaining(info.endsAt)
 
+                            Log.i("EMERGENCY", remaining)
+
                             _uiState.update {
                                 it.copy(
                                     emergencyEndsAt = info.endsAt,
+                                    remaining = remaining,
                                     sharingState =
                                         LiveLocationState.EmergencySharing(remaining)
                                 )
                             }
 
-                            if (remaining == "00:00") break
+                            if (remaining == "00:00") {
+                                stopEmergencyInternal()
+                                break
+                            }
                             delay(1_000)
                         }
                     }
@@ -113,12 +122,16 @@ class LocationSharingVM
 
 
     fun startEmergency(duration: Int = 30) {
-        if(currentUserId.isEmpty()) return
+        if (currentUserId.isEmpty()) return
 
         viewModelScope.launch {
 
+            val wasSharingBefore =
+                _uiState.value.sharingState is LiveLocationState.Sharing
+
             _uiState.update {
                 it.copy(
+                    previousSharingState = if(wasSharingBefore) it.sharingState else null,
                     isEmergencyLoading = true
                 )
             }
@@ -131,10 +144,15 @@ class LocationSharingVM
 
                 emergencySharingRepository.startEmergency(currentUserId, endsAt, viewerIds)
 
-                val intent = Intent(context, LiveLocationService::class.java)
-                context.startForegroundService(intent)
+                val wasSharingBefore =
+                    _uiState.value.previousSharingState is LiveLocationState.Sharing
 
-            // It should be updates by observeFunction or else i am done
+                if (!wasSharingBefore) {
+                    val intent = Intent(context, LiveLocationService::class.java)
+                    context.startForegroundService(intent)
+                }
+
+                // It should be updates by observeFunction or else i am done
 //                _uiState.update {
 //                    it.copy(
 //                        emergencyEndsAt = endsAt,
@@ -143,11 +161,9 @@ class LocationSharingVM
 //                        )
 //                    )
 //                }
-            }
-            catch (e: Exception) {
+            } catch (e: Exception) {
                 emitError("Failed to start emergency sharing")
-            }
-            finally {
+            } finally {
                 _uiState.update {
                     it.copy(
                         isEmergencyLoading = false
@@ -158,7 +174,7 @@ class LocationSharingVM
     }
 
     fun stopEmergency() {
-        if(currentUserId.isEmpty()) return
+        if (currentUserId.isEmpty()) return
 
         viewModelScope.launch {
             _uiState.update {
@@ -172,20 +188,63 @@ class LocationSharingVM
 
                 emergencySharingRepository.stopEmergency(currentUserId)
 
-                val intent = Intent(context, LiveLocationService::class.java).apply {
-                    action = ACTION_STOP
+                val wasSharingBefore =
+                    _uiState.value.previousSharingState is LiveLocationState.Sharing
+
+                if (!wasSharingBefore) {
+                    val intent = Intent(context, LiveLocationService::class.java).apply {
+                        action = ACTION_STOP
+                    }
+                    context.startService(intent)
+//                    stopLiveLocationSharing()
                 }
-                context.startService(intent)
-            }
-            catch (e: Exception) {
+
+            } catch (e: Exception) {
                 emitError("Failed to stop emergency sharing")
-            }
-            finally {
+            } finally {
                 _uiState.update {
                     it.copy(
                         isEmergencyLoading = false
                     )
                 }
+            }
+        }
+    }
+
+    fun stopEmergencyInternal() {
+
+        if (currentUserId.isEmpty()) return
+
+
+        val wasSharingBefore =
+            _uiState.value.previousSharingState is LiveLocationState.Sharing
+
+        viewModelScope.launch {
+            try {
+                emergencySharingRepository.stopEmergency(currentUserId)
+
+                if (!wasSharingBefore) {
+                    // Only stop service if emergency was the only reason it was running
+                    val intent = Intent(context, LiveLocationService::class.java).apply {
+                        action = ACTION_STOP
+                    }
+                    context.startService(intent)
+
+//                    stopLiveLocationSharing()
+                }
+
+                val restoreState = _uiState.value.previousSharingState
+                    ?: LiveLocationState.NotSharing
+
+                _uiState.update {
+                    it.copy(
+                        emergencyEndsAt = null,
+                        sharingState = restoreState,
+                        previousSharingState = null
+                    )
+                }
+            } catch (e: Exception) {
+                emitError("Failed to auto-stop emergency sharing")
             }
         }
     }
@@ -403,26 +462,29 @@ class LocationSharingVM
     }
 
     private fun formatRemaining(endsAt: Long): String {
-        val diff = endsAt - System.currentTimeMillis()
+        val diffMs = endsAt - System.currentTimeMillis()
+        if (diffMs <= 0) return "00:00"
 
-        if (diff <= 0) return "00:00"
-
-        val minutes = (diff / 1000) / 60
-        val seconds = (diff / 1000) % 60
+        val totalSeconds = diffMs / 1000
+        val minutes = totalSeconds / 60
+        val seconds = totalSeconds % 60
 
         return "%02d:%02d".format(minutes, seconds)
     }
+
 
 }
 
 data class LiveLocationUiState(
     val sharingState: LiveLocationState,
+    val previousSharingState: LiveLocationState? = null,
     val selectedViewerIds: Set<String> = emptySet(),
     val lovedOnes: List<CircleMember> = emptyList(),
     val isInitialLoading: Boolean = false,
     val isServiceActionLoading: Boolean = false,
     val updatingViewerId: String? = null,
     val emergencyEndsAt: Long? = null,
+    val remaining: String? = null,
     val isEmergencyLoading: Boolean = false,
     val showStoppedDialog: Boolean = false
 )

@@ -61,6 +61,7 @@ import com.aarav.geowav.data.model.CircleMember
 import com.aarav.geowav.presentation.components.EmergencyShareDialog
 import com.aarav.geowav.presentation.theme.manrope
 import com.aarav.geowav.presentation.theme.sora
+import okhttp3.internal.concurrent.formatDuration
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -145,7 +146,7 @@ fun LocationSharingContent(
     EmergencyShareDialog(
         showEmergencyDialog,
         onConfirm = {
-            onStartEmergency(30)
+            onStartEmergency(1)
             showEmergencyDialog = false
         },
         onDismiss = { showEmergencyDialog = false }
@@ -172,6 +173,7 @@ fun LocationSharingContent(
 
             item {
                 StatusCard(
+                    locationUiState.remaining,
                     locationUiState.sharingState,
                     isEmergencyActive,
                     onStartSharing,
@@ -198,7 +200,7 @@ fun LocationSharingContent(
                 EmergencyShareButton(
                     enabled = !isEmergencyActive &&
                             !locationUiState.isEmergencyLoading &&
-                            locationUiState.sharingState is LiveLocationState.NotSharing
+                            locationUiState.sharingState !is LiveLocationState.EmergencySharing
                 ) {
                     showEmergencyDialog = true
                 }
@@ -234,6 +236,7 @@ fun LocationSharingContent(
 @Preview
 @Composable
 fun StatusCard(
+    remainingTime: String? = null,
     liveLocationState: LiveLocationState,
     isEmergencyActive: Boolean,
     onStart: () -> Unit,
@@ -275,7 +278,7 @@ fun StatusCard(
 
         is LiveLocationState.Sharing -> {
             Triple(
-                "Sharing live location", "Sharing with: ${liveLocationState.visibleCount} people",
+                "Sharing live location", if(liveLocationState.visibleCount > 1) "Sharing with: ${liveLocationState.visibleCount} people" else "Sharing with: 1 person",
                 Color(0xFF2E7D32)
             )
         }
@@ -415,6 +418,30 @@ fun StatusCard(
                         .size(10.dp)
                         .background(MaterialTheme.colorScheme.error, CircleShape)
                 )
+            }
+
+            AnimatedVisibility(isEmergencyActive) {
+
+                val sharingState = liveLocationState as? LiveLocationState.EmergencySharing
+
+                Column(
+                    modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    Text(
+                        "Emergency ends in",
+                        fontFamily = manrope,
+                        fontWeight = FontWeight.SemiBold,
+                        fontSize = 16.sp,
+                    )
+
+                    Text(
+                        remainingTime ?: "00:00",
+                        fontFamily = manrope,
+                        fontWeight = FontWeight.ExtraBold,
+                        fontSize = 32.sp,
+                    )
+                }
             }
 
             when (liveLocationState) {
