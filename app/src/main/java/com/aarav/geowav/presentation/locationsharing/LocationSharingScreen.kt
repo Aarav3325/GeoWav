@@ -22,6 +22,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.Icon
@@ -61,16 +62,32 @@ import com.aarav.geowav.data.model.CircleMember
 import com.aarav.geowav.presentation.components.EmergencyShareDialog
 import com.aarav.geowav.presentation.theme.manrope
 import com.aarav.geowav.presentation.theme.sora
+import com.google.android.gms.maps.model.CameraPosition
+import com.google.android.gms.maps.model.LatLng
+import com.google.maps.android.compose.CameraPositionState
+import com.google.maps.android.compose.GoogleMap
+import com.google.maps.android.compose.MapProperties
+import com.google.maps.android.compose.MapUiSettings
+import com.google.maps.android.compose.rememberCameraPositionState
 import kotlinx.coroutines.delay
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun LocationSharingScreen(
-    viewModel: LocationSharingVM
+    viewModel: LocationSharingVM,
+    location: Pair<Double, Double>?,
 ) {
 
     val uiState by viewModel.uiState.collectAsState()
 
+
+    val cameraPositionState = rememberCameraPositionState()
+
+    location?.let { (lat, lng) ->
+        LaunchedEffect(lat, lng) {
+            cameraPositionState.position = CameraPosition.fromLatLngZoom(LatLng(lat, lng), 16f)
+        }
+    }
 
     val snackbarHostState = remember { SnackbarHostState() }
 
@@ -115,6 +132,7 @@ fun LocationSharingScreen(
         LocationSharingContent(
             modifier = Modifier.padding(padding),
             locationUiState = uiState,
+            cameraPositionState,
             onToggleChange = viewModel::onViewerToggle,
             onStartSharing = viewModel::startLiveLocationSharing,
             onStopSharing = viewModel::stopLiveLocationSharing,
@@ -129,6 +147,7 @@ fun LocationSharingScreen(
 fun LocationSharingContent(
     modifier: Modifier = Modifier,
     locationUiState: LiveLocationUiState,
+    cameraPosition: CameraPositionState,
     onToggleChange: (String, Boolean) -> Unit,
     onStartSharing: () -> Unit,
     onStopSharing: () -> Unit,
@@ -183,7 +202,7 @@ fun LocationSharingContent(
             }
 
             item {
-                MapPreviewCard(locationUiState.sharingState)
+                MapPreviewCard(cameraPosition, locationUiState.sharingState)
             }
 
             item {
@@ -233,7 +252,6 @@ fun LocationSharingContent(
 ////        LocationSharingContent(locationUiState)
 //}
 
-@Preview
 @Composable
 fun StatusCard(
     remainingTime: String? = null,
@@ -468,6 +486,7 @@ fun StatusCard(
 
 @Composable
 fun MapPreviewCard(
+    cameraPosition: CameraPositionState,
     liveLocationState: LiveLocationState
 ) {
 //    GoogleMap(
@@ -482,9 +501,16 @@ fun MapPreviewCard(
 //            .clip(RoundedCornerShape(24.dp)),
 //    )
 
+    var mapLoad by remember {
+        mutableStateOf(false)
+    }
+
+
     Surface(
         color = MaterialTheme.colorScheme.surfaceContainerHigh,
         shape = RoundedCornerShape(24.dp),
+        shadowElevation = 6.dp,
+        tonalElevation = 4.dp,
         modifier = Modifier
             .fillMaxWidth()
             .padding(16.dp)
@@ -493,15 +519,50 @@ fun MapPreviewCard(
         Box(
             modifier = Modifier.fillMaxSize()
         ) {
-            Text(
-                "Google Map Preview",
-                fontFamily = sora,
-                fontWeight = FontWeight.SemiBold,
-                color = MaterialTheme.colorScheme.onBackground,
-                style = MaterialTheme.typography.labelLarge,
+//            Text(
+//                "Google Map Preview",
+//                fontFamily = sora,
+//                fontWeight = FontWeight.SemiBold,
+//                color = MaterialTheme.colorScheme.onBackground,
+//                style = MaterialTheme.typography.labelLarge,
+//                modifier = Modifier
+//                    .padding(vertical = 6.dp, horizontal = 12.dp)
+//                    .align(Alignment.Center)
+//            )
+            var uiSettings by remember {
+                mutableStateOf(
+                    MapUiSettings(
+                        myLocationButtonEnabled = false,
+                        zoomControlsEnabled = false,
+                        compassEnabled = true,
+                    )
+                )
+            }
+
+            var mapProperties by remember {
+                mutableStateOf(MapProperties(isMyLocationEnabled = true))
+            }
+
+            if(!mapLoad) {
+                Box(
+                    modifier = Modifier.fillMaxSize(),
+                    contentAlignment = Alignment.Center
+                ) {
+                    CircularProgressIndicator()
+                }
+            }
+
+
+            GoogleMap(
                 modifier = Modifier
-                    .padding(vertical = 6.dp, horizontal = 12.dp)
-                    .align(Alignment.Center)
+                    .fillMaxSize()
+                    .clip(RoundedCornerShape(8.dp)),
+                cameraPositionState = cameraPosition,
+                uiSettings = uiSettings,
+                properties = mapProperties,
+                onMapLoaded = {
+                    mapLoad = true
+                }
             )
 
 

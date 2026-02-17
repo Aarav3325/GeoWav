@@ -5,6 +5,7 @@ sealed class NavRoute(val path: String) {
     object ActivityScreen : NavRoute("activity")
     object Circle : NavRoute("circle")
     object LocationSharing : NavRoute("locationSharing")
+    object ObserveUsers : NavRoute("observeUsers")
 
     object MapScreen : NavRoute("mapScreen")
 

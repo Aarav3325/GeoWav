@@ -114,6 +114,7 @@ fun GeoWavHomeScreen(
     isDarkThemeEnabled: Boolean,
     navigateToAuth: () -> Unit,
     onAddZone: () -> Unit,
+    navigateToObserve: () -> Unit,
     onShareLocation: () -> Unit,
     onOpenAlerts: () -> Unit,
     homeScreenVM: HomeScreenVM,
@@ -320,7 +321,8 @@ fun GeoWavHomeScreen(
                     }
 
                     AnimatedVisibility(hasAnyLiveSharing) {
-                        ObserveLiveLocationCard(uiState.locations)
+                        ObserveLiveLocationCard(homeScreenVM, uiState, navigateToObserve, Modifier
+                            .height(220.dp))
                     }
 
 //                    ObserveLiveLocationCard(
@@ -567,7 +569,7 @@ fun ConnectionsRow(title: String, connections: List<CircleMember>, onAdd: () -> 
                 fontSize = 16.sp,
                 modifier = Modifier.weight(1.0f)
             )
-            TextButton(onClick = { }) {
+            TextButton(onClick = onAdd) {
                 Text(
                     "Manage",
                     fontSize = 16.sp,
@@ -643,7 +645,7 @@ fun ConnectionCard(conn: CircleMember) {
             contentAlignment = Alignment.BottomEnd
         ) {
             Text(
-                conn.alias?.take(1).toString(),
+                conn.alias?.take(1) ?: conn.profileName.take(1),
                 color = MaterialTheme.colorScheme.onBackground,
                 style = MaterialTheme.typography.headlineSmall.copy(
                     fontWeight = FontWeight.W600,

@@ -11,6 +11,7 @@ import com.aarav.geowav.data.model.CircleMember
 import com.aarav.geowav.data.model.GeoAlert
 import com.aarav.geowav.data.model.GeoConnection
 import com.aarav.geowav.data.model.Place
+import com.aarav.geowav.data.model.User
 import com.aarav.geowav.data.repository.GeoActivityRepositoryImpl
 import com.aarav.geowav.data.repository.GeoConnectionRepositoryImpl
 import com.aarav.geowav.data.repository.PlaceRepositoryImpl
@@ -144,6 +145,33 @@ class HomeScreenVM @Inject constructor(
         }
     }
 
+    fun fetchViewerInfo() {
+        viewModelScope.launch {
+            val currentViewerIds = _uiState.value.locations.entries.filter { entry ->
+                when (entry.value) {
+                    is ViewerLocationState.NormalSharing -> true
+                    is ViewerLocationState.EmergencySharing -> true
+                    ViewerLocationState.Blocked -> false
+                }
+            }
+
+            currentViewerIds.forEach {
+                val user = googleSignInClient.findUserByUserId(it.key)
+
+                if (user != null) {
+                    if (!_uiState.value.currentViewers.contains(user)) {
+                        _uiState.update {
+                            it.copy(
+                                currentViewers = it.currentViewers + user
+                            )
+                        }
+                    }
+
+                }
+            }
+        }
+    }
+
 
     init {
         viewModelScope.launch {
@@ -194,7 +222,6 @@ class HomeScreenVM @Inject constructor(
     }
 
 
-
 }
 
 data class HomeScreenUiState(
@@ -202,6 +229,7 @@ data class HomeScreenUiState(
     val connectionsList: List<GeoConnection> = emptyList(),
     val lovedOnes: List<CircleMember> = emptyList(),
     val locations: Map<String, ViewerLocationState> = emptyMap(),
+    val currentViewers: List<User> = emptyList(),
     val alertsList: List<GeoAlert> = emptyList(),
     val userAvatar: String? = null,
     val username: String? = null,

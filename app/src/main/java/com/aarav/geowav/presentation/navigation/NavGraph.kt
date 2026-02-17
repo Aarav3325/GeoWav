@@ -21,6 +21,7 @@ import com.aarav.geowav.presentation.onboard.OnboardingScreen
 import com.aarav.geowav.presentation.addplace.AddPlaceScreen
 import com.aarav.geowav.presentation.circle.CircleScreen
 import com.aarav.geowav.presentation.locationsharing.LocationSharingScreen
+import com.aarav.geowav.presentation.observe.ObserveScreen
 import com.aarav.geowav.presentation.settings.SettingsScreen
 import com.aarav.geowav.presentation.settings.ThemeMode
 import com.aarav.geowav.presentation.settings.TriggerType
@@ -98,6 +99,12 @@ fun NavGraph(
         )
 
         AddLocationSharingScreen(
+            navHostController,
+            this,
+            location
+        )
+
+        AddObserveScreen(
             navHostController,
             this
         )
@@ -256,6 +263,9 @@ fun AddHomeScreen(
             onAddZone = {
                 navController.navigate(NavRoute.MapScreen.path)
             },
+            navigateToObserve = {
+                navController.navigate(NavRoute.ObserveUsers.path)
+            },
             onShareLocation = {},
             onOpenAlerts = {},
             homeScreenVM = hiltViewModel(),
@@ -310,13 +320,31 @@ fun AddCircleScreen(
 
 fun AddLocationSharingScreen(
     navController: NavController,
-    navGraphBuilder: NavGraphBuilder
+    navGraphBuilder: NavGraphBuilder,
+    location: Pair<Double, Double>?
 ) {
     navGraphBuilder.composable(
         route = NavRoute.LocationSharing.path
     ) {
         LocationSharingScreen(
-            viewModel = hiltViewModel()
+            viewModel = hiltViewModel(),
+            location
+        )
+    }
+}
+
+fun AddObserveScreen(
+    navController: NavController,
+    navGraphBuilder: NavGraphBuilder,
+) {
+    navGraphBuilder.composable(
+        route = NavRoute.ObserveUsers.path
+    ) {
+        ObserveScreen(
+            viewModel = hiltViewModel(),
+            back = {
+                navController.popBackStack()
+            }
         )
     }
 }
