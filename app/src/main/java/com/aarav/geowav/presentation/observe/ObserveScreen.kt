@@ -118,7 +118,10 @@ fun ObserveScreen(
                 .padding(it)
         ) {
 
-            AnimatedVisibility(hasAnyLiveSharing) {
+
+
+
+        AnimatedVisibility(hasAnyLiveSharing) {
                 ObserveLiveLocationCard(viewModel, uiState, true, navigateToObserve = {}, Modifier
                     .fillMaxSize())
             }

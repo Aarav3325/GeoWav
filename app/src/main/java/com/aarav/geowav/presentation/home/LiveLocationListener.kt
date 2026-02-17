@@ -37,6 +37,7 @@ import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
@@ -72,12 +73,6 @@ import com.google.maps.android.compose.rememberCameraPositionState
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
 
-enum class CameraMode {
-    NORMAL_AUTO,
-    EMERGENCY_AUTO,
-    USER_MANUAL
-}
-
 
 @Preview(showBackground = true)
 @Composable
@@ -88,21 +83,29 @@ fun ObserveLiveLocationCard(
     navigateToObserve: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    var cameraMode by remember { mutableStateOf(CameraMode.NORMAL_AUTO) }
+    var isUserPanning by remember { mutableStateOf(false) }
 
+    var isFollowingEmergency by remember { mutableStateOf(false) }
 
-//    val cameraPositionState = rememberCameraPositionState()
+    val emergencyState = uiState.locations.values
+        .firstOrNull { it is ViewerLocationState.EmergencySharing }
+            as? ViewerLocationState.EmergencySharing
 
-//    Card(
-//        shape = RoundedCornerShape(16.dp),
-//        colors = CardDefaults.cardColors(
-//            containerColor = MaterialTheme.colorScheme.secondaryContainer
-//        ),
-//        modifier = Modifier
-//            .padding(top = 16.dp)
-//            .fillMaxWidth()
-//            .height(220.dp)
-//    ) {
+    val emergencyLat = emergencyState?.location?.lat
+    val emergencyLng = emergencyState?.location?.lng
+
+    //    val cameraPositionState = rememberCameraPositionState()
+
+    //    Card(
+    //        shape = RoundedCornerShape(16.dp),
+    //        colors = CardDefaults.cardColors(
+    //            containerColor = MaterialTheme.colorScheme.secondaryContainer
+    //        ),
+    //        modifier = Modifier
+    //            .padding(top = 16.dp)
+    //            .fillMaxWidth()
+    //            .height(220.dp)
+    //    ) {
 
 
     // Get list of users who are currently sharing location
@@ -141,38 +144,12 @@ fun ObserveLiveLocationCard(
 
     val viewerInfo = uiState.currentViewers
 
-    /* “When an emergency is active, automatically focus the camera on the emergency user
-        unless the user manually moved the map
-     */
-//    LaunchedEffect(emergencyUser, mapLoaded, isFullScreen) {
-//        if (!mapLoaded) return@LaunchedEffect // no animations before map is loaded
-//        if (emergencyUser == null) {
-//            userMovedCamera = false
-//            return@LaunchedEffect
-//        } /*
-//                if no emergency is active then normal camera logic will handle things
-//            */
-//
-//
-//        if (userMovedCamera && !isFullScreen) return@LaunchedEffect
-//
-//        val state = emergencyUser.value as ViewerLocationState.EmergencySharing
-//        val loc = state.location
-//
-//        cameraPositionState.animate(
-//            CameraUpdateFactory.newLatLngZoom(
-//                LatLng(loc.lat, loc.lng),
-//                16f
-//            )
-//        )
-//    }
 
-    val emergencyLocation = remember(uiState.locations) {
-        (uiState.locations.values
+    val emergencyLocation =
+        uiState.locations.values
             .firstOrNull { it is ViewerLocationState.EmergencySharing }
-                as? ViewerLocationState.EmergencySharing
-                )?.location
-    }
+            ?.let { (it as ViewerLocationState.EmergencySharing).location }
+
 
     var uiSettings by remember {
         mutableStateOf(
@@ -198,9 +175,11 @@ fun ObserveLiveLocationCard(
             com.google.android.gms.maps.model.CameraPosition.fromLatLngZoom(
                 LatLng(20.0, 78.0),
                 5f
+
             )
         }
     }
+
 
     val cameraPositionState = rememberCameraPositionState {
         position = initialCameraPosition
@@ -210,54 +189,194 @@ fun ObserveLiveLocationCard(
     /* Calculate a rectangle that contains all currently visible users, then smoothly
      move and zoom the map camera so everyone fits nicely inside the card*/
     // Normal mode camera behavior - show all visible users on map
+//    LaunchedEffect(visibleLatLngs, mapLoaded, emergencyUser) {
+//        if (!mapLoaded) return@LaunchedEffect // no camera animation until map loads
+//        if (visibleLatLngs.isEmpty()) return@LaunchedEffect // nothing to show on map
+//
+//        if (emergencyUser != null) return@LaunchedEffect
+//
+//        isUserPanning = false
+//
+//        // Draws an invisible rectangle on map to show all visible users (zoom so that all users are visible)
+//        val bounds = LatLngBounds.builder().apply {
+//            visibleLatLngs.forEach { include(it) } // use include to add latlng to bounds
+//        }.build()
+//        // The smallest map rectangle that contains all visible users
+//
+//        /* Move the camera so that this bounds fits completely inside the screen,
+//           Camera auto-zooms until all dots are visible. */
+//        cameraPositionState.animate(
+//            CameraUpdateFactory.newLatLngBounds(bounds, 80)
+//        )
+//    }
     LaunchedEffect(visibleLatLngs, mapLoaded, emergencyUser) {
-        if (!mapLoaded) return@LaunchedEffect // no camera animation until map loads
-        if (visibleLatLngs.isEmpty()) return@LaunchedEffect // nothing to show on map
 
-        if (emergencyUser != null) return@LaunchedEffect // no camera animation while user is in emergency state, override this later
+        if (!mapLoaded) return@LaunchedEffect
+        if (visibleLatLngs.isEmpty()) return@LaunchedEffect
+        if (emergencyUser != null) return@LaunchedEffect
+        if (isUserPanning) return@LaunchedEffect
 
-
-        // Draws an invisible rectangle on map to show all visible users (zoom so that all users are visible)
         val bounds = LatLngBounds.builder().apply {
-            visibleLatLngs.forEach { include(it) } // use include to add latlng to bounds
+            visibleLatLngs.forEach { include(it) }
         }.build()
-        // The smallest map rectangle that contains all visible users
-        if (cameraMode == CameraMode.USER_MANUAL) return@LaunchedEffect
 
-        /* Move the camera so that this bounds fits completely inside the screen,
-           Camera auto-zooms until all dots are visible. */
         cameraPositionState.animate(
             CameraUpdateFactory.newLatLngBounds(bounds, 80)
         )
     }
 
-    LaunchedEffect(emergencyLocation) {
-        if (emergencyLocation == null) {
-            cameraMode = CameraMode.NORMAL_AUTO
-        }
-    }
+    //
+    //    LaunchedEffect(emergencyLocation) {
+    //        if (emergencyLocation != null) {
+    //            cameraMode = CameraMode.EMERGENCY_AUTO
+    //        }
+    //    }
 
 
-    LaunchedEffect(emergencyLocation, mapLoaded) {
+    val isEmergencyActive =
+        uiState.locations.values.any { it is ViewerLocationState.EmergencySharing }
 
+
+//        LaunchedEffect(emergencyLocation, mapLoaded) {
+//
+//            if (!mapLoaded) return@LaunchedEffect
+//            if (emergencyLocation == null) {
+//                return@LaunchedEffect
+//            }
+//            if(isUserPanning) return@LaunchedEffect
+//
+//    //        if (cameraMode == CameraMode.USER_MANUAL) return@LaunchedEffect
+//
+//            // First time → move instantly (guaranteed)
+//            cameraPositionState.move(
+//                CameraUpdateFactory.newLatLngZoom(
+//                    LatLng(emergencyLocation.lat, emergencyLocation.lng),
+//                    16f
+//                )
+//            )
+//        }
+
+    //    LaunchedEffect(emergencyLocation) {
+    //        if (emergencyLocation == null) {
+    //            cameraMode = CameraMode.NORMAL
+    //        }
+    //    }
+
+    LaunchedEffect(isFullScreen, mapLoaded) {
         if (!mapLoaded) return@LaunchedEffect
-        if (emergencyLocation == null) {
-            return@LaunchedEffect
-        }
+        if (!isFullScreen) return@LaunchedEffect
+        if (emergencyLat == null || emergencyLng == null) return@LaunchedEffect
 
-//        if (cameraMode == CameraMode.USER_MANUAL) return@LaunchedEffect
+        isUserPanning = false
 
-        cameraMode = CameraMode.EMERGENCY_AUTO
-
-        // First time → move instantly (guaranteed)
         cameraPositionState.move(
             CameraUpdateFactory.newLatLngZoom(
-                LatLng(emergencyLocation.lat, emergencyLocation.lng),
+                LatLng(emergencyLat, emergencyLng),
                 16f
             )
         )
     }
 
+//
+//        /* “When an emergency is active, automatically focus the camera on the emergency user
+//        unless the user manually moved the map
+//     */
+//        LaunchedEffect(emergencyUser, mapLoaded, isFullScreen) {
+//            if (!mapLoaded) return@LaunchedEffect // no animations before map is loaded
+//            if (emergencyUser == null) {
+//                userMovedCamera = false
+//                return@LaunchedEffect
+//            } /*
+//                    if no emergency is active then normal camera logic will handle things
+//                */
+//
+////            if(isUserPanning) return@LaunchedEffect
+//
+//            val state = emergencyUser.value as ViewerLocationState.EmergencySharing
+//            val loc = state.location
+//
+//            cameraPositionState.animate(
+//                CameraUpdateFactory.newLatLngZoom(
+//                    LatLng(loc.lat, loc.lng),
+//                    16f
+//                )
+//            )
+//        }
+
+    LaunchedEffect(
+        isFullScreen,
+        mapLoaded,
+        emergencyLat,
+        emergencyLng
+    ) {
+        if (!mapLoaded) return@LaunchedEffect
+
+        if (emergencyLat == null || emergencyLng == null) {
+           // isFollowingEmergency = false
+            return@LaunchedEffect
+        }
+
+        // Emergency just started → force follow
+//        if (!isFollowingEmergency) {
+//            isFollowingEmergency = true
+//            isUserPanning = false
+//        }
+
+        if (isFullScreen || isUserPanning) {
+            isUserPanning = false
+
+            cameraPositionState.animate(
+                CameraUpdateFactory.newLatLngZoom(
+                    LatLng(emergencyLat, emergencyLng),
+                    16f
+                )
+            )
+        }
+
+        /*
+        // If entering fullscreen while emergency active → force follow
+        if (isFullScreen) {
+            isUserPanning = false
+            isFollowingEmergency = true
+        }
+
+        // Only follow if user is not panning
+        if (!isUserPanning) {
+            cameraPositionState.animate(
+                CameraUpdateFactory.newLatLngZoom(
+                    LatLng(emergencyLat, emergencyLng),
+                    16f
+                )
+            )
+        }
+        */
+    }
+
+
+//    LaunchedEffect(mapLoaded, emergencyLat, emergencyLng, isFullScreen, isUserPanning, isFollowingEmergency) {
+//
+//        if (!mapLoaded) return@LaunchedEffect
+//        if (emergencyLat == null || emergencyLng == null) {
+//            isFollowingEmergency = false
+//            return@LaunchedEffect
+//        }
+//
+//        // When entering fullscreen during emergency → enable follow
+//        if (isFullScreen && !isFollowingEmergency) {
+//            isFollowingEmergency = true
+//            isUserPanning = false
+//        }
+//
+//        // Follow ONLY if fullscreen AND not panning AND following is enabled
+//        if (isFullScreen && !isUserPanning && isFollowingEmergency) {
+//            cameraPositionState.animate(
+//                CameraUpdateFactory.newLatLngZoom(
+//                    LatLng(emergencyLat, emergencyLng),
+//                    16f
+//                )
+//            )
+//        }
+//    }
 
 
 
@@ -268,7 +387,7 @@ fun ObserveLiveLocationCard(
                     cameraPositionState.cameraMoveStartedReason
         }.collect { (isMoving, reason) ->
             if (isMoving && reason == CameraMoveStartedReason.GESTURE) {
-                cameraMode = CameraMode.USER_MANUAL
+                isUserPanning = true
             }
         }
     }
@@ -276,13 +395,14 @@ fun ObserveLiveLocationCard(
 
 
 
+
     Log.i("OBSERVE", "current viewer: " + viewerInfo.toString())
 
 
-//    Column(
-//        modifier = Modifier.fillMaxWidth()
-//            .padding(top = 16.dp)
-//    ) {
+    //    Column(
+    //        modifier = Modifier.fillMaxWidth()
+    //            .padding(top = 16.dp)
+    //    ) {
 
 
     /*.shadow(
@@ -293,43 +413,92 @@ fun ObserveLiveLocationCard(
                 clip = false
             )*/
 
-//        Card(
-//            modifier = Modifier.shadow(
-//                elevation = 24.dp,
-//                shape = RoundedCornerShape(16.dp),
-//                ambientColor = MaterialTheme.colorScheme.inversePrimary,
-//                spotColor = MaterialTheme.colorScheme.inversePrimary,
-//                clip = false
-//            ).fillMaxWidth()
-//                .height(220.dp)
-//        ) {
-    GoogleMap(
+    //        Card(
+    //            modifier = Modifier.shadow(
+    //                elevation = 24.dp,
+    //                shape = RoundedCornerShape(16.dp),
+    //                ambientColor = MaterialTheme.colorScheme.inversePrimary,
+    //                spotColor = MaterialTheme.colorScheme.inversePrimary,
+    //                clip = false
+    //            ).fillMaxWidth()
+    //                .height(220.dp)
+    //        ) {
+
+    val scope = rememberCoroutineScope()
+
+    Box(
         modifier = modifier
             .fillMaxWidth()
-            .shadow(4.dp, RoundedCornerShape(16.dp))
-            .clip(RoundedCornerShape(16.dp)),
-        cameraPositionState = cameraPositionState,
-        uiSettings = uiSettings,
-        onMapLoaded = {
-            mapLoaded = true
-        }
     ) {
-        uiState.locations.forEach { (userId, state) ->
-            UserMarker(
-                userId = userId,
-                state = state
-            )
+
+        GoogleMap(
+            modifier = Modifier
+                .matchParentSize()
+                .shadow(4.dp, RoundedCornerShape(16.dp))
+                .clip(RoundedCornerShape(16.dp)),
+            cameraPositionState = cameraPositionState,
+            uiSettings = uiSettings,
+            onMapLoaded = { mapLoaded = true }
+        ) {
+            uiState.locations.forEach { (userId, state) ->
+                UserMarker(
+                    userId = userId,
+                    state = state
+                )
+            }
+
+            emergencyUser?.let { (_, state) ->
+                val emergencyState = state as ViewerLocationState.EmergencySharing
+                val loc = emergencyState.location
+
+                EmergencyRipple(
+                    center = LatLng(loc.lat, loc.lng)
+                )
+            }
         }
 
-        emergencyUser?.let { (_, state) ->
-            val emergencyState = state as ViewerLocationState.EmergencySharing
-            val loc = emergencyState.location
+//        LaunchedEffect(isFullScreen, mapLoaded) {
+//            if (!mapLoaded) return@LaunchedEffect
+//
+//            cameraPositionState.move(
+//                CameraUpdateFactory.newCameraPosition(initialCameraPosition)
+//            )
+//        }
 
-            EmergencyRipple(
-                center = LatLng(loc.lat, loc.lng)
-            )
+
+
+
+        if (
+            isFullScreen &&
+            emergencyLat != null &&
+            emergencyLng != null &&
+            isUserPanning
+        ) {
+            androidx.compose.material3.FloatingActionButton(
+                onClick = {
+                    isUserPanning = false
+                    scope.launch {
+                        cameraPositionState.animate(
+                            CameraUpdateFactory.newLatLngZoom(
+                                LatLng(emergencyLat, emergencyLng),
+                                16f
+                            )
+                        )
+                    }
+                },
+                modifier = Modifier
+                    .align(Alignment.TopEnd)
+                    .padding(16.dp),
+                containerColor = MaterialTheme.colorScheme.primary
+            ) {
+                Icon(
+                    painter = painterResource(R.drawable.emergency),
+                    contentDescription = "Follow Emergency"
+                )
+            }
         }
     }
+
 }
 
 /*
@@ -626,6 +795,7 @@ fun animateLatLngAsState(
         }
     }
 }
+
 @Composable
 fun UserMarker(
     userId: String,
@@ -643,9 +813,33 @@ fun UserMarker(
 
     val markerState = remember { MarkerState(position = target) }
 
-    // Smoothly update marker position
+    // Animatables for smooth movement
+    val latAnim = remember { Animatable(target.latitude.toFloat()) }
+    val lngAnim = remember { Animatable(target.longitude.toFloat()) }
+
     LaunchedEffect(target) {
-        markerState.position = target
+        coroutineScope {
+            launch {
+                latAnim.animateTo(
+                    target.latitude.toFloat(),
+                    tween(800, easing = LinearOutSlowInEasing)
+                )
+            }
+            launch {
+                lngAnim.animateTo(
+                    target.longitude.toFloat(),
+                    tween(800, easing = LinearOutSlowInEasing)
+                )
+            }
+        }
+    }
+
+    // Update marker position from animated values
+    LaunchedEffect(latAnim.value, lngAnim.value) {
+        markerState.position = LatLng(
+            latAnim.value.toDouble(),
+            lngAnim.value.toDouble()
+        )
     }
 
     val isEmergency = state is ViewerLocationState.EmergencySharing
@@ -660,4 +854,5 @@ fun UserMarker(
         zIndex = if (isEmergency) 2f else 1f
     )
 }
-
+    
+    
