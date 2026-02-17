@@ -96,6 +96,12 @@ fun ObserveScreen(
                     it is ViewerLocationState.EmergencySharing
         }
 
+        LaunchedEffect(hasAnyLiveSharing) {
+            if(!hasAnyLiveSharing) {
+                back()
+            }
+        }
+
 
         /*
         listOf(

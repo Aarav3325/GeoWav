@@ -175,7 +175,6 @@ fun ObserveLiveLocationCard(
             com.google.android.gms.maps.model.CameraPosition.fromLatLngZoom(
                 LatLng(20.0, 78.0),
                 5f
-
             )
         }
     }
@@ -261,21 +260,21 @@ fun ObserveLiveLocationCard(
     //            cameraMode = CameraMode.NORMAL
     //        }
     //    }
-
-    LaunchedEffect(isFullScreen, mapLoaded) {
-        if (!mapLoaded) return@LaunchedEffect
-        if (!isFullScreen) return@LaunchedEffect
-        if (emergencyLat == null || emergencyLng == null) return@LaunchedEffect
-
-        isUserPanning = false
-
-        cameraPositionState.move(
-            CameraUpdateFactory.newLatLngZoom(
-                LatLng(emergencyLat, emergencyLng),
-                16f
-            )
-        )
-    }
+//
+//    LaunchedEffect(isFullScreen, mapLoaded) {
+//        if (!mapLoaded) return@LaunchedEffect
+//        if (!isFullScreen) return@LaunchedEffect
+//        if (emergencyLat == null || emergencyLng == null) return@LaunchedEffect
+//
+//        isUserPanning = false
+//
+//        cameraPositionState.move(
+//            CameraUpdateFactory.newLatLngZoom(
+//                LatLng(emergencyLat, emergencyLng),
+//                16f
+//            )
+//        )
+//    }
 
 //
 //        /* “When an emergency is active, automatically focus the camera on the emergency user
@@ -307,7 +306,8 @@ fun ObserveLiveLocationCard(
         isFullScreen,
         mapLoaded,
         emergencyLat,
-        emergencyLng
+        emergencyLng,
+        isUserPanning
     ) {
         if (!mapLoaded) return@LaunchedEffect
 
@@ -322,8 +322,7 @@ fun ObserveLiveLocationCard(
 //            isUserPanning = false
 //        }
 
-        if (isFullScreen || isUserPanning) {
-            isUserPanning = false
+        if (isFullScreen && !isUserPanning) {
 
             cameraPositionState.animate(
                 CameraUpdateFactory.newLatLngZoom(
@@ -392,6 +391,11 @@ fun ObserveLiveLocationCard(
         }
     }
 
+    LaunchedEffect(isFullScreen) {
+        if (isFullScreen) {
+            isUserPanning = false
+        }
+    }
 
 
 
@@ -580,7 +584,7 @@ fun ViewerTrayOverlay(
 
 @Composable
 fun ViewerCardHome(
-    viewerInfo: List<User>,
+    viewerInfo: List<CircleMember>,
     navigateToObserve: () -> Unit
 ) {
 
@@ -589,14 +593,14 @@ fun ViewerCardHome(
             "No one"
 
         viewerInfo.size == 1 -> {
-            viewerInfo.first().username
+            viewerInfo.first().profileName
         }
 
         viewerInfo.size == 2 ->
-            viewerInfo.joinToString { it.username }
+            viewerInfo.joinToString { it.profileName }
 
         else ->
-            "${viewerInfo[0].username}, ${viewerInfo[1].username} + ${viewerInfo.size - 2}"
+            "${viewerInfo[0].profileName}, ${viewerInfo[1].profileName} + ${viewerInfo.size - 2}"
     }
 
     Card(

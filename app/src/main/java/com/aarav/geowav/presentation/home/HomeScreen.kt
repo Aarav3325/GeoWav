@@ -108,10 +108,10 @@ fun GeoWavHomeScreen(
         if (uiState.lovedOnes.isNotEmpty()) {
             Log.i("OBSERVE", "observe called")
             homeScreenVM.observeUsers()
-            homeScreenVM.cleanupRemovedUsers(
-                uiState.lovedOnes.map { it.id }.toSet()
-            )
         }
+        homeScreenVM.cleanupRemovedUsers(
+            uiState.lovedOnes.map { it.id }.toSet()
+        )
     }
 
     LaunchedEffect(Unit) {
@@ -301,32 +301,38 @@ fun GeoWavHomeScreen(
                         .background(MaterialTheme.colorScheme.background)
                 ) {
 
-                    val hasAnyLiveSharing = uiState.locations.values.any {
-                        it is ViewerLocationState.NormalSharing ||
-                                it is ViewerLocationState.EmergencySharing
-                    }
+//                    val hasAnyLiveSharing = uiState.locations.values.any {
+//                        it is ViewerLocationState.NormalSharing ||
+//                                it is ViewerLocationState.EmergencySharing
+//                    }
+//
+//                    val viewerInfo = uiState.currentViewers
 
-                    val viewerInfo = uiState.currentViewers
+                    val activeViewerIds = uiState.locations
+                        .filterValues {
+                            it is ViewerLocationState.NormalSharing ||
+                                    it is ViewerLocationState.EmergencySharing
+                        }
+                        .keys
+
+                    val hasAnyLiveSharing = activeViewerIds.isNotEmpty()
 
 
-                    AnimatedVisibility(hasAnyLiveSharing && viewerInfo.isNotEmpty()) {
+                    AnimatedVisibility(hasAnyLiveSharing) {
                         Column(
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .padding(top = 16.dp)
                         ) {
-                            ViewerCardHome(viewerInfo, navigateToObserve)
-
-                            val currentViewerIds = uiState.locations
-                                .filterValues {
-                                    it is ViewerLocationState.NormalSharing ||
-                                            it is ViewerLocationState.EmergencySharing
-                                }
-                                .keys
 
                             val viewers = uiState.lovedOnes.filter {
-                                it.id in currentViewerIds
+                                it.id in activeViewerIds
                             }
+
+                            ViewerCardHome(viewers, navigateToObserve)
+
+
+
 
                             ObserveLiveLocationCard(
                                 homeScreenVM, uiState, false, navigateToObserve, Modifier

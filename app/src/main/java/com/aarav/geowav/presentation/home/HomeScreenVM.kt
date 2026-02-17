@@ -70,12 +70,24 @@ class HomeScreenVM @Inject constructor(
                     .collect { viewerState ->
                         _uiState.update { state ->
 
-                            Log.i("OBSERVE", "user: ${userId}")
-                            state.copy(
-                                locations = state.locations + (userId to viewerState)
-                            )
+                            when (viewerState) {
+
+                                is ViewerLocationState.NormalSharing,
+                                is ViewerLocationState.EmergencySharing -> {
+                                    state.copy(
+                                        locations = state.locations + (userId to viewerState)
+                                    )
+                                }
+
+                                ViewerLocationState.Blocked -> {
+                                    state.copy(
+                                        locations = state.locations - userId
+                                    )
+                                }
+                            }
                         }
                     }
+
             }
 
             observerJobs[userId] = job
@@ -147,26 +159,34 @@ class HomeScreenVM @Inject constructor(
 
     fun fetchViewerInfo() {
         viewModelScope.launch {
-            val currentViewerIds = _uiState.value.locations.entries.filter { entry ->
-                when (entry.value) {
-                    is ViewerLocationState.NormalSharing -> true
-                    is ViewerLocationState.EmergencySharing -> true
-                    ViewerLocationState.Blocked -> false
+
+            val activeViewerIds = _uiState.value.locations
+                .filterValues {
+                    it is ViewerLocationState.NormalSharing ||
+                            it is ViewerLocationState.EmergencySharing
                 }
+                .keys
+
+            // Remove viewers that are no longer active
+            _uiState.update { state ->
+                state.copy(
+                    currentViewers = state.currentViewers
+                        .filter { it.userId in activeViewerIds }
+                )
             }
 
-            currentViewerIds.forEach {
-                val user = googleSignInClient.findUserByUserId(it.key)
+            // Add new active viewers
+            activeViewerIds.forEach { id ->
+                val user = googleSignInClient.findUserByUserId(id)
 
-                if (user != null) {
-                    if (!_uiState.value.currentViewers.contains(user)) {
-                        _uiState.update {
-                            it.copy(
-                                currentViewers = it.currentViewers + user
-                            )
-                        }
+                if (user != null &&
+                    !_uiState.value.currentViewers.contains(user)
+                ) {
+                    _uiState.update {
+                        it.copy(
+                            currentViewers = it.currentViewers + user
+                        )
                     }
-
                 }
             }
         }
@@ -213,8 +233,6 @@ class HomeScreenVM @Inject constructor(
             }
         }
     }
-
-
 
 
 }

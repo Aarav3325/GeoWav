@@ -26,99 +26,89 @@ class ViewerLocationRepositoryImpl
         viewerId: String
     ): Flow<ViewerLocationState> = callbackFlow {
 
-        var currentMode: ShareMode = ShareMode.Blocked
+        var latestLocation: LocationUpdates? = null
+        var isEmergencyActive = false
+        var emergencyEndsAt: Long? = null
+        var isNormalAllowed = false
 
-        val locationRef = rootRef
-            .child("live_location")
-            .child(userId)
+        fun emitState() {
+            val state = when {
+                isEmergencyActive && emergencyEndsAt != null ->
+                    ViewerLocationState.EmergencySharing(
+                        location = latestLocation ?: return,
+                        endsAt = emergencyEndsAt!!
+                    )
 
-        // Get location updates and send them to ui as flow based on sharing mode
-        val locationListener = object : ValueEventListener {
-            override fun onDataChange(snapshot: DataSnapshot) {
-                val location = snapshot.getValue(LocationUpdates::class.java) ?: return
+                isNormalAllowed && latestLocation != null ->
+                    ViewerLocationState.NormalSharing(latestLocation!!)
 
-                when (val mode = currentMode) {
-                    is ShareMode.Emergency -> {
-
-                        trySend(
-                            ViewerLocationState.EmergencySharing(
-                                location = location,
-                                endsAt = mode.endsAt
-                            )
-                        )
-                    }
-
-                    ShareMode.Normal -> {
-
-                        trySend(
-                            ViewerLocationState.NormalSharing(
-                                location
-                            )
-                        )
-                    }
-
-                    ShareMode.Blocked -> Unit
-                }
+                else ->
+                    ViewerLocationState.Blocked
             }
 
-            override fun onCancelled(error: DatabaseError) {
-                TODO("Not yet implemented")
-            }
-
+            trySend(state)
         }
 
-        locationRef.addValueEventListener(locationListener)
+        val locationRef = rootRef.child("live_location").child(userId)
+        val emergencyRef = rootRef.child("emergency_sharing").child(userId)
+        val normalRef = rootRef.child("location_sharing").child(userId).child(viewerId)
 
-        // Check if emergency sharing is active
-        val emergencyRef = rootRef
-            .child("emergency_sharing")
-            .child(userId)
-
-        val emergencyListener = object: ValueEventListener {
+        val locationListener = object : ValueEventListener {
             override fun onDataChange(snapshot: DataSnapshot) {
-                val active = snapshot.child("active").getValue(Boolean::class.java) == true
-                val endsAt = snapshot.child("endsAt").getValue(Long::class.java)
-                val allowed = snapshot
-                    .child("viewers")
-                    .child(viewerId)
-                    .getValue(Boolean::class.java) == true
-
-                // User appears in emergency sharing mode to listener
-                if(active && allowed && endsAt != null && System.currentTimeMillis() < endsAt){
-                    currentMode = ShareMode.Emergency(endsAt)
-                    return
-                }
-
-                currentMode = ShareMode.Blocked
-                trySend(ViewerLocationState.Blocked)
-
-                // Fallback to normal permission check if emergency is not active
-                rootRef.child("location_sharing")
-                    .child(userId)
-                    .child(viewerId)
-                    .get()
-                    .addOnSuccessListener {
-                        snap ->
-                        // normal location updates
-                        if(snap.getValue(Boolean::class.java) == true) {
-                            currentMode = ShareMode.Normal
-                        }
-                    }
+                latestLocation = snapshot.getValue(LocationUpdates::class.java)
+                emitState()
             }
 
             override fun onCancelled(error: DatabaseError) {
                 close(error.toException())
             }
-
         }
 
-        emergencyRef.addValueEventListener(emergencyListener)
+        val emergencyListener = object : ValueEventListener {
+            override fun onDataChange(snapshot: DataSnapshot) {
+                val active = snapshot.child("active").getValue(Boolean::class.java) == true
+                val endsAt = snapshot.child("endsAt").getValue(Long::class.java)
+                val allowed = snapshot.child("viewers")
+                    .child(viewerId)
+                    .getValue(Boolean::class.java) == true
 
-        // final flow clean up
+                if (active && allowed && endsAt != null && System.currentTimeMillis() < endsAt) {
+                    isEmergencyActive = true
+                    emergencyEndsAt = endsAt
+                } else {
+                    isEmergencyActive = false
+                    emergencyEndsAt = null
+                }
+
+                emitState()
+            }
+
+            override fun onCancelled(error: DatabaseError) {
+                close(error.toException())
+            }
+        }
+
+        val normalListener = object : ValueEventListener {
+            override fun onDataChange(snapshot: DataSnapshot) {
+                isNormalAllowed = snapshot.getValue(Boolean::class.java) == true
+                emitState()
+            }
+
+            override fun onCancelled(error: DatabaseError) {
+                close(error.toException())
+            }
+        }
+
+        locationRef.addValueEventListener(locationListener)
+        emergencyRef.addValueEventListener(emergencyListener)
+        normalRef.addValueEventListener(normalListener)
+
         awaitClose {
             locationRef.removeEventListener(locationListener)
             emergencyRef.removeEventListener(emergencyListener)
+            normalRef.removeEventListener(normalListener)
         }
-
     }
+
+
 }
