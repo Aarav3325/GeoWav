@@ -214,12 +214,7 @@ class HomeScreenVM @Inject constructor(
         }
     }
 
-    // clear jobs when vm is destroyed
-    override fun onCleared() {
-        observerJobs.values.forEach { it.cancel() }
-        observerJobs.clear()
-        super.onCleared()
-    }
+
 
 
 }

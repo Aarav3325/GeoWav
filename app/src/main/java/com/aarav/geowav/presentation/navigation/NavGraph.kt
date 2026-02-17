@@ -1,5 +1,6 @@
 import android.content.SharedPreferences
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.navigation.NavController
@@ -9,19 +10,21 @@ import androidx.navigation.NavHostController
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
+import androidx.navigation.compose.navigation
 import androidx.navigation.navArgument
 import com.aarav.geowav.data.authentication.GoogleSignInClient
-import com.aarav.geowav.presentation.home.GeoWavHomeScreen
 import com.aarav.geowav.presentation.activity.ActivityScreen
+import com.aarav.geowav.presentation.addplace.AddPlaceScreen
 import com.aarav.geowav.presentation.auth.LoginScreen
 import com.aarav.geowav.presentation.auth.SignupScreen
+import com.aarav.geowav.presentation.circle.CircleScreen
+import com.aarav.geowav.presentation.home.GeoWavHomeScreen
+import com.aarav.geowav.presentation.home.HomeScreenVM
+import com.aarav.geowav.presentation.locationsharing.LocationSharingScreen
 import com.aarav.geowav.presentation.map.MapScreen
 import com.aarav.geowav.presentation.navigation.NavRoute
-import com.aarav.geowav.presentation.onboard.OnboardingScreen
-import com.aarav.geowav.presentation.addplace.AddPlaceScreen
-import com.aarav.geowav.presentation.circle.CircleScreen
-import com.aarav.geowav.presentation.locationsharing.LocationSharingScreen
 import com.aarav.geowav.presentation.observe.ObserveScreen
+import com.aarav.geowav.presentation.onboard.OnboardingScreen
 import com.aarav.geowav.presentation.settings.SettingsScreen
 import com.aarav.geowav.presentation.settings.ThemeMode
 import com.aarav.geowav.presentation.settings.TriggerType
@@ -44,7 +47,7 @@ fun NavGraph(
     NavHost(
         modifier = modifier,
         navController = navHostController,
-        startDestination = if (isLoggedIn && isOnboarded) NavRoute.HomeScreen.path else if (!isOnboarded) NavRoute.OnBoard.path
+        startDestination = if (isLoggedIn && isOnboarded) "home_graph" else if (!isOnboarded) NavRoute.OnBoard.path
         else if (!isLoggedIn && isOnboarded) NavRoute.Login.path else NavRoute.SignUp.path
     ) {
         AddMapsScreen(
@@ -81,11 +84,11 @@ fun NavGraph(
             sharedPreferences
         )
 
-        AddHomeScreen(
-            isDarkThemeEnabled,
-            navHostController,
-            this
-        )
+//        AddHomeScreen(
+//            isDarkThemeEnabled,
+//            navHostController,
+//            this
+//        )
 
         AddActivityScreen(
             isDarkThemeEnabled,
@@ -104,10 +107,28 @@ fun NavGraph(
             location
         )
 
-        AddObserveScreen(
-            navHostController,
-            this
-        )
+//        AddObserveScreen(
+//            navHostController,
+//            this
+//        )
+
+        navigation(
+            route = "home_graph",
+            startDestination = NavRoute.HomeScreen.path
+        ) {
+
+            AddHomeScreen(
+                isDarkThemeEnabled,
+                navHostController,
+                this
+            )
+
+            AddObserveScreen(
+                navHostController,
+                this
+            )
+        }
+
 
         AddSettingsScreen(
             themeMode,
@@ -253,7 +274,13 @@ fun AddHomeScreen(
 ) {
     navGraphBuilder.composable(
         route = NavRoute.HomeScreen.path
-    ) {
+    ) { backStackEntry ->
+
+        val parentEntry = remember(backStackEntry) {
+            navController.getBackStackEntry("home_graph")
+        }
+
+        val sharedVM: HomeScreenVM = hiltViewModel(parentEntry)
 
         GeoWavHomeScreen(
             isDarkThemeEnabled = isDarkThemeEnabled,
@@ -268,7 +295,7 @@ fun AddHomeScreen(
             },
             onShareLocation = {},
             onOpenAlerts = {},
-            homeScreenVM = hiltViewModel(),
+            homeScreenVM = sharedVM,
             navigateToSettings = {
                 navController.navigate(NavRoute.Settings.path)
             },
@@ -339,9 +366,17 @@ fun AddObserveScreen(
 ) {
     navGraphBuilder.composable(
         route = NavRoute.ObserveUsers.path
-    ) {
+    ) { backStackEntry ->
+
+        val parentEntry = remember(backStackEntry) {
+            navController.getBackStackEntry("home_graph")
+        }
+
+        val sharedVM: HomeScreenVM = hiltViewModel(parentEntry)
+
+
         ObserveScreen(
-            viewModel = hiltViewModel(),
+            viewModel = sharedVM,
             back = {
                 navController.popBackStack()
             }

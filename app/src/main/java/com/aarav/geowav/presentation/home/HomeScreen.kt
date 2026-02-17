@@ -1,15 +1,10 @@
 package com.aarav.geowav.presentation.home
 
 
-import android.graphics.Bitmap
-import android.graphics.Canvas
-import android.graphics.Paint
 import android.util.Log
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.animateColorAsState
-import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.EaseInOut
-import androidx.compose.animation.core.LinearOutSlowInEasing
 import androidx.compose.animation.core.RepeatMode
 import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.infiniteRepeatable
@@ -59,20 +54,14 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.State
 import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.runtime.setValue
-import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.scale
-import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
@@ -95,17 +84,6 @@ import com.aarav.geowav.presentation.components.SnackbarManager
 import com.aarav.geowav.presentation.theme.GeoWavTheme
 import com.aarav.geowav.presentation.theme.manrope
 import com.aarav.geowav.presentation.theme.sora
-import com.google.android.gms.maps.CameraUpdateFactory
-import com.google.android.gms.maps.model.BitmapDescriptor
-import com.google.android.gms.maps.model.BitmapDescriptorFactory
-import com.google.android.gms.maps.model.LatLng
-import com.google.android.gms.maps.model.LatLngBounds
-import com.google.maps.android.compose.CameraMoveStartedReason
-import com.google.maps.android.compose.GoogleMap
-import com.google.maps.android.compose.Marker
-import com.google.maps.android.compose.MarkerState
-import com.google.maps.android.compose.rememberCameraPositionState
-import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -138,6 +116,14 @@ fun GeoWavHomeScreen(
 
     LaunchedEffect(Unit) {
         homeScreenVM.loadLovedOnes()
+    }
+
+    Log.i("HOME", uiState.lovedOnes.toString())
+
+    LaunchedEffect(uiState.locations) {
+        if (uiState.locations.isNotEmpty()) {
+            homeScreenVM.fetchViewerInfo()
+        }
     }
 
 
@@ -320,14 +306,45 @@ fun GeoWavHomeScreen(
                                 it is ViewerLocationState.EmergencySharing
                     }
 
-                    AnimatedVisibility(hasAnyLiveSharing) {
-                        ObserveLiveLocationCard(homeScreenVM, uiState, navigateToObserve, Modifier
-                            .height(220.dp))
+                    val viewerInfo = uiState.currentViewers
+
+
+                    AnimatedVisibility(hasAnyLiveSharing && viewerInfo.isNotEmpty()) {
+                        Column(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(top = 16.dp)
+                        ) {
+                            ViewerCardHome(viewerInfo, navigateToObserve)
+
+                            val currentViewerIds = uiState.locations
+                                .filterValues {
+                                    it is ViewerLocationState.NormalSharing ||
+                                            it is ViewerLocationState.EmergencySharing
+                                }
+                                .keys
+
+                            val viewers = uiState.lovedOnes.filter {
+                                it.id in currentViewerIds
+                            }
+
+                            ObserveLiveLocationCard(
+                                homeScreenVM, uiState, false, navigateToObserve, Modifier
+                                    .height(220.dp)
+                            )
+                        }
                     }
 
 //                    ObserveLiveLocationCard(
 //                        uiState.locations
 //                    )
+
+
+//
+//                    AnimatedVisibility(hasAnyLiveSharing && viewerInfo.isNotEmpty()) {
+//                        ViewerCardHome(viewerInfo, navigateToObserve)
+//                    }
+
 
                     ConnectionsRow(
                         title = "Your Circle",
@@ -473,7 +490,6 @@ fun UserMarkerUi(
         )
     }
 }
-
 
 
 @Preview(showBackground = true)
