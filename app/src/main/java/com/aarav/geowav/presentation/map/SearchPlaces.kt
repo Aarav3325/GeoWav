@@ -9,19 +9,16 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.input.TextFieldState
 import androidx.compose.foundation.text.input.clearText
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.filled.ArrowBack
-import androidx.compose.material.icons.filled.Clear
-import androidx.compose.material.icons.filled.LocationOn
-import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.ContainedLoadingIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -32,6 +29,7 @@ import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -42,7 +40,7 @@ import com.aarav.geowav.presentation.theme.surfaceContainerLowDarkHighContrast
 import com.aarav.geowav.presentation.theme.surfaceContainerLowestLightHighContrast
 import com.google.android.libraries.places.api.model.AutocompletePrediction
 
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 fun NewSearch(
     isDarkThemeEnabled: Boolean,
@@ -64,7 +62,6 @@ fun NewSearch(
     ) {
         SearchBar(
             shadowElevation = 16.dp,
-            shape = RoundedCornerShape(16.dp),
             colors = SearchBarDefaults.colors(
                 containerColor = if (!isDarkThemeEnabled) surfaceContainerLowestLightHighContrast else surfaceContainerLowDarkHighContrast,
                 dividerColor = MaterialTheme.colorScheme.primary
@@ -78,6 +75,9 @@ fun NewSearch(
                 SearchBarDefaults.InputField(
                     modifier = Modifier
                         .fillMaxWidth()
+                        .clip(
+                            shape = RoundedCornerShape(16.dp)
+                        )
                         .padding(0.dp),
                     query = textFieldState.text.toString(),
                     onQueryChange = onQueryChange,
@@ -86,16 +86,18 @@ fun NewSearch(
                         if (expanded) {
                             IconButton(onClick = { onExpandedChange(false) }) {
                                 Icon(
-                                    imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                                    painter = painterResource(R.drawable.back),
                                     contentDescription = "back",
+                                    modifier = Modifier.size(24.dp),
                                     tint = MaterialTheme.colorScheme.tertiary
                                 )
                             }
                         } else {
                             IconButton(onClick = {}) {
                                 Icon(
-                                    imageVector = Icons.Default.LocationOn,
+                                    painter = painterResource(R.drawable.map_pin),
                                     contentDescription = "location",
+                                    modifier = Modifier.size(24.dp),
                                     tint = MaterialTheme.colorScheme.tertiary
                                 )
                             }
@@ -105,16 +107,18 @@ fun NewSearch(
                         if (expanded) {
                             IconButton(onClick = { textFieldState.clearText() }) {
                                 Icon(
-                                    imageVector = Icons.Default.Clear,
+                                    painter = painterResource(R.drawable.clear),
                                     contentDescription = "clear",
+                                    modifier = Modifier.size(24.dp),
                                     tint = MaterialTheme.colorScheme.tertiary
                                 )
                             }
                         } else {
                             IconButton(onClick = {}) {
                                 Icon(
-                                    imageVector = Icons.Default.Search,
+                                    painter = painterResource(R.drawable.search),
                                     contentDescription = "search",
+                                    modifier = Modifier.size(24.dp),
                                     tint = MaterialTheme.colorScheme.tertiary
                                 )
                             }
@@ -124,7 +128,7 @@ fun NewSearch(
                     onExpandedChange = onExpandedChange,
                     placeholder = { Text("Search here", fontFamily = sora) },
                     colors = TextFieldDefaults.colors(
-                        unfocusedContainerColor = MaterialTheme.colorScheme.secondaryContainer,
+                        //unfocusedContainerColor = MaterialTheme.colorScheme.secondaryContainer,
                         focusedContainerColor = MaterialTheme.colorScheme.surface,
                         focusedTextColor = MaterialTheme.colorScheme.onSurface,
                         focusedIndicatorColor = MaterialTheme.colorScheme.primary,
@@ -138,7 +142,7 @@ fun NewSearch(
                     modifier = Modifier.fillMaxSize(),
                     contentAlignment = Alignment.Center
                 ) {
-                    CircularProgressIndicator()
+                    ContainedLoadingIndicator()
                 }
             }
             else if(textFieldState.text.isEmpty() && expanded){

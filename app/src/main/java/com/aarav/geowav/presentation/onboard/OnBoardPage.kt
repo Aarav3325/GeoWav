@@ -24,6 +24,8 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.ContainedLoadingIndicator
+import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
@@ -54,7 +56,7 @@ import com.google.accompanist.permissions.ExperimentalPermissionsApi
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
-@OptIn(ExperimentalPermissionsApi::class)
+@OptIn(ExperimentalPermissionsApi::class, ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 fun OnboardingScreen(
     navigateToAuth: () -> Unit,
@@ -232,9 +234,9 @@ fun OnboardingScreen(
 
 
                     AnimatedVisibility(clickState) {
-                        CircularProgressIndicator(
+                        ContainedLoadingIndicator(
                             modifier = Modifier.size(32.dp),
-                            color = MaterialTheme.colorScheme.onPrimary
+                            indicatorColor = MaterialTheme.colorScheme.onPrimary
                         )
                     }
                 }

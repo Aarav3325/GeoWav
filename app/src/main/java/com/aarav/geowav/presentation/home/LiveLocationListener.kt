@@ -610,7 +610,6 @@ fun RichTooltipExample(
                         horizontalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
 
-                        // Close → ONLY dismiss
                         TextButton(
                             onClick = {
                                 scope.launch { tooltipState.dismiss() }
@@ -619,7 +618,6 @@ fun RichTooltipExample(
                             Text("Close")
                         }
 
-                        // Show on Map → old close functionality
                         Button(
                             onClick = {
                                 scope.launch {

@@ -31,10 +31,6 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.LocationOn
-import androidx.compose.material.icons.filled.Place
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
@@ -542,7 +538,7 @@ fun CurrentLocationCard(city: String, lastUpdated: String, onViewMap: () -> Unit
                 contentAlignment = Alignment.Center
             ) {
                 Icon(
-                    Icons.Default.LocationOn,
+                    painter = painterResource(R.drawable.map_pin),
                     contentDescription = "map",
                     tint = Accent,
                     modifier = Modifier.size(36.dp)
@@ -658,7 +654,7 @@ fun ConnectionsList(
                     )
                 }
 
-                QuickActionButton(Icons.Default.Add, "Add", onManage)
+                QuickActionButton(R.drawable.plus_circle__1_, "Add", onManage)
             }
         }
     }
@@ -696,12 +692,10 @@ fun ConnectionStatusCard(
             modifier = Modifier.padding(12.dp)
         ) {
 
-            // -------- TOP ROW --------
             Row(
                 verticalAlignment = Alignment.CenterVertically
             ) {
 
-                // Icon block (like ZoneCard)
                 Box(
                     modifier = Modifier
                         .size(46.dp)
@@ -762,7 +756,6 @@ fun ConnectionStatusCard(
                 }
             }
 
-            // -------- LOCATION DETAILS --------
             if (isSharing && locationState != null) {
 
                 val location = when (locationState) {
@@ -1018,7 +1011,7 @@ fun AddConnectionCard(onClick: () -> Unit) {
             contentAlignment = Alignment.Center
         ) {
             Icon(
-                imageVector = Icons.Default.Add,
+                painter = painterResource(R.drawable.plus_circle__1_),
                 contentDescription = "Add",
                 tint = MaterialTheme.colorScheme.tertiary
             )
@@ -1111,8 +1104,9 @@ fun ZoneCard(zone: Place, onClick: () -> Unit) {
                     contentAlignment = Alignment.Center
                 ) {
                     Icon(
-                        Icons.Default.Place,
+                        painter = painterResource(R.drawable.map_pin),
                         contentDescription = "zone",
+                        modifier = Modifier.size(24.dp),
                         tint = MaterialTheme.colorScheme.onSurface
                     )
                 }
@@ -1160,13 +1154,13 @@ fun ZoneCard(zone: Place, onClick: () -> Unit) {
 @Composable
 fun QuickActionsRow(onAddZone: () -> Unit, onShare: () -> Unit, onAlerts: () -> Unit) {
     Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-        QuickActionButton(Icons.Default.Add, "Add Zone", onAddZone)
+        QuickActionButton(R.drawable.plus_circle__1_, "Add Zone", onAddZone)
     }
 }
 
 @Composable
 fun QuickActionButton(
-    icon: androidx.compose.ui.graphics.vector.ImageVector,
+    icon: Int,
     label: String,
     onClick: () -> Unit
 ) {
@@ -1187,10 +1181,10 @@ fun QuickActionButton(
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center
         ) {
-            Icon(
-                icon,
+            Image(
+                painter = painterResource(icon),
                 contentDescription = label,
-                tint = MaterialTheme.colorScheme.onSurface,
+                colorFilter = ColorFilter.tint(MaterialTheme.colorScheme.onSurface),
                 modifier = Modifier.size(28.dp)
             )
             Spacer(modifier = Modifier.height(4.dp))
@@ -1288,8 +1282,9 @@ fun AlertItem(alert: com.aarav.geowav.data.model.GeoAlert, isDarkThemeEnabled: B
                 contentAlignment = Alignment.Center
             ) {
                 Icon(
-                    Icons.Default.LocationOn,
+                    painter = painterResource(R.drawable.map_pin),
                     contentDescription = null,
+                    modifier = Modifier.size(24.dp),
                     tint = MaterialTheme.colorScheme.inverseOnSurface
                 )
             }

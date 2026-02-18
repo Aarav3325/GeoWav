@@ -47,9 +47,9 @@ android {
         correctErrorTypes = true
     }
 
-    composeOptions {
-        kotlinCompilerExtensionVersion = "2.0.0"
-    }
+//    composeOptions {
+//        kotlinCompilerExtensionVersion = "2.0.0"
+//    }
 }
 
 dependencies {
@@ -90,6 +90,7 @@ dependencies {
     implementation(libs.androidx.hilt.common)
     implementation(libs.androidx.compose.animation.core)
     implementation(libs.androidx.compose.ui.graphics)
+    implementation(libs.androidx.compose.material3)
     kapt("com.google.dagger:hilt-android-compiler:2.57.2")
     implementation("androidx.hilt:hilt-navigation-compose:1.3.0")
 

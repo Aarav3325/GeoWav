@@ -12,8 +12,6 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Add
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.FloatingActionButtonDefaults
@@ -142,7 +140,7 @@ fun AddLocationFAB(modifier: Modifier, onClick: () -> Unit) {
         }
     ) {
         Icon(
-            imageVector = Icons.Default.Add,
+            painter = painterResource(R.drawable.plus_circle__1_),
             contentDescription = "add location",
         )
     }
