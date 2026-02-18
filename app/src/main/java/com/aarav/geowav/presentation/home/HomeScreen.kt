@@ -331,15 +331,17 @@ fun GeoWavHomeScreen(
 
                             ViewerCardHome(viewers, navigateToObserve)
 
-
-
-
                             ObserveLiveLocationCard(
-                                homeScreenVM, uiState, false, navigateToObserve, Modifier
+                                homeScreenVM, uiState, false, false, onHideClick = {}, navigateToObserve, Modifier
                                     .height(220.dp)
                             )
                         }
                     }
+
+//                    ObserveLiveLocationCard(
+//                        homeScreenVM, uiState, false, navigateToObserve, Modifier
+//                            .height(220.dp)
+//                    )
 
 //                    ObserveLiveLocationCard(
 //                        uiState.locations

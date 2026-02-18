@@ -2,26 +2,32 @@ package com.aarav.geowav.presentation.observe
 
 import android.util.Log
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.foundation.Image
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
@@ -29,10 +35,10 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.aarav.geowav.R
 import com.aarav.geowav.core.utils.ViewerLocationState
-import com.aarav.geowav.data.model.CircleMember
-import com.aarav.geowav.data.model.User
+import com.aarav.geowav.presentation.components.MyAlertDialog
 import com.aarav.geowav.presentation.home.HomeScreenVM
 import com.aarav.geowav.presentation.home.ObserveLiveLocationCard
+import com.aarav.geowav.presentation.home.RichTooltipExample
 import com.aarav.geowav.presentation.home.ViewerTrayOverlay
 import com.aarav.geowav.presentation.theme.manrope
 
@@ -91,14 +97,38 @@ fun ObserveScreen(
 //            }
 //        }
 
+
+        var showStopDialog by remember {
+            mutableStateOf(false)
+        }
+
+        var showTray by remember {
+            mutableStateOf(true)
+        }
+
+        MyAlertDialog(
+            shouldShowDialog = showStopDialog,
+            onDismissRequest = {
+                showStopDialog = false
+            },
+            icon = R.drawable.new_logo,
+            title = "Sharing Inactive",
+            message = "Currently nobody is sharing their live location with you. You will be redirected to Home on clicking Return to Home button.",
+            confirmButtonText = "Return to Home"
+
+        ) {
+            showStopDialog = false
+            back()
+        }
+
         val hasAnyLiveSharing = uiState.locations.values.any {
             it is ViewerLocationState.NormalSharing ||
                     it is ViewerLocationState.EmergencySharing
         }
 
         LaunchedEffect(hasAnyLiveSharing) {
-            if(!hasAnyLiveSharing) {
-                back()
+            if (!hasAnyLiveSharing) {
+                showStopDialog = true
             }
         }
 
@@ -120,22 +150,46 @@ fun ObserveScreen(
 
 
         Box(
-            modifier = Modifier.fillMaxSize()
+            modifier = Modifier
+                .fillMaxSize()
                 .padding(it)
         ) {
 
-
-
-
-        AnimatedVisibility(hasAnyLiveSharing) {
-                ObserveLiveLocationCard(viewModel, uiState, true, navigateToObserve = {}, Modifier
-                    .fillMaxSize())
+            AnimatedVisibility(hasAnyLiveSharing) {
+                ObserveLiveLocationCard(
+                    viewModel, uiState, true,
+                    showTray,
+                    onHideClick = {
+                        showTray = false
+                    }, navigateToObserve = {}, Modifier
+                        .fillMaxSize()
+                )
             }
 
-            ViewerTrayOverlay(
-                Modifier.align(Alignment.BottomCenter),
-                uiState.lovedOnes
-            )
+//            RichTooltipExample(
+//                Modifier.align(Alignment.BottomCenter)
+//            )
+
+            AnimatedVisibility(!showTray) {
+                Surface(
+                    shape = CircleShape,
+                    color = MaterialTheme.colorScheme.primaryContainer,
+                    modifier = Modifier.size(54.dp)
+                        .clickable {
+                            showTray = true
+                        }
+                        .align(Alignment.TopStart).padding(6.dp)
+                ) {
+                    Image(
+                        painter = painterResource(R.drawable.tray),
+                        contentDescription = "tray",
+                        colorFilter = ColorFilter.tint(MaterialTheme.colorScheme.onPrimaryContainer),
+                        modifier = Modifier.padding(8.dp)
+                    )
+                }
+            }
+
+
         }
     }
 }

@@ -166,6 +166,7 @@ fun MyAlertDialog(
     shouldShowDialog: Boolean,
     onDismissRequest: () -> Unit,
     title: String,
+    icon: Int = R.drawable.bug_droid,
     message: String,
     confirmButtonText: String,
     onConfirmClick: () -> Unit,
@@ -198,8 +199,9 @@ fun MyAlertDialog(
             },
             icon = {
                 Icon(
-                    painter = painterResource(id = R.drawable.bug_droid),
+                    painter = painterResource(id = icon),
                     contentDescription = "Error icon",
+                    modifier = Modifier.size(24.dp),
                     tint = MaterialTheme.colorScheme.error
                 )
             },

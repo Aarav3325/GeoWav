@@ -4,6 +4,7 @@ import android.graphics.Bitmap
 import android.graphics.Canvas
 import android.graphics.Paint
 import android.util.Log
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.LinearOutSlowInEasing
 import androidx.compose.animation.core.RepeatMode
@@ -16,6 +17,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -26,10 +28,16 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.RichTooltip
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
+import androidx.compose.material3.TooltipBox
+import androidx.compose.material3.TooltipDefaults
+import androidx.compose.material3.rememberTooltipState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.State
@@ -57,11 +65,11 @@ import androidx.compose.ui.unit.sp
 import com.aarav.geowav.R
 import com.aarav.geowav.core.utils.ViewerLocationState
 import com.aarav.geowav.data.model.CircleMember
-import com.aarav.geowav.data.model.User
 import com.aarav.geowav.presentation.theme.manrope
 import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.model.BitmapDescriptor
 import com.google.android.gms.maps.model.BitmapDescriptorFactory
+import com.google.android.gms.maps.model.CameraPosition
 import com.google.android.gms.maps.model.LatLng
 import com.google.android.gms.maps.model.LatLngBounds
 import com.google.maps.android.compose.CameraMoveStartedReason
@@ -69,6 +77,7 @@ import com.google.maps.android.compose.GoogleMap
 import com.google.maps.android.compose.MapUiSettings
 import com.google.maps.android.compose.Marker
 import com.google.maps.android.compose.MarkerState
+import com.google.maps.android.compose.Polyline
 import com.google.maps.android.compose.rememberCameraPositionState
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
@@ -80,12 +89,12 @@ fun ObserveLiveLocationCard(
     viewModel: HomeScreenVM,
     uiState: HomeScreenUiState,
     isFullScreen: Boolean,
+    showTray: Boolean = false,
+    onHideClick: () -> Unit,
     navigateToObserve: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     var isUserPanning by remember { mutableStateOf(false) }
-
-    var isFollowingEmergency by remember { mutableStateOf(false) }
 
     val emergencyState = uiState.locations.values
         .firstOrNull { it is ViewerLocationState.EmergencySharing }
@@ -123,8 +132,6 @@ fun ObserveLiveLocationCard(
         }
 
 
-    var userMovedCamera by remember { mutableStateOf(false) }
-
 
     // Find if any user is in emergency state
     val emergencyUser = uiState.locations
@@ -144,11 +151,6 @@ fun ObserveLiveLocationCard(
 
     val viewerInfo = uiState.currentViewers
 
-
-    val emergencyLocation =
-        uiState.locations.values
-            .firstOrNull { it is ViewerLocationState.EmergencySharing }
-            ?.let { (it as ViewerLocationState.EmergencySharing).location }
 
 
     var uiSettings by remember {
@@ -172,8 +174,12 @@ fun ObserveLiveLocationCard(
                 16f
             )
         } else {
-            com.google.android.gms.maps.model.CameraPosition.fromLatLngZoom(
-                LatLng(20.0, 78.0),
+//            com.google.android.gms.maps.model.CameraPosition.fromLatLngZoom(
+//                LatLng(20.0, 78.0),
+//                5f
+//            )
+            CameraPosition.fromLatLngZoom(
+                LatLng(47.6677146, -122.3470447),
                 5f
             )
         }
@@ -312,7 +318,7 @@ fun ObserveLiveLocationCard(
         if (!mapLoaded) return@LaunchedEffect
 
         if (emergencyLat == null || emergencyLng == null) {
-           // isFollowingEmergency = false
+            // isFollowingEmergency = false
             return@LaunchedEffect
         }
 
@@ -376,7 +382,6 @@ fun ObserveLiveLocationCard(
 //            )
 //        }
 //    }
-
 
 
     // Detect when user manually moves the map
@@ -451,6 +456,19 @@ fun ObserveLiveLocationCard(
                 )
             }
 
+            val points = listOf(
+                LatLng(47.6677146, -122.3470447),
+                LatLng(47.6442757, -122.2814693)
+            )
+
+            Polyline(
+                points = points,
+                color = Color.Red,
+                width = 8f,
+                geodesic = false // optional
+            )
+
+
             emergencyUser?.let { (_, state) ->
                 val emergencyState = state as ViewerLocationState.EmergencySharing
                 val loc = emergencyState.location
@@ -470,7 +488,34 @@ fun ObserveLiveLocationCard(
 //        }
 
 
+        if (!isFullScreen) {
+            FullScreenIcon(
+                Modifier
+                    .align(Alignment.TopEnd)
+                    .padding(6.dp)
+                    .clickable {
+                        navigateToObserve()
+                    }
+            )
+        }
 
+        AnimatedVisibility (isFullScreen && showTray) {
+            ViewerTrayOverlay(
+                Modifier.align(Alignment.TopCenter).padding(vertical = 16.dp),
+                uiState.lovedOnes,
+                uiState.locations,
+                onHideClick = onHideClick
+            ) {
+                scope.launch {
+                    cameraPositionState.animate(
+                        CameraUpdateFactory.newLatLngZoom(
+                            it,
+                            16f
+                        )
+                    )
+                }
+            }
+        }
 
         if (
             isFullScreen &&
@@ -505,6 +550,124 @@ fun ObserveLiveLocationCard(
 
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun RichTooltipExample(
+    modifier: Modifier = Modifier,
+    conn: CircleMember,
+    viewerState: ViewerLocationState?,
+    onClick: (LatLng) -> Unit
+) {
+    val tooltipState = rememberTooltipState(
+        isPersistent = true
+    )
+    val scope = rememberCoroutineScope()
+
+
+    val state = viewerState as? ViewerLocationState.NormalSharing
+    val location = state?.location
+
+    TooltipBox(
+        modifier = modifier,
+        positionProvider = TooltipDefaults.rememberRichTooltipPositionProvider(
+            spacingBetweenTooltipAndAnchor = 16.dp
+        ),
+        tooltip = {
+            RichTooltip(
+                title = { Text(conn.profileName) },
+                action = {
+                    TextButton(
+                        contentPadding = PaddingValues(0.dp),
+                        onClick = {
+                            scope.launch {
+                                tooltipState.dismiss()
+
+                                location?.let {
+                                    onClick(
+                                        LatLng(it.lat, it.lng)
+                                    )
+                                }
+                            }
+                        }
+                    ) {
+                        Text("Close")
+                    }
+                }
+            ) {
+                Column() {
+                    Text(
+                        "${conn.profileName} is currently sharing their location with you",
+                        fontFamily = manrope,
+                        fontSize = 12.sp,
+                        color = MaterialTheme.colorScheme.onSurface,
+                        fontWeight = FontWeight.SemiBold
+                    )
+
+                    Text(
+                        "Lat: ${state?.location?.lat}, Lng: ${state?.location?.lng}",
+                        fontFamily = manrope,
+                        fontSize = 12.sp,
+                        color = MaterialTheme.colorScheme.onSurface,
+                        fontWeight = FontWeight.SemiBold
+                    )
+                }
+            }
+        },
+        state = tooltipState
+    ) {
+        Column(
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.spacedBy(6.dp),
+            modifier = modifier.clickable(
+                indication = null,
+                interactionSource = null
+            ) {
+                scope.launch {
+                    tooltipState.show()
+                }
+            }
+        ) {
+            Box(
+                modifier = Modifier
+                    .size(54.dp)
+                    .clip(CircleShape)
+                    .background(
+                        Brush.radialGradient(
+                            listOf(
+                                MaterialTheme.colorScheme.onPrimary,
+                                MaterialTheme.colorScheme.inversePrimary
+                            )
+                        )
+                    ),
+                contentAlignment = Alignment.Center
+            ) {
+                Text(
+                    conn.alias?.take(1) ?: conn.profileName.take(1),
+                    color = MaterialTheme.colorScheme.onBackground,
+                    style = MaterialTheme.typography.headlineSmall.copy(
+                        fontWeight = FontWeight.W600,
+                        fontFamily = manrope
+                    ),
+                    fontSize = 24.sp
+                )
+            }
+
+            Text(
+                conn.alias ?: conn.profileName,
+                fontSize = 14.sp,
+                textAlign = TextAlign.Center,
+                color = MaterialTheme.colorScheme.onBackground,
+                style = MaterialTheme.typography.bodyMedium.copy(
+                    fontFamily = manrope,
+                    fontWeight = FontWeight.SemiBold
+                ),
+                maxLines = 1
+            )
+        }
+    }
+}
+
+
 /*
 Text(
                 "Watching: $text",
@@ -517,66 +680,54 @@ Text(
 @Composable
 fun ViewerTrayOverlay(
     modifier: Modifier = Modifier,
-    viewerList: List<CircleMember>
+    viewerList: List<CircleMember>,
+    locations: Map<String, ViewerLocationState>,
+    onHideClick: () -> Unit,
+    onClick: (LatLng) -> Unit
 ) {
+    val filtered = viewerList.filter {
+        it.id in locations.keys.toSet()
+    }
+
     Card(
         shape = MaterialTheme.shapes.large,
         colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceContainerHigh
+            containerColor = MaterialTheme.colorScheme.surfaceBright.copy(0.85f)
         ),
         modifier = modifier
+            .padding(start = 16.dp, end = 16.dp)
             .fillMaxWidth()
-            .padding(start = 16.dp, end = 16.dp, bottom = 36.dp)
     ) {
-        Row(
-            verticalAlignment = Alignment.CenterVertically,
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(vertical = 8.dp, horizontal = 16.dp)
+        Box(
+            modifier = Modifier.fillMaxWidth()
         ) {
-            viewerList.forEach { conn ->
-                Column(
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                    verticalArrangement = Arrangement.spacedBy(6.dp)
-                ) {
-                    Box(
-                        modifier = Modifier
-                            .size(54.dp)
-                            .clip(CircleShape)
-                            .background(
-                                Brush.radialGradient(
-                                    listOf(
-                                        MaterialTheme.colorScheme.onPrimary,
-                                        MaterialTheme.colorScheme.inversePrimary
-                                    )
-                                )
-                            ),
-                        contentAlignment = Alignment.BottomEnd
-                    ) {
-                        Text(
-                            conn.alias?.take(1) ?: conn.profileName.take(1),
-                            color = MaterialTheme.colorScheme.onBackground,
-                            style = MaterialTheme.typography.headlineSmall.copy(
-                                fontWeight = FontWeight.W600,
-                                fontFamily = manrope
-                            ),
-                            fontSize = 24.sp,
-                            modifier = Modifier.align(Alignment.Center)
-                        )
-                    }
-
-                    Text(
-                        conn.alias ?: conn.profileName,
-                        fontSize = 14.sp,
-                        textAlign = TextAlign.Center,
-                        color = MaterialTheme.colorScheme.onBackground,
-                        style = MaterialTheme.typography.bodyMedium.copy(
-                            fontFamily = manrope,
-                            fontWeight = FontWeight.SemiBold
-                        ),
-                        maxLines = 1
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(vertical = 8.dp, horizontal = 16.dp)
+            ) {
+                filtered.forEach { conn ->
+                    RichTooltipExample(
+                        conn = conn,
+                        viewerState = locations[conn.id],
+                        onClick = onClick
                     )
                 }
+            }
+
+            TextButton(
+                onClick = onHideClick,
+                modifier = Modifier
+                    .padding(top = 68.dp).align(Alignment.BottomEnd)
+            ) {
+                Text(
+                    "Hide Tray",
+                    fontFamily = manrope,
+                    color = MaterialTheme.colorScheme.primary,
+                    fontWeight = FontWeight.SemiBold,
+                    fontSize = 14.sp
+                )
             }
         }
     }
@@ -611,9 +762,9 @@ fun ViewerCardHome(
         modifier = Modifier
             .fillMaxWidth()
             .padding(bottom = 16.dp)
-            .clickable {
-                navigateToObserve()
-            }
+//            .clickable {
+//                navigateToObserve()
+//            }
     ) {
         Row(
             verticalAlignment = Alignment.CenterVertically,
@@ -858,5 +1009,34 @@ fun UserMarker(
         zIndex = if (isEmergency) 2f else 1f
     )
 }
-    
-    
+
+
+@Preview
+@Composable
+fun FullScreenIcon(
+    modifier: Modifier = Modifier
+) {
+    Box(
+        modifier = modifier
+            .size(42.dp)
+            .clip(CircleShape)
+    ) {
+        Box(
+            modifier = Modifier
+                .matchParentSize()
+                .background(
+                    MaterialTheme.colorScheme.surfaceContainerHigh.copy(alpha = 0.6f)
+                )
+        )
+
+        Icon(
+            painter = painterResource(R.drawable.full_screen),
+            contentDescription = "full_screen",
+            tint = MaterialTheme.colorScheme.onSurface,
+            modifier = Modifier
+                .size(24.dp)
+                .align(Alignment.Center)
+        )
+    }
+
+}
