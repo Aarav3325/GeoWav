@@ -3,6 +3,7 @@ package com.aarav.geowav.data.model
 data class LocationUpdates(
     val lat: Double = 0.0,
     val lng: Double = 0.0,
+    val startedAt: Long = 0L,
     val timestamp: Long = 0L,
 )
 

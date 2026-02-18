@@ -174,11 +174,11 @@ fun ObserveScreen(
                 Surface(
                     shape = CircleShape,
                     color = MaterialTheme.colorScheme.primaryContainer,
-                    modifier = Modifier.size(54.dp)
+                    modifier = Modifier.size(62.dp)
                         .clickable {
                             showTray = true
                         }
-                        .align(Alignment.TopStart).padding(6.dp)
+                        .align(Alignment.TopStart).padding(8.dp)
                 ) {
                     Image(
                         painter = painterResource(R.drawable.tray),

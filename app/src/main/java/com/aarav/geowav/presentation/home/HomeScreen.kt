@@ -27,8 +27,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.wrapContentHeight
-import androidx.compose.foundation.lazy.LazyRow
-import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -41,8 +39,10 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.Divider
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilledTonalButton
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -332,7 +332,13 @@ fun GeoWavHomeScreen(
                             ViewerCardHome(viewers, navigateToObserve)
 
                             ObserveLiveLocationCard(
-                                homeScreenVM, uiState, false, false, onHideClick = {}, navigateToObserve, Modifier
+                                homeScreenVM,
+                                uiState,
+                                false,
+                                false,
+                                onHideClick = {},
+                                navigateToObserve,
+                                Modifier
                                     .height(220.dp)
                             )
                         }
@@ -354,10 +360,11 @@ fun GeoWavHomeScreen(
 //                    }
 
 
-                    ConnectionsRow(
+                    ConnectionsList(
                         title = "Your Circle",
                         connections = uiState.lovedOnes,
-                        onAdd = navigateToCircle
+                        locationStates = uiState.locations,
+                        onManage = navigateToCircle
                     )
 
                     ActiveZonesSection(
@@ -375,7 +382,7 @@ fun GeoWavHomeScreen(
 
                     Row(
                         modifier = Modifier
-                            .padding(vertical = 6.dp)
+                            .padding(vertical = 0.dp)
                             .fillMaxWidth(),
                         verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.SpaceBetween
@@ -573,11 +580,19 @@ fun CurrentLocationCard(city: String, lastUpdated: String, onViewMap: () -> Unit
 }
 
 @Composable
-fun ConnectionsRow(title: String, connections: List<CircleMember>, onAdd: () -> Unit) {
+fun ConnectionsList(
+    title: String,
+    connections: List<CircleMember>,
+    locationStates: Map<String, ViewerLocationState>,
+    onManage: () -> Unit
+) {
 
     Column(
-        modifier = Modifier.padding(top = 6.dp, bottom = 8.dp)
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 8.dp)
     ) {
+
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceBetween,
@@ -593,7 +608,8 @@ fun ConnectionsRow(title: String, connections: List<CircleMember>, onAdd: () -> 
                 fontSize = 16.sp,
                 modifier = Modifier.weight(1.0f)
             )
-            TextButton(onClick = onAdd) {
+
+            TextButton(onClick = onManage) {
                 Text(
                     "Manage",
                     fontSize = 16.sp,
@@ -603,52 +619,343 @@ fun ConnectionsRow(title: String, connections: List<CircleMember>, onAdd: () -> 
             }
         }
 
-//        val connectionItem = GeoConnection(
-//            id = 1,
-//            phoneNumber = "9558030582",
-//            name = "Test"
-//        )
+        Spacer(modifier = Modifier.height(6.dp))
 
-//        val demoList = listOf<GeoConnection>(connectionItem)
-
-        LazyRow(
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(0.dp),
-            modifier = Modifier.padding(top = 8.dp)
+        Column(
+            verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
-            if (connections.isNullOrEmpty()) {
-                item {
-                    Column(
-                        modifier = Modifier
-                            .fillParentMaxWidth()
-                            .height(50.dp),
-                        horizontalAlignment = Alignment.CenterHorizontally,
-                        verticalArrangement = Arrangement.spacedBy(4.dp)
-                    ) {
-                        Image(
-                            painter = painterResource(R.drawable.empty),
-                            contentDescription = "empty icon",
-                            modifier = Modifier.size(24.dp),
-                            colorFilter = ColorFilter.tint(MaterialTheme.colorScheme.secondary)
-                        )
 
-                        Text(
-                            "No connections yet",
-                            fontFamily = sora,
-                            color = MaterialTheme.colorScheme.onBackground,
-                            fontSize = 16.sp
-                        )
-                    }
+            if (connections.isEmpty()) {
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth(),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.spacedBy(4.dp)
+                ) {
+                    Image(
+                        painter = painterResource(R.drawable.empty),
+                        contentDescription = "empty icon",
+                        modifier = Modifier.size(24.dp),
+                        colorFilter = ColorFilter.tint(MaterialTheme.colorScheme.secondary)
+                    )
+
+                    Text(
+                        "No connections yet",
+                        fontFamily = sora,
+                        color = MaterialTheme.colorScheme.onBackground,
+                        fontSize = 16.sp
+                    )
                 }
+
             } else {
-                items(connections) { conn ->
-                    ConnectionCard(conn)
+
+                connections.forEach { conn ->
+                    val state = locationStates[conn.id]
+
+                    ConnectionStatusCard(
+                        member = conn,
+                        locationState = state
+                    )
                 }
+
+                QuickActionButton(Icons.Default.Add, "Add", onManage)
             }
-            item { AddConnectionCard(onClick = onAdd) }
         }
     }
 }
+
+@Composable
+fun ConnectionStatusCard(
+    member: CircleMember,
+    locationState: ViewerLocationState?
+) {
+
+    val name = member.alias ?: member.profileName
+
+    val (statusText, statusColor, isSharing) = when (locationState) {
+        is ViewerLocationState.EmergencySharing ->
+            Triple("Emergency", MaterialTheme.colorScheme.error, true)
+
+        is ViewerLocationState.NormalSharing ->
+            Triple("Live", MaterialTheme.colorScheme.primary, true)
+
+        else ->
+            Triple("Offline", MaterialTheme.colorScheme.outline, false)
+    }
+
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surfaceContainer
+        ),
+        shape = RoundedCornerShape(16.dp),
+        elevation = CardDefaults.cardElevation(4.dp)
+    ) {
+
+        Column(
+            modifier = Modifier.padding(12.dp)
+        ) {
+
+            // -------- TOP ROW --------
+            Row(
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+
+                // Icon block (like ZoneCard)
+                Box(
+                    modifier = Modifier
+                        .size(46.dp)
+                        .clip(CircleShape)
+                        .background(
+                            statusColor.copy(alpha = 0.12f)
+                        ),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Icon(
+                        painter = painterResource(R.drawable.new_logo),
+                        contentDescription = null,
+                        tint = statusColor,
+                        modifier = Modifier.size(36.dp)
+                    )
+                }
+
+                Spacer(Modifier.width(12.dp))
+
+                Column(
+                    modifier = Modifier.weight(1f)
+                ) {
+                    Text(
+                        text = name,
+                        fontFamily = manrope,
+                        fontSize = 15.sp,
+                        fontWeight = FontWeight.SemiBold,
+                        color = MaterialTheme.colorScheme.onSurface
+                    )
+
+                    Spacer(Modifier.height(0.dp))
+
+                    Text(
+                        text = statusText,
+                        fontFamily = manrope,
+                        fontSize = 12.sp,
+                        fontWeight = FontWeight.Medium,
+                        color = statusColor
+                    )
+                }
+
+                // Status label on right
+                Surface(
+                    shape = RoundedCornerShape(25),
+                    color = statusColor.copy(alpha = 0.12f)
+                ) {
+                    Text(
+                        text = statusText,
+                        modifier = Modifier.padding(
+                            horizontal = 12.dp,
+                            vertical = 4.dp
+                        ),
+                        fontFamily = manrope,
+                        fontSize = 12.sp,
+                        fontWeight = FontWeight.SemiBold,
+                        color = statusColor
+                    )
+                }
+            }
+
+            // -------- LOCATION DETAILS --------
+            if (isSharing && locationState != null) {
+
+                val location = when (locationState) {
+                    is ViewerLocationState.NormalSharing -> locationState.location
+                    is ViewerLocationState.EmergencySharing -> locationState.location
+                    else -> null
+                }
+
+                location?.let {
+
+                    Spacer(Modifier.height(14.dp))
+
+                    HorizontalDivider(
+                        color = MaterialTheme.colorScheme.outline.copy(alpha = 0.2f)
+                    )
+
+                    Spacer(Modifier.height(14.dp))
+
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        InfoColumn("Latitude", it.lat.toString())
+                        InfoColumn("Longitude", it.lng.toString())
+                    }
+
+                    Spacer(Modifier.height(10.dp))
+
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        Text(
+                            text = "Updated ${formatTime(it.timestamp)}",
+                            fontFamily = manrope,
+                            fontSize = 12.sp,
+                            fontWeight = FontWeight.Medium,
+                            color = MaterialTheme.colorScheme.outline
+                        )
+                        Text(
+                            text = "Started ${formatTime(it.startedAt)}",
+                            fontFamily = manrope,
+                            fontSize = 12.sp,
+                            fontWeight = FontWeight.Medium,
+                            color = MaterialTheme.colorScheme.outline
+                        )
+                    }
+                }
+            }
+        }
+    }
+}
+
+
+//@Composable
+//fun ConnectionStatusCard(
+//    member: CircleMember,
+//    locationState: ViewerLocationState?
+//) {
+//
+//    val name = member.alias ?: member.profileName
+//
+//    val (statusText, statusColor) = when (locationState) {
+//        is ViewerLocationState.EmergencySharing ->
+//            "Emergency" to MaterialTheme.colorScheme.error
+//
+//        is ViewerLocationState.NormalSharing ->
+//            "Live" to MaterialTheme.colorScheme.primary
+//
+//        else ->
+//            "Not Sharing" to MaterialTheme.colorScheme.outline
+//    }
+//
+//        Card(
+//            shape = RoundedCornerShape(16.dp),
+//            colors = CardDefaults.cardColors(
+//                containerColor = MaterialTheme.colorScheme.surfaceContainerHigh
+//            ),
+//            elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
+//            modifier = Modifier.fillMaxWidth()
+//        ) {
+//
+//            Column(
+//                modifier = Modifier
+//            ) {
+//
+//                // ---------- TOP ROW ----------
+//                Row(
+//                    verticalAlignment = Alignment.CenterVertically,
+//                    horizontalArrangement = Arrangement.SpaceBetween,
+//                    modifier = Modifier.fillMaxWidth()
+//                        .padding(vertical = 8.dp, horizontal = 12.dp)
+//                ) {
+//
+//                    Column {
+//                        Text(
+//                            text = name,
+//                            fontFamily = manrope,
+//                            fontSize = 18.sp,
+//                            fontWeight = FontWeight.SemiBold,
+//                            color = MaterialTheme.colorScheme.onSurface
+//                        )
+//
+//                        Spacer(Modifier.height(2.dp))
+//
+//                        Text(
+//                            text = statusText,
+//                            fontFamily = manrope,
+//                            fontSize = 13.sp,
+//                            fontWeight = FontWeight.Medium,
+//                            color = statusColor
+//                        )
+//                    }
+//
+//                    // Status Indicator Dot
+//                    Box(
+//                        modifier = Modifier
+//                            .size(12.dp)
+//                            .background(statusColor, CircleShape)
+//                    )
+//                }
+//
+//                // ---------- LOCATION INFO ----------
+//                if (locationState is ViewerLocationState.NormalSharing ||
+//                    locationState is ViewerLocationState.EmergencySharing
+//                ) {
+//
+//                    Spacer(Modifier.height(14.dp))
+//
+//                    Divider(
+//                        color = MaterialTheme.colorScheme.outline.copy(alpha = 0.2f)
+//                    )
+//
+//                    Spacer(Modifier.height(14.dp))
+//
+//                    val locationData = when (locationState) {
+//                        is ViewerLocationState.NormalSharing -> locationState.location
+//                        is ViewerLocationState.EmergencySharing -> locationState.location
+//                        else -> null
+//                    }
+//
+//                    locationData?.let { location ->
+//
+//                        val lat = location.lat
+//                        val lng = location.lng
+//                        val time = formatTime(location.timestamp)
+//                        Row(
+//                            modifier = Modifier.fillMaxWidth(),
+//                            horizontalArrangement = Arrangement.SpaceBetween
+//                        ) {
+//                            InfoColumn("Latitude", lat.toString())
+//                            InfoColumn("Longitude", lng.toString())
+//                        }
+//
+//                        Spacer(Modifier.height(12.dp))
+//
+//                        Text(
+//                            text = "Updated $time",
+//                            fontFamily = manrope,
+//                            fontSize = 12.sp,
+//                            fontWeight = FontWeight.Medium,
+//                            color = MaterialTheme.colorScheme.outline
+//                        )
+//                    }
+//                }
+//
+//            }
+//        }
+//}
+
+@Composable
+private fun InfoColumn(label: String, value: String) {
+    Column {
+        Text(
+            text = label,
+            fontFamily = manrope,
+            fontSize = 11.sp,
+            fontWeight = FontWeight.Medium,
+            color = MaterialTheme.colorScheme.outline
+        )
+
+        Spacer(Modifier.height(2.dp))
+
+        Text(
+            text = value,
+            fontFamily = manrope,
+            fontSize = 14.sp,
+            fontWeight = FontWeight.SemiBold,
+            color = MaterialTheme.colorScheme.onSurface
+        )
+    }
+}
+
 
 @Composable
 fun ConnectionCard(conn: CircleMember) {

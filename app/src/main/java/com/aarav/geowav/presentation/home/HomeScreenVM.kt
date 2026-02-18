@@ -17,6 +17,8 @@ import com.aarav.geowav.data.repository.GeoConnectionRepositoryImpl
 import com.aarav.geowav.data.repository.PlaceRepositoryImpl
 import com.aarav.geowav.domain.repository.CircleRepository
 import com.aarav.geowav.domain.repository.ViewerLocationRepository
+import com.google.android.gms.maps.model.LatLng
+import com.google.maps.android.SphericalUtil
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -72,14 +74,34 @@ class HomeScreenVM @Inject constructor(
 
                             when (viewerState) {
 
-                                is ViewerLocationState.NormalSharing,
+                                is ViewerLocationState.NormalSharing -> {
+
+                                    onUserLocationUpdate(
+                                        userId = userId,
+                                        lat = viewerState.location.lat,
+                                        lng = viewerState.location.lng
+                                    )
+
+                                    state.copy(
+                                        locations = state.locations + (userId to viewerState)
+                                    )
+                                }
+
                                 is ViewerLocationState.EmergencySharing -> {
+                                    onUserLocationUpdate(
+                                        userId = userId,
+                                        lat = viewerState.location.lat,
+                                        lng = viewerState.location.lng
+                                    )
+
                                     state.copy(
                                         locations = state.locations + (userId to viewerState)
                                     )
                                 }
 
                                 ViewerLocationState.Blocked -> {
+                                    onSharingEnded(userId)
+
                                     state.copy(
                                         locations = state.locations - userId
                                     )
@@ -93,6 +115,68 @@ class HomeScreenVM @Inject constructor(
             observerJobs[userId] = job
         }
     }
+
+    fun onUserLocationUpdate(
+        userId: String,
+        lat: Double,
+        lng: Double
+    ) {
+        val newPoint = LatLng(lat, lng)
+
+        _uiState.update { current ->
+
+            val existing = current.userPaths[userId].orEmpty()
+
+            if (existing.isNotEmpty()) {
+                val last = existing.last()
+                val distance = SphericalUtil
+                    .computeDistanceBetween(last, newPoint)
+
+                if (distance < 5) {
+                    return@update current
+                }
+            }
+
+            current.copy(
+                userPaths = current.userPaths + (userId to (existing + newPoint))
+            )
+        }
+    }
+
+    fun onSharingEnded(userId: String) {
+        _uiState.update { current ->
+
+            val existing = current.userPaths[userId] ?: return@update current
+
+            if (existing.size < 2) return@update current
+
+            val compressed = listOf(
+                existing.first(),
+                existing.last()
+            )
+
+            Log.i("POLYLINE", "start: ${compressed.first()} and last: ${compressed.last()}")
+
+            current.copy(
+                userPaths = current.userPaths + (userId to compressed)
+            )
+        }
+    }
+
+
+    /* Add this in order to reset paths for new session
+
+    val existingPath = _uiState.value.userPaths[userId]
+
+if (existingPath?.size == 2) {
+    // Previous session summary exists → reset for new session
+    _uiState.update {
+        it.copy(
+            userPaths = it.userPaths - userId
+        )
+    }
+}
+*/
 
     // job clean up when location sharing is not active
     fun cleanupRemovedUsers(activeUserIds: Set<String>) {
@@ -242,6 +326,7 @@ data class HomeScreenUiState(
     val connectionsList: List<GeoConnection> = emptyList(),
     val lovedOnes: List<CircleMember> = emptyList(),
     val locations: Map<String, ViewerLocationState> = emptyMap(),
+    val userPaths: Map<String, List<LatLng>> = emptyMap(),
     val currentViewers: List<User> = emptyList(),
     val alertsList: List<GeoAlert> = emptyList(),
     val userAvatar: String? = null,

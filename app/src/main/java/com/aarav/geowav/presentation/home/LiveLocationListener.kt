@@ -14,6 +14,7 @@ import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -26,9 +27,12 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.Divider
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.RichTooltip
@@ -70,8 +74,10 @@ import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.model.BitmapDescriptor
 import com.google.android.gms.maps.model.BitmapDescriptorFactory
 import com.google.android.gms.maps.model.CameraPosition
+import com.google.android.gms.maps.model.JointType
 import com.google.android.gms.maps.model.LatLng
 import com.google.android.gms.maps.model.LatLngBounds
+import com.google.android.gms.maps.model.RoundCap
 import com.google.maps.android.compose.CameraMoveStartedReason
 import com.google.maps.android.compose.GoogleMap
 import com.google.maps.android.compose.MapUiSettings
@@ -456,17 +462,30 @@ fun ObserveLiveLocationCard(
                 )
             }
 
-            val points = listOf(
-                LatLng(47.6677146, -122.3470447),
-                LatLng(47.6442757, -122.2814693)
-            )
+            uiState.userPaths.forEach { (userId, path) ->
 
-            Polyline(
-                points = points,
-                color = Color.Red,
-                width = 8f,
-                geodesic = false // optional
-            )
+                val state = uiState.locations[userId]
+
+                if (path.size > 1 && state != null) {
+
+                    val isEmergency =
+                        state is ViewerLocationState.EmergencySharing
+
+                    Polyline(
+                        points = path,
+                        color = if (isEmergency)
+                            Color.Red
+                        else
+                            Color.Blue,
+                        width = if (isEmergency) 10f else 6f,
+                        jointType = JointType.ROUND,
+                        startCap = RoundCap(),
+                        endCap = RoundCap(),
+                        zIndex = if (isEmergency) 1f else 0f
+                    )
+                }
+            }
+
 
 
             emergencyUser?.let { (_, state) ->
@@ -536,8 +555,8 @@ fun ObserveLiveLocationCard(
                     }
                 },
                 modifier = Modifier
-                    .align(Alignment.TopEnd)
-                    .padding(16.dp),
+                    .align(Alignment.BottomStart)
+                    .padding(vertical = 36.dp, horizontal = 24.dp),
                 containerColor = MaterialTheme.colorScheme.primary
             ) {
                 Icon(
@@ -549,7 +568,6 @@ fun ObserveLiveLocationCard(
     }
 
 }
-
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun RichTooltipExample(
@@ -558,78 +576,129 @@ fun RichTooltipExample(
     viewerState: ViewerLocationState?,
     onClick: (LatLng) -> Unit
 ) {
-    val tooltipState = rememberTooltipState(
-        isPersistent = true
-    )
+    val tooltipState = rememberTooltipState(isPersistent = true)
     val scope = rememberCoroutineScope()
 
+    val location = when (viewerState) {
+        is ViewerLocationState.NormalSharing -> viewerState.location
+        is ViewerLocationState.EmergencySharing -> viewerState.location
+        else -> null
+    }
 
-    val state = viewerState as? ViewerLocationState.NormalSharing
-    val location = state?.location
 
     TooltipBox(
         modifier = modifier,
         positionProvider = TooltipDefaults.rememberRichTooltipPositionProvider(
-            spacingBetweenTooltipAndAnchor = 16.dp
+            spacingBetweenTooltipAndAnchor = 24.dp
         ),
+        state = tooltipState,
         tooltip = {
             RichTooltip(
-                title = { Text(conn.profileName) },
+                shape = RoundedCornerShape(20.dp),
+                tonalElevation = 6.dp,
+                title = {
+                    Text(
+                        text = conn.profileName,
+                        style = MaterialTheme.typography.titleMedium.copy(
+                            fontWeight = FontWeight.Bold,
+                            fontFamily = manrope
+                        )
+                    )
+                },
                 action = {
-                    TextButton(
-                        contentPadding = PaddingValues(0.dp),
-                        onClick = {
-                            scope.launch {
-                                tooltipState.dismiss()
-
-                                location?.let {
-                                    onClick(
-                                        LatLng(it.lat, it.lng)
-                                    )
-                                }
-                            }
-                        }
+                    Row(
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
-                        Text("Close")
+
+                        // Close → ONLY dismiss
+                        TextButton(
+                            onClick = {
+                                scope.launch { tooltipState.dismiss() }
+                            }
+                        ) {
+                            Text("Close")
+                        }
+
+                        // Show on Map → old close functionality
+                        Button(
+                            onClick = {
+                                scope.launch {
+                                    tooltipState.dismiss()
+                                    location?.let {
+                                        onClick(LatLng(it.lat, it.lng))
+                                    }
+                                }
+                            },
+                            shape = RoundedCornerShape(12.dp)
+                        ) {
+                            Text("Show on Map")
+                        }
                     }
                 }
             ) {
-                Column() {
+                Column(
+                    modifier = Modifier
+                        .padding(top = 4.dp),
+                    verticalArrangement = Arrangement.spacedBy(6.dp)
+                ) {
+
                     Text(
-                        "${conn.profileName} is currently sharing their location with you",
-                        fontFamily = manrope,
-                        fontSize = 12.sp,
-                        color = MaterialTheme.colorScheme.onSurface,
-                        fontWeight = FontWeight.SemiBold
+                        text = "${conn.profileName} is currently sharing their location with you",
+                        style = MaterialTheme.typography.bodyMedium.copy(
+                            fontFamily = manrope,
+                            fontWeight = FontWeight.Medium
+                        ),
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+
+                    HorizontalDivider(
+                        modifier = Modifier.padding(vertical = 4.dp),
+                        thickness = 0.6.dp,
+                        color = MaterialTheme.colorScheme.outlineVariant
                     )
 
                     Text(
-                        "Lat: ${state?.location?.lat}, Lng: ${state?.location?.lng}",
-                        fontFamily = manrope,
-                        fontSize = 12.sp,
-                        color = MaterialTheme.colorScheme.onSurface,
-                        fontWeight = FontWeight.SemiBold
+                        text = "Lat: ${location?.lat}\nLng: ${location?.lng}",
+                        style = MaterialTheme.typography.bodySmall.copy(
+                            fontFamily = manrope
+                        ),
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+
+                    Text(
+                        text = "Started: ${formatTime(location?.startedAt ?: System.currentTimeMillis())}",
+                        style = MaterialTheme.typography.bodySmall.copy(
+                            fontFamily = manrope
+                        ),
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+
+                    Text(
+                        text = "Last Updated: ${formatTime(location?.timestamp ?: System.currentTimeMillis())}",
+                        style = MaterialTheme.typography.bodySmall.copy(
+                            fontFamily = manrope
+                        ),
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 }
             }
-        },
-        state = tooltipState
+        }
     ) {
         Column(
             horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.spacedBy(6.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp),
             modifier = modifier.clickable(
                 indication = null,
-                interactionSource = null
+                interactionSource = remember { MutableInteractionSource() }
             ) {
-                scope.launch {
-                    tooltipState.show()
-                }
+                scope.launch { tooltipState.show() }
             }
         ) {
+
+            // Avatar
             Box(
                 modifier = Modifier
-                    .size(54.dp)
+                    .size(64.dp)
                     .clip(CircleShape)
                     .background(
                         Brush.radialGradient(
@@ -642,30 +711,30 @@ fun RichTooltipExample(
                 contentAlignment = Alignment.Center
             ) {
                 Text(
-                    conn.alias?.take(1) ?: conn.profileName.take(1),
-                    color = MaterialTheme.colorScheme.onBackground,
+                    text = conn.alias?.take(1) ?: conn.profileName.take(1),
                     style = MaterialTheme.typography.headlineSmall.copy(
-                        fontWeight = FontWeight.W600,
+                        fontWeight = FontWeight.Bold,
                         fontFamily = manrope
                     ),
-                    fontSize = 24.sp
+                    color = MaterialTheme.colorScheme.onBackground
                 )
             }
 
+            // Name
             Text(
-                conn.alias ?: conn.profileName,
-                fontSize = 14.sp,
-                textAlign = TextAlign.Center,
-                color = MaterialTheme.colorScheme.onBackground,
+                text = conn.alias ?: conn.profileName,
                 style = MaterialTheme.typography.bodyMedium.copy(
                     fontFamily = manrope,
                     fontWeight = FontWeight.SemiBold
                 ),
-                maxLines = 1
+                color = MaterialTheme.colorScheme.onBackground,
+                maxLines = 1,
+                textAlign = TextAlign.Center
             )
         }
     }
 }
+
 
 
 /*
@@ -1039,4 +1108,24 @@ fun FullScreenIcon(
         )
     }
 
+}
+
+fun formatTime(timestamp: Long): String {
+    val diff = System.currentTimeMillis() - timestamp
+
+    val seconds = diff / 1000
+    val minutes = seconds / 60
+    val hours = minutes / 60
+    val days = hours / 24
+
+    return when {
+        seconds < 60 -> "Just now"
+        minutes < 60 -> "$minutes min ago"
+        hours < 24 -> "$hours hr ago"
+        days < 7 -> "$days day${if (days > 1) "s" else ""} ago"
+        else -> {
+            val sdf = java.text.SimpleDateFormat("dd MMM yyyy", java.util.Locale.getDefault())
+            sdf.format(java.util.Date(timestamp))
+        }
+    }
 }

@@ -125,6 +125,8 @@ dependencies {
     implementation("androidx.lifecycle:lifecycle-runtime-compose:2.8.6")
 
     implementation("com.google.accompanist:accompanist-permissions:0.37.3")
+    implementation("com.google.maps.android:android-maps-utils:2.3.0")
+
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)
     implementation(libs.androidx.activity.compose)
