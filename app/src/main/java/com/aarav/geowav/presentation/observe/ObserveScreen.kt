@@ -61,7 +61,7 @@ fun ObserveScreen(
                     Text(
                         text = "Observe Loved Ones",
                         fontFamily = manrope,
-                        fontSize = 24.sp,
+                        fontSize = 20.sp,
                         fontWeight = FontWeight.Bold,
                         modifier = Modifier
                     )

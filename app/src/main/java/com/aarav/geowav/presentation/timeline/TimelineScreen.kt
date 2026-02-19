@@ -80,7 +80,7 @@ fun TimelineScreen(
                     Text(
                         text = "Timeline of $name",
                         fontFamily = manrope,
-                        fontSize = 24.sp,
+                        fontSize = 20.sp,
                         fontWeight = FontWeight.Bold,
                         modifier = Modifier
                     )

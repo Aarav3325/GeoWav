@@ -1,6 +1,10 @@
 package com.aarav.geowav.presentation.timeline
 
 // Your custom font
+import android.graphics.Bitmap
+import android.graphics.Canvas
+import android.graphics.Color
+import android.graphics.Paint
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -40,7 +44,9 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.ColorFilter
+import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
@@ -53,6 +59,8 @@ import com.aarav.geowav.data.model.toTimelineItem
 import com.aarav.geowav.presentation.theme.GeoWavTheme
 import com.aarav.geowav.presentation.theme.manrope
 import com.google.android.gms.maps.CameraUpdateFactory
+import com.google.android.gms.maps.model.BitmapDescriptor
+import com.google.android.gms.maps.model.BitmapDescriptorFactory
 import com.google.android.gms.maps.model.LatLng
 import com.google.maps.android.compose.GoogleMap
 import com.google.maps.android.compose.MapUiSettings
@@ -137,15 +145,27 @@ fun TimelineMapPreview(
                     val start = LatLng(session.startLat, session.startLng)
                     val end = LatLng(session.endLat, session.endLng)
 
+                    val startIcon =
+                        timelineMarkerIcon(MaterialTheme.colorScheme.primary, true)
+
+                    val endIcon =
+                        timelineMarkerIcon(MaterialTheme.colorScheme.error, false)
+
+
                     Marker(
                         state = MarkerState(position = start),
-                        title = "Start: ${currentSession?.startAddress}"
+                        icon = startIcon,
+                        title = "Start: ${currentSession?.startAddress}",
+                        anchor = Offset(0.5f, 0.5f)
                     )
 
                     Marker(
                         state = MarkerState(position = end),
-                        title = "End: ${currentSession?.endAddress}"
+                        icon = endIcon,
+                        title = "End: ${currentSession?.endAddress}",
+                        anchor = Offset(0.5f, 0.5f)
                     )
+
 
                     com.google.maps.android.compose.Polyline(
                         points = listOf(start, end),
@@ -327,6 +347,48 @@ fun SessionPreviewTray(
         }
     }
 }
+
+fun createTimelineMarkerBitmap(
+    color: Int,
+    isStart: Boolean
+): Bitmap {
+
+    val size = 96
+    val bitmap = Bitmap.createBitmap(size, size, Bitmap.Config.ARGB_8888)
+    val canvas = Canvas(bitmap)
+    val paint = Paint(Paint.ANTI_ALIAS_FLAG)
+
+    // Outer soft glow
+    paint.color = color
+    paint.alpha = 60
+    canvas.drawCircle(size / 2f, size / 2f, size / 2.2f, paint)
+
+    // Main circle
+    paint.alpha = 255
+    paint.color = color
+    canvas.drawCircle(size / 2f, size / 2f, size / 3f, paint)
+
+    // White border
+    paint.style = Paint.Style.STROKE
+    paint.strokeWidth = 6f
+    paint.color = android.graphics.Color.WHITE
+    canvas.drawCircle(size / 2f, size / 2f, size / 3f, paint)
+
+    return bitmap
+}
+
+fun timelineMarkerIcon(
+    color: androidx.compose.ui.graphics.Color,
+    isStart: Boolean
+): BitmapDescriptor {
+    return BitmapDescriptorFactory.fromBitmap(
+        createTimelineMarkerBitmap(
+            color = color.toArgb(),
+            isStart = isStart
+        )
+    )
+}
+
 
 @Preview(showBackground = true)
 @Composable

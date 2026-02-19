@@ -73,7 +73,7 @@ fun ActivityScreen(
     ) {
         Text(
             text = "Activity",
-            fontSize = 24.sp,
+            fontSize = 20.sp,
             fontFamily = manrope,
             fontWeight = FontWeight.SemiBold,
             color = MaterialTheme.colorScheme.onBackground,

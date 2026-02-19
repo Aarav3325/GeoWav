@@ -148,7 +148,7 @@ fun SettingsScreen(
                 title = {
                     Text(
                         text = "Settings",
-                        fontSize = 24.sp,
+                        fontSize = 20.sp,
                         fontFamily = manrope,
                         fontWeight = FontWeight.SemiBold,
                         color = MaterialTheme.colorScheme.onBackground,

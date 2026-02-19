@@ -120,7 +120,7 @@ fun LocationSharingScreen(
                     Text(
                         text = "Live Location Sharing",
                         fontFamily = manrope,
-                        fontSize = 24.sp,
+                        fontSize = 20.sp,
                         fontWeight = FontWeight.Bold,
                         modifier = Modifier
                     )
