@@ -25,6 +25,7 @@ import androidx.compose.material3.ContainedLoadingIndicator
 import androidx.compose.material3.Divider
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -40,6 +41,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -64,9 +66,9 @@ fun TimelineScreen(
     name: String
 ) {
 
-    val timelineList by timelineViewModel.sessionHistory.collectAsState()
+    val uiState by timelineViewModel.uiState.collectAsState()
 
-    LaunchedEffect(timelineList) {
+    LaunchedEffect(userId) {
         timelineViewModel.getUserSessionHistory(userId)
     }
 
@@ -76,7 +78,7 @@ fun TimelineScreen(
             TopAppBar(
                 title = {
                     Text(
-                        text = "Timeline",
+                        text = "Timeline of $name",
                         fontFamily = manrope,
                         fontSize = 24.sp,
                         fontWeight = FontWeight.Bold,
@@ -103,22 +105,29 @@ fun TimelineScreen(
                 .padding(it),
 
             ) {
-
-            if(timelineList.isEmpty()) {
-                Box(
-                    contentAlignment = Alignment.Center,
-                    modifier = Modifier.fillMaxSize()
-                ) {
-                    ContainedLoadingIndicator()
+            
+            when {
+                uiState.isLoading -> {
+                    Box(
+                        modifier = Modifier.fillMaxSize(),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        ContainedLoadingIndicator()
+                    }
                 }
-            }
-            else {
-                LazyColumn() {
-                    items(timelineList) { session ->
-                        TimelineItem(
-                            session.toTimelineItem(name),
-                            onClick = navigateToPreview,
-                        )
+
+                uiState.sessions.isEmpty() -> {
+                    TimelineEmptyState()
+                }
+
+                else -> {
+                    LazyColumn() {
+                        items(uiState.sessions) { session ->
+                            TimelineItem(
+                                session.toTimelineItem(name),
+                                onClick = navigateToPreview,
+                            )
+                        }
                     }
                 }
             }
@@ -174,7 +183,6 @@ fun TimelineItem(
             verticalArrangement = Arrangement.spacedBy(14.dp)
         ) {
 
-            // 🔹 Header Row
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween
@@ -194,10 +202,7 @@ fun TimelineItem(
                     )
                 }
 
-//                TextButton(
-//                    onClick = onClick,
-//                    contentPadding = PaddingValues(0.dp)
-//                ) {
+
                 Row(
                     modifier = Modifier
                         .padding(0.dp)
@@ -225,13 +230,11 @@ fun TimelineItem(
                         modifier = Modifier.size(16.dp)
                     )
                 }
-                //  }
 
             }
 
-            Divider(color = MaterialTheme.colorScheme.outlineVariant)
+            HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
 
-            // 🔹 Route Section
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -318,5 +321,46 @@ fun TimelineItem(
         }
     }
 }
+
+@Composable
+fun TimelineEmptyState(
+    modifier: Modifier = Modifier
+) {
+    Column(
+        modifier = modifier
+            .fillMaxSize()
+            .padding(32.dp),
+        verticalArrangement = Arrangement.Center,
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+
+        Icon(
+            painter = painterResource(R.drawable.timeline),
+            contentDescription = null,
+            tint = MaterialTheme.colorScheme.outlineVariant,
+            modifier = Modifier.size(64.dp)
+        )
+
+        Spacer(Modifier.height(20.dp))
+
+        Text(
+            text = "No location history yet",
+            style = MaterialTheme.typography.titleMedium,
+            fontFamily = manrope,
+            fontWeight = FontWeight.SemiBold
+        )
+
+        Spacer(Modifier.height(8.dp))
+
+        Text(
+            text = "Sessions will appear here once location sharing happens.",
+            style = MaterialTheme.typography.bodyMedium,
+            fontFamily = manrope,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            textAlign = TextAlign.Center
+        )
+    }
+}
+
 
 

@@ -35,7 +35,6 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.Divider
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.HorizontalDivider
@@ -684,6 +683,7 @@ fun ConnectionStatusCard(
 
     val name = member.alias ?: member.profileName
     val emergencyState = locationState as? ViewerLocationState.EmergencySharing
+    val isSharingActive = locationState as? ViewerLocationState.NormalSharing
 
     // Emergency count down
     val remaining by produceState(
@@ -712,9 +712,6 @@ fun ConnectionStatusCard(
     }
 
     Card(
-        onClick = {
-            navigateToTimeline(member.id, member.alias ?: member.profileName)
-        },
         modifier = Modifier.fillMaxWidth(),
         colors = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.surfaceContainer
@@ -772,36 +769,47 @@ fun ConnectionStatusCard(
                     )
                 }
 
-                IconButton(
-                    onClick = {
-                        navigateToTimeline(member.id, name)
+                // Status label on right
+                if(isSharingActive != null || emergencyState != null) {
+                    Surface(
+                        shape = RoundedCornerShape(25),
+                        color = statusColor.copy(alpha = 0.12f)
+                    ) {
+                        Text(
+                            text = statusText,
+                            modifier = Modifier.padding(
+                                horizontal = 12.dp,
+                                vertical = 4.dp
+                            ),
+                            fontFamily = manrope,
+                            fontSize = 12.sp,
+                            fontWeight = FontWeight.SemiBold,
+                            color = statusColor
+                        )
                     }
+                }
+
+                Spacer(Modifier.width(10.dp))
+
+                Surface(
+                    shape = CircleShape,
+                    color = MaterialTheme.colorScheme.secondaryContainer,
+                    modifier = Modifier
+                        .clip(CircleShape)
+                        .clickable {
+                            navigateToTimeline(member.id, name)
+                        }
+                        .size(36.dp)
                 ) {
                     Icon(
                         painter = painterResource(R.drawable.timeline),
                         contentDescription = "View Timeline",
-                        tint = MaterialTheme.colorScheme.primary,
-                        modifier = Modifier.size(24.dp)
+                        tint = MaterialTheme.colorScheme.onSecondaryContainer,
+                        modifier = Modifier
+                            .size(24.dp)
+                            .padding(6.dp)
                     )
                 }
-
-                // Status label on right
-//                Surface(
-//                    shape = RoundedCornerShape(25),
-//                    color = statusColor.copy(alpha = 0.12f)
-//                ) {
-//                    Text(
-//                        text = statusText,
-//                        modifier = Modifier.padding(
-//                            horizontal = 12.dp,
-//                            vertical = 4.dp
-//                        ),
-//                        fontFamily = manrope,
-//                        fontSize = 12.sp,
-//                        fontWeight = FontWeight.SemiBold,
-//                        color = statusColor
-//                    )
-//                }
             }
 
 

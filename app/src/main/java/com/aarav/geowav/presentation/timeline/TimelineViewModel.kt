@@ -8,6 +8,7 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
@@ -17,15 +18,35 @@ class TimelineViewModel
     val sessionHistoryRepository: SessionHistoryRepository
 ) : ViewModel() {
 
-    private var _sessionHistory = MutableStateFlow<List<SessionHistory>>(emptyList())
-    val sessionHistory: StateFlow<List<SessionHistory>> = _sessionHistory.asStateFlow()
+//    private var _sessionHistory = MutableStateFlow<List<SessionHistory>>(emptyList())
+//    val sessionHistory: StateFlow<List<SessionHistory>> = _sessionHistory.asStateFlow()
+
+    private var _uiState = MutableStateFlow(TimelineUiState())
+    val uiState: StateFlow<TimelineUiState> = _uiState.asStateFlow()
 
     fun getUserSessionHistory(userId: String) {
-        viewModelScope.launch {
-            sessionHistoryRepository.getSessionsForUser(userId)
-                .collect {
-                    _sessionHistory.value = it
-                }
+
+        _uiState.update {
+            it.copy(
+                isLoading = true
+            )
         }
+
+        viewModelScope.launch {
+            sessionHistoryRepository.getSessionsForUser(userId).collect { list ->
+                _uiState.update {
+                    it.copy(
+                        sessions = list,
+                        isLoading = false
+                    )
+                }
+            }
+        }
+
     }
 }
+
+data class TimelineUiState(
+    val isLoading: Boolean = true,
+    val sessions: List<SessionHistory> = emptyList()
+)
