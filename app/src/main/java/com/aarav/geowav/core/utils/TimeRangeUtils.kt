@@ -45,3 +45,34 @@ fun rangeForFilter(filter: ActivityFilter): TimeRange {
         }
     }
 }
+
+fun formatTime(timestamp: Long): String {
+    val diff = System.currentTimeMillis() - timestamp
+
+    val seconds = diff / 1000
+    val minutes = seconds / 60
+    val hours = minutes / 60
+    val days = hours / 24
+
+    return when {
+        seconds < 60 -> "Just now"
+        minutes < 60 -> "$minutes min ago"
+        hours < 24 -> "$hours hr ago"
+        days < 7 -> "$days day${if (days > 1) "s" else ""} ago"
+        else -> {
+            val sdf = java.text.SimpleDateFormat("dd MMM yyyy", java.util.Locale.getDefault())
+            sdf.format(java.util.Date(timestamp))
+        }
+    }
+}
+
+fun formatRemainingForEmergency(endsAt: Long): String {
+    val diffMs = endsAt - System.currentTimeMillis()
+    if (diffMs <= 0) return "00:00"
+
+    val totalSeconds = diffMs / 1000
+    val minutes = totalSeconds / 60
+    val seconds = totalSeconds % 60
+
+    return "%02d:%02d".format(minutes, seconds)
+}

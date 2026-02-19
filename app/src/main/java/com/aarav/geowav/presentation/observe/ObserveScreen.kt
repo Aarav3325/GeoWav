@@ -51,6 +51,7 @@ fun ObserveScreen(
 ) {
 
     val uiState by viewModel.uiState.collectAsState()
+    val locations by viewModel.locations.collectAsState()
 
     Log.i("OBSERVE", uiState.lovedOnes.toString())
     Scaffold(
@@ -121,7 +122,7 @@ fun ObserveScreen(
             back()
         }
 
-        val hasAnyLiveSharing = uiState.locations.values.any {
+        val hasAnyLiveSharing = locations.values.any {
             it is ViewerLocationState.NormalSharing ||
                     it is ViewerLocationState.EmergencySharing
         }
@@ -144,7 +145,7 @@ fun ObserveScreen(
 //                    )
          */
 
-        val emergencyUser = uiState.locations
+        val emergencyUser = locations
             .entries
             .firstOrNull { it.value is ViewerLocationState.EmergencySharing }
 

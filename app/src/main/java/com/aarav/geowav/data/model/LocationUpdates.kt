@@ -33,6 +33,7 @@ data class EmergencyInfo(
 )
 
 data class UserPath(
+    val startedAt: Long = 0L,
     val points: List<LatLng>,
     val isActive: Boolean
 )

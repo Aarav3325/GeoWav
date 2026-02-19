@@ -6,12 +6,14 @@ import androidx.room.Room
 import androidx.room.RoomDatabase
 import com.aarav.geowav.data.model.GeoConnection
 import com.aarav.geowav.data.model.Place
+import com.aarav.geowav.data.model.SessionHistory
 
-@Database(entities = [Place::class, GeoConnection::class], version = 3)
+@Database(entities = [Place::class, GeoConnection::class, SessionHistory::class], version = 5)
 abstract class PlaceDatabase : RoomDatabase() {
 
     abstract val placeDao : PlacesDAO
     abstract val connectionDao : ConnectionDao
+    abstract val sessionHistoryDao : SessionHistoryDao
 
     companion object{
 

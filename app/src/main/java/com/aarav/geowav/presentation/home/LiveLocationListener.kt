@@ -45,6 +45,7 @@ import androidx.compose.material3.rememberTooltipState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.State
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -68,6 +69,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.aarav.geowav.R
 import com.aarav.geowav.core.utils.ViewerLocationState
+import com.aarav.geowav.core.utils.formatTime
 import com.aarav.geowav.data.model.CircleMember
 import com.aarav.geowav.presentation.theme.manrope
 import com.google.android.gms.maps.CameraUpdateFactory
@@ -103,9 +105,16 @@ fun ObserveLiveLocationCard(
 ) {
     var isUserPanning by remember { mutableStateOf(false) }
 
-    val emergencyState = uiState.locations.values
+
+
+
+    val locations by viewModel.locations.collectAsState()
+    val userPaths by viewModel.userPaths.collectAsState()
+
+    val emergencyState = locations.values
         .firstOrNull { it is ViewerLocationState.EmergencySharing }
             as? ViewerLocationState.EmergencySharing
+
 
     val emergencyLat = emergencyState?.location?.lat
     val emergencyLng = emergencyState?.location?.lng
@@ -125,7 +134,7 @@ fun ObserveLiveLocationCard(
 
 
     // Get list of users who are currently sharing location
-    val visibleLatLngs = uiState.locations.values
+    val visibleLatLngs = locations.values
         .mapNotNull {
             when (it) {
                 is ViewerLocationState.NormalSharing ->
@@ -141,7 +150,7 @@ fun ObserveLiveLocationCard(
 
 
     // Find if any user is in emergency state
-    val emergencyUser = uiState.locations
+    val emergencyUser = locations
         .entries
         .firstOrNull { it.value is ViewerLocationState.EmergencySharing }
 
@@ -163,15 +172,16 @@ fun ObserveLiveLocationCard(
     var uiSettings by remember {
         mutableStateOf(
             MapUiSettings(
-                myLocationButtonEnabled = false, // currently set to false as we will have a fab later
+                myLocationButtonEnabled = false, // currently set to false as have a FAB in fullscreen mode
                 zoomControlsEnabled = true, // set to true later
-                compassEnabled = true
+                compassEnabled = true,
+                mapToolbarEnabled = false
             )
         )
     }
 
-    val initialCameraPosition = remember(uiState.locations) {
-        val emergency = uiState.locations.values
+    val initialCameraPosition = remember(locations) {
+        val emergency = locations.values
             .firstOrNull { it is ViewerLocationState.EmergencySharing }
                 as? ViewerLocationState.EmergencySharing
 
@@ -246,7 +256,7 @@ fun ObserveLiveLocationCard(
 
 
     val isEmergencyActive =
-        uiState.locations.values.any { it is ViewerLocationState.EmergencySharing }
+        locations.values.any { it is ViewerLocationState.EmergencySharing }
 
 
 //        LaunchedEffect(emergencyLocation, mapLoaded) {
@@ -453,19 +463,21 @@ fun ObserveLiveLocationCard(
                 .shadow(4.dp, RoundedCornerShape(16.dp))
                 .clip(RoundedCornerShape(16.dp)),
             cameraPositionState = cameraPositionState,
+            onMapClick = {},
+            onMapLongClick = {},
             uiSettings = uiSettings,
             onMapLoaded = { mapLoaded = true }
         ) {
-            uiState.locations.forEach { (userId, state) ->
+            locations.forEach { (userId, state) ->
                 UserMarker(
                     userId = userId,
                     state = state
                 )
             }
 
-            uiState.userPaths.forEach { (userId, path) ->
+            userPaths.forEach { (userId, path) ->
 
-                val state = uiState.locations[userId]
+                val state = locations[userId]
 
                 if (path.points.size > 1 && state != null) {
 
@@ -530,7 +542,7 @@ fun ObserveLiveLocationCard(
             ViewerTrayOverlay(
                 Modifier.align(Alignment.TopCenter).padding(vertical = 16.dp),
                 uiState.lovedOnes,
-                uiState.locations,
+                locations,
                 onHideClick = onHideClick
             ) {
                 scope.launch {
@@ -1088,22 +1100,22 @@ fun FullScreenIcon(
 
 }
 
-fun formatTime(timestamp: Long): String {
-    val diff = System.currentTimeMillis() - timestamp
-
-    val seconds = diff / 1000
-    val minutes = seconds / 60
-    val hours = minutes / 60
-    val days = hours / 24
-
-    return when {
-        seconds < 60 -> "Just now"
-        minutes < 60 -> "$minutes min ago"
-        hours < 24 -> "$hours hr ago"
-        days < 7 -> "$days day${if (days > 1) "s" else ""} ago"
-        else -> {
-            val sdf = java.text.SimpleDateFormat("dd MMM yyyy", java.util.Locale.getDefault())
-            sdf.format(java.util.Date(timestamp))
-        }
-    }
-}
+//fun formatTime(timestamp: Long): String {
+//    val diff = System.currentTimeMillis() - timestamp
+//
+//    val seconds = diff / 1000
+//    val minutes = seconds / 60
+//    val hours = minutes / 60
+//    val days = hours / 24
+//
+//    return when {
+//        seconds < 60 -> "Just now"
+//        minutes < 60 -> "$minutes min ago"
+//        hours < 24 -> "$hours hr ago"
+//        days < 7 -> "$days day${if (days > 1) "s" else ""} ago"
+//        else -> {
+//            val sdf = java.text.SimpleDateFormat("dd MMM yyyy", java.util.Locale.getDefault())
+//            sdf.format(java.util.Date(timestamp))
+//        }
+//    }
+//}

@@ -52,6 +52,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
@@ -74,12 +75,15 @@ import coil.compose.AsyncImage
 import coil.decode.SvgDecoder
 import com.aarav.geowav.R
 import com.aarav.geowav.core.utils.ViewerLocationState
+import com.aarav.geowav.core.utils.formatRemainingForEmergency
+import com.aarav.geowav.core.utils.formatTime
 import com.aarav.geowav.data.model.CircleMember
 import com.aarav.geowav.data.model.Place
 import com.aarav.geowav.presentation.components.SnackbarManager
 import com.aarav.geowav.presentation.theme.GeoWavTheme
 import com.aarav.geowav.presentation.theme.manrope
 import com.aarav.geowav.presentation.theme.sora
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -99,6 +103,11 @@ fun GeoWavHomeScreen(
 ) {
 
     val uiState by homeScreenVM.uiState.collectAsState()
+    val locations by homeScreenVM.locations.collectAsState()
+
+    val sessionHistory by homeScreenVM.userSessionHistory.collectAsState()
+
+
 
     LaunchedEffect(uiState.lovedOnes) {
         if (uiState.lovedOnes.isNotEmpty()) {
@@ -110,14 +119,16 @@ fun GeoWavHomeScreen(
         )
     }
 
+    Log.i("SESSION", sessionHistory.toString())
+
     LaunchedEffect(Unit) {
         homeScreenVM.loadLovedOnes()
     }
 
     Log.i("HOME", uiState.lovedOnes.toString())
 
-    LaunchedEffect(uiState.locations) {
-        if (uiState.locations.isNotEmpty()) {
+    LaunchedEffect(locations) {
+        if (locations.isNotEmpty()) {
             homeScreenVM.fetchViewerInfo()
         }
     }
@@ -221,7 +232,7 @@ fun GeoWavHomeScreen(
                 .background(MaterialTheme.colorScheme.background)
         ) {
 
-            uiState.locations.forEach { (ownerId, state) ->
+            locations.forEach { (ownerId, state) ->
                 when (state) {
                     is ViewerLocationState.NormalSharing -> {
                         Log.i("OBSERVE", "user: $ownerId, location: ${state.location}")
@@ -304,7 +315,7 @@ fun GeoWavHomeScreen(
 //
 //                    val viewerInfo = uiState.currentViewers
 
-                    val activeViewerIds = uiState.locations
+                    val activeViewerIds = locations
                         .filterValues {
                             it is ViewerLocationState.NormalSharing ||
                                     it is ViewerLocationState.EmergencySharing
@@ -359,7 +370,7 @@ fun GeoWavHomeScreen(
                     ConnectionsList(
                         title = "Your Circle",
                         connections = uiState.lovedOnes,
-                        locationStates = uiState.locations,
+                        locationStates = locations,
                         onManage = navigateToCircle
                     )
 
@@ -667,6 +678,22 @@ fun ConnectionStatusCard(
 ) {
 
     val name = member.alias ?: member.profileName
+    val emergencyState = locationState as? ViewerLocationState.EmergencySharing
+
+    // Emergency count down
+    val remaining by produceState(
+        initialValue = formatRemainingForEmergency(emergencyState?.endsAt ?: 0L),
+        key1 = emergencyState?.endsAt
+    ) {
+        val endsAt = emergencyState?.endsAt ?: return@produceState
+
+        while (true) {
+            value = formatRemainingForEmergency(endsAt)
+            delay(1000)
+
+            if (formatRemainingForEmergency(endsAt) == "00:00") break
+        }
+    }
 
     val (statusText, statusColor, isSharing) = when (locationState) {
         is ViewerLocationState.EmergencySharing ->
@@ -756,6 +783,36 @@ fun ConnectionStatusCard(
                 }
             }
 
+
+            // Emergency count down section
+            if(emergencyState != null) {
+
+
+
+                Spacer(Modifier.height(12.dp))
+
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(vertical = 4.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    Text(
+                        "Emergency ends in",
+                        fontFamily = manrope,
+                        fontWeight = FontWeight.SemiBold,
+                        fontSize = 16.sp,
+                    )
+
+                    Text(
+                        remaining,
+                        fontFamily = manrope,
+                        fontWeight = FontWeight.ExtraBold,
+                        fontSize = 32.sp,
+                    )
+                }
+            }
+
             if (isSharing && locationState != null) {
 
                 val location = when (locationState) {
@@ -766,7 +823,7 @@ fun ConnectionStatusCard(
 
                 location?.let {
 
-                    Spacer(Modifier.height(14.dp))
+                    Spacer(Modifier.height(12.dp))
 
                     HorizontalDivider(
                         color = MaterialTheme.colorScheme.outline.copy(alpha = 0.2f)
