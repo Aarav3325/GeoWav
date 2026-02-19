@@ -1,5 +1,7 @@
 package com.aarav.geowav.data.model
 
+import com.google.android.gms.maps.model.LatLng
+
 data class LocationUpdates(
     val lat: Double = 0.0,
     val lng: Double = 0.0,
@@ -29,3 +31,9 @@ data class EmergencyInfo(
     val duration: Long = 0L,
     val viewers: Set<String> = emptySet()
 )
+
+data class UserPath(
+    val points: List<LatLng>,
+    val isActive: Boolean
+)
+

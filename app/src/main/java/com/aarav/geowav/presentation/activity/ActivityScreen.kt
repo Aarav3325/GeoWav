@@ -206,7 +206,6 @@ fun ActivityContent(
                     Text(
                         text = "Try changing the date range to see previous logs.",
                         style = MaterialTheme.typography.bodySmall,
-                        fontFamily = sora,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 }
@@ -281,7 +280,7 @@ fun LogFilterChip(
         onClick = onClick,
         label = {
             Text(
-                label, fontSize = 12.sp, fontFamily = sora
+                label, fontSize = 12.sp,
             )
         },
         modifier = Modifier

@@ -12,6 +12,7 @@ import com.aarav.geowav.data.model.GeoAlert
 import com.aarav.geowav.data.model.GeoConnection
 import com.aarav.geowav.data.model.Place
 import com.aarav.geowav.data.model.User
+import com.aarav.geowav.data.model.UserPath
 import com.aarav.geowav.data.repository.GeoActivityRepositoryImpl
 import com.aarav.geowav.data.repository.GeoConnectionRepositoryImpl
 import com.aarav.geowav.data.repository.PlaceRepositoryImpl
@@ -70,46 +71,128 @@ class HomeScreenVM @Inject constructor(
             val job = viewModelScope.launch {
                 viewerLocationRepository.observeUserLocation(userId, viewerId)
                     .collect { viewerState ->
-                        _uiState.update { state ->
 
-                            when (viewerState) {
+                        when (viewerState) {
 
-                                is ViewerLocationState.NormalSharing -> {
+                            is ViewerLocationState.NormalSharing -> {
+                                val lat = viewerState.location.lat
+                                val lng = viewerState.location.lng
 
-                                    onUserLocationUpdate(
-                                        userId = userId,
-                                        lat = viewerState.location.lat,
-                                        lng = viewerState.location.lng
-                                    )
+                                _uiState.update { current ->
 
-                                    state.copy(
-                                        locations = state.locations + (userId to viewerState)
+                                    val existingPath = current.userPaths[userId]
+
+                                    val cleanedPaths =
+                                        if (existingPath?.isActive == false)
+                                            current.userPaths - userId
+                                        else
+                                            current.userPaths
+
+                                    val existingPoints =
+                                        cleanedPaths[userId]?.points.orEmpty()
+
+                                    val newPoint = LatLng(lat, lng)
+
+                                    val updatedPoints =
+                                        if (existingPoints.isNotEmpty()) {
+                                            val last = existingPoints.last()
+                                            val distance =
+                                                SphericalUtil.computeDistanceBetween(last, newPoint)
+
+                                            if (distance < 5)
+                                                existingPoints
+                                            else
+                                                existingPoints + newPoint
+                                        } else {
+                                            listOf(newPoint)
+                                        }
+
+                                    current.copy(
+                                        locations = current.locations + (userId to viewerState),
+                                        userPaths = cleanedPaths + (
+                                                userId to UserPath(
+                                                    points = updatedPoints,
+                                                    isActive = true
+                                                )
+                                                )
                                     )
                                 }
+                            }
 
-                                is ViewerLocationState.EmergencySharing -> {
-                                    onUserLocationUpdate(
-                                        userId = userId,
-                                        lat = viewerState.location.lat,
-                                        lng = viewerState.location.lng
-                                    )
+                            is ViewerLocationState.EmergencySharing -> {
 
-                                    state.copy(
-                                        locations = state.locations + (userId to viewerState)
+                                val lat = viewerState.location.lat
+                                val lng = viewerState.location.lng
+
+                                _uiState.update { current ->
+
+                                    val existingPath = current.userPaths[userId]
+
+                                    val cleanedPaths =
+                                        if (existingPath?.isActive == false)
+                                            current.userPaths - userId
+                                        else
+                                            current.userPaths
+
+                                    val existingPoints =
+                                        cleanedPaths[userId]?.points.orEmpty()
+
+                                    val newPoint = LatLng(lat, lng)
+
+                                    val updatedPoints =
+                                        if (existingPoints.isNotEmpty()) {
+                                            val last = existingPoints.last()
+                                            val distance =
+                                                SphericalUtil.computeDistanceBetween(last, newPoint)
+
+                                            if (distance < 5)
+                                                existingPoints
+                                            else
+                                                existingPoints + newPoint
+                                        } else {
+                                            listOf(newPoint)
+                                        }
+
+                                    current.copy(
+                                        locations = current.locations + (userId to viewerState),
+                                        userPaths = cleanedPaths + (
+                                                userId to UserPath(
+                                                    points = updatedPoints,
+                                                    isActive = true
+                                                    )
+                                                )
                                     )
                                 }
+                            }
 
-                                ViewerLocationState.Blocked -> {
-                                    onSharingEnded(userId)
+                            ViewerLocationState.Blocked -> {
 
-                                    state.copy(
-                                        locations = state.locations - userId
+                                _uiState.update { current ->
+
+                                    val existing = current.userPaths[userId]
+
+                                    val compressed =
+                                        if (existing != null && existing.points.size >= 2) {
+                                            UserPath(
+                                                points = listOf(
+                                                    existing.points.first(),
+                                                    existing.points.last()
+                                                ),
+                                                isActive = false
+                                            )
+                                        } else existing
+
+                                    current.copy(
+                                        locations = current.locations - userId,
+                                        userPaths = if (compressed != null)
+                                            current.userPaths + (userId to compressed)
+                                        else
+                                            current.userPaths
                                     )
                                 }
                             }
                         }
                     }
-
             }
 
             observerJobs[userId] = job
@@ -125,7 +208,7 @@ class HomeScreenVM @Inject constructor(
 
         _uiState.update { current ->
 
-            val existing = current.userPaths[userId].orEmpty()
+            val existing = current.userPaths[userId]?.points.orEmpty()
 
             if (existing.isNotEmpty()) {
                 val last = existing.last()
@@ -138,7 +221,10 @@ class HomeScreenVM @Inject constructor(
             }
 
             current.copy(
-                userPaths = current.userPaths + (userId to (existing + newPoint))
+                userPaths = current.userPaths + (userId to UserPath(
+                    points = existing + newPoint,
+                    isActive = true
+                ))
             )
         }
     }
@@ -148,17 +234,20 @@ class HomeScreenVM @Inject constructor(
 
             val existing = current.userPaths[userId] ?: return@update current
 
-            if (existing.size < 2) return@update current
+            if (existing.points.size < 2) return@update current
 
             val compressed = listOf(
-                existing.first(),
-                existing.last()
+                existing.points.first(),
+                existing.points.last()
             )
 
             Log.i("POLYLINE", "start: ${compressed.first()} and last: ${compressed.last()}")
 
             current.copy(
-                userPaths = current.userPaths + (userId to compressed)
+                userPaths = current.userPaths + (userId to UserPath(
+                    points = compressed,
+                    isActive = false
+                ))
             )
         }
     }
@@ -326,7 +415,7 @@ data class HomeScreenUiState(
     val connectionsList: List<GeoConnection> = emptyList(),
     val lovedOnes: List<CircleMember> = emptyList(),
     val locations: Map<String, ViewerLocationState> = emptyMap(),
-    val userPaths: Map<String, List<LatLng>> = emptyMap(),
+    val userPaths: Map<String, UserPath> = emptyMap(),
     val currentViewers: List<User> = emptyList(),
     val alertsList: List<GeoAlert> = emptyList(),
     val userAvatar: String? = null,

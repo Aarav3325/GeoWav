@@ -85,6 +85,7 @@ import com.google.maps.android.compose.Marker
 import com.google.maps.android.compose.MarkerState
 import com.google.maps.android.compose.Polyline
 import com.google.maps.android.compose.rememberCameraPositionState
+import com.google.maps.android.compose.rememberMarkerState
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
 
@@ -466,17 +467,24 @@ fun ObserveLiveLocationCard(
 
                 val state = uiState.locations[userId]
 
-                if (path.size > 1 && state != null) {
+                if (path.points.size > 1 && state != null) {
 
+                    Log.i("POLYLINE", "size: ${path.points.size}")
                     val isEmergency =
                         state is ViewerLocationState.EmergencySharing
 
                     Polyline(
-                        points = path,
-                        color = if (isEmergency)
-                            Color.Red
-                        else
-                            Color.Blue,
+                        points = path.points,
+                        color = when {
+                            isEmergency ->
+                                Color.Red
+
+                            path.isActive ->
+                                Color.Blue
+
+                            else ->
+                                Color.Gray // summary line
+                        },
                         width = if (isEmergency) 10f else 6f,
                         jointType = JointType.ROUND,
                         startCap = RoundCap(),
@@ -1033,45 +1041,17 @@ fun UserMarker(
 
     val target = LatLng(location.lat, location.lng)
 
-    val markerState = remember { MarkerState(position = target) }
-
-    // Animatables for smooth movement
-    val latAnim = remember { Animatable(target.latitude.toFloat()) }
-    val lngAnim = remember { Animatable(target.longitude.toFloat()) }
+    val markerState = rememberMarkerState()
 
     LaunchedEffect(target) {
-        coroutineScope {
-            launch {
-                latAnim.animateTo(
-                    target.latitude.toFloat(),
-                    tween(800, easing = LinearOutSlowInEasing)
-                )
-            }
-            launch {
-                lngAnim.animateTo(
-                    target.longitude.toFloat(),
-                    tween(800, easing = LinearOutSlowInEasing)
-                )
-            }
-        }
-    }
-
-    // Update marker position from animated values
-    LaunchedEffect(latAnim.value, lngAnim.value) {
-        markerState.position = LatLng(
-            latAnim.value.toDouble(),
-            lngAnim.value.toDouble()
-        )
+        markerState.position = target
     }
 
     val isEmergency = state is ViewerLocationState.EmergencySharing
 
-    val normalIcon = remember { markerIcon(false) }
-    val emergencyIcon = remember { markerIcon(true) }
-
     Marker(
         state = markerState,
-        icon = if (isEmergency) emergencyIcon else normalIcon,
+        icon = if (isEmergency) markerIcon(true) else markerIcon(false),
         anchor = Offset(0.5f, 0.5f),
         zIndex = if (isEmergency) 2f else 1f
     )
