@@ -98,6 +98,7 @@ fun GeoWavHomeScreen(
     homeScreenVM: HomeScreenVM,
     navigateToSettings: () -> Unit,
     navigateToCircle: () -> Unit,
+    navigateToTimeline: (String, String) -> Unit,
     navigateToActivity: () -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -371,7 +372,8 @@ fun GeoWavHomeScreen(
                         title = "Your Circle",
                         connections = uiState.lovedOnes,
                         locationStates = locations,
-                        onManage = navigateToCircle
+                        onManage = navigateToCircle,
+                        navigateToTimeline = navigateToTimeline
                     )
 
                     ActiveZonesSection(
@@ -591,7 +593,8 @@ fun ConnectionsList(
     title: String,
     connections: List<CircleMember>,
     locationStates: Map<String, ViewerLocationState>,
-    onManage: () -> Unit
+    onManage: () -> Unit,
+    navigateToTimeline: (String, String) -> Unit
 ) {
 
     Column(
@@ -661,7 +664,8 @@ fun ConnectionsList(
 
                     ConnectionStatusCard(
                         member = conn,
-                        locationState = state
+                        locationState = state,
+                        navigateToTimeline
                     )
                 }
 
@@ -674,7 +678,8 @@ fun ConnectionsList(
 @Composable
 fun ConnectionStatusCard(
     member: CircleMember,
-    locationState: ViewerLocationState?
+    locationState: ViewerLocationState?,
+    navigateToTimeline: (String, String) -> Unit
 ) {
 
     val name = member.alias ?: member.profileName
@@ -707,6 +712,9 @@ fun ConnectionStatusCard(
     }
 
     Card(
+        onClick = {
+            navigateToTimeline(member.id, member.alias ?: member.profileName)
+        },
         modifier = Modifier.fillMaxWidth(),
         colors = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.surfaceContainer
@@ -764,29 +772,41 @@ fun ConnectionStatusCard(
                     )
                 }
 
-                // Status label on right
-                Surface(
-                    shape = RoundedCornerShape(25),
-                    color = statusColor.copy(alpha = 0.12f)
+                IconButton(
+                    onClick = {
+                        navigateToTimeline(member.id, name)
+                    }
                 ) {
-                    Text(
-                        text = statusText,
-                        modifier = Modifier.padding(
-                            horizontal = 12.dp,
-                            vertical = 4.dp
-                        ),
-                        fontFamily = manrope,
-                        fontSize = 12.sp,
-                        fontWeight = FontWeight.SemiBold,
-                        color = statusColor
+                    Icon(
+                        painter = painterResource(R.drawable.timeline),
+                        contentDescription = "View Timeline",
+                        tint = MaterialTheme.colorScheme.primary,
+                        modifier = Modifier.size(24.dp)
                     )
                 }
+
+                // Status label on right
+//                Surface(
+//                    shape = RoundedCornerShape(25),
+//                    color = statusColor.copy(alpha = 0.12f)
+//                ) {
+//                    Text(
+//                        text = statusText,
+//                        modifier = Modifier.padding(
+//                            horizontal = 12.dp,
+//                            vertical = 4.dp
+//                        ),
+//                        fontFamily = manrope,
+//                        fontSize = 12.sp,
+//                        fontWeight = FontWeight.SemiBold,
+//                        color = statusColor
+//                    )
+//                }
             }
 
 
             // Emergency count down section
-            if(emergencyState != null) {
-
+            if (emergencyState != null) {
 
 
                 Spacer(Modifier.height(12.dp))
@@ -863,6 +883,33 @@ fun ConnectionStatusCard(
                 }
             }
         }
+
+//            Spacer(Modifier.height(12.dp))
+//
+//            HorizontalDivider(
+//                color = MaterialTheme.colorScheme.outline.copy(alpha = 0.2f)
+//            )
+//
+//            Spacer(Modifier.height(10.dp))
+//
+//            Row(
+//                modifier = Modifier.fillMaxWidth(),
+//                horizontalArrangement = Arrangement.End
+//            ) {
+//                TextButton(
+//                    onClick = {
+//                        navigateToTimeline(member.id, name)
+//                    }
+//                ) {
+//                    Text(
+//                        text = "View Timeline",
+//                        fontFamily = manrope,
+//                        fontWeight = FontWeight.SemiBold
+//                    )
+//                }
+//            }
+//
+//        }
     }
 }
 

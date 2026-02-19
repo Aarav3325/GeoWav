@@ -28,6 +28,8 @@ import com.aarav.geowav.presentation.onboard.OnboardingScreen
 import com.aarav.geowav.presentation.settings.SettingsScreen
 import com.aarav.geowav.presentation.settings.ThemeMode
 import com.aarav.geowav.presentation.settings.TriggerType
+import com.aarav.geowav.presentation.timeline.TimelineMapPreview
+import com.aarav.geowav.presentation.timeline.TimelineScreen
 import com.aarav.geowav.presentation.yourplace.YourPlacesScreen
 
 @Composable
@@ -105,6 +107,16 @@ fun NavGraph(
             navHostController,
             this,
             location
+        )
+
+        AddTimelineScreen(
+            navHostController,
+            this
+        )
+
+        AddTimelinePreviewScreen(
+            navHostController,
+            this
         )
 
 //        AddObserveScreen(
@@ -302,6 +314,10 @@ fun AddHomeScreen(
             navigateToCircle = {
                 navController.navigate(NavRoute.Circle.path)
             },
+            navigateToTimeline = {
+                userId, name ->
+                navController.navigate(NavRoute.TimeLine.createRoute(userId, name))
+            },
             navigateToActivity = {
                 navController.navigate(NavRoute.ActivityScreen.path) {
                     popUpTo(navController.graph.findStartDestination().id) {
@@ -380,6 +396,77 @@ fun AddObserveScreen(
             back = {
                 navController.popBackStack()
             }
+        )
+    }
+}
+
+fun AddTimelineScreen(
+    navController: NavController,
+    navGraphBuilder: NavGraphBuilder
+) {
+    navGraphBuilder.composable(
+        route = NavRoute.TimeLine.path.plus("/{userId}/{name}"),
+        arguments = listOf(
+            navArgument(
+                "userId"
+            ) {
+                type = NavType.StringType
+            },
+            navArgument(
+                "name"
+            ) {
+                type = NavType.StringType
+            }
+        )
+    ) {
+        val userId = it.arguments?.getString("userId") ?: ""
+        val name = it.arguments?.getString("name") ?: ""
+
+        TimelineScreen(
+            timelineViewModel = hiltViewModel(),
+            back = {
+                navController.popBackStack()
+            },
+            navigateToPreview = {
+                sessionId, name ->
+                navController.navigate(NavRoute.TimelinePreview.createRoute(sessionId, name))
+            },
+            userId = userId,
+            name= name
+        )
+    }
+}
+
+fun AddTimelinePreviewScreen(
+    navController: NavController,
+    navGraphBuilder: NavGraphBuilder
+) {
+    navGraphBuilder.composable(
+        route = NavRoute.TimelinePreview.path.plus("/{sessionId}/{name}"),
+        arguments = listOf(
+            navArgument(
+                "sessionId"
+            ) {
+                type = NavType.StringType
+            },
+
+            navArgument(
+                "name"
+            ) {
+                type = NavType.StringType
+            }
+        )
+    ) {
+        val sessionId = it.arguments?.getString("sessionId") ?: ""
+        val name = it.arguments?.getString("name") ?: ""
+
+        TimelineMapPreview(
+            viewModel = hiltViewModel(),
+            back = {
+                navController.popBackStack()
+            },
+            sessionId,
+            name
         )
     }
 }

@@ -17,4 +17,8 @@ class SessionHistoryRepositoryImpl
     override fun getSessionsForUser(userId: String): Flow<List<SessionHistory>> {
         return sessionHistoryDao.getSessionsForUser(userId)
     }
+
+    override fun getSessionById(sessionId: String): Flow<SessionHistory> {
+        return sessionHistoryDao.getSessionById(sessionId)
+    }
 }

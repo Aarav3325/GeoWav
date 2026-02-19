@@ -8,4 +8,6 @@ interface SessionHistoryRepository {
     suspend fun insertSession(session: SessionHistory)
 
     fun getSessionsForUser(userId: String): Flow<List<SessionHistory>>
+
+    fun getSessionById(sessionId: String): Flow<SessionHistory>
 }

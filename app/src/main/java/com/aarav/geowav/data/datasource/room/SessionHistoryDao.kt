@@ -16,4 +16,7 @@ interface SessionHistoryDao {
     @Query("SELECT * FROM session_history WHERE userId = :userId ORDER BY startTime DESC")
     fun getSessionsForUser(userId: String): Flow<List<SessionHistory>>
 
+    @Query("SELECT * FROM session_history WHERE id = :sessionId")
+    fun getSessionById(sessionId: String): Flow<SessionHistory>
+
 }

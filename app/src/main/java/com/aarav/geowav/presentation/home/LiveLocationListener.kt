@@ -588,6 +588,7 @@ fun ObserveLiveLocationCard(
     }
 
 }
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun RichTooltipExample(
