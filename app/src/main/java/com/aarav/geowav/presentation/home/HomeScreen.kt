@@ -105,7 +105,7 @@ fun GeoWavHomeScreen(
     val uiState by homeScreenVM.uiState.collectAsState()
     val locations by homeScreenVM.locations.collectAsState()
 
-    val sessionHistory by homeScreenVM.userSessionHistory.collectAsState()
+//    val sessionHistory by homeScreenVM.userSessionHistory.collectAsState()
 
 
 
@@ -119,7 +119,7 @@ fun GeoWavHomeScreen(
         )
     }
 
-    Log.i("SESSION", sessionHistory.toString())
+//    Log.i("SESSION", sessionHistory.toString())
 
     LaunchedEffect(Unit) {
         homeScreenVM.loadLovedOnes()
@@ -224,7 +224,6 @@ fun GeoWavHomeScreen(
             )
         }
     ) { innerPadding ->
-
 
         Box(
             modifier = Modifier

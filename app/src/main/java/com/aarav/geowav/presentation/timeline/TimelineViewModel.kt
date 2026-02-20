@@ -3,6 +3,7 @@ package com.aarav.geowav.presentation.timeline
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.aarav.geowav.data.model.SessionHistory
+import com.aarav.geowav.data.model.TimelineItem
 import com.aarav.geowav.domain.repository.SessionHistoryRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -24,7 +25,8 @@ class TimelineViewModel
     private var _uiState = MutableStateFlow(TimelineUiState())
     val uiState: StateFlow<TimelineUiState> = _uiState.asStateFlow()
 
-    fun getUserSessionHistory(userId: String) {
+    fun getUserSessions(userId: String) {
+
 
         _uiState.update {
             it.copy(
@@ -33,20 +35,37 @@ class TimelineViewModel
         }
 
         viewModelScope.launch {
-            sessionHistoryRepository.getSessionsForUser(userId).collect { list ->
+            sessionHistoryRepository.getSessionForUserFirebase(userId).collect { list ->
                 _uiState.update {
                     it.copy(
-                        sessions = list,
+                        sessionsFirebase = list,
                         isLoading = false
                     )
                 }
             }
         }
-
     }
+
+//    fun getUserSessionHistory(userId: String) {
+//
+//
+//
+//        viewModelScope.launch {
+//            sessionHistoryRepository.getSessionsForUser(userId).collect { list ->
+//                _uiState.update {
+//                    it.copy(
+//                        sessions = list,
+//                        isLoading = false
+//                    )
+//                }
+//            }
+//        }
+//
+//    }
 }
 
 data class TimelineUiState(
     val isLoading: Boolean = true,
-    val sessions: List<SessionHistory> = emptyList()
+    val sessions: List<SessionHistory> = emptyList(),
+    val sessionsFirebase: List<TimelineItem> = emptyList()
 )

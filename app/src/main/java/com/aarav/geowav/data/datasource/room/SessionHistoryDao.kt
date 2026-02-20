@@ -11,7 +11,7 @@ import kotlinx.coroutines.flow.Flow
 interface SessionHistoryDao {
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
-    suspend fun insertSession(session: SessionHistory)
+    suspend fun saveSession(session: SessionHistory)
 
     @Query("SELECT * FROM session_history WHERE userId = :userId ORDER BY startTime DESC")
     fun getSessionsForUser(userId: String): Flow<List<SessionHistory>>

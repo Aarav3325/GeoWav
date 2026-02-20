@@ -293,7 +293,7 @@ fun LogFilterChip(
                 Icon(
                     painter = painterResource(R.drawable.check),
                     contentDescription = "",
-                    modifier = Modifier.size(24.dp),
+                    modifier = Modifier.size(FilterChipDefaults.IconSize),
                     tint = MaterialTheme.colorScheme.onPrimary
                 )
             }

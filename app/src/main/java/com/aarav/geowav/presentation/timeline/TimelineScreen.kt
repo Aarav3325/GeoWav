@@ -69,7 +69,8 @@ fun TimelineScreen(
     val uiState by timelineViewModel.uiState.collectAsState()
 
     LaunchedEffect(userId) {
-        timelineViewModel.getUserSessionHistory(userId)
+//        timelineViewModel.getUserSessionHistory(userId)
+        timelineViewModel.getUserSessions(userId)
     }
 
     Scaffold(
@@ -116,15 +117,15 @@ fun TimelineScreen(
                     }
                 }
 
-                uiState.sessions.isEmpty() -> {
+                uiState.sessionsFirebase.isEmpty() -> {
                     TimelineEmptyState()
                 }
 
                 else -> {
                     LazyColumn() {
-                        items(uiState.sessions) { session ->
+                        items(uiState.sessionsFirebase) { session ->
                             TimelineItem(
-                                session.toTimelineItem(name),
+                                session,
                                 onClick = navigateToPreview,
                             )
                         }

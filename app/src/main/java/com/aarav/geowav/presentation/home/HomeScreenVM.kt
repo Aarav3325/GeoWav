@@ -67,12 +67,12 @@ class HomeScreenVM @Inject constructor(
     private val _userPaths = MutableStateFlow<Map<String, UserPath>>(emptyMap())
     val userPaths = _userPaths.asStateFlow()
 
-    val userSessionHistory = sessionHistoryRepository.getSessionsForUser("7sZTZoNLRpUBcJSevQJyNq2XRVw1")
-        .stateIn(viewModelScope, SharingStarted.Lazily, emptyList<SessionHistory>())
+//    val userSessionHistory = sessionHistoryRepository.getSessionsForUser("7sZTZoNLRpUBcJSevQJyNq2XRVw1")
+//        .stateIn(viewModelScope, SharingStarted.Lazily, emptyList<SessionHistory>())
 
     val viewerId = googleSignInClient.getUserId()
 
-    private var countdownJob: Job? = null
+//    private var countdownJob: Job? = null
 
     private val observerJobs = mutableMapOf<String, Job>()
 
@@ -235,21 +235,21 @@ class HomeScreenVM @Inject constructor(
                                                 getAddressFromLatLng(end.latitude, end.longitude)
 
                                             if(startAddress != null && endAddress != null) {
-                                                val sessionHistory = SessionHistory(
-                                                    id = UUID.randomUUID().toString(),
-                                                    userId = userId,
-                                                    startLat = start.latitude,
-                                                    startLng = start.longitude,
-                                                    endLat = end.latitude,
-                                                    endLng = end.longitude,
-                                                    startTime = existing.startedAt,
-                                                    endTime = System.currentTimeMillis(),
-                                                    startAddress = startAddress,
-                                                    endAddress = endAddress
-                                                )
-
-                                                // Store session history in room database
-                                                sessionHistoryRepository.insertSession(sessionHistory)
+//                                                val sessionHistory = SessionHistory(
+//                                                    id = UUID.randomUUID().toString(),
+//                                                    userId = userId,
+//                                                    startLat = start.latitude,
+//                                                    startLng = start.longitude,
+//                                                    endLat = end.latitude,
+//                                                    endLng = end.longitude,
+//                                                    startTime = existing.startedAt,
+//                                                    endTime = System.currentTimeMillis(),
+//                                                    startAddress = startAddress,
+//                                                    endAddress = endAddress
+//                                                )
+//
+//                                                // Store session history in room database
+//                                                sessionHistoryRepository.saveSession(sessionHistory)
                                             }
 
                                             Log.i(
@@ -385,6 +385,9 @@ if (existingPath?.size == 2) {
     }
 
 
+    /*
+    No longer using room to store connections, instead using rtdb
+     */
     fun addConnection(connection: GeoConnection) {
         viewModelScope.launch {
             connectionRepository.addNewConnection(connection)
@@ -397,6 +400,7 @@ if (existingPath?.size == 2) {
         }
     }
 
+    // Remove this flow after full implementation session history
     val allConnections = connectionRepository.getConnections()
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
 

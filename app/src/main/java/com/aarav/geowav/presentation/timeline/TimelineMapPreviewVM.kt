@@ -3,6 +3,7 @@ package com.aarav.geowav.presentation.timeline
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.aarav.geowav.data.model.SessionHistory
+import com.aarav.geowav.data.model.TimelineItem
 import com.aarav.geowav.domain.repository.SessionHistoryRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -17,15 +18,17 @@ class TimelineMapPreviewVM
     val sessionHistoryRepository: SessionHistoryRepository
 ) : ViewModel() {
 
-    private var _currentSession = MutableStateFlow<SessionHistory?>(null)
-    val currentSession: StateFlow<SessionHistory?> = _currentSession.asStateFlow()
+    private var _currentSession = MutableStateFlow<TimelineItem?>(null)
+    val currentSession: StateFlow<TimelineItem?> = _currentSession.asStateFlow()
 
     fun getSessionInfo(sessionId: String) {
         viewModelScope.launch {
-            sessionHistoryRepository.getSessionById(sessionId)
-                .collect {
-                    _currentSession.value = it
-                }
+//            sessionHistoryRepository.getSessionById(sessionId)
+//                .collect {
+//                    _currentSession.value = it
+//                }
+
+            _currentSession.value = sessionHistoryRepository.getSessionByIdFirebase(sessionId, "7sZTZoNLRpUBcJSevQJyNq2XRVw1")
         }
     }
 }

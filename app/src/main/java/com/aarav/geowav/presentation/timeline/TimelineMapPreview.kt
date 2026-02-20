@@ -1,6 +1,5 @@
 package com.aarav.geowav.presentation.timeline
 
-// Your custom font
 import android.graphics.Bitmap
 import android.graphics.Canvas
 import android.graphics.Color
@@ -70,6 +69,8 @@ import com.google.maps.android.compose.rememberCameraPositionState
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
+import androidx.core.graphics.createBitmap
+
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 fun TimelineMapPreview(
@@ -169,7 +170,7 @@ fun TimelineMapPreview(
 
                     com.google.maps.android.compose.Polyline(
                         points = listOf(start, end),
-                        color = MaterialTheme.colorScheme.inversePrimary,
+                        color = MaterialTheme.colorScheme.secondary,
                         width = 10f
                     )
 
@@ -183,7 +184,7 @@ fun TimelineMapPreview(
                                 .build()
 
                             cameraPositionState.animate(
-                                CameraUpdateFactory.newLatLngBounds(bounds, 120)
+                                CameraUpdateFactory.newLatLngBounds(bounds, 200)
                             )
                         }
                     }
@@ -198,7 +199,7 @@ fun TimelineMapPreview(
                     modifier = Modifier.align(Alignment.BottomCenter)
                 ) {
                     SessionPreviewTray(
-                        session = session.toTimelineItem(name),
+                        session = session,
                         onClose = { showTray = false }
                     )
                 }
@@ -244,6 +245,12 @@ fun SessionPreviewTray(
         SimpleDateFormat("hh:mm a", Locale.getDefault())
     }
 
+    val dateFormatter = remember {
+        SimpleDateFormat("dd MMM yyyy", Locale.getDefault())
+    }
+
+    val date = dateFormatter.format(Date(session.startTime))
+
     val startTime = timeFormatter.format(Date(session.startTime))
     val endTime = timeFormatter.format(Date(session.endTime))
 
@@ -288,7 +295,7 @@ fun SessionPreviewTray(
                     )
 
                     Text(
-                        text = "Location session • $durationText",
+                        text = "Location session • $date • $durationText",
                         style = MaterialTheme.typography.labelMedium,
                         fontFamily = manrope,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
@@ -321,8 +328,8 @@ fun SessionPreviewTray(
                     text = session.startAddress,
                     style = MaterialTheme.typography.bodyMedium,
                     fontFamily = manrope,
-                    maxLines = 2,
-                    overflow = TextOverflow.Ellipsis
+//                    maxLines = 2,
+//                    overflow = TextOverflow.Ellipsis
                 )
             }
 
@@ -340,8 +347,8 @@ fun SessionPreviewTray(
                     text = session.endAddress,
                     style = MaterialTheme.typography.bodyMedium,
                     fontFamily = manrope,
-                    maxLines = 2,
-                    overflow = TextOverflow.Ellipsis
+//                    maxLines = 2,
+//                    overflow = TextOverflow.Ellipsis
                 )
             }
         }
@@ -354,7 +361,7 @@ fun createTimelineMarkerBitmap(
 ): Bitmap {
 
     val size = 96
-    val bitmap = Bitmap.createBitmap(size, size, Bitmap.Config.ARGB_8888)
+    val bitmap = createBitmap(size, size)
     val canvas = Canvas(bitmap)
     val paint = Paint(Paint.ANTI_ALIAS_FLAG)
 
