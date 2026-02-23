@@ -2,10 +2,9 @@ package com.aarav.geowav.data.model
 
 import androidx.room.Entity
 import androidx.room.PrimaryKey
+import com.google.android.gms.maps.model.LatLng
 
-@Entity(tableName = "session_history")
 data class SessionHistory(
-    @PrimaryKey
     val id: String = "",
     val userId: String = "",
     val userName: String = "",
@@ -16,5 +15,13 @@ data class SessionHistory(
     val startTime: Long = 0L,
     val endTime: Long = 0L,
     val startAddress: String = "",
-    val endAddress: String = ""
+    val endAddress: String = "",
+    val userPath: List<UserPathLatLng> = emptyList()
 )
+
+fun LatLng.toUserPathLatLng(): UserPathLatLng {
+    return UserPathLatLng(
+        latitude = latitude,
+        longitude = longitude
+    )
+}

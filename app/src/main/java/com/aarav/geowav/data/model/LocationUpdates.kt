@@ -25,6 +25,15 @@ fun LocationUpdates.toMap(): Map<String, Any> {
     )
 }
 
+data class UserPathLatLng(
+    val latitude: Double = 0.0,
+    val longitude: Double = 0.0
+)
+
+fun UserPathLatLng.toLatLng(): LatLng {
+    return LatLng(latitude, longitude)
+}
+
 data class EmergencyInfo(
     val startedAt: Long = 0L,
     val endsAt: Long = 0L,

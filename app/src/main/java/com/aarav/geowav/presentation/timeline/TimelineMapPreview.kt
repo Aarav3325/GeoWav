@@ -4,6 +4,7 @@ import android.graphics.Bitmap
 import android.graphics.Canvas
 import android.graphics.Color
 import android.graphics.Paint
+import android.util.Log
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -70,6 +71,10 @@ import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
 import androidx.core.graphics.createBitmap
+import com.aarav.geowav.data.model.toLatLng
+import com.google.maps.android.compose.MapProperties
+import com.google.maps.android.compose.MapType
+import com.google.maps.android.compose.Polyline
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3ExpressiveApi::class)
 @Composable
@@ -77,13 +82,14 @@ fun TimelineMapPreview(
     viewModel: TimelineMapPreviewVM,
     back: () -> Unit,
     sessionId: String,
-    name: String
+    name: String,
+    userId: String
 ) {
 
     val currentSession by viewModel.currentSession.collectAsState()
 
     LaunchedEffect(sessionId) {
-        viewModel.getSessionInfo(sessionId)
+        viewModel.getSessionInfo(sessionId, userId)
     }
 
     val cameraPositionState = rememberCameraPositionState()
@@ -147,10 +153,10 @@ fun TimelineMapPreview(
                     val end = LatLng(session.endLat, session.endLng)
 
                     val startIcon =
-                        timelineMarkerIcon(MaterialTheme.colorScheme.primary, true)
+                        timelineMarkerIcon(androidx.compose.ui.graphics.Color(0xFF515B92), true)
 
                     val endIcon =
-                        timelineMarkerIcon(MaterialTheme.colorScheme.error, false)
+                        timelineMarkerIcon(androidx.compose.ui.graphics.Color(0xFF904A44), false)
 
 
                     Marker(
@@ -167,10 +173,15 @@ fun TimelineMapPreview(
                         anchor = Offset(0.5f, 0.5f)
                     )
 
+                    val userPaths = session.userPath.map {
+                        it.toLatLng()
+                    }
+
+                    Log.i("SESSION", session.userPath.toString())
 
                     com.google.maps.android.compose.Polyline(
-                        points = listOf(start, end),
-                        color = MaterialTheme.colorScheme.secondary,
+                        points = userPaths,
+                        color = androidx.compose.ui.graphics.Color(0xFF0A6780),
                         width = 10f
                     )
 

@@ -61,7 +61,7 @@ import java.util.Locale
 fun TimelineScreen(
     timelineViewModel: TimelineViewModel,
     back: () -> Unit,
-    navigateToPreview: (String, String) -> Unit,
+    navigateToPreview: (String, String, String) -> Unit,
     userId: String,
     name: String
 ) {
@@ -139,7 +139,7 @@ fun TimelineScreen(
 @Composable
 fun TimelineItem(
     item: TimelineItem,
-    onClick: (String, String) -> Unit,
+    onClick: (String, String, String) -> Unit,
     modifier: Modifier = Modifier
 ) {
 
@@ -211,7 +211,7 @@ fun TimelineItem(
                             indication = null,
                             interactionSource = null
                         ) {
-                            onClick(item.id, item.name)
+                            onClick(item.id, item.name, item.userId)
                         },
                     verticalAlignment = Alignment.CenterVertically
                 ) {
@@ -289,14 +289,14 @@ fun TimelineItem(
                             text = "Started at $startTime",
                             style = MaterialTheme.typography.labelMedium,
                             fontFamily = manrope,
-                            maxLines = 2,
-                            overflow = TextOverflow.Ellipsis,
                             color = MaterialTheme.colorScheme.primary
                         )
 
                         Text(
                             text = item.startAddress ?: "Unknown location",
                             style = MaterialTheme.typography.bodyMedium,
+                            maxLines = 2,
+                            overflow = TextOverflow.Ellipsis,
                             fontFamily = manrope
                         )
                     }

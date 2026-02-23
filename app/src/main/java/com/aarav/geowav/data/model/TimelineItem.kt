@@ -1,5 +1,7 @@
 package com.aarav.geowav.data.model
 
+import com.google.android.gms.maps.model.LatLng
+
 data class TimelineItem(
     val id: String = "",
     val userId: String = "",
@@ -11,8 +13,10 @@ data class TimelineItem(
     val startTime: Long = 0L,
     val endTime: Long = 0L,
     val startAddress: String = "",
-    val endAddress: String = ""
+    val endAddress: String = "",
+    val userPath: List<UserPathLatLng> = emptyList()
 )
+
 
 fun SessionHistory.toTimelineItem(name: String): TimelineItem {
     return TimelineItem(
@@ -26,7 +30,8 @@ fun SessionHistory.toTimelineItem(name: String): TimelineItem {
         startTime = startTime,
         endTime = endTime,
         startAddress = startAddress,
-        endAddress = endAddress
+        endAddress = endAddress,
+        userPath = userPath
     )
 
 

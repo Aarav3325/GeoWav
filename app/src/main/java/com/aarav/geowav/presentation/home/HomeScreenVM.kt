@@ -18,6 +18,7 @@ import com.aarav.geowav.data.model.Place
 import com.aarav.geowav.data.model.SessionHistory
 import com.aarav.geowav.data.model.User
 import com.aarav.geowav.data.model.UserPath
+import com.aarav.geowav.data.model.toUserPathLatLng
 import com.aarav.geowav.data.repository.GeoActivityRepositoryImpl
 import com.aarav.geowav.data.repository.GeoConnectionRepositoryImpl
 import com.aarav.geowav.data.repository.PlaceRepositoryImpl
@@ -234,22 +235,28 @@ class HomeScreenVM @Inject constructor(
                                             val endAddress =
                                                 getAddressFromLatLng(end.latitude, end.longitude)
 
+                                            val userPathLatLng = existing.points.map {
+                                                it.toUserPathLatLng()
+                                            }
+
                                             if(startAddress != null && endAddress != null) {
-//                                                val sessionHistory = SessionHistory(
-//                                                    id = UUID.randomUUID().toString(),
-//                                                    userId = userId,
-//                                                    startLat = start.latitude,
-//                                                    startLng = start.longitude,
-//                                                    endLat = end.latitude,
-//                                                    endLng = end.longitude,
-//                                                    startTime = existing.startedAt,
-//                                                    endTime = System.currentTimeMillis(),
-//                                                    startAddress = startAddress,
-//                                                    endAddress = endAddress
-//                                                )
-//
-//                                                // Store session history in room database
-//                                                sessionHistoryRepository.saveSession(sessionHistory)
+                                                val sessionHistory = SessionHistory(
+                                                    id = UUID.randomUUID().toString(),
+                                                    userId = userId,
+                                                    userName = it.alias ?: it.profileName,
+                                                    startLat = start.latitude,
+                                                    startLng = start.longitude,
+                                                    endLat = end.latitude,
+                                                    endLng = end.longitude,
+                                                    startTime = existing.startedAt,
+                                                    endTime = System.currentTimeMillis(),
+                                                    startAddress = startAddress,
+                                                    endAddress = endAddress,
+                                                    userPath = userPathLatLng
+                                                )
+
+                                                // Store session history in rtdb
+                                                sessionHistoryRepository.saveSession(sessionHistory)
                                             }
 
                                             Log.i(

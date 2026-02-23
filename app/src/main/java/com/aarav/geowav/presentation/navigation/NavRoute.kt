@@ -13,8 +13,8 @@ sealed class NavRoute(val path: String) {
     }
 
     object TimelinePreview: NavRoute("timelinePreview") {
-        fun createRoute(sessionId: String, name: String): String {
-            return "timelinePreview/$sessionId/$name"
+        fun createRoute(sessionId: String, name: String, userId: String): String {
+            return "timelinePreview/$sessionId/$name/$userId"
         }
     }
 

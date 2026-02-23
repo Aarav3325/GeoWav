@@ -35,7 +35,7 @@ class TimelineViewModel
         }
 
         viewModelScope.launch {
-            sessionHistoryRepository.getSessionForUserFirebase(userId).collect { list ->
+            sessionHistoryRepository.getSessionsForUser(userId).collect { list ->
                 _uiState.update {
                     it.copy(
                         sessionsFirebase = list,
