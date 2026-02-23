@@ -8,9 +8,13 @@ interface SessionHistoryRepository {
 
     suspend fun saveSession(session: SessionHistory)
 
-    fun getSessionsForUser(
+    fun getSessionsVisibleTo (
         ownerId: String,
         viewerId: String
+    ): Flow<List<TimelineItem>>
+
+    fun getSessionsForCurrentUser (
+        userId: String
     ): Flow<List<TimelineItem>>
 
     suspend fun getSessionById(sessionId: String, userId: String): TimelineItem?

@@ -31,7 +31,7 @@ class SessionHistoryRepositoryImpl
             .await()
     }
 
-    override fun getSessionsForUser(
+    override fun getSessionsVisibleTo(
         ownerId: String,
         viewerId: String
     ): Flow<List<TimelineItem>> = callbackFlow {
@@ -66,6 +66,47 @@ class SessionHistoryRepositoryImpl
             override fun onCancelled(error: DatabaseError) {
                 close(error.toException())
             }
+        }
+
+        ref.addValueEventListener(listener)
+
+        awaitClose {
+            ref.removeEventListener(listener)
+        }
+    }
+
+    override fun getSessionsForCurrentUser(userId: String): Flow<List<TimelineItem>> = callbackFlow {
+
+
+        val ref = rootRef.child("sessions")
+            .child(userId)
+
+
+        val listener = object : ValueEventListener {
+
+            override fun onDataChange(snapshot: DataSnapshot) {
+
+                Log.i("SESSION", "session: $snapshot")
+                val sessions = snapshot.children.mapNotNull {
+                    val session = it.getValue(SessionHistory::class.java)
+
+                    session?.toTimelineItem(session.userName)
+                }
+                    .sortedByDescending { session ->
+                        session.startTime
+
+
+                    }
+                Log.i("SESSION", "data: $sessions")
+
+
+                trySend(sessions)
+            }
+
+            override fun onCancelled(error: DatabaseError) {
+                close(error.toException())
+            }
+
         }
 
         ref.addValueEventListener(listener)

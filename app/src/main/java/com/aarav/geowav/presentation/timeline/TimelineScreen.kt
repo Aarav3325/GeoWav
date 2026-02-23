@@ -71,7 +71,7 @@ fun TimelineScreen(
 
     LaunchedEffect(userId) {
         timelineViewModel.getUserSessions(userId)
-//        timelineViewModel.getMySessions()
+        timelineViewModel.getMySessions()
     }
 
     Scaffold(
@@ -437,10 +437,14 @@ fun ButtonGroupTimeline(
                 ),
                 modifier = Modifier.weight(1f)
             ) {
+
+                val finalName = name.split(" ").first()
                 Text(
-                    if (timelineOptions == TimelineOptions.MY_TIMELINE) "My Timeline" else "$name's Timeline",
+                    if (timelineOptions == TimelineOptions.MY_TIMELINE) "My Timeline" else "$finalName's Timeline",
                     fontFamily = manrope,
-                    fontSize = 16.sp,
+                    fontSize = 14.sp,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
                     fontWeight = FontWeight.SemiBold
                 )
             }

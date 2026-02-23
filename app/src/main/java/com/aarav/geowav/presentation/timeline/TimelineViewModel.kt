@@ -40,7 +40,7 @@ class TimelineViewModel
         }
 
         viewModelScope.launch {
-            sessionHistoryRepository.getSessionsForUser(userId, currentUserId).collect { list ->
+            sessionHistoryRepository.getSessionsVisibleTo(userId, currentUserId).collect { list ->
                 _uiState.update {
                     it.copy(
                         sessions = list,
@@ -51,29 +51,29 @@ class TimelineViewModel
         }
     }
 
-//    fun getMySessions() {
-//        if(currentUserId.isNotEmpty()) {
-//            _uiState.update {
-//                it.copy(
-//                    isLoading = true
-//                )
-//            }
-//
-//
-//            viewModelScope.launch {
-//                sessionHistoryRepository.getSessionsForUser(currentUserId).collect { list ->
-//
-//                    Log.i("SESSIONS", "currentUserId: ${list.toString()}")
-//                    _uiState.update {
-//                        it.copy(
-//                            mySessions = list,
-//                            isLoading = false
-//                        )
-//                    }
-//                }
-//            }
-//        }
-//    }
+    fun getMySessions() {
+        if(currentUserId.isNotEmpty()) {
+            _uiState.update {
+                it.copy(
+                    isLoading = true
+                )
+            }
+
+
+            viewModelScope.launch {
+                sessionHistoryRepository.getSessionsForCurrentUser(currentUserId).collect { list ->
+
+                    Log.i("SESSIONS", "currentUserId: ${list.toString()}")
+                    _uiState.update {
+                        it.copy(
+                            mySessions = list,
+                            isLoading = false
+                        )
+                    }
+                }
+            }
+        }
+    }
 
 //    fun getUserSessionHistory(userId: String) {
 //
