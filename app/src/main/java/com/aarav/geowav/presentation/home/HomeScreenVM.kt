@@ -207,6 +207,12 @@ class HomeScreenVM @Inject constructor(
 
                             ViewerLocationState.Blocked -> {
 
+
+
+                                val sharedAudience  = locations.value.keys.filter {
+                                    it != userId
+                                }
+
                                 // Remove user from active users
                                 _locations.update {
                                     it - userId
@@ -252,7 +258,8 @@ class HomeScreenVM @Inject constructor(
                                                     endTime = System.currentTimeMillis(),
                                                     startAddress = startAddress,
                                                     endAddress = endAddress,
-                                                    userPath = userPathLatLng
+                                                    userPath = userPathLatLng,
+                                                    sharedWith = sharedAudience
                                                 )
 
                                                 // Store session history in rtdb

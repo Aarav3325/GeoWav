@@ -31,34 +31,45 @@ class SessionHistoryRepositoryImpl
             .await()
     }
 
-    override fun getSessionsForUser(userId: String): Flow<List<TimelineItem>> = callbackFlow {
+    override fun getSessionsForUser(
+        ownerId: String,
+        viewerId: String
+    ): Flow<List<TimelineItem>> = callbackFlow {
+
         val ref = rootRef.child("sessions")
-            .child(userId)
+            .child(ownerId)
+
+        Log.i("SESSION", "allowed")
 
         val listener = object : ValueEventListener {
+
             override fun onDataChange(snapshot: DataSnapshot) {
 
-                Log.i("SESSION", "session: $snapshot")
-                val sessions = snapshot.children.mapNotNull {
-                    val session = it.getValue(SessionHistory::class.java)
+                val sessions = snapshot.children.mapNotNull { child ->
 
-                    session?.toTimelineItem(session.userName)
-                }
-                    .sortedByDescending {
-                        session ->
-                        session.startTime
+                    val session = child.getValue(SessionHistory::class.java)
+
+                    if (session != null &&
+                        session.sharedWith.contains(viewerId)
+                    ) {
+
+                        session.toTimelineItem(session.userName)
+                    } else {
+                        null
                     }
-                Log.i("SESSION", "data: $sessions")
+                }
+                    .sortedByDescending { it.startTime }
+
                 trySend(sessions)
             }
 
             override fun onCancelled(error: DatabaseError) {
                 close(error.toException())
             }
-
         }
 
         ref.addValueEventListener(listener)
+
         awaitClose {
             ref.removeEventListener(listener)
         }

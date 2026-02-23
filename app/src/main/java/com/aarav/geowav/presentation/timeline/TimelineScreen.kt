@@ -71,7 +71,7 @@ fun TimelineScreen(
 
     LaunchedEffect(userId) {
         timelineViewModel.getUserSessions(userId)
-        timelineViewModel.getMySessions()
+//        timelineViewModel.getMySessions()
     }
 
     Scaffold(

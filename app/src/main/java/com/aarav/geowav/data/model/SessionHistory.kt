@@ -16,7 +16,8 @@ data class SessionHistory(
     val endTime: Long = 0L,
     val startAddress: String = "",
     val endAddress: String = "",
-    val userPath: List<UserPathLatLng> = emptyList()
+    val userPath: List<UserPathLatLng> = emptyList(),
+    val sharedWith: List<String> = emptyList()
 )
 
 fun LatLng.toUserPathLatLng(): UserPathLatLng {
