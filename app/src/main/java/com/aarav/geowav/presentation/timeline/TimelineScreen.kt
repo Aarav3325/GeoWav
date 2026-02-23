@@ -70,7 +70,6 @@ fun TimelineScreen(
     val uiState by timelineViewModel.uiState.collectAsState()
 
     LaunchedEffect(userId) {
-//        timelineViewModel.getUserSessionHistory(userId)
         timelineViewModel.getUserSessions(userId)
         timelineViewModel.getMySessions()
     }
@@ -421,7 +420,7 @@ fun ButtonGroupTimeline(
 ) {
 
     Row(
-        Modifier.padding(horizontal = 8.dp),
+        Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
         horizontalArrangement = Arrangement.spacedBy(ButtonGroupDefaults.ConnectedSpaceBetween),
     ) {
         TimelineOptions.entries.forEach { timelineOptions ->
@@ -450,8 +449,9 @@ fun ButtonGroupTimeline(
 }
 
 enum class TimelineOptions(val label: String) {
-    MY_TIMELINE("My Timeline"),
-    OTHERS_TIMELINE("Timeline")
+
+    OTHERS_TIMELINE("Timeline"),
+    MY_TIMELINE("My Timeline")
 }
 
 

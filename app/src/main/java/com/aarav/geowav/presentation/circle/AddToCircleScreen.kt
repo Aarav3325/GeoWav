@@ -124,7 +124,7 @@ fun CircleScreen(
         },
         contentWindowInsets = WindowInsets(0, 0, 0, 0),
         containerColor = MaterialTheme.colorScheme.background,
-        snackbarHost = { SnackbarHost(snackbarHostState) }
+        snackbarHost = { SnackbarHost(snackbarHostState, Modifier.padding(bottom = 36.dp)) }
     ) { padding ->
         CircleContent(
             modifier = Modifier.padding(padding),
