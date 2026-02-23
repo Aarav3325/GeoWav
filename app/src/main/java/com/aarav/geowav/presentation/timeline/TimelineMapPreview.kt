@@ -195,7 +195,7 @@ fun TimelineMapPreview(
                                 .build()
 
                             cameraPositionState.animate(
-                                CameraUpdateFactory.newLatLngBounds(bounds, 200)
+                                CameraUpdateFactory.newLatLngBounds(bounds, 230)
                             )
                         }
                     }
