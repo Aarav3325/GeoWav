@@ -86,6 +86,7 @@ class LocationSharingVM
     private fun observeEmergency() {
         if (currentUserId.isEmpty()) return
 
+
         viewModelScope.launch {
             emergencySharingRepository.observeEmergency(currentUserId)
                 .collect { info ->

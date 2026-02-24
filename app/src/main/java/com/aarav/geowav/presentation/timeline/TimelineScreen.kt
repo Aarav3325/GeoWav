@@ -6,6 +6,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.IntrinsicSize
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
@@ -164,7 +165,9 @@ fun TimelineScreen(
                     if (uiState.sessions.isEmpty()) {
                         TimelineEmptyState()
                     } else {
-                        LazyColumn() {
+                        LazyColumn(
+                            contentPadding = PaddingValues(bottom = 100.dp)
+                        ) {
                             items(uiState.sessions) { session ->
                                 TimelineItem(
                                     session,
@@ -179,7 +182,9 @@ fun TimelineScreen(
                     if (uiState.mySessions.isEmpty()) {
                         TimelineEmptyState()
                     } else {
-                        LazyColumn() {
+                        LazyColumn(
+                            contentPadding = PaddingValues(bottom = 100.dp)
+                        ) {
                             items(uiState.mySessions) { session ->
                                 TimelineItem(
                                     session,

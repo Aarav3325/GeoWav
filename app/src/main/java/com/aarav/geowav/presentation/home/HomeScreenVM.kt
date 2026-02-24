@@ -23,6 +23,7 @@ import com.aarav.geowav.data.repository.GeoActivityRepositoryImpl
 import com.aarav.geowav.data.repository.GeoConnectionRepositoryImpl
 import com.aarav.geowav.data.repository.PlaceRepositoryImpl
 import com.aarav.geowav.domain.repository.CircleRepository
+import com.aarav.geowav.domain.repository.LiveLocationSharingRepository
 import com.aarav.geowav.domain.repository.SessionHistoryRepository
 import com.aarav.geowav.domain.repository.ViewerLocationRepository
 import com.google.android.gms.maps.model.LatLng
@@ -76,6 +77,7 @@ class HomeScreenVM @Inject constructor(
 //    private var countdownJob: Job? = null
 
     private val observerJobs = mutableMapOf<String, Job>()
+
 
     // Observe user live location updates
     fun observeUsers() {
@@ -327,7 +329,6 @@ class HomeScreenVM @Inject constructor(
             observerJobs[userId] = job
         }
     }
-
     private fun isValidLocation(lat: Double, lng: Double): Boolean {
         return lat in -90.0..90.0 &&
                 lng in -180.0..180.0 &&
