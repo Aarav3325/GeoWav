@@ -114,7 +114,7 @@ class MainActivity : ComponentActivity() {
                 mutableStateOf<Location?>(null)
             }
 
-            LaunchedEffect(location) {
+            LaunchedEffect(Unit) {
                 locationManager.getLocationUpdates().distinctUntilChanged().collectLatest {
                     location = it
 

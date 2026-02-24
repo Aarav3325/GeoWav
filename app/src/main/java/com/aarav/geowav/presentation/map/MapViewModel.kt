@@ -77,12 +77,15 @@ class MapViewModel @Inject constructor(application: Application,
     }
 
 
+    private var searchJob: kotlinx.coroutines.Job? = null
+
     fun searchPlaces(query: String) {
 
-        if (_uiState.value.isLoading) return
         if (_uiState.value.showErrorDialog) return
 
-        viewModelScope.launch {
+        searchJob?.cancel()
+
+        searchJob = viewModelScope.launch {
 
             _uiState.update {
                 it.copy(

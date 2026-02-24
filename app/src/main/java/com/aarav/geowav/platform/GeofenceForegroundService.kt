@@ -25,7 +25,7 @@ import com.google.android.gms.location.GeofencingRequest
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.Job
+import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
@@ -33,7 +33,7 @@ import javax.inject.Inject
 class GeofenceForegroundService : Service() {
 
 
-    private val job = Job()
+    private val job = SupervisorJob()
     private val scope = CoroutineScope(Dispatchers.IO + job)
 
     @Inject
@@ -157,7 +157,11 @@ class GeofenceForegroundService : Service() {
         val permission = PermissionChecker.checkSelfPermission(applicationContext, Manifest.permission.ACCESS_FINE_LOCATION)
 
         if(permission == PackageManager.PERMISSION_GRANTED) {
-            startForeground(1, notification)
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                startForeground(1, notification, android.content.pm.ServiceInfo.FOREGROUND_SERVICE_TYPE_LOCATION)
+            } else {
+                startForeground(1, notification)
+            }
         }
     }
 

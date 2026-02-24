@@ -119,7 +119,11 @@ class LiveLocationService : Service() {
 
         setSharingState(ServiceState.STARTING)
 
-        startForeground(1, createNotification())
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+            startForeground(1, createNotification(), android.content.pm.ServiceInfo.FOREGROUND_SERVICE_TYPE_LOCATION)
+        } else {
+            startForeground(1, createNotification())
+        }
         serviceScope.launch {
             sendLastKnownLocation()
         }
@@ -270,13 +274,14 @@ class LiveLocationService : Service() {
             fusedLocationProviderClient.removeLocationUpdates(locationCallback)
         }
 
-        serviceScope.launch(NonCancellable) {
+        serviceScope.cancel()
+
+        CoroutineScope(Dispatchers.IO + NonCancellable).launch {
             googleSignInClient.getUserId()?.let {
                 liveLocationSharingRepository.stopSharingLiveLocation(it)
             }
         }
 
-        serviceScope.cancel()
         super.onDestroy()
     }
 
