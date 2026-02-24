@@ -5,7 +5,7 @@ import kotlinx.coroutines.flow.Flow
 
 interface LocationPermissionRepository {
 
-    suspend fun allowViewer(currentUserId: String, viewerId: String)
+    suspend fun allowViewer(currentUserId: String, viewerId: String, viewers: Set<String>)
 
     suspend fun revokeViewer(currentUserId: String, viewerId: String)
 

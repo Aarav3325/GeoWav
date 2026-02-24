@@ -21,13 +21,19 @@ class LocationPermissionRepositoryImpl
     val rootRef = firebaseDatabase.reference
 
 
-    override suspend fun allowViewer(currentUserId: String, viewerId: String) {
-        rootRef
-            .child("location_sharing")
-            .child(currentUserId)
-            .child(viewerId)
-            .setValue(true)
-            .await()
+    override suspend fun allowViewer(currentUserId: String, viewerId: String, viewers: Set<String>) {
+        val updates = hashMapOf<String, Any>()
+
+        updates["location_sharing/$currentUserId/$viewerId"] = true
+        updates["live_location/$currentUserId/sharedWith"] = viewers.toList()
+
+        rootRef.updateChildren(updates).await()
+//        rootRef
+//            .child("location_sharing")
+//            .child(currentUserId)
+//            .child(viewerId)
+//            .setValue(true)
+//            .await()
     }
 
     override suspend fun revokeViewer(currentUserId: String, viewerId: String) {

@@ -368,7 +368,7 @@ class LocationSharingVM
 
                 viewers.forEach { viewerId ->
                     locationPermissionRepository
-                        .allowViewer(currentUserId, viewerId)
+                        .allowViewer(currentUserId, viewerId, viewers)
                 }
 
                 val intent = Intent(context, LiveLocationService::class.java)
@@ -386,8 +386,10 @@ class LocationSharingVM
                 getLatestTimestamp()
 
             } catch (e: IOException) {
+                Log.e("SHARING", e.message.toString())
                 emitError("Failed to start sharing")
             } catch (e: Exception) {
+                Log.e("SHARING", e.message.toString())
                 emitError("Failed to start sharing")
             } finally {
                 _uiState.update { it.copy(isServiceActionLoading = false) }

@@ -452,6 +452,12 @@ fun ObserveLiveLocationCard(
 
     val scope = rememberCoroutineScope()
 
+    var selectedUser by remember {
+        mutableStateOf<String?>(null)
+    }
+
+
+
     Box(
         modifier = modifier
             .fillMaxWidth()
@@ -475,11 +481,13 @@ fun ObserveLiveLocationCard(
                 )
             }
 
+            Log.i("POLYLINE", "selected user: $selectedUser")
+
             userPaths.forEach { (userId, path) ->
 
                 val state = locations[userId]
 
-                if (path.points.size > 1 && state != null) {
+                if (path.points.size > 1 && state != null && selectedUser == userId) {
 
                     Log.i("POLYLINE", "size: ${path.points.size}")
                     val isEmergency =
@@ -543,7 +551,10 @@ fun ObserveLiveLocationCard(
                 Modifier.align(Alignment.TopCenter).padding(vertical = 16.dp),
                 uiState.lovedOnes,
                 locations,
-                onHideClick = onHideClick
+                onHideClick = onHideClick,
+                onUserClick = {
+                    selectedUser = it
+                }
             ) {
                 scope.launch {
                     cameraPositionState.animate(
@@ -595,7 +606,8 @@ fun RichTooltipExample(
     modifier: Modifier = Modifier,
     conn: CircleMember,
     viewerState: ViewerLocationState?,
-    onClick: (LatLng) -> Unit
+    onClick: (LatLng) -> Unit,
+    onUserClick: (String) -> Unit
 ) {
     val tooltipState = rememberTooltipState(isPersistent = true)
     val scope = rememberCoroutineScope()
@@ -710,7 +722,11 @@ fun RichTooltipExample(
                 indication = null,
                 interactionSource = remember { MutableInteractionSource() }
             ) {
-                scope.launch { tooltipState.show() }
+                onUserClick(conn.id)
+                Log.i("POLYLINE", "select")
+                scope.launch {
+                    tooltipState.show()
+                }
             }
         ) {
 
@@ -771,6 +787,7 @@ fun ViewerTrayOverlay(
     viewerList: List<CircleMember>,
     locations: Map<String, ViewerLocationState>,
     onHideClick: () -> Unit,
+    onUserClick: (String) -> Unit,
     onClick: (LatLng) -> Unit
 ) {
     val filtered = viewerList.filter {
@@ -799,7 +816,8 @@ fun ViewerTrayOverlay(
                     RichTooltipExample(
                         conn = conn,
                         viewerState = locations[conn.id],
-                        onClick = onClick
+                        onClick = onClick,
+                        onUserClick = onUserClick
                     )
                 }
             }

@@ -94,13 +94,28 @@ class HomeScreenVM @Inject constructor(
             val job = viewModelScope.launch {
                 viewerLocationRepository.observeUserLocation(userId, viewerId)
                     .collect { viewerState ->
+//
+//                        val sharedAudience  = locations.value
+//
+//                        Log.i("SHARED", "audience: $sharedAudience")
 
                         when (viewerState) {
 
                             is ViewerLocationState.NormalSharing -> {
-                                val startedAt = viewerState.location.startedAt
+
+                                _uiState.update {
+                                    it.copy(
+                                        currentSessionParticipants = viewerState.location.sharedWith
+                                    )
+                                }
+
                                 val lat = viewerState.location.lat
                                 val lng = viewerState.location.lng
+
+                                if (!isValidLocation(lat, lng)) {
+                                    Log.d("LOCATION_SKIP", "Skipped invalid: $lat, $lng")
+                                    return@collect
+                                }
 
                                 val newPoint = LatLng(lat, lng)
 
@@ -148,7 +163,7 @@ class HomeScreenVM @Inject constructor(
                                     // Update user path with new points
                                     cleanedPaths + (
                                             userId to UserPath(
-                                                startedAt = startedAt,
+                                                startedAt = viewerState.location.startedAt,
                                                 points = updatedPoints,
                                                 isActive = true
                                             )
@@ -158,9 +173,21 @@ class HomeScreenVM @Inject constructor(
 
                             is ViewerLocationState.EmergencySharing -> {
 
-                                val startedAt = viewerState.location.startedAt
+
+                                _uiState.update {
+                                    it.copy(
+                                        currentSessionParticipants = viewerState.location.sharedWith
+                                    )
+                                }
+
+
                                 val lat = viewerState.location.lat
                                 val lng = viewerState.location.lng
+
+                                if (!isValidLocation(lat, lng)) {
+                                    Log.d("LOCATION_SKIP", "Skipped invalid: $lat, $lng")
+                                    return@collect
+                                }
 
                                 val newPoint = LatLng(lat, lng)
 
@@ -197,7 +224,7 @@ class HomeScreenVM @Inject constructor(
 
                                     cleanedPaths + (
                                             userId to UserPath(
-                                                startedAt = startedAt,
+                                                startedAt = viewerState.location.startedAt,
                                                 points = updatedPoints,
                                                 isActive = true
                                             )
@@ -209,9 +236,10 @@ class HomeScreenVM @Inject constructor(
 
 
 
-                                val sharedAudience  = locations.value.keys.filter {
-                                    it != userId
-                                }
+
+                                val sharedAudience  = _uiState.value.currentSessionParticipants
+
+                                Log.i("SHARED", "audience: $sharedAudience")
 
                                 // Remove user from active users
                                 _locations.update {
@@ -223,6 +251,12 @@ class HomeScreenVM @Inject constructor(
 
                                     // Get user's path if it exists
                                     val existing = current[userId]
+                                    val existingPath = current[userId]
+
+                                    val safeStartedAt =
+                                        existingPath?.startedAt
+                                                .takeIf { it != 0L }
+                                            ?: System.currentTimeMillis()
 
                                     // Compress the path to 2 points after the session ends
                                     // we only show start and end in timeline once the session ends
@@ -254,7 +288,7 @@ class HomeScreenVM @Inject constructor(
                                                     startLng = start.longitude,
                                                     endLat = end.latitude,
                                                     endLng = end.longitude,
-                                                    startTime = existing.startedAt,
+                                                    startTime = safeStartedAt,
                                                     endTime = System.currentTimeMillis(),
                                                     startAddress = startAddress,
                                                     endAddress = endAddress,
@@ -292,6 +326,12 @@ class HomeScreenVM @Inject constructor(
             // Store job in map to be able to cancel it later
             observerJobs[userId] = job
         }
+    }
+
+    private fun isValidLocation(lat: Double, lng: Double): Boolean {
+        return lat in -90.0..90.0 &&
+                lng in -180.0..180.0 &&
+                !(lat == 0.0 && lng == 0.0)
     }
 
 
@@ -535,6 +575,7 @@ data class HomeScreenUiState(
     val connectionsList: List<GeoConnection> = emptyList(),
     val lovedOnes: List<CircleMember> = emptyList(),
     val currentViewers: List<User> = emptyList(),
+    val currentSessionParticipants: List<String> = emptyList(),
     val alertsList: List<GeoAlert> = emptyList(),
     val userAvatar: String? = null,
     val username: String? = null,

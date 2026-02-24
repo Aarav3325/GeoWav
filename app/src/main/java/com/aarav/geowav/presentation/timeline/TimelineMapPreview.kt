@@ -211,7 +211,8 @@ fun TimelineMapPreview(
                 ) {
                     SessionPreviewTray(
                         session = session,
-                        onClose = { showTray = false }
+                        onClose = { showTray = false },
+                        Modifier.padding(bottom = 32.dp)
                     )
                 }
 
@@ -219,7 +220,7 @@ fun TimelineMapPreview(
                     visible = !showTray,
                     modifier = Modifier
                         .align(Alignment.BottomStart)
-                        .padding(vertical = 36.dp, horizontal = 24.dp)
+                        .padding(vertical = 32.dp, horizontal = 16.dp)
                 ) {
                     Surface(
                         shape = CircleShape,

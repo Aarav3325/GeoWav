@@ -681,8 +681,11 @@ fun ConnectionStatusCard(
 ) {
 
     val name = member.alias ?: member.profileName
+
+    val finalName = name.split(" ").first()
     val emergencyState = locationState as? ViewerLocationState.EmergencySharing
     val isSharingActive = locationState as? ViewerLocationState.NormalSharing
+    val initialRemaining = emergencyState?.endsAt?.minus(System.currentTimeMillis())
 
     // Emergency count down
     val remaining by produceState(
@@ -750,7 +753,7 @@ fun ConnectionStatusCard(
                     modifier = Modifier.weight(1f)
                 ) {
                     Text(
-                        text = name,
+                        text = finalName,
                         fontFamily = manrope,
                         fontSize = 15.sp,
                         fontWeight = FontWeight.SemiBold,
@@ -858,15 +861,15 @@ fun ConnectionStatusCard(
 
                     Spacer(Modifier.height(14.dp))
 
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween
-                    ) {
-                        InfoColumn("Latitude", it.lat.toString())
-                        InfoColumn("Longitude", it.lng.toString())
-                    }
-
-                    Spacer(Modifier.height(10.dp))
+//                    Row(
+//                        modifier = Modifier.fillMaxWidth(),
+//                        horizontalArrangement = Arrangement.SpaceBetween
+//                    ) {
+//                        InfoColumn("Latitude", it.lat.toString())
+//                        InfoColumn("Longitude", it.lng.toString())
+//                    }
+//
+//                    Spacer(Modifier.height(10.dp))
 
                     Row(
                         modifier = Modifier.fillMaxWidth(),

@@ -53,6 +53,7 @@ class SessionHistoryRepositoryImpl
                         session.sharedWith.contains(viewerId)
                     ) {
 
+                        Log.i("SESSION", "other: " + session.toString())
                         session.toTimelineItem(session.userName)
                     } else {
                         null
