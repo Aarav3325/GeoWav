@@ -95,11 +95,7 @@ class MainActivity : ComponentActivity() {
             insets
         }
 
-        val controller = WindowInsetsControllerCompat(
-            window,
-            View(applicationContext)
-        )
-        controller.isAppearanceLightStatusBars = true
+
 
         ViewCompat.setOnApplyWindowInsetsListener(View(applicationContext)) { v, insets ->
             val systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
@@ -155,6 +151,12 @@ class MainActivity : ComponentActivity() {
                 GeoWavTheme(
                     darkTheme = isDark
                 ) {
+
+                    val controller = WindowInsetsControllerCompat(
+                        window,
+                        View(applicationContext)
+                    )
+                    controller.isAppearanceLightStatusBars = !isDark
 
                     val fineLocationPermission =
                         rememberPermissionState(Manifest.permission.ACCESS_FINE_LOCATION)

@@ -33,17 +33,7 @@ class ActivityViewModel
         observeForFilter(newFilter)
     }
 
-    fun showDatePicker() {
-        _uiState.update {
-            it.copy(showDatePicker = true)
-        }
-    }
 
-    fun dismissDatePicker() {
-        _uiState.update {
-            it.copy(showDatePicker = false)
-        }
-    }
 
 
     fun observeForFilter(filter: ActivityFilter) {
@@ -79,6 +69,18 @@ class ActivityViewModel
                 }
         }
 
+    }
+
+    fun showDatePicker() {
+        _uiState.update {
+            it.copy(showDatePicker = true)
+        }
+    }
+
+    fun dismissDatePicker() {
+        _uiState.update {
+            it.copy(showDatePicker = false)
+        }
     }
 }
 

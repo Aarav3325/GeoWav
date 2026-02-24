@@ -243,7 +243,7 @@ fun FilterRow(
         modifier = Modifier
             .fillMaxWidth()
             .padding(start = 12.dp, top = 8.dp),
-        horizontalArrangement = Arrangement.spacedBy(4.dp),
+        horizontalArrangement = Arrangement.spacedBy(2.dp),
     ) {
         item {
             LogFilterChip("Today", selectedFilter == ActivityFilter.Today) {

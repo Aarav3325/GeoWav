@@ -51,7 +51,11 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.aarav.geowav.R
+import com.aarav.geowav.core.utils.ActivityFilter
+import com.aarav.geowav.core.utils.toLocalDateInIndia
 import com.aarav.geowav.data.model.TimelineItem
+import com.aarav.geowav.presentation.activity.DateRangePickerModal
+import com.aarav.geowav.presentation.activity.FilterRow
 import com.aarav.geowav.presentation.theme.manrope
 import java.text.SimpleDateFormat
 import java.util.Date
@@ -70,8 +74,8 @@ fun TimelineScreen(
     val uiState by timelineViewModel.uiState.collectAsState()
 
     LaunchedEffect(userId) {
-        timelineViewModel.getUserSessions(userId)
-        timelineViewModel.getMySessions()
+        timelineViewModel.observeForFilter(ActivityFilter.Today, userId)
+        timelineViewModel.getMySessions(ActivityFilter.Today)
     }
 
     Scaffold(
@@ -112,6 +116,30 @@ fun TimelineScreen(
                 mutableStateOf(TimelineOptions.OTHERS_TIMELINE)
             }
 
+            if (uiState.showDatePicker) {
+                DateRangePickerModal(onDateRangeSelected = { (from, to) ->
+                    if (from != null && to != null) {
+                        val fromDate = from.toLocalDateInIndia()
+                        val toDate = to.toLocalDateInIndia()
+                        timelineViewModel.onFilterChanged(ActivityFilter.Between(fromDate, toDate), userId)
+                    }
+
+                }, onDismiss = {
+                    timelineViewModel.dismissDatePicker()
+                })
+            }
+
+
+            FilterRow(
+                selectedFilter = uiState.currentFilter,
+                onFilterSelected = {
+                    timelineViewModel.onFilterChanged(it, userId)
+                },
+                onSetRangeClick = {
+                    timelineViewModel.showDatePicker()
+                }
+            )
+
             ButtonGroupTimeline(
                 selected,
                 name
@@ -133,10 +161,9 @@ fun TimelineScreen(
 //                }
 
                 selected == TimelineOptions.OTHERS_TIMELINE -> {
-                    if(uiState.sessions.isEmpty()) {
+                    if (uiState.sessions.isEmpty()) {
                         TimelineEmptyState()
-                    }
-                    else {
+                    } else {
                         LazyColumn() {
                             items(uiState.sessions) { session ->
                                 TimelineItem(
@@ -149,10 +176,9 @@ fun TimelineScreen(
                 }
 
                 selected == TimelineOptions.MY_TIMELINE -> {
-                    if(uiState.mySessions.isEmpty()) {
+                    if (uiState.mySessions.isEmpty()) {
                         TimelineEmptyState()
-                    }
-                    else {
+                    } else {
                         LazyColumn() {
                             items(uiState.mySessions) { session ->
                                 TimelineItem(

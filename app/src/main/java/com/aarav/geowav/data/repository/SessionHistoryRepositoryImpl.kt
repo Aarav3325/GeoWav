@@ -1,6 +1,11 @@
 package com.aarav.geowav.data.repository
 
 import android.util.Log
+import com.aarav.geowav.core.utils.ActivityFilter
+import com.aarav.geowav.core.utils.rangeForFilter
+import com.aarav.geowav.data.mapper.FirebaseActivity
+import com.aarav.geowav.data.mapper.toGeoAlert
+import com.aarav.geowav.data.model.GeoAlert
 import com.aarav.geowav.data.model.SessionHistory
 import com.aarav.geowav.data.model.TimelineItem
 import com.aarav.geowav.data.model.toTimelineItem
@@ -33,11 +38,20 @@ class SessionHistoryRepositoryImpl
 
     override fun getSessionsVisibleTo(
         ownerId: String,
-        viewerId: String
+        viewerId: String,
+        filter: ActivityFilter
     ): Flow<List<TimelineItem>> = callbackFlow {
+
+
+        val timeRange = rangeForFilter(filter)
 
         val ref = rootRef.child("sessions")
             .child(ownerId)
+            .orderByChild("startTime")
+            .startAt(timeRange.startMillis.toDouble())
+            .endAt(timeRange.endMillis.toDouble())
+
+
 
         Log.i("SESSION", "allowed")
 
@@ -76,11 +90,18 @@ class SessionHistoryRepositoryImpl
         }
     }
 
-    override fun getSessionsForCurrentUser(userId: String): Flow<List<TimelineItem>> = callbackFlow {
+    override fun getSessionsForCurrentUser(
+        userId: String,
+        filter: ActivityFilter
+    ): Flow<List<TimelineItem>> = callbackFlow {
 
+        val timeRange = rangeForFilter(filter)
 
         val ref = rootRef.child("sessions")
             .child(userId)
+            .orderByChild("startTime")
+            .startAt(timeRange.startMillis.toDouble())
+            .endAt(timeRange.endMillis.toDouble())
 
 
         val listener = object : ValueEventListener {
@@ -132,4 +153,42 @@ class SessionHistoryRepositoryImpl
 
         return session?.toTimelineItem(session.userName)
     }
+
+//    fun observeAlerts(filter: ActivityFilter): Flow<List<GeoAlert>> = callbackFlow{
+//        val userID = uid()
+//        val timeRange = rangeForFilter(filter)
+//
+//        val ref = db.getReference("geofence_activity")
+//            .child(userID)
+//
+//        // Query for logs in the timestamp range
+//        val query = ref
+//            .orderByChild("timestamp")
+//            .startAt(timeRange.startMillis.toDouble())
+//            .endAt(timeRange.endMillis.toDouble())
+//
+//        val listener = object : ValueEventListener {
+//            override fun onDataChange(snapshot: DataSnapshot) {
+//                val alerts = snapshot.children.mapNotNull { snap ->
+//                    val activity = snap.getValue(FirebaseActivity::class.java)
+//                    activity?.toGeoAlert(id = snap.key ?: "")
+//                }.sortedByDescending { alert ->
+//                    // If you later add timestamp to GeoAlert, sort by that.
+//                    // For now, we just keep the order from Firebase (usually already by timestamp).
+//                    alert.time // not perfect, but okay if readableTime is ordered
+//                }
+//
+//                trySend(alerts)
+//            }
+//
+//            override fun onCancelled(error: DatabaseError) {
+//                close(error.toException())
+//            }
+//        }
+//
+//
+//        query.addValueEventListener(listener)
+//        awaitClose { query.removeEventListener(listener) }
+//
+//    }
 }

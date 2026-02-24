@@ -3,14 +3,17 @@ package com.aarav.geowav.presentation.timeline
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.aarav.geowav.core.utils.ActivityFilter
 import com.aarav.geowav.data.authentication.GoogleSignInClient
-import com.aarav.geowav.data.model.SessionHistory
 import com.aarav.geowav.data.model.TimelineItem
 import com.aarav.geowav.domain.repository.SessionHistoryRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.catch
+import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import javax.inject.Inject
@@ -30,29 +33,33 @@ class TimelineViewModel
 
     val currentUserId = googleSignInClient.getUserId()
 
-    fun getUserSessions(userId: String) {
+    private var observeJob: Job? = null
 
+//    fun getUserSessions(userId: String) {
+//
+//
+//        _uiState.update {
+//            it.copy(
+//                isLoading = true
+//            )
+//        }
+//
+//        viewModelScope.launch {
+//            sessionHistoryRepository.getSessionsVisibleTo(userId, currentUserId).collect { list ->
+//                _uiState.update {
+//                    it.copy(
+//                        sessions = list,
+//                        isLoading = false
+//                    )
+//                }
+//            }
+//        }
+//    }
 
-        _uiState.update {
-            it.copy(
-                isLoading = true
-            )
-        }
-
-        viewModelScope.launch {
-            sessionHistoryRepository.getSessionsVisibleTo(userId, currentUserId).collect { list ->
-                _uiState.update {
-                    it.copy(
-                        sessions = list,
-                        isLoading = false
-                    )
-                }
-            }
-        }
-    }
-
-    fun getMySessions() {
-        if(currentUserId.isNotEmpty()) {
+    fun getMySessions(
+        filter: ActivityFilter
+    ) {
+        if (currentUserId.isNotEmpty()) {
             _uiState.update {
                 it.copy(
                     isLoading = true
@@ -61,7 +68,7 @@ class TimelineViewModel
 
 
             viewModelScope.launch {
-                sessionHistoryRepository.getSessionsForCurrentUser(currentUserId).collect { list ->
+                sessionHistoryRepository.getSessionsForCurrentUser(currentUserId, filter).collect { list ->
 
                     Log.i("SESSIONS", "currentUserId: ${list.toString()}")
                     _uiState.update {
@@ -74,6 +81,56 @@ class TimelineViewModel
             }
         }
     }
+
+    fun onFilterChanged(newFilter: ActivityFilter, userId: String) {
+        if (_uiState.value.currentFilter == newFilter) return
+        observeForFilter(newFilter, userId)
+        getMySessions(newFilter)
+    }
+
+    fun observeForFilter(filter: ActivityFilter, userId: String) {
+        observeJob?.cancel()
+
+        _uiState.update {
+            it.copy(
+                currentFilter = filter,
+                isLoading = true,
+            )
+        }
+
+        observeJob = viewModelScope.launch {
+            sessionHistoryRepository.getSessionsVisibleTo(userId, currentUserId, filter)
+                .catch { e ->
+                    _uiState.update {
+                        it.copy(
+                            isLoading = false
+                        )
+                    }
+                }
+                .collectLatest { list ->
+                    _uiState.update {
+                        it.copy(
+                            sessions = list,
+                            isLoading = false,
+                        )
+                    }
+                }
+        }
+
+    }
+
+    fun showDatePicker() {
+        _uiState.update {
+            it.copy(showDatePicker = true)
+        }
+    }
+
+    fun dismissDatePicker() {
+        _uiState.update {
+            it.copy(showDatePicker = false)
+        }
+    }
+
 
 //    fun getUserSessionHistory(userId: String) {
 //
@@ -96,5 +153,7 @@ class TimelineViewModel
 data class TimelineUiState(
     val isLoading: Boolean = true,
     val sessions: List<TimelineItem> = emptyList(),
-    val mySessions: List<TimelineItem> = emptyList()
+    val mySessions: List<TimelineItem> = emptyList(),
+    val showDatePicker: Boolean = false,
+    val currentFilter: ActivityFilter = ActivityFilter.Today
 )
