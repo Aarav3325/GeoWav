@@ -57,6 +57,15 @@ class LiveLocationSharingRepositoryImpl
             startedAt = System.currentTimeMillis()
         )
 
+        val update = hashMapOf<String, Any>()
+
+        update["live_location/$userId/lat"] = lat
+        update["live_location/$userId/lng"] = long
+        update["live_location/$userId/timestamp"] = System.currentTimeMillis()
+        update["live_location/$userId/active"] = true
+        update["live_location/$userId/startedAt"] = System.currentTimeMillis()
+
+
 //        val data = mapOf(
 //            "lat" to lat,
 //            "long" to long,
@@ -65,10 +74,10 @@ class LiveLocationSharingRepositoryImpl
 //            "startedAt" to System.currentTimeMillis()
 //        )
 
-        val ref = rootRef.child("live_location")
-            .child(userId)
+//        val ref = rootRef.child("live_location")
+//            .child(userId)
 
-        ref.setValue(data).await()
+        rootRef.updateChildren(update).await()
     }
 
     override suspend fun updateLocation(userId: String, lat: Double, long: Double) {
@@ -103,10 +112,11 @@ class LiveLocationSharingRepositoryImpl
         val snapshot = rootRef
             .child("live_location")
             .child(userId)
+            .child("active")
             .get()
             .await()
 
-        return snapshot.exists()
+        return snapshot.getValue(Boolean::class.java) == true
     }
 
     override fun getUpdatedTimestamp(userId: String): Flow<Long> = callbackFlow {

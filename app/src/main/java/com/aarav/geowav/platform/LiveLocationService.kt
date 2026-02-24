@@ -10,6 +10,7 @@ import android.content.SharedPreferences
 import android.location.Location
 import android.os.Build
 import android.os.IBinder
+import android.util.Log
 import androidx.core.app.NotificationCompat
 import androidx.core.content.edit
 import com.aarav.geowav.R
@@ -30,6 +31,7 @@ import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.tasks.await
 import javax.inject.Inject
 
 
@@ -55,6 +57,8 @@ class LiveLocationService : Service() {
 
     @Inject
     lateinit var sharedPreferences: SharedPreferences
+
+    private var hasStartedSharing = false
 
     private fun setSharingState(state: ServiceState) {
         sharedPreferences.edit(commit = true) {
@@ -116,6 +120,9 @@ class LiveLocationService : Service() {
         setSharingState(ServiceState.STARTING)
 
         startForeground(1, createNotification())
+        serviceScope.launch {
+            sendLastKnownLocation()
+        }
         startLocationUpdates()
 
     }
@@ -154,15 +161,13 @@ class LiveLocationService : Service() {
     private suspend fun sendLocation(location: Location) {
         val userId = googleSignInClient.getUserId()
 
-        val isActive = liveLocationSharingRepository
-            .isLiveLocationActive(userId)
-
-        if (!isActive) {
+        if (!hasStartedSharing) {
             liveLocationSharingRepository.startSharing(
                 userId,
                 location.latitude,
                 location.longitude
             )
+            hasStartedSharing = true
             setSharingState(ServiceState.SHARING)
         } else {
             liveLocationSharingRepository.updateLocation(
@@ -170,6 +175,14 @@ class LiveLocationService : Service() {
                 location.latitude,
                 location.longitude
             )
+        }
+    }
+
+    @SuppressLint("MissingPermission")
+    private suspend fun sendLastKnownLocation() {
+        val location = fusedLocationProviderClient.lastLocation.await()
+        location?.let {
+            sendLocation(it)
         }
     }
 

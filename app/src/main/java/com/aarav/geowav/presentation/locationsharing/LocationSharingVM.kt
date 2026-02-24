@@ -25,6 +25,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import java.io.IOException
@@ -356,7 +357,6 @@ class LocationSharingVM
             return
         }
 
-
         viewModelScope.launch {
             try {
                 _uiState.update {
@@ -366,11 +366,29 @@ class LocationSharingVM
                     )
                 }
 
-                viewers.forEach { viewerId ->
-                    locationPermissionRepository
-                        .allowViewer(currentUserId, viewerId, viewers)
+                val existingViewers = locationPermissionRepository
+                    .getAllowedViewers(currentUserId)
+                    .first()
+
+                val toAdd = viewers - existingViewers
+                val toRemove = existingViewers - viewers
+
+                toAdd.forEach { viewerId ->
+                    locationPermissionRepository.allowViewer(
+                        currentUserId,
+                        viewerId,
+                        viewers
+                    )
                 }
 
+                toRemove.forEach { viewerId ->
+                    locationPermissionRepository.revokeViewer(
+                        currentUserId,
+                        viewerId
+                    )
+                }
+
+                // Start foreground service
                 val intent = Intent(context, LiveLocationService::class.java)
                 context.startForegroundService(intent)
 
@@ -385,11 +403,7 @@ class LocationSharingVM
 
                 getLatestTimestamp()
 
-            } catch (e: IOException) {
-                Log.e("SHARING", e.message.toString())
-                emitError("Failed to start sharing")
             } catch (e: Exception) {
-                Log.e("SHARING", e.message.toString())
                 emitError("Failed to start sharing")
             } finally {
                 _uiState.update { it.copy(isServiceActionLoading = false) }
