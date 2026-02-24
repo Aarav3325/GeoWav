@@ -1,79 +1,210 @@
-# GeoWav – Location-Based Alert & Activity Tracker
+# GeoWav
 
-GeoWav is an Android application that helps users track when they **enter or leave selected places** and receive **real-time alerts**. The app records all location events with date and time, allowing users to view their movement history anytime.
+GeoWav is a production-focused Android application that combines **geofencing automation**, **real-time live location sharing**, and **session-based timeline history** into a privacy-aware location intelligence system.
 
----
-
-## Features
-
-- Select important places using **Google Places API**
-- Detect entry and exit events using location tracking
-- Receive automatic alerts when entering or leaving a place
-- Send alerts to a selected phone number using **WhatsApp Cloud API**
-- Maintain a detailed activity log with date, time, and location
-- Secure user authentication with **Firebase Authentication**
-- Store user data and logs in **Firebase Realtime Database**
-- Handles foreground and background location permissions properly
+The application is designed with clean architecture principles, reactive state management, and scalable Firebase integration.
 
 ---
 
-## Tech Stack
+# Core Functionalities
 
-- **Language:** Kotlin  
-- **Architecture:** MVVM Architecture  
-- **Location Services:** Fused Location Provider  
-- **APIs:**  
-  - Google Places API  
-  - WhatsApp Cloud API  
-- **Backend & Auth:**  
-  - Firebase Authentication  
-  - Firebase Realtime Database  
+## Geofencing (Primary Feature)
 
----
+- Select important places using Google Places API  
+- Continuous background geofence monitoring  
+- Automatic detection of entry and exit events  
+- Accurate timestamp logging  
+- Works even when the app is in background  
 
-## 📂 App Workflow
+Geofencing is the foundational system of the application.
 
-1. User signs in using Firebase Authentication  
-2. User selects places using Google Places API  
-3. App monitors location in foreground and background  
-4. Entry and exit events are detected  
-5. Alerts are sent automatically via WhatsApp  
-6. Events are logged and stored in Firebase  
-7. User can view full activity history inside the app  
+The system detects when a user enters or exits predefined zones and triggers real-time actions without requiring the app to be open.
 
 ---
 
-## Permissions Used
+## WhatsApp Cloud API Integration (Primary Feature)
 
-- Foreground location access  
-- Background location access  
-- Internet access  
+- Automatic WhatsApp message alerts on entry/exit events  
+- Cloud-based message dispatch  
+- Configurable recipient number  
+- Real-time alert triggering  
 
-Permissions are handled carefully to ensure user privacy and reliable background tracking.
+This transforms GeoWav into an automated location-based notification system.
 
----
-
-## Learning Outcomes
-
-This project helped me gain hands-on experience with:
-- Android location services and permissions
-- Background execution limits
-- Real-time database updates
-- API integration in Android
-- Handling real-world edge cases like battery usage and app lifecycle
+When a geofence event occurs, the system immediately sends a WhatsApp notification through the Cloud API, enabling real-time remote awareness.
 
 ---
 
-## Future Improvements
+# Live Location Sharing
 
-- Add geofencing for better battery efficiency  
-- Offline caching for activity logs  
-- Notification customization  
+- Real-time live location updates using Firebase Realtime Database  
+- Smooth animated marker movement  
+- Polyline-based path visualization  
+- Distance-based coordinate filtering to prevent noisy updates  
+- Supports multiple active viewers  
+
+Users can share their live location with selected connections. Movement is rendered dynamically on Google Maps with smooth transitions and live path drawing.
 
 ---
 
-## Author
+# Emergency Mode
 
-**Aarav Halvadiya**  
-- GitHub: https://github.com/Aarav3325  
-- LinkedIn: https://www.linkedin.com/in/aaravhalvadiya  
+- Dedicated emergency sharing state  
+- Real-time countdown timer  
+- Visually differentiated emergency UI  
+- Automatic session termination handling  
+- Special highlighting on map  
+
+Emergency mode allows users to temporarily escalate sharing with stronger visibility and time-bound tracking.
+
+---
+
+# Activity Logging
+
+- Logs all geofence entry and exit events  
+- Timestamped activity tracking  
+- Daily activity filtering  
+- Organized event history  
+
+Provides a structured record of user movement relative to selected places.
+
+---
+
+# Session History System
+
+- Automatically stores completed live sharing sessions  
+- Reverse geocoding for readable start and end addresses  
+- Stores full polyline route data  
+- Session duration tracking  
+- Secure session-level visibility control  
+
+Each completed session captures:
+
+- Start & end coordinates  
+- Start & end timestamps  
+- Human-readable addresses  
+- Full route path  
+- List of participants allowed to view the session  
+
+Session history visibility is restricted only to users included in that session’s sharing audience.
+
+---
+
+# Timeline Screen
+
+- User-wise session grouping  
+- Chronological ordering  
+- Clean, contextual timeline UI  
+- Session duration display  
+- “View on Map” navigation  
+
+Each timeline item clearly displays:
+
+- User name  
+- Session date  
+- Start time & address  
+- End time & address  
+- Total session duration  
+
+---
+
+# Timeline Map Preview
+
+- Custom start and end markers  
+- Polyline rendering of recorded route  
+- Auto camera bounds adjustment  
+- Bottom information tray with session details  
+- Smooth map UI integration  
+
+Users can preview any historical session visually on the map with a clean and contextual layout.
+
+---
+
+# Privacy & Access Control
+
+GeoWav implements session-level access control:
+
+- Only users included in a session’s `sharedWith` list can view that session  
+- No retroactive access to past sessions  
+- No global history visibility  
+- Audience snapshot stored at session creation  
+
+This ensures privacy is preserved even if connections change later.
+
+---
+
+# Architecture
+
+The project follows a scalable and clean structure:
+
+- MVVM Architecture  
+- Repository Pattern  
+- Reactive StateFlow-based state management  
+- CallbackFlow for Firebase real-time listeners  
+- Separation of UI state and domain logic  
+
+---
+
+# Tech Stack
+
+- Kotlin  
+- Jetpack Compose  
+- Google Maps Compose  
+- Firebase Realtime Database  
+- Coroutines & Flow  
+- Hilt (Dependency Injection)  
+- Google Places API  
+- WhatsApp Cloud API  
+- Android Geofencing API  
+- Geocoder API (Reverse geocoding)  
+
+---
+
+# Real-Time System Design
+
+- Location updates observed using callbackFlow  
+- Marker animation with Compose state updates  
+- Polyline updates filtered by distance threshold  
+- Session compression after stop (start & end preserved)  
+- Listener cleanup to prevent memory leaks  
+
+---
+
+# Edge Case Handling
+
+- Invalid coordinate filtering  
+- Duplicate point filtering  
+- Geocoder failure handling  
+- Background monitoring reliability  
+- Session audience freezing at creation  
+- Proper coroutine lifecycle handling  
+
+---
+
+# What This Project Demonstrates
+
+- Real-time distributed system handling  
+- Privacy-aware data modeling  
+- Automated geofence-triggered messaging  
+- Clean reactive UI architecture  
+- Advanced Google Maps integration  
+- Production-level Android system design  
+
+---
+
+# Future Enhancements
+
+- Mutual live sharing detection  
+- Live distance calculation between users  
+- Route snapping to roads  
+- Session statistics (distance, speed, duration analytics)  
+- Performance optimizations  
+
+---
+
+# Author
+
+Aarav Halvadiya  
+
+GitHub: https://github.com/Aarav3325  
+LinkedIn: https://www.linkedin.com/in/aaravhalvadiya  
