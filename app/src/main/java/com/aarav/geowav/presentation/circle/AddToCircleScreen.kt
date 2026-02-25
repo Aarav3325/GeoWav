@@ -414,7 +414,7 @@ fun SendInviteButton(
         Icon(
             painter = painterResource(R.drawable.send_invite),
             contentDescription = null,
-            modifier = Modifier.size(24.dp)
+            modifier = Modifier.size(18.dp)
         )
 
     }

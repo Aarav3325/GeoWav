@@ -9,6 +9,7 @@ import androidx.credentials.CustomCredential
 import androidx.credentials.GetCredentialRequest
 import androidx.credentials.GetCredentialResponse
 import com.aarav.geowav.R
+import com.aarav.geowav.core.utils.encodeEmail
 import com.aarav.geowav.data.model.User
 import com.google.android.libraries.identity.googleid.GetGoogleIdOption
 import com.google.android.libraries.identity.googleid.GoogleIdTokenCredential
@@ -31,6 +32,8 @@ class GoogleSignInClient @Inject constructor(
     private val tag = "GoogleSignInClient"
 
     private val userReference = firebaseDatabase.getReference("users")
+    private val lookupReference = firebaseDatabase.getReference("user_lookup")
+
 
     // To implement Google Sign In
     @Inject
@@ -121,15 +124,20 @@ class GoogleSignInClient @Inject constructor(
 
             if (finalEmail.isBlank() || finalPass.isBlank()) return false
 
-            firebaseAuth
-                .createUserWithEmailAndPassword(finalEmail, finalPass)
-                .await()
+//            firebaseAuth
+//                .createUserWithEmailAndPassword(finalEmail, finalPass)
+//                .await()
 
-            val user = firebaseAuth.currentUser ?: return false
 
-            storeUserData(finalEmail, username)
+            val user = firebaseAuth.createUserWithEmailAndPassword(finalEmail, finalPass).await().user
 
-            true
+            if(user != null) {
+                storeUserData(finalEmail, username)
+                return true
+            }
+            else {
+                return false
+            }
         } catch (e: Exception) {
             Log.e(tag, "signUp failed", e)
             false
@@ -148,8 +156,9 @@ class GoogleSignInClient @Inject constructor(
             if (finalEmail.isBlank() || finalPass.isBlank()) return false
 
 
-            firebaseAuth.signInWithEmailAndPassword(finalEmail, finalPass).await()
-            return true
+            val user = firebaseAuth.signInWithEmailAndPassword(finalEmail, finalPass).await().user
+
+            if(user != null) return true else return false
         } catch (e: Exception) {
             Log.i(tag, e.message.toString())
             return false
@@ -175,9 +184,9 @@ class GoogleSignInClient @Inject constructor(
                     Log.e(tag, "userReference: Success")
                 }
 
-//            userReference.child("user_lookup")
-//                .child(email)
-//                .setValue(userId)
+            lookupReference
+                .child(encodeEmail(email))
+                .setValue(userId)
         }
     }
 

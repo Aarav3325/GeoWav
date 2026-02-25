@@ -163,6 +163,18 @@ class MainActivity : ComponentActivity() {
                     val backgroundLocationPermission =
                         rememberPermissionState(Manifest.permission.ACCESS_BACKGROUND_LOCATION)
 
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+
+                        val notificationPermission =
+                            rememberPermissionState(Manifest.permission.POST_NOTIFICATIONS)
+
+                        LaunchedEffect(Unit) {
+                            if (!notificationPermission.status.isGranted) {
+                                notificationPermission.launchPermissionRequest()
+                            }
+                        }
+                    }
+
                     val permissionsGranted =
                         fineLocationPermission.status.isGranted && backgroundLocationPermission.status.isGranted
 

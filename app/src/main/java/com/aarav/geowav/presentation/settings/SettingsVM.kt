@@ -39,7 +39,6 @@ class SettingsVM @Inject constructor(
 
     init {
         updateAppVersion()
-
     }
 
     fun updateLocationPermission(hasLocationPermission: Boolean) {
@@ -93,8 +92,6 @@ class SettingsVM @Inject constructor(
     fun loadTheme(): ThemeMode {
         val theme =  prefs.getString("theme_mode", ThemeMode.SYSTEM.name)?.let {
             ThemeMode.valueOf(it) } ?: ThemeMode.SYSTEM
-
-
 
         return theme
     }
