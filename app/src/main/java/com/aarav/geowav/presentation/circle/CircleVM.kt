@@ -253,10 +253,12 @@ class CircleVM
                 return@launch
             }
 
+
             when (
                 val result = circleRepository.acceptInvite(
                     receiverUid = currentUserId,
                     senderUid = senderUid,
+                    senderEmail = sender.email,
                     senderProfileName = sender.username,
                     receiverProfileName = receiver.username
                 )
@@ -313,6 +315,44 @@ class CircleVM
         }
     }
 
+    fun deleteMember(circleMemberId: String) {
+        if (currentUserId.isEmpty()) {
+            emitError("User not authenticated")
+            return
+        }
+
+        viewModelScope.launch {
+            when (val result = circleRepository.deleteCircleMember(currentUserId, circleMemberId)) {
+                is Resource.Success -> {
+                    loadLovedOnes()
+                    _events.emit(CircleUiEvent.MemberDeleted)
+                }
+
+                is Resource.Error -> {
+                    emitError(result.message ?: "Failed to delete member")
+                }
+
+                else -> Unit
+            }
+        }
+    }
+
+    fun showDeleteDialog() {
+        _uiState.update {
+            it.copy(
+                showDeleteDialog = true
+            )
+        }
+    }
+
+    fun hideDeleteDialog() {
+        _uiState.update {
+            it.copy(
+                showDeleteDialog = false
+            )
+        }
+    }
+
 
     private fun emitError(message: String) {
         viewModelScope.launch {
@@ -329,6 +369,7 @@ data class CircleUiState(
     val rejectingInviteId: String? = null,
     val name: String = "",
     val email: String = "",
+    val showDeleteDialog: Boolean = false,
     val nameError: String? = null,
     val emailError: String? = null,
     val isInputValid: Boolean = false
@@ -337,6 +378,8 @@ data class CircleUiState(
 sealed class CircleUiEvent {
     object InviteSent : CircleUiEvent()
     object InviteAccepted : CircleUiEvent()
+
+    object MemberDeleted: CircleUiEvent()
     data class ShowError(val message: String) : CircleUiEvent()
 }
 

@@ -1,5 +1,6 @@
 package com.aarav.geowav.data.repository
 
+import android.util.Log
 import com.aarav.geowav.core.utils.Resource
 import com.aarav.geowav.domain.repository.LocationPermissionRepository
 import com.google.firebase.database.DataSnapshot
@@ -21,11 +22,10 @@ class LocationPermissionRepositoryImpl
     val rootRef = firebaseDatabase.reference
 
 
-    override suspend fun allowViewer(currentUserId: String, viewerId: String, viewers: Set<String>) {
+    override suspend fun allowViewer(currentUserId: String, viewerId: String) {
         val updates = hashMapOf<String, Any>()
 
         updates["location_sharing/$currentUserId/$viewerId"] = true
-        updates["live_location/$currentUserId/sharedWith"] = viewers.toList()
 
         rootRef.updateChildren(updates).await()
 //        rootRef
@@ -35,6 +35,19 @@ class LocationPermissionRepositoryImpl
 //            .setValue(true)
 //            .await()
     }
+
+    override suspend fun updateSharedWith(
+        currentUserId: String,
+        viewers: Set<String>
+    ) {
+        rootRef
+            .child("live_location")
+            .child(currentUserId)
+            .child("sharedWith")
+            .setValue(viewers.toList())
+            .await()
+    }
+
 
     override suspend fun revokeViewer(currentUserId: String, viewerId: String) {
         rootRef

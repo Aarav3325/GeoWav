@@ -58,6 +58,8 @@ import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import com.aarav.geowav.R
 import com.aarav.geowav.data.model.CircleMember
 import com.aarav.geowav.data.model.PendingInvite
+import com.aarav.geowav.presentation.components.DeleteDialog
+import com.aarav.geowav.presentation.components.MyAlertDialog
 import com.aarav.geowav.presentation.locationsharing.LovedOneUi
 import com.aarav.geowav.presentation.locationsharing.itemShape
 import com.aarav.geowav.presentation.theme.GeoWavTheme
@@ -73,6 +75,8 @@ fun CircleScreen(
 ) {
     val uiState by viewModel.uiState.collectAsState()
 
+    var showDeleteDialog by remember { mutableStateOf(false) }
+
     val snackbarHostState = remember { SnackbarHostState() }
 
     LaunchedEffect(Unit) {
@@ -86,6 +90,9 @@ fun CircleScreen(
 
                 is CircleUiEvent.InviteAccepted ->
                     snackbarHostState.showSnackbar("Invite Accepted")
+
+                is CircleUiEvent.MemberDeleted ->
+                    snackbarHostState.showSnackbar("Member deleted")
             }
         }
     }
@@ -133,7 +140,10 @@ fun CircleScreen(
             updateEmail = viewModel::updateEmail,
             onSendInvite = viewModel::sendInvite,
             onAcceptInvite = viewModel::acceptInvite,
-            onRejectInvite = viewModel::rejectInvite
+            onRejectInvite = viewModel::rejectInvite,
+            onDeleteMember = viewModel::showDeleteDialog,
+            dismissDialog = viewModel::hideDeleteDialog,
+            deleteMember = viewModel::deleteMember
         )
     }
 }
@@ -146,13 +156,36 @@ fun CircleContent(
     updateEmail: (String) -> Unit,
     onSendInvite: (String, String) -> Unit,
     onAcceptInvite: (String) -> Unit,
-    onRejectInvite: (String) -> Unit
+    onRejectInvite: (String) -> Unit,
+    onDeleteMember: () -> Unit,
+    dismissDialog: () -> Unit,
+    deleteMember: (String) -> Unit,
 ) {
     val lovedOnes = listOf(
         LovedOneUi("1", "Mom", true),
         LovedOneUi("2", "Dad", true),
         LovedOneUi("3", "Brother", true)
     )
+
+    var confirmDeleteFor by remember {
+        mutableStateOf<String?>(null)
+    }
+
+    DeleteDialog(
+        shouldShowDialog = uiState.showDeleteDialog && confirmDeleteFor != null,
+        onDismissRequest = dismissDialog,
+        dismissButtonText = "Cancel",
+        onDismissClick = dismissDialog,
+        title = "Delete Member",
+        icon = R.drawable.trash,
+        message = "Are you sure you want to remove this member from your circle?",
+        confirmButtonText = "Remove"
+    ) {
+        confirmDeleteFor?.let {
+            deleteMember(it)
+            dismissDialog()
+        }
+    }
 
     LazyColumn(
         modifier = modifier
@@ -182,7 +215,9 @@ fun CircleContent(
         }
 
         item {
-            MyCircleSection(uiState.lovedOnes)
+            MyCircleSection(uiState.lovedOnes, onDeleteMember) {
+                confirmDeleteFor = it
+            }
         }
 
         item {
@@ -388,7 +423,9 @@ fun SendInviteButton(
 
 @Composable
 fun MyCircleSection(
-    lovedOnesList: List<CircleMember>
+    lovedOnesList: List<CircleMember>,
+    onDeleteMember: () -> Unit,
+    confirmDelete: (String) -> Unit,
 ) {
 
 //    val lovedOnes = listOf(
@@ -464,7 +501,9 @@ fun MyCircleSection(
                     LovedOneCardCircle(
                         connection = connection,
                         index = index,
-                        count = lovedOnesList.size
+                        count = lovedOnesList.size,
+                        onDeleteMember,
+                        confirmDelete
                     )
                 }
             }
@@ -588,7 +627,9 @@ fun PendingInviteSection(
 fun LovedOneCardCircle(
     connection: CircleMember,
     index: Int,
-    count: Int
+    count: Int,
+    onDeleteMember: () -> Unit,
+    confirmDelete: (String) -> Unit
 ) {
 
     val shape = itemShape(index, count)
@@ -652,6 +693,10 @@ fun LovedOneCardCircle(
                 modifier = Modifier
                     .size(36.dp)
                     .padding(6.dp)
+                    .clickable {
+                        onDeleteMember()
+                        confirmDelete(connection.id)
+                    }
             )
         }
 

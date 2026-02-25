@@ -21,6 +21,7 @@ interface CircleRepository {
     suspend fun acceptInvite(
         receiverUid: String,
         senderUid: String,
+        senderEmail: String,
         senderProfileName: String,
         receiverProfileName: String
     ): Resource<Unit>
@@ -37,4 +38,9 @@ interface CircleRepository {
     fun getPendingInvites(
         userId: String
     ): Flow<List<PendingInvite>>
+
+    suspend fun deleteCircleMember(
+        userId: String,
+        circleMemberId: String
+    ): Resource<Unit>
 }

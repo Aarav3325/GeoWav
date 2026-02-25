@@ -157,6 +157,77 @@ fun PermissionAlertDialog(
     )
 }
 
+@Composable
+fun DeleteDialog(
+    modifier: Modifier = Modifier,
+    shouldShowDialog: Boolean,
+    onDismissRequest: () -> Unit,
+    dismissButtonText: String?,
+    onDismissClick: () -> Unit,
+    title: String,
+    icon: Int = R.drawable.trash,
+    message: String,
+    confirmButtonText: String,
+    onConfirmClick: () -> Unit,
+) {
+    if (shouldShowDialog) {
+        AlertDialog(
+            modifier = modifier,
+            onDismissRequest = onDismissRequest,
+            confirmButton = {
+                FilledTonalButton(
+                    onClick = onConfirmClick,
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = MaterialTheme.colorScheme.primaryContainer,
+                        contentColor = MaterialTheme.colorScheme.onPrimaryContainer
+                    )
+                ) {
+                    Text(confirmButtonText, fontFamily = manrope)
+                }
+            },
+            dismissButton = {
+                dismissButtonText?.let {
+                    FilledTonalButton(
+                        onClick = onDismissClick,
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = Color.Transparent,
+                            contentColor = MaterialTheme.colorScheme.onSurface
+                        )
+                    ) {
+                        Text(dismissButtonText, fontFamily = manrope)
+                    }
+                }
+            },
+            containerColor = MaterialTheme.colorScheme.background,
+            title = {
+                Text(
+                    text = title,
+                    fontFamily = manrope,
+                    color = MaterialTheme.colorScheme.onBackground,
+                    fontSize = 16.sp,
+                    fontWeight = FontWeight.SemiBold
+                )
+            },
+            icon = {
+                Icon(
+                    painter = painterResource(id = icon),
+                    contentDescription = "Error icon",
+                    modifier = Modifier.size(24.dp),
+                    tint = MaterialTheme.colorScheme.error
+                )
+            },
+            text = {
+                Text(
+                    text = message,
+                    fontFamily = sora,
+                    textAlign = TextAlign.Center,
+                    fontSize = 12.sp,
+                    color = MaterialTheme.colorScheme.onBackground
+                )
+            }
+        )
+    }
+}
 
 @Composable
 fun MyAlertDialog(
@@ -474,7 +545,8 @@ fun EmergencyShareDialog(
                         painter = painterResource(R.drawable.emergency),
                         contentDescription = "emergency icon",
                         colorFilter = ColorFilter.tint(MaterialTheme.colorScheme.onError),
-                        modifier = Modifier.size(34.dp)
+                        modifier = Modifier
+                            .size(34.dp)
                             .padding(4.dp)
                     )
                 }

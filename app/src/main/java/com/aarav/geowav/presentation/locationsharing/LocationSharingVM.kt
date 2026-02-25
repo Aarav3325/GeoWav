@@ -28,7 +28,6 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-import java.io.IOException
 import javax.inject.Inject
 
 @HiltViewModel
@@ -374,20 +373,31 @@ class LocationSharingVM
                 val toAdd = viewers - existingViewers
                 val toRemove = existingViewers - viewers
 
+                // Add new viewers
                 toAdd.forEach { viewerId ->
                     locationPermissionRepository.allowViewer(
                         currentUserId,
-                        viewerId,
-                        viewers
+                        viewerId
                     )
+
+                    Log.i("LOCATION_PERMISSION", "Allowing viewer: $viewerId")
                 }
 
+                // Remove old viewers
                 toRemove.forEach { viewerId ->
                     locationPermissionRepository.revokeViewer(
                         currentUserId,
                         viewerId
                     )
+
+                    Log.i("LOCATION_PERMISSION", "Revoking viewer: $viewerId")
                 }
+
+                // Update sharedWith list once
+                locationPermissionRepository.updateSharedWith(
+                    currentUserId,
+                    viewers
+                )
 
                 // Start foreground service
                 val intent = Intent(context, LiveLocationService::class.java)

@@ -49,12 +49,12 @@ class CircleRepositoryImpl
             val updates = mapOf(
                 "circle_requests/$receiverUid/$senderUid" to mapOf(
                     "status" to "pending",
-                    "senderEmail" to senderEmail,
+                    "email" to senderEmail,
                     "senderProfileName" to senderProfileName,
                     "sentAt" to timestamp
                 ),
                 "circle/$senderUid/$receiverUid" to mapOf(
-                    "receiverEmail" to receiverEmail,
+                    "email" to receiverEmail,
                     "status" to "pending",
                     "alias" to alias,
                     "addedAt" to timestamp
@@ -75,6 +75,7 @@ class CircleRepositoryImpl
     override suspend fun acceptInvite(
         receiverUid: String,
         senderUid: String,
+        senderEmail: String,
         senderProfileName: String,
         receiverProfileName: String
     ): Resource<Unit> {
@@ -89,6 +90,7 @@ class CircleRepositoryImpl
 
                 // Receiver’s view of sender
                 "circle/$receiverUid/$senderUid/status" to "accepted",
+                "circle/$receiverUid/$senderUid/email" to senderEmail,
                 "circle/$receiverUid/$senderUid/profileName" to senderProfileName,
                 "circle/$receiverUid/$senderUid/addedAt" to timestamp,
 
@@ -137,7 +139,6 @@ class CircleRepositoryImpl
                 .await()
 
 
-
             val lovedOnes = snapshot.children.mapNotNull { child ->
                 Log.i("CircleRepositoryImpl", "getAcceptedLovedOnes: $child")
                 val status = child.child("status").getValue(String::class.java)
@@ -150,7 +151,7 @@ class CircleRepositoryImpl
                             .getValue(String::class.java) ?: "Unknown",
                         alias = child.child("alias").getValue(String::class.java),
                         selected = false,
-                        receiverEmail = child.child("receiverEmail").getValue(String::class.java)
+                        receiverEmail = child.child("email").getValue(String::class.java)
                             ?: "",
                     )
                 } else null
@@ -173,7 +174,7 @@ class CircleRepositoryImpl
                     val status = it.child("status").getValue(String::class.java)
                     if (status == "pending") {
                         PendingInvite(
-                            senderEmail = it.child("senderEmail").getValue(String::class.java)
+                            senderEmail = it.child("email").getValue(String::class.java)
                                 ?: "",
                             senderProfileName = it.child("senderProfileName")
                                 .getValue(String::class.java),
@@ -195,6 +196,27 @@ class CircleRepositoryImpl
 
         awaitClose {
             ref.removeEventListener(listener)
+        }
+    }
+
+    override suspend fun deleteCircleMember(
+        userId: String,
+        circleMemberId: String
+    ): Resource<Unit> {
+        return try {
+            val ref = rootRef.child("circle")
+
+            val updates = mapOf(
+                "$userId/$circleMemberId" to null,
+                "$circleMemberId/$userId" to null
+            )
+
+
+            ref.updateChildren(updates).await()
+
+            Resource.Success(Unit)
+        } catch (e: Exception) {
+            Resource.Error("Failed to delete circle member")
         }
     }
 
