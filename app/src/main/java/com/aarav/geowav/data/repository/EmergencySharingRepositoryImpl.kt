@@ -20,15 +20,14 @@ class EmergencySharingRepositoryImpl
 
     val rootRef = firebaseDatabase.reference
 
+    // Start emergency
     override suspend fun startEmergency(
         currentUserId: String,
-        duration: Long,
+        duration: Long, // here duration is now + duration = endsAt, change namings
         viewers: List<String>
     ) {
 
         val viewerMap = viewers.associateWith { true }
-
-        val now = System.currentTimeMillis()
 
         val data = mapOf(
             "active" to true,
@@ -37,6 +36,7 @@ class EmergencySharingRepositoryImpl
             "viewers" to viewerMap
         )
 
+        // Add data to emergency_sharing separately
         rootRef
             .child("emergency_sharing")
             .child(currentUserId)
@@ -44,6 +44,7 @@ class EmergencySharingRepositoryImpl
             .await()
     }
 
+    // Stop emergency
     override suspend fun stopEmergency(currentUserId: String) {
         rootRef
             .child("emergency_sharing")
@@ -52,6 +53,7 @@ class EmergencySharingRepositoryImpl
             .await()
     }
 
+    // Check if emergency is active
     override suspend fun isEmergencyActive(currentUserId: String): Boolean {
         val snapshot = rootRef
             .child("emergency_sharing")
@@ -59,13 +61,16 @@ class EmergencySharingRepositoryImpl
             .get()
             .await()
 
+        // Return false if snapshot does not exist
         if (!snapshot.exists()) return false
 
         val endsAt = snapshot.child("endsAt").value as? Long ?: return false
 
+        // Check if endsAt is in the future
         return System.currentTimeMillis() < endsAt
     }
 
+    // Observe emergency status
     override fun observeEmergency(currentUserId: String): Flow<EmergencyInfo?> = callbackFlow {
         val ref = rootRef
             .child("emergency_sharing")
@@ -78,6 +83,7 @@ class EmergencySharingRepositoryImpl
                     return
                 }
 
+                // Return null if emergency is not active
                 val active = snapshot.child("active").getValue(Boolean::class.java) ?: false
                 if (!active) {
                     trySend(null)
@@ -88,6 +94,7 @@ class EmergencySharingRepositoryImpl
                 val endsAt = snapshot.child("endsAt").getValue(Long::class.java) ?: 0L
                 val duration = snapshot.child("duration").getValue(Long::class.java) ?: 0L
 
+                // Get all viewers
                 val viewers = snapshot.child("viewers")
                     .children
                     .mapNotNull { it.key }

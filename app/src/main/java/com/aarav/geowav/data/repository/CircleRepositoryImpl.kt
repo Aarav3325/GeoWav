@@ -23,6 +23,7 @@ class CircleRepositoryImpl
 
     private val rootRef = firebaseDatabase.reference
 
+    // Find user by email using user_lookup
     override suspend fun findUserByEmail(email: String): String? {
         val emailKey = encodeEmail(email)
 
@@ -35,6 +36,7 @@ class CircleRepositoryImpl
         return snapshot.getValue(String::class.java)
     }
 
+    // Send invite
     override suspend fun sendCircleInvite(
         senderUid: String,
         senderEmail: String,
@@ -46,13 +48,16 @@ class CircleRepositoryImpl
         return try {
             val timestamp = System.currentTimeMillis()
 
+            // Update circle_requests and circle
             val updates = mapOf(
+                // Add request to receiver
                 "circle_requests/$receiverUid/$senderUid" to mapOf(
                     "status" to "pending",
                     "email" to senderEmail,
                     "senderProfileName" to senderProfileName,
                     "sentAt" to timestamp
                 ),
+                // Add receiver to sender's circle on request
                 "circle/$senderUid/$receiverUid" to mapOf(
                     "email" to receiverEmail,
                     "status" to "pending",
@@ -72,6 +77,7 @@ class CircleRepositoryImpl
         }
     }
 
+    // Accept invite
     override suspend fun acceptInvite(
         receiverUid: String,
         senderUid: String,
@@ -106,12 +112,14 @@ class CircleRepositoryImpl
         }
     }
 
-
+    // Reject invite
     override suspend fun rejectInvite(
         receiverUid: String,
         senderUid: String
     ): Resource<Unit> {
         return try {
+
+            // Remove pending request and remove receiver from sender's circle
             val updates = mapOf(
                 "circle_requests/$receiverUid/$senderUid" to null,
                 "circle/$senderUid/$receiverUid" to null
@@ -126,7 +134,7 @@ class CircleRepositoryImpl
         }
     }
 
-
+    // Get circle members
     override suspend fun getAcceptedLovedOnes(
         userId: String
     ): Resource<List<CircleMember>> {
@@ -153,6 +161,7 @@ class CircleRepositoryImpl
                         selected = false,
                         receiverEmail = child.child("email").getValue(String::class.java)
                             ?: "",
+                        addedAt = child.child("addedAt").getValue(Long::class.java) ?: 0L
                     )
                 } else null
             }
@@ -164,6 +173,7 @@ class CircleRepositoryImpl
         }
     }
 
+    // Get pending invites
     override fun getPendingInvites(userId: String): Flow<List<PendingInvite>> = callbackFlow {
 
         val ref = rootRef.child("circle_requests").child(userId)
@@ -199,6 +209,7 @@ class CircleRepositoryImpl
         }
     }
 
+    // Delete circle member
     override suspend fun deleteCircleMember(
         userId: String,
         circleMemberId: String

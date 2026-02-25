@@ -10,11 +10,10 @@ import android.content.SharedPreferences
 import android.location.Location
 import android.os.Build
 import android.os.IBinder
-import android.util.Log
 import androidx.core.app.NotificationCompat
 import androidx.core.content.edit
 import com.aarav.geowav.R
-import com.aarav.geowav.core.utils.LiveLocationState
+import com.aarav.geowav.core.managers.KillSwitchManager
 import com.aarav.geowav.core.utils.ServiceState
 import com.aarav.geowav.data.authentication.GoogleSignInClient
 import com.aarav.geowav.domain.repository.LiveLocationSharingRepository
@@ -30,7 +29,6 @@ import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.tasks.await
 import javax.inject.Inject
 
@@ -53,6 +51,9 @@ class LiveLocationService : Service() {
 
     @Inject
     lateinit var liveLocationSharingRepository: LiveLocationSharingRepository
+
+    @Inject
+    lateinit var killSwitchManager: KillSwitchManager
 
 
     @Inject
@@ -94,7 +95,6 @@ class LiveLocationService : Service() {
     }
 
 
-
 //    override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
 //        if (!googleSignInClient.isLoggedIn()) {
 //            stopSelf()
@@ -112,23 +112,42 @@ class LiveLocationService : Service() {
     override fun onCreate() {
         super.onCreate()
 
-        if (!googleSignInClient.isLoggedIn()) {
-            stopSelf()
-            return
-        }
-
-        setSharingState(ServiceState.STARTING)
-
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-            startForeground(1, createNotification(), android.content.pm.ServiceInfo.FOREGROUND_SERVICE_TYPE_LOCATION)
-        } else {
-            startForeground(1, createNotification())
-        }
         serviceScope.launch {
-            sendLastKnownLocation()
-        }
-        startLocationUpdates()
 
+            killSwitchManager.fetchAndActivate()
+
+            if (!killSwitchManager.isAppEnabled()) {
+                stopSelf()
+                return@launch
+            }
+
+            if (!googleSignInClient.isLoggedIn()) {
+                stopSelf()
+                return@launch
+            }
+
+            setSharingState(ServiceState.STARTING)
+
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                startForeground(
+                    1,
+                    createNotification(),
+                    android.content.pm.ServiceInfo.FOREGROUND_SERVICE_TYPE_LOCATION
+                )
+            } else {
+                startForeground(1, createNotification())
+            }
+
+            sendLastKnownLocation()
+            startLocationUpdates()
+
+            killSwitchManager.observeAppEnabled()
+                .collect { enabled ->
+                    if (!enabled) {
+                        shutdownService()
+                    }
+                }
+        }
     }
 
 //    private fun startLocationSharing() {
@@ -203,6 +222,12 @@ class LiveLocationService : Service() {
 
         locationCallback = object : LocationCallback() {
             override fun onLocationResult(result: LocationResult) {
+                if (!killSwitchManager
+                        .isAppEnabled()
+                ) {
+                    return
+                }
+
                 val location = result.lastLocation ?: return
 
                 serviceScope.launch {
@@ -271,7 +296,7 @@ class LiveLocationService : Service() {
         stopForeground(STOP_FOREGROUND_REMOVE)
 
         if (::locationCallback.isInitialized) {
-            fusedLocationProviderClient.removeLocationUpdates(locationCallback)
+            stopLocationUpdates()
         }
 
         serviceScope.cancel()
@@ -285,9 +310,18 @@ class LiveLocationService : Service() {
         super.onDestroy()
     }
 
+    private fun shutdownService() {
 
+        stopLocationUpdates()
 
+        stopForeground(true)
 
+        stopSelf()
+    }
+
+    private fun stopLocationUpdates() {
+        fusedLocationProviderClient.removeLocationUpdates(locationCallback)
+    }
 
 
 }

@@ -15,9 +15,10 @@ import androidx.core.app.ActivityCompat
 import androidx.core.app.NotificationCompat
 import androidx.core.content.PermissionChecker
 import com.aarav.geowav.R
+import com.aarav.geowav.core.managers.KillSwitchManager
+import com.aarav.geowav.data.authentication.GoogleSignInClient
 import com.aarav.geowav.data.model.Place
 import com.aarav.geowav.data.repository.GeofenceRepositoryImpl
-import com.aarav.geowav.data.authentication.GoogleSignInClient
 import com.aarav.geowav.data.repository.PlaceRepositoryImpl
 import com.google.android.gms.location.Geofence
 import com.google.android.gms.location.GeofencingClient
@@ -51,17 +52,56 @@ class GeofenceForegroundService : Service() {
     @Inject
     lateinit var placeRepositoryImpl: PlaceRepositoryImpl
 
+    @Inject
+    lateinit var killSwitchManager: KillSwitchManager
+
     override fun onBind(intent: Intent?): IBinder? {
         TODO("Not yet implemented")
     }
 
     override fun onCreate() {
         super.onCreate()
-        startForegroundService()
 
-        if (googleSignInClient.isLoggedIn()) {
-            observePlaces()
+        scope.launch {
+
+            killSwitchManager.fetchAndActivate()
+
+            val isEnabled = killSwitchManager.isAppEnabled()
+
+            if (!isEnabled) {
+                stopGeofenceCompletely()
+                stopSelf()
+                return@launch
+            }
+
+            // Start only once
+            startForegroundService()
+
+            if (googleSignInClient.isLoggedIn()) {
+                observePlaces()
+            }
+
+            // Now only observe for shutdown, not restart
+            killSwitchManager.observeAppEnabled()
+                .collect { enabled ->
+                    if (!enabled) {
+                        stopGeofenceCompletely()
+                        stopSelf()
+                    }
+                }
         }
+    }
+
+    private fun stopGeofenceCompletely() {
+
+        val pendingIntent = PendingIntent.getBroadcast(
+            this,
+            0,
+            Intent(this, GeofenceBroadcastReceiver::class.java),
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_MUTABLE
+        )
+
+        geofencingClient.removeGeofences(pendingIntent)
 
     }
 
@@ -154,11 +194,18 @@ class GeofenceForegroundService : Service() {
             .build()
 
 
-        val permission = PermissionChecker.checkSelfPermission(applicationContext, Manifest.permission.ACCESS_FINE_LOCATION)
+        val permission = PermissionChecker.checkSelfPermission(
+            applicationContext,
+            Manifest.permission.ACCESS_FINE_LOCATION
+        )
 
-        if(permission == PackageManager.PERMISSION_GRANTED) {
+        if (permission == PackageManager.PERMISSION_GRANTED) {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-                startForeground(1, notification, android.content.pm.ServiceInfo.FOREGROUND_SERVICE_TYPE_LOCATION)
+                startForeground(
+                    1,
+                    notification,
+                    android.content.pm.ServiceInfo.FOREGROUND_SERVICE_TYPE_LOCATION
+                )
             } else {
                 startForeground(1, notification)
             }

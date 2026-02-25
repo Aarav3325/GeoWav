@@ -2,6 +2,7 @@ package com.aarav.geowav
 
 import NavGraph
 import android.Manifest
+import android.app.PendingIntent
 import android.content.Intent
 import android.content.SharedPreferences
 import android.location.Location
@@ -40,10 +41,14 @@ import androidx.core.view.WindowInsetsControllerCompat
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
+import com.aarav.geowav.core.managers.KillSwitchManager
 import com.aarav.geowav.data.authentication.GoogleSignInClient
+import com.aarav.geowav.platform.GeofenceBroadcastReceiver
 import com.aarav.geowav.platform.GeofenceForegroundService
+import com.aarav.geowav.platform.LiveLocationService
 import com.aarav.geowav.platform.LocationManager
 import com.aarav.geowav.presentation.MainVM
+import com.aarav.geowav.presentation.components.AppDisabled
 import com.aarav.geowav.presentation.components.LocationPermissionDialog
 import com.aarav.geowav.presentation.components.SnackbarManager
 import com.aarav.geowav.presentation.navigation.BottomNavigationBar
@@ -55,6 +60,7 @@ import com.google.accompanist.permissions.ExperimentalPermissionsApi
 import com.google.accompanist.permissions.isGranted
 import com.google.accompanist.permissions.rememberPermissionState
 import com.google.android.gms.location.FusedLocationProviderClient
+import com.google.android.gms.location.GeofencingClient
 import com.google.android.gms.location.LocationServices
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.flow.collectLatest
@@ -64,6 +70,8 @@ import javax.inject.Inject
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
 
+    @Inject
+    lateinit var killSwitchManager: KillSwitchManager
 
     @Inject
     lateinit var googleSignInClient: GoogleSignInClient
@@ -76,6 +84,12 @@ class MainActivity : ComponentActivity() {
 
     @Inject
     lateinit var locationManager: LocationManager
+
+    @Inject
+    lateinit var geofencingClient: GeofencingClient
+
+    private var isAppEnabled = false
+    private var showDilaog = false
 
 
     @RequiresPermission(Manifest.permission.ACCESS_FINE_LOCATION)
@@ -107,8 +121,64 @@ class MainActivity : ComponentActivity() {
 
         fusedClient = LocationServices.getFusedLocationProviderClient(this)
 
+//        lifecycleScope.launch {
+//            killSwitchManager.fetchAndActivate()
+//
+//            killSwitchManager.observeAppEnabled()
+//                .collect { enabled ->
+//
+//                    Log.i("KILL", "app in kill mode: $enabled")
+//
+//                    if (!enabled) {
+//                        stopAllCriticalServices()
+//                        showAppDisabledState = true
+//
+////                        startActivity(
+////                            Intent(this@MainActivity, AppDisabledActivity::class.java)
+////                        )
+////                        finish()
+//                    }
+//                }
+//        }
+
+
+//        lifecycleScope.launch {
+//            killSwitchManager.fetchAndActivate()
+//
+//            if(!killSwitchManager.isAppEnabled()) {
+//
+//                startActivity(Intent(this@MainActivity, AppDisabledActivity::class.java))
+//                finish()
+//                Log.e("KILL", "App is in kill mode")
+//            }
+//
+//        }
 
         setContent {
+            var showAppDisabledState by remember {
+                mutableStateOf(false)
+            }
+
+            LaunchedEffect(Unit) {
+                killSwitchManager.fetchAndActivate()
+                killSwitchManager.observeAppEnabled()
+                    .collect { enabled ->
+                        if (!enabled) {
+
+                            Log.i("KILL", "app in kill mode")
+                            stopAllCriticalServices()
+                            showAppDisabledState = !enabled
+                        } else {
+
+                            Log.i("KILL", "app not in kill mode")
+                        }
+                    }
+            }
+
+            if (showAppDisabledState) {
+                AppDisabled()
+                return@setContent
+            }
 
             var location by remember {
                 mutableStateOf<Location?>(null)
@@ -183,26 +253,53 @@ class MainActivity : ComponentActivity() {
 
                     val isOnboarded = sharedPreferences.getBoolean("isOnboarded", false)
 
-                    if (permissionsGranted) {
-                        val intent = Intent(context, GeofenceForegroundService::class.java)
-                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                            context.startForegroundService(intent)
-                        } else {
-                            context.startService(intent)
+//                    if (permissionsGranted && isAppEnabled) {
+//                        val intent = Intent(context, GeofenceForegroundService::class.java)
+//                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+//                            context.startForegroundService(intent)
+//                        } else {
+//                            context.startService(intent)
+//                        }
+//                    } else {
+//                        if (isOnboarded) {
+//                            LocationPermissionDialog(
+//                                true,
+//                                onConfirmClick = {
+//                                    openAppSettings(
+//                                        context,
+//                                        Settings.ACTION_LOCATION_SOURCE_SETTINGS
+//                                    )
+//                                }
+//                            )
+//                        }
+//                    }
+
+                    LaunchedEffect(permissionsGranted) {
+
+                        val enabled = killSwitchManager.isAppEnabled()
+
+                        if (permissionsGranted && enabled) {
+
+                            val intent = Intent(context, GeofenceForegroundService::class.java)
+
+                            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                                context.startForegroundService(intent)
+                            } else {
+                                context.startService(intent)
+                            }
                         }
-                    } else {
-                        if (isOnboarded) {
-                            LocationPermissionDialog(
-                                true,
-                                onConfirmClick = {
-                                    openAppSettings(
-                                        context,
-                                        Settings.ACTION_LOCATION_SOURCE_SETTINGS
-                                    )
-                                }
+
+                    }
+
+                    LocationPermissionDialog(
+                        isOnboarded && !permissionsGranted,
+                        onConfirmClick = {
+                            openAppSettings(
+                                context,
+                                Settings.ACTION_LOCATION_SOURCE_SETTINGS
                             )
                         }
-                    }
+                    )
 
 
                     val navController = rememberNavController()
@@ -265,6 +362,21 @@ class MainActivity : ComponentActivity() {
 
 
         }
+    }
+
+    private fun stopAllCriticalServices() {
+
+        stopService(Intent(this, LiveLocationService::class.java))
+        stopService(Intent(this, GeofenceForegroundService::class.java))
+
+        val pendingIntent = PendingIntent.getBroadcast(
+            this,
+            0,
+            Intent(this, GeofenceBroadcastReceiver::class.java),
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_MUTABLE
+        )
+
+        geofencingClient.removeGeofences(pendingIntent)
     }
 
 }

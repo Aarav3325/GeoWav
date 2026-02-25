@@ -14,11 +14,19 @@ import androidx.work.workDataOf
 import com.aarav.geowav.R
 import com.google.android.gms.location.Geofence
 import com.google.android.gms.location.GeofencingEvent
+import com.google.firebase.remoteconfig.FirebaseRemoteConfig
 
 class GeofenceBroadcastReceiver : BroadcastReceiver() {
 
     // detect geofence activity and send notification to connection via Whatsapp Cloud API
     override fun onReceive(context: Context, intent: Intent) {
+
+        val remoteConfig = FirebaseRemoteConfig.getInstance()
+        val isAppEnabled = remoteConfig.getBoolean("app_enabled")
+
+        if (!isAppEnabled) {
+            return
+        }
 
         val geofencingEvent = GeofencingEvent.fromIntent(intent) ?: return
         if (geofencingEvent.hasError()) {

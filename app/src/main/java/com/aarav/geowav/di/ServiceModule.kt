@@ -2,14 +2,16 @@ package com.aarav.geowav.di
 
 import android.content.Context
 import android.content.SharedPreferences
+import com.aarav.geowav.data.datasource.retrofit.MessageAPI
 import com.aarav.geowav.platform.GeofenceHelper
 import com.aarav.geowav.platform.LocationManager
-import com.aarav.geowav.data.datasource.retrofit.MessageAPI
 import com.google.android.gms.location.FusedLocationProviderClient
 import com.google.android.gms.location.GeofencingClient
 import com.google.android.gms.location.LocationServices
 import com.google.android.libraries.places.api.Places
 import com.google.android.libraries.places.api.net.PlacesClient
+import com.google.firebase.remoteconfig.FirebaseRemoteConfig
+import com.google.firebase.remoteconfig.remoteConfigSettings
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -82,6 +84,24 @@ object ServiceModule {
     @Singleton
     fun provideSharedPreference(@ApplicationContext context: Context): SharedPreferences {
         return context.getSharedPreferences("geowav", Context.MODE_PRIVATE)
+    }
+
+    @Singleton
+    @Provides
+    fun provideRemoteConfig(): FirebaseRemoteConfig {
+        return FirebaseRemoteConfig.getInstance().apply {
+            val configSettings = remoteConfigSettings {
+                minimumFetchIntervalInSeconds = 0
+            }
+
+            setConfigSettingsAsync(configSettings)
+
+            setDefaultsAsync(
+                mapOf(
+                    "app_enabled" to true
+                )
+            )
+        }
     }
 
 }

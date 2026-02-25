@@ -6,7 +6,8 @@ CircleMember(
     val profileName: String,
     val alias: String?,
     val selected: Boolean,
-    val receiverEmail: String? = ""
+    val receiverEmail: String? = "",
+    val addedAt: Long = 0L
 )
 
 data class

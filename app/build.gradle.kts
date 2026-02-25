@@ -56,6 +56,9 @@ dependencies {
 
     // Firebase
     implementation("com.google.firebase:firebase-auth")
+
+    implementation("com.google.firebase:firebase-config-ktx")
+
 //    implementation("com.google.firebase:firebase-analytics")
 ////    implementation("com.google.firebase:firebase-inappmessaging-display")
 ////    implementation("com.google.firebase:firebase-ai")
@@ -111,7 +114,7 @@ dependencies {
     kapt("androidx.room:room-compiler:$room_version")
     implementation("androidx.room:room-ktx:$room_version")
 
-    implementation(platform("com.google.firebase:firebase-bom:34.4.0"))
+    implementation(platform("com.google.firebase:firebase-bom:34.9.0"))
     implementation("com.google.firebase:firebase-analytics")
 
     implementation("androidx.hilt:hilt-work:1.2.0")
@@ -129,6 +132,7 @@ dependencies {
 
     implementation("com.google.accompanist:accompanist-permissions:0.37.3")
     implementation("com.google.maps.android:android-maps-utils:2.3.0")
+    implementation("com.google.firebase:firebase-config-ktx:22.1.2")
 
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)

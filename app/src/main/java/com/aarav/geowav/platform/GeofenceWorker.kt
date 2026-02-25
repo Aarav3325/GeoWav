@@ -10,6 +10,7 @@ import com.aarav.geowav.data.model.Parameter
 import com.aarav.geowav.data.model.Template
 import com.aarav.geowav.data.model.TemplateMessageRequest
 import com.aarav.geowav.data.repository.MessageRepo
+import com.google.firebase.remoteconfig.FirebaseRemoteConfig
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -41,6 +42,12 @@ class GeofenceWorker(
 
         val latitude = inputData.getDouble("latitude", 0.0)
         val longitude = inputData.getDouble("longitude", 0.0)
+
+
+
+        if (!FirebaseRemoteConfig.getInstance().getBoolean("app_enabled")) {
+            return Result.success()
+        }
 
 
         val activityData = mapOf(
@@ -77,7 +84,6 @@ class GeofenceWorker(
                 )
             )
         )
-
 
         // Send message via WhatsApp Cloud API and register event in rtdb
         val messageRepo = MessageRepo()

@@ -36,6 +36,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.DialogProperties
 import com.aarav.geowav.R
+import com.aarav.geowav.data.model.CircleMember
 import com.aarav.geowav.presentation.theme.manrope
 import com.aarav.geowav.presentation.theme.sora
 import com.google.accompanist.permissions.ExperimentalPermissionsApi
@@ -545,6 +546,83 @@ fun EmergencyShareDialog(
                         painter = painterResource(R.drawable.emergency),
                         contentDescription = "emergency icon",
                         colorFilter = ColorFilter.tint(MaterialTheme.colorScheme.onError),
+                        modifier = Modifier
+                            .size(34.dp)
+                            .padding(4.dp)
+                    )
+                }
+            }
+        )
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+fun MemberAlertPreview() {
+    val member = CircleMember(
+        id = "1",
+        alias = "Test",
+        selected = false,
+        receiverEmail = "test@gmail.com",
+        addedAt = System.currentTimeMillis(),
+        profileName = "Test"
+    )
+
+    MemberAlertDialog(
+        true,
+        onDismiss = {},
+        member
+    )
+}
+
+@Composable
+fun MemberAlertDialog(
+    showDialog: Boolean,
+    onDismiss: () -> Unit,
+    member: CircleMember
+) {
+    if (showDialog) {
+        AlertDialog(
+            modifier = Modifier.fillMaxWidth(),
+            containerColor = MaterialTheme.colorScheme.errorContainer,
+            onDismissRequest = onDismiss,
+            title = {
+                Text(
+                    text = "Emergency Live Location Sharing",
+                    fontFamily = manrope,
+                    color = MaterialTheme.colorScheme.onErrorContainer,
+                    fontSize = 16.sp,
+                    fontWeight = FontWeight.SemiBold
+                )
+            },
+            text = {
+                MemberInfoCard(member)
+            },
+            confirmButton = {
+                TextButton(
+                    onClick = onDismiss,
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = MaterialTheme.colorScheme.secondary,
+                        contentColor = MaterialTheme.colorScheme.onSecondary
+                    )
+                ) {
+                    Text(
+                        text = "Close",
+                        fontFamily = manrope,
+                        fontSize = 12.sp,
+                        fontWeight = FontWeight.SemiBold
+                    )
+                }
+            },
+            icon = {
+                Surface(
+                    color = MaterialTheme.colorScheme.surface,
+                    shape = CircleShape
+                ) {
+                    Image(
+                        painter = painterResource(R.drawable.info),
+                        contentDescription = "emergency icon",
+                        colorFilter = ColorFilter.tint(MaterialTheme.colorScheme.onSurface),
                         modifier = Modifier
                             .size(34.dp)
                             .padding(4.dp)
