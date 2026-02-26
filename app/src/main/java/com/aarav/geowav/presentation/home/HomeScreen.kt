@@ -1,6 +1,7 @@
 package com.aarav.geowav.presentation.home
 
 
+import android.Manifest
 import android.util.Log
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.animateColorAsState
@@ -82,10 +83,13 @@ import com.aarav.geowav.presentation.components.SnackbarManager
 import com.aarav.geowav.presentation.theme.GeoWavTheme
 import com.aarav.geowav.presentation.theme.manrope
 import com.aarav.geowav.presentation.theme.sora
+import com.google.accompanist.permissions.ExperimentalPermissionsApi
+import com.google.accompanist.permissions.isGranted
+import com.google.accompanist.permissions.rememberPermissionState
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalPermissionsApi::class)
 @Composable
 fun GeoWavHomeScreen(
     isDarkThemeEnabled: Boolean,
@@ -106,6 +110,16 @@ fun GeoWavHomeScreen(
     val locations by homeScreenVM.locations.collectAsState()
 
 //    val sessionHistory by homeScreenVM.userSessionHistory.collectAsState()
+
+    val notificationPermission =
+        rememberPermissionState(Manifest.permission.POST_NOTIFICATIONS)
+
+    LaunchedEffect(Unit) {
+        if (!notificationPermission.status.isGranted) {
+
+            notificationPermission.launchPermissionRequest()
+        }
+    }
 
 
 
@@ -389,7 +403,7 @@ fun GeoWavHomeScreen(
 
                     Row(
                         modifier = Modifier
-                            .padding(vertical = 0.dp)
+                            .padding(top = 16.dp)
                             .fillMaxWidth(),
                         verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.SpaceBetween
@@ -598,7 +612,7 @@ fun ConnectionsList(
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(vertical = 8.dp)
+            .padding(bottom = 16.dp, top = 8.dp)
     ) {
 
         Row(
@@ -649,9 +663,10 @@ fun ConnectionsList(
 
                     Text(
                         "No connections yet",
-                        fontFamily = sora,
-                        color = MaterialTheme.colorScheme.onBackground,
-                        fontSize = 16.sp
+                        style = MaterialTheme.typography.bodyMedium.copy(
+                            color = MaterialTheme.colorScheme.onBackground,
+                            fontFamily = sora
+                        )
                     )
                 }
 
@@ -1177,10 +1192,11 @@ fun ActiveZonesSection(
                     )
 
                     Text(
-                        "No Zones are addded yet",
-                        fontFamily = sora,
-                        color = MaterialTheme.colorScheme.onBackground,
-                        fontSize = 16.sp
+                        "No zones are added yet",
+                        style = MaterialTheme.typography.bodyMedium.copy(
+                            color = MaterialTheme.colorScheme.onBackground,
+                            fontFamily = sora
+                        )
                     )
                 }
             }
@@ -1320,11 +1336,13 @@ fun RecentAlertsList(
     isDarkThemeEnabled: Boolean
 ) {
 
+
+
     Column(
         verticalArrangement = Arrangement.spacedBy(10.dp),
         modifier = Modifier
             .fillMaxWidth()
-            .padding(bottom = 24.dp, top = 4.dp)
+            .padding(bottom = 24.dp, top = 8.dp)
     ) {
         if (alerts.isEmpty()) {
             Column(
@@ -1335,11 +1353,11 @@ fun RecentAlertsList(
                 Image(
                     painter = painterResource(R.drawable.link_break),
                     contentDescription = "break",
-                    modifier = Modifier.size(48.dp),
+                    modifier = Modifier.size(24.dp),
                     colorFilter = ColorFilter.tint(MaterialTheme.colorScheme.secondary)
                 )
 
-                Spacer(modifier = Modifier.height(12.dp))
+                Spacer(modifier = Modifier.height(6.dp))
 
                 Text(
                     "No recent alerts. You’re all clear!",

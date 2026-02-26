@@ -5,6 +5,7 @@ import com.aarav.geowav.data.repository.EmergencySharingRepositoryImpl
 import com.aarav.geowav.data.repository.GeoActivityRepositoryImpl
 import com.aarav.geowav.data.repository.LiveLocationSharingRepositoryImpl
 import com.aarav.geowav.data.repository.LocationPermissionRepositoryImpl
+import com.aarav.geowav.data.repository.NotificationRepositoryImpl
 import com.aarav.geowav.data.repository.PlaceRepositoryImpl
 import com.aarav.geowav.data.repository.SessionHistoryRepositoryImpl
 import com.aarav.geowav.data.repository.ViewerLocationRepositoryImpl
@@ -44,6 +45,7 @@ abstract class RepositoryModule {
     abstract fun bindLiveCircleRepository(
         circleRepositoryImpl: CircleRepositoryImpl
     ): CircleRepository
+
 
     @Binds
     abstract fun bindLocationPermissionRepository(

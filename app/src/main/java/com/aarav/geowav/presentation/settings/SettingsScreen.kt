@@ -3,6 +3,7 @@ package com.aarav.geowav.presentation.settings
 import android.Manifest
 import android.content.Context
 import android.content.Intent
+import android.content.pm.PackageManager
 import android.os.Build
 import android.provider.Settings
 import android.util.Log
@@ -39,6 +40,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -54,6 +56,11 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.core.content.ContextCompat
+import androidx.core.content.PermissionChecker
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
+import androidx.lifecycle.compose.LocalLifecycleOwner
 import com.aarav.geowav.presentation.components.AboutDialog
 import com.aarav.geowav.presentation.components.TermsAndConditionsDialog
 import com.aarav.geowav.presentation.theme.manrope
@@ -102,9 +109,30 @@ fun SettingsScreen(
     val fineLocation = rememberPermissionState(Manifest.permission.ACCESS_FINE_LOCATION)
     val background = rememberPermissionState(Manifest.permission.ACCESS_BACKGROUND_LOCATION)
 
-    LaunchedEffect(notificationPermission.status) {
-        settingsVM.updateNotificationsEnabled(notificationPermission.status.isGranted)
+    val lifecycleOwner = LocalLifecycleOwner.current
+
+    DisposableEffect(lifecycleOwner) {
+        val observer = LifecycleEventObserver { _, event ->
+            if (event == Lifecycle.Event.ON_RESUME) {
+
+                val isGranted =
+                    ContextCompat.checkSelfPermission(
+                        context,
+                        Manifest.permission.POST_NOTIFICATIONS
+                    ) == PackageManager.PERMISSION_GRANTED
+
+                Log.i("NOTI", "granted: " + isGranted)
+                settingsVM.updateNotificationsEnabled(isGranted)
+            }
+        }
+
+        lifecycleOwner.lifecycle.addObserver(observer)
+
+        onDispose {
+            lifecycleOwner.lifecycle.removeObserver(observer)
+        }
     }
+
     LaunchedEffect(fineLocation.status, background.status) {
         if(fineLocation.status.isGranted && background.status.isGranted) {
             settingsVM.updateLocationPermission(true)

@@ -61,13 +61,14 @@ fun YourPlacesScreen(
         Column(
             modifier = Modifier.padding(horizontal = 12.dp)
         ) {
+
             Text(
                 text = "Your Places",
-                fontSize = 24.sp,
+                fontSize = 20.sp,
                 fontFamily = manrope,
-                fontWeight = FontWeight.SemiBold,
+                fontWeight = FontWeight.Bold,
                 color = MaterialTheme.colorScheme.onBackground,
-                modifier = Modifier.padding(top = 54.dp)
+                modifier = Modifier.padding(top = 68.dp, start = 16.dp, end = 16.dp)
             )
 
             if (uiState.placesList.isEmpty()) {
@@ -82,23 +83,23 @@ fun YourPlacesScreen(
                         Surface(
                             shape = CircleShape,
                             color = MaterialTheme.colorScheme.primaryContainer,
-                            modifier = Modifier.size(132.dp)
+                            modifier = Modifier.size(102.dp)
                         ) {
                             Image(
                                 painter = painterResource(R.drawable.tray),
                                 contentDescription = "tray",
                                 colorFilter = ColorFilter.tint(MaterialTheme.colorScheme.onPrimaryContainer),
-                                modifier = Modifier.padding(12.dp)
+                                modifier = Modifier.padding(16.dp)
                             )
                         }
 
                         Text(
                             text = "Add a location to start tracking your zones",
-                            fontSize = 16.sp,
+                            fontSize = 14.sp,
                             textAlign = TextAlign.Center,
                             fontFamily = sora,
                             color = MaterialTheme.colorScheme.onBackground,
-                            fontWeight = FontWeight.SemiBold,
+                            fontWeight = FontWeight.Normal,
                         )
                     }
                 }

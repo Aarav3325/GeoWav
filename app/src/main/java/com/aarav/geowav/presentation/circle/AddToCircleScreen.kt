@@ -161,11 +161,6 @@ fun CircleContent(
     dismissDialog: () -> Unit,
     deleteMember: (String) -> Unit,
 ) {
-    val lovedOnes = listOf(
-        LovedOneUi("1", "Mom", true),
-        LovedOneUi("2", "Dad", true),
-        LovedOneUi("3", "Brother", true)
-    )
 
     var confirmDeleteFor by remember {
         mutableStateOf<String?>(null)
@@ -176,7 +171,7 @@ fun CircleContent(
         onDismissRequest = dismissDialog,
         dismissButtonText = "Cancel",
         onDismissClick = dismissDialog,
-        title = "Delete Member",
+        title = "Remove Member",
         icon = R.drawable.trash,
         message = "Are you sure you want to remove this member from your circle?",
         confirmButtonText = "Remove"

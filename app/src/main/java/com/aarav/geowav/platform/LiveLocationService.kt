@@ -270,16 +270,14 @@ class LiveLocationService : Service() {
     private fun createNotification(): Notification {
         val channelId = "live_location_channel"
 
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            val channel = NotificationChannel(
-                channelId,
-                "Live Location",
-                NotificationManager.IMPORTANCE_LOW
-            )
+        val channel = NotificationChannel(
+            channelId,
+            "Live Location",
+            NotificationManager.IMPORTANCE_LOW
+        )
 
-            getSystemService(NotificationManager::class.java)
-                .createNotificationChannel(channel)
-        }
+        getSystemService(NotificationManager::class.java)
+            .createNotificationChannel(channel)
 
         val notification = NotificationCompat.Builder(this, channelId)
             .setContentTitle("Sharing Live Location")

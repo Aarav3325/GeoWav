@@ -5,6 +5,7 @@ import android.Manifest
 import android.app.PendingIntent
 import android.content.Intent
 import android.content.SharedPreferences
+import android.content.pm.PackageManager
 import android.location.Location
 import android.os.Build
 import android.os.Bundle
@@ -35,6 +36,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.core.content.ContextCompat
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.WindowInsetsControllerCompat
@@ -42,11 +44,13 @@ import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.aarav.geowav.core.managers.KillSwitchManager
+import com.aarav.geowav.core.utils.GeoNotificationHelper
 import com.aarav.geowav.data.authentication.GoogleSignInClient
 import com.aarav.geowav.platform.GeofenceBroadcastReceiver
 import com.aarav.geowav.platform.GeofenceForegroundService
 import com.aarav.geowav.platform.LiveLocationService
 import com.aarav.geowav.platform.LocationManager
+import com.aarav.geowav.platform.NotificationService
 import com.aarav.geowav.presentation.MainVM
 import com.aarav.geowav.presentation.components.AppDisabled
 import com.aarav.geowav.presentation.components.LocationPermissionDialog
@@ -119,6 +123,13 @@ class MainActivity : ComponentActivity() {
             insets
         }
 
+        val check = ContextCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS) == PackageManager.PERMISSION_GRANTED
+
+
+        if(!check) {
+            openAppSettings(this, Settings.ACTION_APP_NOTIFICATION_SETTINGS)
+        }
+
         fusedClient = LocationServices.getFusedLocationProviderClient(this)
 
 //        lifecycleScope.launch {
@@ -159,6 +170,20 @@ class MainActivity : ComponentActivity() {
                 mutableStateOf(false)
             }
 
+
+            val context = LocalContext.current
+
+            LaunchedEffect(Unit) {
+                if(check) {
+                    val intent = Intent(context, NotificationService::class.java)
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                        context.startForegroundService(intent)
+                    } else {
+                        context.startService(intent)
+                    }
+                }
+            }
+
             LaunchedEffect(Unit) {
                 killSwitchManager.fetchAndActivate()
                 killSwitchManager.observeAppEnabled()
@@ -167,9 +192,9 @@ class MainActivity : ComponentActivity() {
 
                             Log.i("KILL", "app in kill mode")
                             stopAllCriticalServices()
-                            showAppDisabledState = !enabled
+                            showAppDisabledState = true
                         } else {
-
+                            showAppDisabledState = false
                             Log.i("KILL", "app not in kill mode")
                         }
                     }
@@ -206,7 +231,6 @@ class MainActivity : ComponentActivity() {
 
             Log.i("MYTAG", "theme $themeMode")
 
-            val context = LocalContext.current
 
             val isDarkTheme = when (themeMode) {
                 ThemeMode.DARK -> true
@@ -228,30 +252,20 @@ class MainActivity : ComponentActivity() {
                     )
                     controller.isAppearanceLightStatusBars = !isDark
 
+
+                    val isOnboarded = sharedPreferences.getBoolean("isOnboarded", false)
+
                     val fineLocationPermission =
                         rememberPermissionState(Manifest.permission.ACCESS_FINE_LOCATION)
                     val backgroundLocationPermission =
                         rememberPermissionState(Manifest.permission.ACCESS_BACKGROUND_LOCATION)
 
-                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-
-                        val notificationPermission =
-                            rememberPermissionState(Manifest.permission.POST_NOTIFICATIONS)
-
-                        LaunchedEffect(Unit) {
-                            if (!notificationPermission.status.isGranted) {
-                                notificationPermission.launchPermissionRequest()
-                            }
-                        }
-                    }
 
                     val permissionsGranted =
                         fineLocationPermission.status.isGranted && backgroundLocationPermission.status.isGranted
 
                     Log.i("MYTAG", "permissions $permissionsGranted")
 
-
-                    val isOnboarded = sharedPreferences.getBoolean("isOnboarded", false)
 
 //                    if (permissionsGranted && isAppEnabled) {
 //                        val intent = Intent(context, GeofenceForegroundService::class.java)
@@ -272,6 +286,15 @@ class MainActivity : ComponentActivity() {
 //                                }
 //                            )
 //                        }
+//                    }
+
+//                    LaunchedEffect(Unit) {
+//                        GeoNotificationHelper.show(
+//                            context,
+//                            "circle_channel",
+//                            "New Invite",
+//                            "Aarav invited you"
+//                        )
 //                    }
 
                     LaunchedEffect(permissionsGranted) {

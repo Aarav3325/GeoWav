@@ -75,9 +75,9 @@ fun ActivityScreen(
             text = "Activity",
             fontSize = 20.sp,
             fontFamily = manrope,
-            fontWeight = FontWeight.SemiBold,
+            fontWeight = FontWeight.Bold,
             color = MaterialTheme.colorScheme.onBackground,
-            modifier = Modifier.padding(top = 54.dp, start = 12.dp, end = 12.dp)
+            modifier = Modifier.padding(top = 68.dp, start = 16.dp, end = 16.dp)
         )
 
         FilterRow(selectedFilter = uiState.currentFilter, onFilterSelected = { filter ->

@@ -2,6 +2,11 @@ package com.aarav.geowav
 
 import android.Manifest
 import android.app.Application
+import android.app.NotificationChannel
+import android.app.NotificationManager
+import android.content.Context
+import android.os.Build
+import android.util.Log
 import androidx.annotation.RequiresPermission
 import androidx.hilt.work.HiltWorkerFactory
 import androidx.work.Configuration
@@ -35,9 +40,46 @@ class GeoWavApp : Application(), Configuration.Provider {
     override fun onCreate() {
         super.onCreate()
 
+        applicationContext.createGeoWavChannels()
 
         if(!Places.isInitialized()){
             Places.initializeWithNewPlacesApiEnabled(applicationContext, getString(R.string.maps_api))
         }
+    }
+
+    fun Context.createGeoWavChannels() {
+
+        val circle = NotificationChannel(
+            "circle_channel",
+            "Circle & Invites",
+            NotificationManager.IMPORTANCE_HIGH
+        ).apply {
+            description = "Invites and circle updates"
+        }
+
+        val sharing = NotificationChannel(
+            "sharing_channel",
+            "Location Sharing",
+            NotificationManager.IMPORTANCE_HIGH
+        ).apply {
+            description = "Sharing start and stop alerts"
+        }
+
+        val emergency = NotificationChannel(
+            "emergency_channel",
+            "Emergency Alerts",
+            NotificationManager.IMPORTANCE_HIGH
+        ).apply {
+            description = "Emergency mode notifications"
+            enableVibration(true)
+        }
+
+        val manager = getSystemService(NotificationManager::class.java)
+        manager.createNotificationChannel(circle)
+        manager.createNotificationChannel(sharing)
+        manager.createNotificationChannel(emergency)
+
+
+        Log.i("MYTAG", "channels created")
     }
 }
