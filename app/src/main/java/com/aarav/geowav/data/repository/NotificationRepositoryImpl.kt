@@ -404,6 +404,7 @@ class NotificationRepositoryImpl @Inject constructor(
         }
 
         listenerMap.clear()
+        emergencyListenerMap.clear()
         sharingStateCache.clear()
         repositoryScope.cancel()
     }
