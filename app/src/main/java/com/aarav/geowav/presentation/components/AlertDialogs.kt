@@ -633,4 +633,47 @@ fun MemberAlertDialog(
     }
 }
 
+@Composable
+fun NotificationDisabledDialog(onConfirmClick: () -> Unit, onDismiss: () -> Unit) {
+
+    AlertDialog(
+        onDismissRequest = {},
+        title = { Text("Enable Notifications") },
+        text = {
+            Text(
+                "GeoWav needs notifications to alert you about circle updates, location sharing and emergencies.",
+                fontFamily = manrope,
+                color = MaterialTheme.colorScheme.onSurface
+            )
+        },
+        dismissButton = {
+            TextButton(
+                onClick = onDismiss,
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = Color.Transparent,
+                    contentColor = MaterialTheme.colorScheme.onSurface
+                )
+            ) {
+                Text(
+                    "Close",
+                    fontFamily = manrope
+                )
+            }
+        },
+        confirmButton = {
+            TextButton(
+                onClick = onConfirmClick,
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = MaterialTheme.colorScheme.secondaryContainer,
+                    contentColor = MaterialTheme.colorScheme.onSecondaryContainer
+                )
+            ) {
+                Text(
+                    "Open Settings",
+                    fontFamily = manrope
+                )
+            }
+        }
+    )
+}
 

@@ -38,7 +38,8 @@ object GeoNotificationHelper {
             .setContentTitle(title)
             .setContentText(message)
             .setAutoCancel(true)
-            .setPriority(NotificationCompat.PRIORITY_MIN)
+            .setPriority(NotificationCompat.PRIORITY_HIGH)
+            .setDefaults(NotificationCompat.DEFAULT_ALL)
             .setContentIntent(pendingIntent)
             .build()
 

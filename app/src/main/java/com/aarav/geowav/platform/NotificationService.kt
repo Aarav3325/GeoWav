@@ -16,6 +16,8 @@ import com.google.firebase.auth.FirebaseAuth
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
@@ -31,9 +33,10 @@ class NotificationService : Service() {
     @Inject
     lateinit var firebaseAuth: FirebaseAuth
 
-    override fun onBind(intent: Intent?): IBinder? {
-        TODO("Not yet implemented")
-    }
+    private val serviceScope =
+        CoroutineScope(SupervisorJob() + Dispatchers.IO)
+
+    override fun onBind(intent: Intent?): IBinder? = null
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         return START_STICKY
@@ -44,8 +47,9 @@ class NotificationService : Service() {
         startForegroundServiceNotification()
 
 
-        CoroutineScope(Dispatchers.IO).launch {
+        serviceScope.launch {
 
+            // Read circle members and start listening to events
             when (val members = circleRepository.getAcceptedLovedOnes(
                 firebaseAuth.currentUser?.uid ?: return@launch
             )) {
@@ -56,12 +60,14 @@ class NotificationService : Service() {
                 else -> Unit
             }
 
+            // Listen for events
             notificationRepository.events.collect {
                 handleEvent(it)
             }
         }
     }
 
+    // Handle events and show notifications
     private fun handleEvent(event: SocialEvent) {
         when (event) {
 
@@ -140,6 +146,7 @@ class NotificationService : Service() {
 
     override fun onDestroy() {
         super.onDestroy()
+        serviceScope.cancel()
         notificationRepository.stopListening()
     }
 }

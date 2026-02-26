@@ -21,34 +21,47 @@ class NotificationRepositoryImpl @Inject constructor(
     val firebaseDatabase: FirebaseDatabase,
     val firebaseAuth: FirebaseAuth
 ) {
+
+    // Shared flow in order to notify user based on specific event
     private val _events = MutableSharedFlow<SocialEvent>()
+    // Service uses this to observe events
     val events = _events.asSharedFlow()
 
+    // Track attached members
     private val attachedMembers = mutableSetOf<String>()
 
+    // Access circle_requests
     private var inviteRef: DatabaseReference? = null
+    // Access circle
     private var circleEventRef: DatabaseReference? = null
-    private var sharingRef: DatabaseReference? = null
 
+    // Store user and listener references preventing duplicate listener to avoid memory leaks
     private val listenerMap = mutableMapOf<String, ValueEventListener>()
+
+    // Store sharing state to avoid duplicate notifications
     private val sharingStateCache = mutableMapOf<String, Boolean>()
 
+    // Using coroutine scope to avoid leaks
     private val repositoryScope =
         CoroutineScope(SupervisorJob() + Dispatchers.IO)
 
+    // Listen to all events
     fun startListening(members: List<String>) {
         val userId = firebaseAuth.currentUser?.uid ?: return
 
         listenToInvites(userId)
         listenToCircle(userId)
         members.forEach { member ->
+            // Attach listener to each member only if not already attached
             if (!attachedMembers.contains(member)) {
                 attachSharingListener(member, userId)
+                // Add member to attached members
                 attachedMembers.add(member)
             }
         }
     }
 
+    // Listen to new invite events and notify user
     private fun listenToInvites(userId: String) {
         inviteRef = firebaseDatabase.getReference("circle_requests").child(userId)
 
@@ -97,6 +110,7 @@ class NotificationRepositoryImpl @Inject constructor(
         })
     }
 
+    // Listen for circle updates(specifically status change to accepted) and notify user
     private fun listenToCircle(userId: String) {
         circleEventRef = firebaseDatabase.getReference("circle").child(userId)
 
@@ -108,6 +122,7 @@ class NotificationRepositoryImpl @Inject constructor(
 
             }
 
+            // When status changes to accepted, notify user
             override fun onChildChanged(
                 snapshot: DataSnapshot,
                 previousChildName: String?
@@ -215,6 +230,7 @@ class NotificationRepositoryImpl @Inject constructor(
 //        })
 //    }
 
+    // Fetch username from database
     private fun fetchUserName(userId: String, onResult: (String) -> Unit) {
 
         firebaseDatabase.getReference("users")
@@ -227,20 +243,25 @@ class NotificationRepositoryImpl @Inject constructor(
             }
     }
 
+    // Attach listener to each member
     private fun attachSharingListener(memberId: String, myUserId: String) {
 
 
-        // Prevent duplicate listeners
+        //  Prevent attaching multiple listeners for same member
         if (listenerMap.containsKey(memberId)) return
 
+        // Reference this member's live location node
         val ref = firebaseDatabase.getReference("live_location")
             .child(memberId)
 
+        // Attach real-time listener
         ref.addValueEventListener(object : ValueEventListener {
 
             override fun onDataChange(snapshot: DataSnapshot) {
 
 
+                // Determine if this member is currently sharing
+                // location with me
                 val isSharingWithMe =
                     snapshot.exists() &&
                             snapshot.child("sharedWith")
@@ -249,21 +270,27 @@ class NotificationRepositoryImpl @Inject constructor(
                                 .contains(myUserId)
 
 
+                // sharingStateCache stores last known state for each member
                 val previous = sharingStateCache[memberId]
 
+                // Ignore the first Firebase snapshot (it represents current state, not a change)
+                // Cache it only to prevent fake notifications on service restart or app launch
                 if (previous == null) {
                     sharingStateCache[memberId] = isSharingWithMe
                     return
                 }
 
+                // Only react if state actually changed, if different emit event
                 if (previous != isSharingWithMe) {
 
+                    // Update cache to new state
                     sharingStateCache[memberId] = isSharingWithMe
 
                     fetchUserName(memberId) { username ->
 
                         repositoryScope.launch {
 
+                            // Member started sharing
                             if (isSharingWithMe) {
                                 _events.emit(
                                     SocialEvent.SharingStarted(
@@ -272,6 +299,7 @@ class NotificationRepositoryImpl @Inject constructor(
                                     )
                                 )
                             } else {
+                                // Member stopped sharing
                                 _events.emit(
                                     SocialEvent.SharingStopped(
                                         memberId,

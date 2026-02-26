@@ -2,6 +2,7 @@ package com.aarav.geowav
 
 import android.Manifest
 import android.app.Application
+import android.app.Notification
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.content.Context
@@ -72,6 +73,8 @@ class GeoWavApp : Application(), Configuration.Provider {
         ).apply {
             description = "Emergency mode notifications"
             enableVibration(true)
+            vibrationPattern = longArrayOf(0, 500, 300, 500)
+            lockscreenVisibility = Notification.VISIBILITY_PUBLIC
         }
 
         val manager = getSystemService(NotificationManager::class.java)
