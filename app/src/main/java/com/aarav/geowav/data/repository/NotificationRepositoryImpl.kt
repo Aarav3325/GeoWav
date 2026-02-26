@@ -24,6 +24,7 @@ class NotificationRepositoryImpl @Inject constructor(
 
     // Shared flow in order to notify user based on specific event
     private val _events = MutableSharedFlow<SocialEvent>()
+
     // Service uses this to observe events
     val events = _events.asSharedFlow()
 
@@ -32,14 +33,19 @@ class NotificationRepositoryImpl @Inject constructor(
 
     // Access circle_requests
     private var inviteRef: DatabaseReference? = null
+
     // Access circle
     private var circleEventRef: DatabaseReference? = null
 
     // Store user and listener references preventing duplicate listener to avoid memory leaks
     private val listenerMap = mutableMapOf<String, ValueEventListener>()
 
+    private val emergencyListenerMap = mutableMapOf<String, ValueEventListener>()
+
     // Store sharing state to avoid duplicate notifications
     private val sharingStateCache = mutableMapOf<String, Boolean>()
+
+    private val emergencyStateCache = mutableMapOf<String, Boolean>()
 
     // Using coroutine scope to avoid leaks
     private val repositoryScope =
@@ -51,12 +57,16 @@ class NotificationRepositoryImpl @Inject constructor(
 
         listenToInvites(userId)
         listenToCircle(userId)
-        members.forEach { member ->
-            // Attach listener to each member only if not already attached
-            if (!attachedMembers.contains(member)) {
-                attachSharingListener(member, userId)
-                // Add member to attached members
-                attachedMembers.add(member)
+        members.forEach { memberId ->
+
+            // Attach sharing listener if not already attached
+            if (!listenerMap.containsKey(memberId)) {
+                attachSharingListener(memberId, userId)
+            }
+
+            // Attach emergency listener if not already attached
+            if (!emergencyListenerMap.containsKey(memberId)) {
+                attachEmergencySharingListener(memberId, userId)
             }
         }
     }
@@ -255,7 +265,7 @@ class NotificationRepositoryImpl @Inject constructor(
             .child(memberId)
 
         // Attach real-time listener
-        ref.addValueEventListener(object : ValueEventListener {
+        val listener = object : ValueEventListener {
 
             override fun onDataChange(snapshot: DataSnapshot) {
 
@@ -313,7 +323,76 @@ class NotificationRepositoryImpl @Inject constructor(
             }
 
             override fun onCancelled(error: DatabaseError) {}
-        })
+        }
+
+        // Attach listener
+        ref.addValueEventListener(listener)
+
+        // Store it in map
+        listenerMap[memberId] = listener
+    }
+
+    private fun attachEmergencySharingListener(memberId: String, userId: String) {
+        if (emergencyListenerMap.containsKey(memberId)) return
+
+        val ref = firebaseDatabase.getReference("emergency_sharing")
+            .child(memberId)
+
+        val listener = object : ValueEventListener {
+            override fun onDataChange(snapshot: DataSnapshot) {
+
+                val isEmergencySharing = snapshot.exists()
+                        && snapshot.child("viewers").children
+                    .mapNotNull {
+                        it.key
+                    }.contains(userId)
+
+                val previous = emergencyStateCache[memberId]
+
+                if (previous == null) {
+                    emergencyStateCache[memberId] = isEmergencySharing
+                    return
+                }
+
+                if (previous != isEmergencySharing) {
+                    emergencyStateCache[memberId] = isEmergencySharing
+
+                    if (isEmergencySharing) {
+                        fetchUserName(memberId) { username ->
+                            repositoryScope.launch {
+                                _events.emit(
+                                    SocialEvent.EmergencyStarted(
+                                        memberId,
+                                        username
+                                    )
+                                )
+                            }
+                        }
+                    }
+                    else {
+                        fetchUserName(memberId) {
+                            username ->
+                            repositoryScope.launch {
+                                _events.emit(
+                                    SocialEvent.EmergencyStopped(
+                                        memberId,
+                                        username
+                                    )
+                                )
+                            }
+                        }
+                    }
+                }
+            }
+
+            override fun onCancelled(error: DatabaseError) {
+                TODO("Not yet implemented")
+            }
+
+        }
+
+        ref.addValueEventListener(listener)
+        emergencyListenerMap[memberId] = listener
     }
 
     fun stopListening() {

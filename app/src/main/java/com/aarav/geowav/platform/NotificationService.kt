@@ -107,7 +107,23 @@ class NotificationService : Service() {
                 )
             }
 
-            else -> Unit
+            is SocialEvent.EmergencyStarted -> {
+                GeoNotificationHelper.show(
+                    this,
+                    "emergency_channel",
+                    "Emergency Alert 🚨",
+                    "${event.userName} has activated emergency mode. Tap to view location."
+                )
+            }
+
+            is SocialEvent.EmergencyStopped -> {
+                GeoNotificationHelper.show(
+                    this,
+                    "emergency_channel",
+                    "Emergency Cleared",
+                    "${event.userName} has ended emergency mode."
+                )
+            }
         }
     }
 

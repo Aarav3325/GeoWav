@@ -188,7 +188,7 @@ class GeofenceForegroundService : Service() {
         val notification = NotificationCompat.Builder(this, channelId)
             .setContentTitle("GeoWav Active")
             .setContentText("Monitoring geofence events")
-            .setSmallIcon(R.drawable.navigation_arrow)
+            .setSmallIcon(R.drawable.new_logo)
             .setOngoing(true) // Prevent swiping away
             .setPriority(NotificationCompat.PRIORITY_LOW)
             .build()
