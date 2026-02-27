@@ -312,7 +312,7 @@ class LiveLocationService : Service() {
 
         stopLocationUpdates()
 
-        stopForeground(true)
+        stopForeground(STOP_FOREGROUND_REMOVE)
 
         stopSelf()
     }

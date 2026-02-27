@@ -33,12 +33,13 @@ fun AppDisabled() {
     ) {
         Column(horizontalAlignment = Alignment.CenterHorizontally) {
             Surface(
-                color = MaterialTheme.colorScheme.primary,
+                color = Color(0xFFBAC3FF),
                 shape = CircleShape
             ) {
                 Icon(
                     painter = painterResource(R.drawable.new_logo),
                     contentDescription = "logo",
+                    tint = Color(0xFF222C61),
                     modifier = Modifier.size(56.dp),
                 )
             }

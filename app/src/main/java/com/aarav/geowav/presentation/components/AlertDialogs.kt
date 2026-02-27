@@ -301,7 +301,7 @@ fun AboutDialog(
 ) {
     if (showAboutDialog) {
         AlertDialog(
-            containerColor = MaterialTheme.colorScheme.surfaceTint,
+            containerColor = MaterialTheme.colorScheme.primaryFixed,
             modifier = modifier,
             onDismissRequest = onConfirmClick,
             confirmButton = {
@@ -337,14 +337,14 @@ fun AboutDialog(
             },
             icon = {
                 Surface(
-                    color = MaterialTheme.colorScheme.primary,
+                    color = Color(0xFFBAC3FF),
                     shape = CircleShape
                 ) {
                     Icon(
-                        painter = painterResource(icon),
-                        contentDescription = "info icon",
-                        tint = MaterialTheme.colorScheme.onPrimary,
-                        modifier = Modifier.size(56.dp)
+                        painter = painterResource(R.drawable.new_logo),
+                        contentDescription = "logo",
+                        tint = Color(0xFF222C61),
+                        modifier = Modifier.size(56.dp),
                     )
                 }
             }
@@ -360,7 +360,7 @@ fun LocationPermissionDialog(
 ) {
     if (showDialog) {
         AlertDialog(
-            containerColor = MaterialTheme.colorScheme.surfaceTint,
+            containerColor = MaterialTheme.colorScheme.primaryFixed,
             modifier = modifier,
             onDismissRequest = onConfirmClick,
             confirmButton = {
@@ -422,7 +422,7 @@ fun TermsAndConditionsDialog(
 ) {
     if (showDialog) {
         AlertDialog(
-            containerColor = MaterialTheme.colorScheme.surfaceTint,
+            containerColor = MaterialTheme.colorScheme.primaryFixed,
             modifier = modifier,
             onDismissRequest = onAcceptClick,
             confirmButton = {
@@ -468,7 +468,7 @@ fun TermsAndConditionsDialog(
                         painter = painterResource(R.drawable.files),
                         contentDescription = "terms icon",
                         colorFilter = ColorFilter.tint(MaterialTheme.colorScheme.onPrimary),
-                        modifier = Modifier.size(56.dp)
+                        modifier = Modifier.size(56.dp).padding(6.dp)
                     )
                 }
             }

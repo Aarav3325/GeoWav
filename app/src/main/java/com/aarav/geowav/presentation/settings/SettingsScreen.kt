@@ -8,8 +8,6 @@ import android.os.Build
 import android.provider.Settings
 import android.util.Log
 import androidx.annotation.RequiresApi
-import com.aarav.geowav.R
-import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -33,12 +31,12 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Switch
 import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
@@ -49,6 +47,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
@@ -57,12 +56,13 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.content.ContextCompat
-import androidx.core.content.PermissionChecker
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
+import com.aarav.geowav.R
 import com.aarav.geowav.presentation.components.AboutDialog
 import com.aarav.geowav.presentation.components.TermsAndConditionsDialog
+import com.aarav.geowav.presentation.locationsharing.itemShape
 import com.aarav.geowav.presentation.theme.manrope
 import com.aarav.geowav.presentation.theme.sora
 import com.google.accompanist.permissions.ExperimentalPermissionsApi
@@ -134,10 +134,9 @@ fun SettingsScreen(
     }
 
     LaunchedEffect(fineLocation.status, background.status) {
-        if(fineLocation.status.isGranted && background.status.isGranted) {
+        if (fineLocation.status.isGranted && background.status.isGranted) {
             settingsVM.updateLocationPermission(true)
-        }
-        else {
+        } else {
             settingsVM.updateLocationPermission(false)
         }
     }
@@ -173,6 +172,9 @@ fun SettingsScreen(
         containerColor = MaterialTheme.colorScheme.background,
         topBar = {
             TopAppBar(
+                colors = TopAppBarDefaults.topAppBarColors(
+                    containerColor = MaterialTheme.colorScheme.background
+                ),
                 title = {
                     Text(
                         text = "Settings",
@@ -202,30 +204,33 @@ fun SettingsScreen(
             modifier = Modifier
                 .padding(it)
                 .fillMaxSize()
-                .background(MaterialTheme.colorScheme.background)
-                ,
+                .background(MaterialTheme.colorScheme.background),
             contentPadding = PaddingValues(16.dp),
             verticalArrangement = Arrangement.spacedBy(24.dp)
         ) {
 
             item {
                 Section(title = "Location") {
-                    SettingItem(
+                    SettingItemNew(
                         title = "Location Access",
                         subtitle = "Manage location permission",
                         onClick = {
                             openAppSettings(context, Settings.ACTION_LOCATION_SOURCE_SETTINGS)
-                        }
+                        },
+                        index = 0,
+                        count = 2,
                     )
 
-                    HorizontalDivider(
-                        modifier = Modifier.padding(horizontal = 16.dp),
-                        thickness = 0.5.dp,
-                        color = MaterialTheme.colorScheme.outlineVariant
-                    )
+//                    HorizontalDivider(
+//                        modifier = Modifier.padding(horizontal = 16.dp),
+//                        thickness = 0.5.dp,
+//                        color = MaterialTheme.colorScheme.outlineVariant
+//                    )
 
                     TriggerTypeSelector(
                         enabled = hasLocationPermission && notificationsEnabled,
+                        index = 1,
+                        count = 2,
                         selected = triggerType,
                         onSelected = onTriggerTypeChange
                     )
@@ -235,6 +240,8 @@ fun SettingsScreen(
             item {
                 Section(title = "Appearance") {
                     ThemeSelector(
+                        index = 0,
+                        count = 1,
                         selected = themeMode,
                         onSelected = onThemeChange
                     )
@@ -246,10 +253,15 @@ fun SettingsScreen(
                 Section(title = "Notifications") {
                     SwitchItem(
                         title = "Enable Notifications",
+                        index = 0,
+                        count = 1,
                         checked = uiState.notificationsEnabled,
                         onCheckedChange = {
                             openAppSettings(context, Settings.ACTION_APP_NOTIFICATION_SETTINGS)
-                            Log.i("MYTAG", "Notification : ${notificationPermission.status.isGranted}")
+                            Log.i(
+                                "MYTAG",
+                                "Notification : ${notificationPermission.status.isGranted}"
+                            )
                         }
                     )
                 }
@@ -257,33 +269,39 @@ fun SettingsScreen(
 
             item {
                 Section(title = "About") {
-                    SettingItem(
+                    SettingItemNew(
                         title = "App Version",
+                        index = 0,
+                        count = 3,
                         subtitle = uiState.appVersion,
                         enabled = true
                     )
 
-                    HorizontalDivider(
-                        modifier = Modifier.padding(horizontal = 16.dp),
-                        thickness = 0.5.dp,
-                        color = MaterialTheme.colorScheme.outlineVariant
-                    )
+//                    HorizontalDivider(
+//                        modifier = Modifier.padding(horizontal = 16.dp),
+//                        thickness = 0.5.dp,
+//                        color = MaterialTheme.colorScheme.outlineVariant
+//                    )
 
-                    SettingItem(
+                    SettingItemNew(
                         title = "About GeoWav",
+                        index = 1,
+                        count = 3,
                         onClick = {
                             showAboutDialog = true
                         }
                     )
 
-                    HorizontalDivider(
-                        modifier = Modifier.padding(horizontal = 16.dp),
-                        thickness = 0.5.dp,
-                        color = MaterialTheme.colorScheme.outlineVariant
-                    )
+//                    HorizontalDivider(
+//                        modifier = Modifier.padding(horizontal = 16.dp),
+//                        thickness = 0.5.dp,
+//                        color = MaterialTheme.colorScheme.outlineVariant
+//                    )
 
-                    SettingItem(
+                    SettingItemNew(
                         title = "Terms & Privacy Policy",
+                        index = 2,
+                        count = 3,
                         onClick = {
                             tc = true
                         }
@@ -294,22 +312,26 @@ fun SettingsScreen(
 
             item {
                 Section(title = "Account") {
-                    SettingItem(
+                    SettingItemNew(
                         title = "Logout",
+                        index = 0,
+                        count = 2,
                         onClick = {
                             settingsVM.logout()
                             onLogout()
                         }
                     )
 
-                    HorizontalDivider(
-                        modifier = Modifier.padding(horizontal = 16.dp),
-                        thickness = 0.5.dp,
-                        color = MaterialTheme.colorScheme.outlineVariant
-                    )
+//                    HorizontalDivider(
+//                        modifier = Modifier.padding(horizontal = 16.dp),
+//                        thickness = 0.5.dp,
+//                        color = MaterialTheme.colorScheme.outlineVariant
+//                    )
 
-                    SettingItem(
+                    SettingItemNew(
                         title = "Delete Account",
+                        index = 1,
+                        count = 2,
                         titleColor = MaterialTheme.colorScheme.error,
                         onClick = {
                             settingsVM.showDeleteDialog()
@@ -366,26 +388,27 @@ fun Section(
         Text(
             text = title,
             fontFamily = manrope,
-            fontWeight = FontWeight.Bold,
+            fontWeight = FontWeight.SemiBold,
             style = MaterialTheme.typography.titleMedium,
             color = MaterialTheme.colorScheme.primary,
             modifier = Modifier.padding(horizontal = 4.dp)
         )
-        Surface(
-            shape = MaterialTheme.shapes.extraLarge,
-            tonalElevation = 2.dp,
-            color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f),
-            border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f))
-        ) {
-            Column {
-                content()
-            }
+//        Surface(
+//            shape = MaterialTheme.shapes.extraLarge,
+//            tonalElevation = 2.dp,
+//            color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f),
+//            border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f))
+//        ) {
+        Column {
+            content()
         }
+        // }
     }
 }
 
-fun openAppSettings(context: Context,
-                                appAction: String
+fun openAppSettings(
+    context: Context,
+    appAction: String
 ) {
     val intent = Intent().apply {
         action = appAction
@@ -410,7 +433,7 @@ fun SettingItem(
             .then(
                 if (onClick != null && enabled) Modifier.clickable { onClick() } else Modifier
             )
-            .padding(vertical = 16.dp, horizontal = 16.dp)
+            .padding(vertical = 8.dp, horizontal = 12.dp)
     ) {
         Text(
             text = title,
@@ -434,32 +457,47 @@ fun SettingItem(
 @Composable
 fun SwitchItem(
     title: String,
+    index: Int,
+    count: Int,
     checked: Boolean,
     onCheckedChange: (Boolean) -> Unit
 ) {
+
+    val shape = itemShape(index, count)
+
     Row(
         modifier = Modifier
+            .padding(vertical = 1.5.dp)
             .fillMaxWidth()
-            .clickable { onCheckedChange(!checked) }
-            .padding(horizontal = 16.dp, vertical = 12.dp),
-        horizontalArrangement = Arrangement.SpaceBetween,
+            .clip(shape)
+            .background(MaterialTheme.colorScheme.surfaceContainer),
         verticalAlignment = Alignment.CenterVertically
     ) {
-        Text(
-            text = title,
-            fontFamily = manrope,
-            color = MaterialTheme.colorScheme.onSurface,
-            fontWeight = FontWeight.SemiBold,
-            style = MaterialTheme.typography.bodyLarge
-        )
-        Switch(
-            checked = checked,
-            onCheckedChange = onCheckedChange,
-            colors = SwitchDefaults.colors(
-                checkedThumbColor = MaterialTheme.colorScheme.primary,
-                checkedTrackColor = MaterialTheme.colorScheme.primaryContainer
+
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .clickable { onCheckedChange(!checked) }
+                .padding(horizontal = 16.dp, vertical = 8.dp),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text(
+                text = title,
+                fontFamily = manrope,
+                color = MaterialTheme.colorScheme.onSurface,
+                fontWeight = FontWeight.SemiBold,
+                style = MaterialTheme.typography.bodyLarge
             )
-        )
+            Switch(
+                checked = checked,
+                onCheckedChange = onCheckedChange,
+                colors = SwitchDefaults.colors(
+                    checkedThumbColor = MaterialTheme.colorScheme.primary,
+                    checkedTrackColor = MaterialTheme.colorScheme.primaryContainer
+                )
+            )
+        }
     }
 }
 
@@ -467,54 +505,80 @@ fun SwitchItem(
 @Composable
 fun TriggerTypeSelector(
     enabled: Boolean,
+    index: Int,
+    count: Int,
     selected: TriggerType,
     onSelected: (TriggerType) -> Unit
 ) {
-    Column(
-        modifier = Modifier.padding(horizontal = 16.dp, vertical = 16.dp)
+    val shape = itemShape(index, count)
+
+    Row(
+        modifier = Modifier
+            .padding(vertical = 1.5.dp)
+            .fillMaxWidth()
+            .clip(shape)
+            .background(MaterialTheme.colorScheme.surfaceContainer),
+        verticalAlignment = Alignment.CenterVertically
     ) {
-        Text(
-            text = "Trigger Type",
-            fontFamily = manrope,
-            fontWeight = FontWeight.SemiBold,
-            style = MaterialTheme.typography.bodyLarge,
-            color = if (enabled)
-                MaterialTheme.colorScheme.onSurface
-            else
-                MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f)
-        )
-        Spacer(modifier = Modifier.height(12.dp))
-        TriggerTypeChipRow(
-            enabled = enabled
-        )
+        Column(
+            modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
+        ) {
+            Text(
+                text = "Trigger Type",
+                fontFamily = manrope,
+                fontWeight = FontWeight.SemiBold,
+                style = MaterialTheme.typography.bodyLarge,
+                color = if (enabled)
+                    MaterialTheme.colorScheme.onSurface
+                else
+                    MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f)
+            )
+            Spacer(modifier = Modifier.height(12.dp))
+            TriggerTypeChipRow(
+                enabled = enabled
+            )
+        }
     }
 }
 
 @Composable
 fun ThemeSelector(
+    index: Int,
+    count: Int,
     selected: ThemeMode,
     onSelected: (ThemeMode) -> Unit
 ) {
-    Column(
+    val shape = itemShape(index, count)
+
+    Row(
         modifier = Modifier
+            .padding(vertical = 1.5.dp)
             .fillMaxWidth()
-            .padding(horizontal = 16.dp, vertical = 16.dp)
+            .clip(shape)
+            .background(MaterialTheme.colorScheme.surfaceContainer),
+        verticalAlignment = Alignment.CenterVertically
     ) {
-        Text(
-            text = "Appearance Mode",
-            fontFamily = manrope,
-            fontWeight = FontWeight.SemiBold,
-            color = MaterialTheme.colorScheme.onSurface,
-            style = MaterialTheme.typography.bodyLarge
-        )
-        Spacer(modifier = Modifier.height(12.dp))
-        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            ThemeMode.entries.forEach { mode ->
-                ThemeChips(
-                    label = mode.name.lowercase().replaceFirstChar(Char::uppercase),
-                    selected = selected == mode,
-                    onClick = { onSelected(mode) }
-                )
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 16.dp, vertical = 16.dp)
+        ) {
+            Text(
+                text = "Appearance Mode",
+                fontFamily = manrope,
+                fontWeight = FontWeight.SemiBold,
+                color = MaterialTheme.colorScheme.onSurface,
+                style = MaterialTheme.typography.bodyLarge
+            )
+            Spacer(modifier = Modifier.height(12.dp))
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                ThemeMode.entries.forEach { mode ->
+                    ThemeChips(
+                        label = mode.name.lowercase().replaceFirstChar(Char::uppercase),
+                        selected = selected == mode,
+                        onClick = { onSelected(mode) }
+                    )
+                }
             }
         }
     }
@@ -650,4 +714,52 @@ fun CheckBackgroundPermission(): Boolean {
         rememberPermissionState(Manifest.permission.ACCESS_BACKGROUND_LOCATION)
 
     return permissionState.status.isGranted
+}
+
+@Composable
+fun SettingItemNew(
+    title: String,
+    subtitle: String? = null,
+    enabled: Boolean = true,
+    index: Int,
+    count: Int,
+    titleColor: Color = MaterialTheme.colorScheme.onSurface,
+    onClick: (() -> Unit)? = null
+) {
+    val shape = itemShape(index, count)
+
+    Row(
+        modifier = Modifier
+            .padding(vertical = 1.5.dp)
+            .fillMaxWidth()
+            .clip(shape)
+            .background(MaterialTheme.colorScheme.surfaceContainer),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .then(
+                    if (onClick != null && enabled) Modifier.clickable { onClick() } else Modifier
+                )
+                .padding(vertical = 16.dp, horizontal = 16.dp)
+        ) {
+            Text(
+                text = title,
+                color = if (enabled) titleColor else titleColor.copy(alpha = 0.5f),
+                fontFamily = manrope,
+                fontWeight = FontWeight.SemiBold,
+                style = MaterialTheme.typography.bodyLarge
+            )
+            subtitle?.let {
+                Text(
+                    it,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    fontFamily = sora,
+                    modifier = Modifier.padding(top = 4.dp)
+                )
+            }
+        }
+    }
 }
