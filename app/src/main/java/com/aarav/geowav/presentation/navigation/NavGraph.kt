@@ -1,3 +1,5 @@
+package com.aarav.geowav.presentation.navigation
+
 import android.content.SharedPreferences
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
@@ -22,7 +24,6 @@ import com.aarav.geowav.presentation.home.GeoWavHomeScreen
 import com.aarav.geowav.presentation.home.HomeScreenVM
 import com.aarav.geowav.presentation.locationsharing.LocationSharingScreen
 import com.aarav.geowav.presentation.map.MapScreen
-import com.aarav.geowav.presentation.navigation.NavRoute
 import com.aarav.geowav.presentation.observe.ObserveScreen
 import com.aarav.geowav.presentation.onboard.OnboardingScreen
 import com.aarav.geowav.presentation.settings.SettingsScreen
@@ -198,7 +199,7 @@ fun AddNewPlaceScreen(
             },
             navigateToYourPlaces = {
                 navController.navigate(NavRoute.YourPlaces.path) {
-                    popUpTo(NavRoute.MapScreen.path) {
+                    popUpTo(NavRoute.HomeScreen.path) {
                         inclusive = true   // removes AddPlace AND Map
                     }
                     launchSingleTop = true

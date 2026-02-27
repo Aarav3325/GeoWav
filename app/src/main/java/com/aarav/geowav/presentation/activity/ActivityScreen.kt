@@ -315,7 +315,6 @@ fun NewLog(
     alert: com.aarav.geowav.data.model.GeoAlert, modifier: Modifier = Modifier
 ) {
     val isEnter = alert.type.equals("enter", ignoreCase = true)
-
     val type = if (alert.type.equals("ENTER", ignoreCase = true)) "enter" else "exit"
 
 

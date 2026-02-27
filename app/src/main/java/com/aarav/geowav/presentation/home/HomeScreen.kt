@@ -1220,7 +1220,7 @@ fun ZoneCard(zone: Place, onClick: () -> Unit) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(8.dp),
+                .padding(horizontal = 12.dp, vertical = 12.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
             Row(
@@ -1243,10 +1243,11 @@ fun ZoneCard(zone: Place, onClick: () -> Unit) {
                 }
                 Spacer(modifier = Modifier.width(12.dp))
                 Column(
-                    modifier = Modifier.weight(1f)
+                    modifier = Modifier.weight(1f),
+                    verticalArrangement = Arrangement.spacedBy(4.dp)
                 ) {
                     Text(
-                        if (zone.customName.toString().isNotEmpty()) {
+                        if (zone.customName.isNotEmpty()) {
                             zone.customName
                         } else {
                             zone.placeName
@@ -1258,6 +1259,7 @@ fun ZoneCard(zone: Place, onClick: () -> Unit) {
                             fontFamily = sora
                         )
                     )
+
                     Text(
                         "${zone.radius.toInt()}m • ENTER/EXIT Trigger",
                         style = MaterialTheme.typography.bodySmall.copy(
@@ -1267,6 +1269,8 @@ fun ZoneCard(zone: Place, onClick: () -> Unit) {
                         fontSize = 12.sp
                     )
                 }
+                Spacer(Modifier.width(6.dp))
+
                 TextButton(onClick = { }) {
                     Text(
                         "Active",

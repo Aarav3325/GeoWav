@@ -1,6 +1,6 @@
 package com.aarav.geowav
 
-import NavGraph
+import com.aarav.geowav.presentation.navigation.NavGraph
 import android.Manifest
 import android.app.PendingIntent
 import android.content.Intent
@@ -176,14 +176,14 @@ class MainActivity : ComponentActivity() {
 
             val context = LocalContext.current
 
-            val check = ContextCompat.checkSelfPermission(
-                this,
-                Manifest.permission.POST_NOTIFICATIONS
-            ) == PackageManager.PERMISSION_GRANTED
-
-            val notificationPermission =
-                rememberPermissionState(Manifest.permission.POST_NOTIFICATIONS)
-
+//            val check = ContextCompat.checkSelfPermission(
+//                this,
+//                Manifest.permission.POST_NOTIFICATIONS
+//            ) == PackageManager.PERMISSION_GRANTED
+//
+//            val notificationPermission =
+//                rememberPermissionState(Manifest.permission.POST_NOTIFICATIONS)
+//
 
             NotificationServiceInitializer(
                 showSettingsDialog = {

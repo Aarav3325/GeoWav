@@ -63,11 +63,11 @@ class SessionHistoryRepositoryImpl
 
                     val session = child.getValue(SessionHistory::class.java)
 
+                    Log.i("SESSION", "other: " + session.toString())
                     if (session != null &&
                         session.sharedWith.contains(viewerId)
                     ) {
 
-                        Log.i("SESSION", "other: " + session.toString())
                         session.toTimelineItem(session.userName)
                     } else {
                         null
