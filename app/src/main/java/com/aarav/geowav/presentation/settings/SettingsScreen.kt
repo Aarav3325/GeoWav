@@ -315,12 +315,14 @@ fun SettingsScreen(
                     SettingItemNew(
                         title = "Logout",
                         index = 0,
-                        count = 2,
+                        count = 1,
                         onClick = {
                             settingsVM.logout()
                             onLogout()
                         }
                     )
+
+                    Spacer(modifier = Modifier.height(32.dp))
 
 //                    HorizontalDivider(
 //                        modifier = Modifier.padding(horizontal = 16.dp),
@@ -328,15 +330,15 @@ fun SettingsScreen(
 //                        color = MaterialTheme.colorScheme.outlineVariant
 //                    )
 
-                    SettingItemNew(
-                        title = "Delete Account",
-                        index = 1,
-                        count = 2,
-                        titleColor = MaterialTheme.colorScheme.error,
-                        onClick = {
-                            settingsVM.showDeleteDialog()
-                        }
-                    )
+//                    SettingItemNew(
+//                        title = "Delete Account",
+//                        index = 1,
+//                        count = 2,
+//                        titleColor = MaterialTheme.colorScheme.error,
+//                        onClick = {
+//                            settingsVM.showDeleteDialog()
+//                        }
+//                    )
                 }
             }
         }
@@ -521,7 +523,7 @@ fun TriggerTypeSelector(
         verticalAlignment = Alignment.CenterVertically
     ) {
         Column(
-            modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
+            modifier = Modifier.padding(horizontal = 16.dp, vertical = 16.dp)
         ) {
             Text(
                 text = "Trigger Type",

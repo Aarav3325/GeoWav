@@ -309,8 +309,8 @@ fun AboutDialog(
                     onClick = onConfirmClick,
                     modifier = Modifier.fillMaxWidth(),
                     colors = ButtonDefaults.buttonColors(
-                        containerColor = MaterialTheme.colorScheme.primaryContainer,
-                        contentColor = MaterialTheme.colorScheme.onPrimaryContainer
+                        containerColor = MaterialTheme.colorScheme.onPrimaryFixed,
+                        contentColor = MaterialTheme.colorScheme.primaryFixed
                     )
                 ) {
                     Text(confirmButtonText, fontFamily = manrope)
@@ -322,7 +322,7 @@ fun AboutDialog(
                     fontFamily = sora,
                     textAlign = TextAlign.Center,
                     fontSize = 12.sp,
-                    color = MaterialTheme.colorScheme.background,
+                    color = MaterialTheme.colorScheme.onPrimaryFixed,
                     modifier = Modifier.fillMaxWidth()
                 )
             },
@@ -330,7 +330,7 @@ fun AboutDialog(
                 Text(
                     text = title,
                     fontFamily = manrope,
-                    color = MaterialTheme.colorScheme.background,
+                    color = MaterialTheme.colorScheme.onPrimaryFixed,
                     fontSize = 16.sp,
                     fontWeight = FontWeight.SemiBold
                 )
@@ -368,13 +368,13 @@ fun LocationPermissionDialog(
                     onClick = onConfirmClick,
                     modifier = Modifier.fillMaxWidth(),
                     colors = ButtonDefaults.buttonColors(
-                        containerColor = MaterialTheme.colorScheme.primaryContainer,
-                        contentColor = MaterialTheme.colorScheme.onPrimaryContainer
+                        containerColor = MaterialTheme.colorScheme.onPrimaryFixed,
+                        contentColor = MaterialTheme.colorScheme.primaryFixed
                     )
                 ) {
                     Text(
                         text = "Enable Location",
-                        fontFamily = manrope
+                        fontFamily = manrope,
                     )
                 }
             },
@@ -382,7 +382,7 @@ fun LocationPermissionDialog(
                 Text(
                     text = "Location access required",
                     fontFamily = manrope,
-                    color = MaterialTheme.colorScheme.background,
+                    color = MaterialTheme.colorScheme.onPrimaryFixed,
                     fontSize = 16.sp,
                     fontWeight = FontWeight.SemiBold
                 )
@@ -393,19 +393,19 @@ fun LocationPermissionDialog(
                     fontFamily = sora,
                     textAlign = TextAlign.Center,
                     fontSize = 12.sp,
-                    color = MaterialTheme.colorScheme.background,
+                    color = MaterialTheme.colorScheme.onPrimaryFixed,
                     modifier = Modifier.fillMaxWidth()
                 )
             },
             icon = {
                 Surface(
-                    color = MaterialTheme.colorScheme.primary,
+                    color = MaterialTheme.colorScheme.onPrimaryFixed,
                     shape = CircleShape
                 ) {
                     Icon(
                         painter = painterResource(R.drawable.map_pin),
                         contentDescription = "location icon",
-                        tint = MaterialTheme.colorScheme.onPrimary,
+                        tint = MaterialTheme.colorScheme.primaryFixed,
                         modifier = Modifier.size(56.dp)
                     )
                 }
@@ -430,13 +430,13 @@ fun TermsAndConditionsDialog(
                     onClick = onAcceptClick,
                     modifier = Modifier.fillMaxWidth(),
                     colors = ButtonDefaults.buttonColors(
-                        containerColor = MaterialTheme.colorScheme.primaryContainer,
-                        contentColor = MaterialTheme.colorScheme.onPrimaryContainer
+                        containerColor = MaterialTheme.colorScheme.onPrimaryFixed,
+                        contentColor = MaterialTheme.colorScheme.primaryFixed
                     )
                 ) {
                     Text(
                         text = "Accept & Continue",
-                        fontFamily = manrope
+                        fontFamily = manrope,
                     )
                 }
             },
@@ -444,7 +444,7 @@ fun TermsAndConditionsDialog(
                 Text(
                     text = "Terms & Conditions",
                     fontFamily = manrope,
-                    color = MaterialTheme.colorScheme.background,
+                    color = MaterialTheme.colorScheme.onPrimaryFixed,
                     fontSize = 16.sp,
                     fontWeight = FontWeight.SemiBold
                 )
@@ -455,20 +455,20 @@ fun TermsAndConditionsDialog(
                     fontFamily = sora,
                     textAlign = TextAlign.Center,
                     fontSize = 12.sp,
-                    color = MaterialTheme.colorScheme.background,
+                    color = MaterialTheme.colorScheme.onPrimaryFixed,
                     modifier = Modifier.fillMaxWidth()
                 )
             },
             icon = {
                 Surface(
-                    color = MaterialTheme.colorScheme.primary,
+                    color = MaterialTheme.colorScheme.onPrimaryFixed,
                     shape = CircleShape
                 ) {
                     Image(
                         painter = painterResource(R.drawable.files),
                         contentDescription = "terms icon",
-                        colorFilter = ColorFilter.tint(MaterialTheme.colorScheme.onPrimary),
-                        modifier = Modifier.size(56.dp).padding(6.dp)
+                        colorFilter = ColorFilter.tint(MaterialTheme.colorScheme.primaryFixed),
+                        modifier = Modifier.size(56.dp).padding(8.dp)
                     )
                 }
             }
