@@ -406,7 +406,7 @@ fun LocationPermissionDialog(
                         painter = painterResource(R.drawable.map_pin),
                         contentDescription = "location icon",
                         tint = MaterialTheme.colorScheme.primaryFixed,
-                        modifier = Modifier.size(56.dp)
+                        modifier = Modifier.size(56.dp).padding(8.dp)
                     )
                 }
             }

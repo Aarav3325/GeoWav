@@ -277,6 +277,7 @@ fun AddLovedOneCard(
                     Text(
                         "Enter a Loved One’s Name",
                         fontFamily = sora,
+                        fontSize = 14.sp,
                         color = MaterialTheme.colorScheme.inverseSurface
                     )
                 },
@@ -334,6 +335,7 @@ fun AddLovedOneCard(
                     Text(
                         "Enter a Loved One’s Email",
                         fontFamily = sora,
+                        fontSize = 14.sp,
                         color = MaterialTheme.colorScheme.inverseSurface
                     )
                 },

@@ -119,7 +119,6 @@ class MainActivity : ComponentActivity() {
         }
 
 
-
         ViewCompat.setOnApplyWindowInsetsListener(View(applicationContext)) { v, insets ->
             val systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
             val ime = insets.getInsets(WindowInsetsCompat.Type.ime())
@@ -173,8 +172,15 @@ class MainActivity : ComponentActivity() {
                 mutableStateOf(false)
             }
 
-
             val context = LocalContext.current
+
+
+            LaunchedEffect(Unit) {
+                val check =
+                    ContextCompat.checkSelfPermission(context, Manifest.permission.POST_NOTIFICATIONS)
+
+                Log.i("MYTAG", "notification permissions: $check")
+            }
 
 //            val check = ContextCompat.checkSelfPermission(
 //                this,

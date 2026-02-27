@@ -1,6 +1,5 @@
 package com.aarav.geowav.presentation.components
 
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -16,19 +15,20 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.aarav.geowav.R
+import com.aarav.geowav.presentation.theme.manrope
 
 @Composable
 fun AppDisabled() {
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(Color.Black),
+            .background(MaterialTheme.colorScheme.background),
         contentAlignment = Alignment.Center
     ) {
         Column(horizontalAlignment = Alignment.CenterHorizontally) {
@@ -44,17 +44,32 @@ fun AppDisabled() {
                 )
             }
 
+            Spacer(Modifier.height(8.dp))
+
+            Text(
+                text = "GeoWav",
+                color = MaterialTheme.colorScheme.onBackground,
+                fontSize = 24.sp,
+                fontFamily = manrope,
+                fontWeight = FontWeight.Bold
+            )
+
+
             Spacer(modifier = Modifier.height(16.dp))
 
             Text(
                 text = "App Access Disabled",
-                color = Color.White,
-                fontSize = 22.sp
+                color = MaterialTheme.colorScheme.onBackground,
+                fontFamily = manrope,
+                fontSize = 22.sp,
+                fontWeight = FontWeight.SemiBold
             )
             Spacer(modifier = Modifier.height(10.dp))
             Text(
                 text = "Please update the app or try again later.",
-                color = Color.Gray,
+                color = MaterialTheme.colorScheme.onBackground,
+                fontFamily = manrope,
+                fontWeight = FontWeight.Normal,
                 fontSize = 16.sp
             )
         }
