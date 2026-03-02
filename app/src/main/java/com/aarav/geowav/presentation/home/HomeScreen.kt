@@ -403,7 +403,7 @@ fun GeoWavHomeScreen(
 
                     Row(
                         modifier = Modifier
-                            .padding(top = 16.dp)
+                            .padding(top = 8.dp)
                             .fillMaxWidth(),
                         verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.SpaceBetween
@@ -1163,7 +1163,7 @@ fun ActiveZonesSection(
     onZoneClick: (com.aarav.geowav.data.model.Place) -> Unit
 ) {
     Column(
-        modifier = Modifier.padding(vertical = 16.dp)
+        modifier = Modifier.padding(vertical = 8.dp)
     ) {
         Text(
             "Active Zones",
