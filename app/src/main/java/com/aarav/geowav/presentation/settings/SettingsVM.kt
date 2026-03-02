@@ -1,6 +1,7 @@
 package com.aarav.geowav.presentation.settings
 
 import android.app.Application
+import android.content.Intent
 import android.content.SharedPreferences
 import android.health.connect.datatypes.AppInfo
 import android.util.Log
@@ -10,6 +11,9 @@ import androidx.lifecycle.application
 import androidx.lifecycle.viewModelScope
 import com.aarav.geowav.data.authentication.GoogleSignInClient
 import com.aarav.geowav.platform.AppVersionInfo
+import com.aarav.geowav.platform.GeofenceForegroundService
+import com.aarav.geowav.platform.LiveLocationService
+import com.aarav.geowav.platform.NotificationService
 import com.aarav.geowav.platform.getAppVersionInfo
 import dagger.hilt.android.lifecycle.HiltViewModel
 import jakarta.inject.Inject
@@ -82,6 +86,13 @@ class SettingsVM @Inject constructor(
     }
 
     fun logout() {
+        val context = getApplication<Application>()
+
+        // Stop all foreground services before signing out
+        context.stopService(Intent(context, LiveLocationService::class.java))
+        context.stopService(Intent(context, GeofenceForegroundService::class.java))
+        context.stopService(Intent(context, NotificationService::class.java))
+
         viewModelScope.launch {
             withContext(Dispatchers.IO) {
                 googleSignInClient.signOut()

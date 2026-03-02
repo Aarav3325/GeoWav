@@ -545,6 +545,7 @@ class MainActivity : ComponentActivity() {
 
         stopService(Intent(this, LiveLocationService::class.java))
         stopService(Intent(this, GeofenceForegroundService::class.java))
+        stopService(Intent(this, NotificationService::class.java))
 
         val pendingIntent = PendingIntent.getBroadcast(
             this,
