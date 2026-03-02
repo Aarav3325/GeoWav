@@ -5,6 +5,7 @@ import android.location.Geocoder
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.aarav.geowav.core.tracking.StayPointTracker
 import com.aarav.geowav.core.utils.ActivityFilter
 import com.aarav.geowav.core.utils.LiveLocationState
 import com.aarav.geowav.core.utils.Resource
@@ -16,6 +17,7 @@ import com.aarav.geowav.data.model.GeoAlert
 import com.aarav.geowav.data.model.GeoConnection
 import com.aarav.geowav.data.model.Place
 import com.aarav.geowav.data.model.SessionHistory
+import com.aarav.geowav.data.model.StayPoint
 import com.aarav.geowav.data.model.User
 import com.aarav.geowav.data.model.UserPath
 import com.aarav.geowav.data.model.toUserPathLatLng
@@ -68,6 +70,15 @@ class HomeScreenVM @Inject constructor(
 
     private val _userPaths = MutableStateFlow<Map<String, UserPath>>(emptyMap())
     val userPaths = _userPaths.asStateFlow()
+
+    // Stay Point Tracking
+    // Each user we observe gets their own StayPointTracker
+    private val stayTrackers = mutableMapOf<String, StayPointTracker>()
+
+    // The UI (LiveLocationListener) observes this to draw orange stay markers on the map
+    // e.g. {"user_abc" -> [StayPoint(coffee shop), StayPoint(park)]}
+    private val _liveStayPoints = MutableStateFlow<Map<String, List<StayPoint>>>(emptyMap())
+    val liveStayPoints: StateFlow<Map<String, List<StayPoint>>> = _liveStayPoints.asStateFlow()
 
 //    val userSessionHistory = sessionHistoryRepository.getSessionsForUser("7sZTZoNLRpUBcJSevQJyNq2XRVw1")
 //        .stateIn(viewModelScope, SharingStarted.Lazily, emptyList<SessionHistory>())
@@ -125,6 +136,8 @@ class HomeScreenVM @Inject constructor(
                                     it + (userId to viewerState)
                                 }
 
+                                // Stay point tracking
+                                feedStayTracker(userId, lat, lng, viewerState.location.timestamp)
 
                                 // Update user path for drawing user path on map using polyline
                                 _userPaths.update { current ->
@@ -197,6 +210,9 @@ class HomeScreenVM @Inject constructor(
                                     it + (userId to viewerState)
                                 }
 
+                                // Stay point tracking
+                                feedStayTracker(userId, lat, lng, viewerState.location.timestamp)
+
                                 _userPaths.update { current ->
 
                                     val existingPath = current[userId]
@@ -237,7 +253,11 @@ class HomeScreenVM @Inject constructor(
                             ViewerLocationState.Blocked -> {
 
 
+                                // Session ended - get all stay points before saving to Firebase
+                                // This captures any stay the user is still in + all past stays
+                                val finalStayPoints = finalizeStayTracker(userId)
 
+                                Log.i("STAY", finalStayPoints.toString())
 
                                 val sharedAudience  = _uiState.value.currentSessionParticipants
 
@@ -295,7 +315,8 @@ class HomeScreenVM @Inject constructor(
                                                     startAddress = startAddress,
                                                     endAddress = endAddress,
                                                     userPath = userPathLatLng,
-                                                    sharedWith = sharedAudience
+                                                    sharedWith = sharedAudience,
+                                                    stayPoints = finalStayPoints
                                                 )
 
                                                 // Store session history in rtdb
@@ -432,8 +453,14 @@ if (existingPath?.size == 2) {
             .filter { it !in activeUserIds }
             .forEach { userId ->
                 observerJobs.remove(userId)?.cancel()
+                // Clean up stay tracker for removed user
+                stayTrackers.remove(userId)?.reset()
 
                 _locations.update {
+                    it - userId
+                }
+
+                _liveStayPoints.update {
                     it - userId
                 }
             }
@@ -561,10 +588,79 @@ if (existingPath?.size == 2) {
         observerJobs.values.forEach { it.cancel() }
         observerJobs.clear()
 
+        // Clean up all stay trackers on sign-out
+        stayTrackers.values.forEach { it.reset() }
+        stayTrackers.clear()
+        _liveStayPoints.value = emptyMap()
+
         viewModelScope.launch {
             withContext(Dispatchers.IO) {
                 googleSignInClient.signOut()
             }
+        }
+    }
+
+
+    // ── Stay Point Helper Methods ──
+
+    // Called every time we get a location update for a user
+    // This is the entry point - feeds the location into that user's tracker
+    private fun feedStayTracker(userId: String, lat: Double, lng: Double, timestamp: Long) {
+
+        // Get existing tracker for this user, or create a new one if first time
+        val tracker = stayTrackers.getOrPut(userId) { StayPointTracker() }
+
+        // Tell the tracker about this new location
+        // The tracker will decide: is the user still at the same spot or did they move?
+        tracker.onLocationUpdate(lat, lng, timestamp)
+
+        // After updating the tracker, refresh what the UI sees
+        emitLiveStayPoints(userId, tracker)
+    }
+
+    // Called when a user's session ends (Blocked state)
+    // Returns the final list of all stay points to save in Firebase
+    private fun finalizeStayTracker(userId: String): List<StayPoint> {
+
+        // Remove the tracker from our map (session is over, we don't need it anymore)
+        // If no tracker exists for this user, return empty list
+        val tracker = stayTrackers.remove(userId) ?: return emptyList()
+
+        // Tell the tracker the session is over
+        // This capture the stay the user is currently in (if any)
+        // and returns ALL stays (past ones + the current one)
+        val stays = tracker.finalizeAll()
+
+        // Remove this user's markers from the live map
+        _liveStayPoints.update { it - userId }
+
+        Log.i("STAY_POINT", "Finalized ${stays.size} stay points for user $userId")
+        return stays
+    }
+
+    // Updates the _liveStayPoints flow so the map shows current stay markers
+    // Called after every location update
+    private fun emitLiveStayPoints(userId: String, tracker: StayPointTracker) {
+
+        // Build the list of stay points to show on the map:
+        val all = buildList {
+
+            // 1. Add stays where the user already left
+            addAll(tracker.finalizedStays)
+
+            // 2. Add the stay the user is CURRENTLY at (if they've been there long enough)
+            //    This is null if the user just arrived (under threshold)
+            //    This is a StayPoint if they've been there >= threshold
+            tracker.activeQualifiedStay?.let { add(it) }
+        }
+
+        // Update the flow that the UI observes
+        if (all.isNotEmpty()) {
+            // This user has stay points to show - add to map
+            _liveStayPoints.update { it + (userId to all) }
+        } else {
+            // No stay points for this user - remove from map
+            _liveStayPoints.update { it - userId }
         }
     }
 

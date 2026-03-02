@@ -510,7 +510,11 @@ fun AddSettingsScreen(
             onAboutClick = {},
             onTermsClick = {},
             onLogout = {
-                navController.navigate(NavRoute.Login.path)
+                navController.navigate(NavRoute.Login.path) {
+                    popUpTo(navController.graph.findStartDestination().id) {
+                        inclusive = true
+                    }
+                }
             },
             onDeleteAccount = {}
         )

@@ -264,27 +264,34 @@ fun TimelineItem(
 
             Row(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
             ) {
-                Column {
+                Column(
+                    modifier = Modifier.weight(1f)
+                ) {
                     Text(
                         text = item.name,
                         style = MaterialTheme.typography.titleMedium,
-                        fontFamily = manrope
+                        fontFamily = manrope,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
                     )
 
                     Text(
                         text = "Location session • $date • $durationText",
                         style = MaterialTheme.typography.labelMedium,
                         fontFamily = manrope,
-                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
+                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f),
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
                     )
                 }
 
+                Spacer(Modifier.width(8.dp))
 
                 Row(
                     modifier = Modifier
-                        .padding(0.dp)
                         .clickable(
                             indication = null,
                             interactionSource = null

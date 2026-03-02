@@ -514,7 +514,28 @@ fun ObserveLiveLocationCard(
                 }
             }
 
+            // ── Live Stay Point Markers ──
+            val liveStays by viewModel.liveStayPoints.collectAsState()
 
+            liveStays.forEach { (_, stayPoints) ->
+                stayPoints.forEach { stay ->
+                    val stayPos = LatLng(stay.lat, stay.lng)
+
+                    // Duration text from the pre-computed durationMillis
+                    // Updates reactively as the StateFlow emits new snapshots
+                    val mins = stay.durationMillis / 60_000
+                    val durationText = if (mins < 60) "Stayed $mins min"
+                                       else "${mins / 60}h ${mins % 60}m"
+
+                    Marker(
+                        state = MarkerState(position = stayPos),
+                        title = durationText,
+                        snippet = "Stay Point",
+                        anchor = Offset(0.5f, 0.5f),
+                        icon = stayPointMarkerIcon()
+                    )
+                }
+            }
 
             emergencyUser?.let { (_, state) ->
                 val emergencyState = state as ViewerLocationState.EmergencySharing
@@ -1018,6 +1039,39 @@ fun markerIcon(
     return BitmapDescriptorFactory.fromBitmap(
         createUserMarkerBitmap(isEmergency)
     )
+}
+
+/**
+ * Creates a distinct orange marker icon for stay points.
+ */
+fun stayPointMarkerIcon(): BitmapDescriptor {
+    val size = 64
+    val bitmap = Bitmap.createBitmap(size, size, Bitmap.Config.ARGB_8888)
+    val canvas = Canvas(bitmap)
+    val paint = Paint(Paint.ANTI_ALIAS_FLAG)
+
+    // Outer glow
+    paint.color = android.graphics.Color.parseColor("#FF9800")
+    paint.alpha = 60
+    canvas.drawCircle(size / 2f, size / 2f, size / 2.2f, paint)
+
+    // Main circle
+    paint.alpha = 255
+    paint.color = android.graphics.Color.parseColor("#FF9800")
+    canvas.drawCircle(size / 2f, size / 2f, size / 3f, paint)
+
+    // White border
+    paint.style = Paint.Style.STROKE
+    paint.strokeWidth = 4f
+    paint.color = android.graphics.Color.WHITE
+    canvas.drawCircle(size / 2f, size / 2f, size / 3f, paint)
+
+    // Inner dot
+    paint.style = Paint.Style.FILL
+    paint.color = android.graphics.Color.WHITE
+    canvas.drawCircle(size / 2f, size / 2f, size / 8f, paint)
+
+    return BitmapDescriptorFactory.fromBitmap(bitmap)
 }
 
 

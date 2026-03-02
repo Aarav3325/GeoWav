@@ -14,7 +14,8 @@ data class TimelineItem(
     val endTime: Long = 0L,
     val startAddress: String = "",
     val endAddress: String = "",
-    val userPath: List<UserPathLatLng> = emptyList()
+    val userPath: List<UserPathLatLng> = emptyList(),
+    val stayPoints: List<StayPoint> = emptyList()
 )
 
 
@@ -31,7 +32,8 @@ fun SessionHistory.toTimelineItem(name: String): TimelineItem {
         endTime = endTime,
         startAddress = startAddress,
         endAddress = endAddress,
-        userPath = userPath
+        userPath = userPath,
+        stayPoints = stayPoints
     )
 
 

@@ -185,14 +185,42 @@ fun TimelineMapPreview(
                         width = 10f
                     )
 
+                    // Replay Stay Point Markers
+                    session.stayPoints.forEach { stay ->
+                        val stayPos = LatLng(stay.lat, stay.lng)
+                        val mins = stay.durationMillis / 60_000
+                        val durationText = if (mins < 60) "Stayed $mins min"
+                                           else "${mins / 60}h ${mins % 60}m"
+
+                        val timeFormatter = remember {
+                            java.text.SimpleDateFormat("hh:mm a", java.util.Locale.getDefault())
+                        }
+                        val startStr = timeFormatter.format(java.util.Date(stay.startedAt))
+                        val endStr = timeFormatter.format(java.util.Date(stay.endedAt))
+
+                        Marker(
+                            state = MarkerState(position = stayPos),
+                            icon = replayStayPointMarkerIcon(),
+                            title = durationText,
+                            snippet = "$startStr – $endStr",
+                            anchor = Offset(0.5f, 0.5f)
+                        )
+                    }
+
                     // Animate camera once
                     LaunchedEffect(mapLoaded) {
                         if (mapLoaded) {
-                            val bounds = com.google.android.gms.maps.model.LatLngBounds
+                            val boundsBuilder = com.google.android.gms.maps.model.LatLngBounds
                                 .builder()
                                 .include(start)
                                 .include(end)
-                                .build()
+
+                            // Include stay points in camera bounds
+                            session.stayPoints.forEach { stay ->
+                                boundsBuilder.include(LatLng(stay.lat, stay.lng))
+                            }
+
+                            val bounds = boundsBuilder.build()
 
                             cameraPositionState.animate(
                                 CameraUpdateFactory.newLatLngBounds(bounds, 230)
@@ -363,6 +391,35 @@ fun SessionPreviewTray(
 //                    overflow = TextOverflow.Ellipsis
                 )
             }
+
+            // Stay Points summary
+            if (session.stayPoints.isNotEmpty()) {
+                HorizontalDivider(
+                    color = MaterialTheme.colorScheme.outline
+                )
+
+                val stayCount = session.stayPoints.size
+                val totalStayMins = session.stayPoints.sumOf { it.durationMillis } / 60_000
+                val totalStayText = if (totalStayMins < 60) "$totalStayMins min"
+                                    else "${totalStayMins / 60}h ${totalStayMins % 60}m"
+
+                Column(
+                    verticalArrangement = Arrangement.spacedBy(4.dp)
+                ) {
+                    Text(
+                        text = "$stayCount Stay Point${if (stayCount > 1) "s" else ""}",
+                        style = MaterialTheme.typography.labelMedium,
+                        fontFamily = manrope,
+                        color = androidx.compose.ui.graphics.Color(0xFFFF9800)
+                    )
+
+                    Text(
+                        text = "Total time stayed: $totalStayText",
+                        style = MaterialTheme.typography.bodyMedium,
+                        fontFamily = manrope,
+                    )
+                }
+            }
         }
     }
 }
@@ -406,6 +463,39 @@ fun timelineMarkerIcon(
             isStart = isStart
         )
     )
+}
+
+/**
+ * Orange marker icon for stay points shown in session replay.
+ */
+fun replayStayPointMarkerIcon(): BitmapDescriptor {
+    val size = 72
+    val bitmap = createBitmap(size, size)
+    val canvas = Canvas(bitmap)
+    val paint = Paint(Paint.ANTI_ALIAS_FLAG)
+
+    // Outer glow
+    paint.color = android.graphics.Color.parseColor("#FF9800")
+    paint.alpha = 60
+    canvas.drawCircle(size / 2f, size / 2f, size / 2.2f, paint)
+
+    // Main circle
+    paint.alpha = 255
+    paint.color = android.graphics.Color.parseColor("#FF9800")
+    canvas.drawCircle(size / 2f, size / 2f, size / 3f, paint)
+
+    // White border
+    paint.style = Paint.Style.STROKE
+    paint.strokeWidth = 5f
+    paint.color = android.graphics.Color.WHITE
+    canvas.drawCircle(size / 2f, size / 2f, size / 3f, paint)
+
+    // Inner dot
+    paint.style = Paint.Style.FILL
+    paint.color = android.graphics.Color.WHITE
+    canvas.drawCircle(size / 2f, size / 2f, size / 8f, paint)
+
+    return BitmapDescriptorFactory.fromBitmap(bitmap)
 }
 
 

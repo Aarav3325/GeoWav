@@ -226,19 +226,21 @@ class MainActivity : ComponentActivity() {
 //            }
 
             LaunchedEffect(Unit) {
-                killSwitchManager.fetchAndActivate()
-                killSwitchManager.observeAppEnabled()
-                    .collect { enabled ->
-                        if (!enabled) {
+                if(googleSignInClient.isLoggedIn()) {
+                    killSwitchManager.fetchAndActivate()
+                    killSwitchManager.observeAppEnabled()
+                        .collect { enabled ->
+                            if (!enabled) {
 
-                            Log.i("KILL", "app in kill mode")
-                            stopAllCriticalServices()
-                            showAppDisabledState = true
-                        } else {
-                            showAppDisabledState = false
-                            Log.i("KILL", "app not in kill mode")
+                                Log.i("KILL", "app in kill mode")
+                                stopAllCriticalServices()
+                                showAppDisabledState = true
+                            } else {
+                                showAppDisabledState = false
+                                Log.i("KILL", "app not in kill mode")
+                            }
                         }
-                    }
+                }
             }
 
             if (showAppDisabledState) {
