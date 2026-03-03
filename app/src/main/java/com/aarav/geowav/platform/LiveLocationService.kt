@@ -211,20 +211,13 @@ class LiveLocationService : Service() {
             System.currentTimeMillis()
         )
 
-        stayPointTracker.activeQualifiedStay?.let { stay ->
+        val newStay = stayPointTracker.consumeQualifiedStay()
 
-            // Persist only once when it qualifies
+        if (newStay != null) {
             liveLocationSharingRepository.saveStayPoint(
                 userId,
-                stay
+                newStay
             )
-
-            // Reset active stay so we don't keep pushing same stay
-            val newStay = stayPointTracker.consumeQualifiedStay()
-
-            if (newStay != null) {
-                liveLocationSharingRepository.saveStayPoint(userId, newStay)
-            }
         }
     }
 
