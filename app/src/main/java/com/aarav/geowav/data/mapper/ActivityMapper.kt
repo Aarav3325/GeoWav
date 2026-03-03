@@ -13,7 +13,8 @@ data class FirebaseActivity(
     val timestamp: Long? = null,
     val dateKey: String? = null,         // "yyyy-MM-dd"
     val readableTime: String? = null,    // "5:42 PM"
-    val location: FirebaseLocation? = null
+    val location: FirebaseLocation? = null,
+    val userName: String? = null
 )
 
 // Mappers.kt
@@ -41,7 +42,8 @@ fun FirebaseActivity.toGeoAlert(id: String): GeoAlert? {
         subtitle = relativeTime,
         time = readable,
         readableTime = ts,
-        type = type
+        type = type,
+        userName = userName ?: ""
     )
 }
 
@@ -58,12 +60,12 @@ private fun buildRelativeSubtitle(type: String, timestamp: Long): String {
     }
 
     return when {
-        minutes < 1 -> "$verb just now"
-        minutes < 60 -> "$verb $minutes min${if (minutes > 1) "s" else ""} ago"
-        hours < 24 -> "$verb $hours hour${if (hours > 1) "s" else ""} ago"
+        minutes < 1 -> "just now"
+        minutes < 60 -> "$minutes min${if (minutes > 1) "s" else ""} ago"
+        hours < 24 -> "$hours hour${if (hours > 1) "s" else ""} ago"
         else -> {
             val df = java.text.SimpleDateFormat("dd MMM, h:mm a", java.util.Locale.getDefault())
-            "$verb on ${df.format(java.util.Date(timestamp))}"
+            "on ${df.format(java.util.Date(timestamp))}"
         }
     }
 }

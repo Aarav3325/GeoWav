@@ -38,6 +38,9 @@ import androidx.compose.material3.rememberDateRangePickerState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -52,8 +55,10 @@ import com.aarav.geowav.R
 import com.aarav.geowav.core.utils.ActivityFilter
 import com.aarav.geowav.core.utils.toLocalDateInIndia
 import com.aarav.geowav.presentation.home.buildRelativeSubtitle
+import com.aarav.geowav.presentation.components.MyAlertDialog
 import com.aarav.geowav.presentation.theme.manrope
 import com.aarav.geowav.presentation.theme.sora
+import java.time.LocalDate
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -64,6 +69,17 @@ fun ActivityScreen(
 
 
     val uiState by activityViewModel.uiState.collectAsState()
+
+    var showFutureDateAlert by remember { mutableStateOf(false) }
+
+    MyAlertDialog(
+        shouldShowDialog = showFutureDateAlert,
+        onDismissRequest = { showFutureDateAlert = false },
+        title = "Invalid Date Range",
+        message = "You cannot select dates in the future. Please choose a date range up to today.",
+        confirmButtonText = "OK",
+        onConfirmClick = { showFutureDateAlert = false }
+    )
 
     Column(
         modifier = Modifier
@@ -93,7 +109,13 @@ fun ActivityScreen(
                 if (from != null && to != null) {
                     val fromDate = from.toLocalDateInIndia()
                     val toDate = to.toLocalDateInIndia()
-                    activityViewModel.onFilterChanged(ActivityFilter.Between(fromDate, toDate))
+                    val today = LocalDate.now()
+
+                    if (fromDate.isAfter(today) || toDate.isAfter(today)) {
+                        showFutureDateAlert = true
+                    } else {
+                        activityViewModel.onFilterChanged(ActivityFilter.Between(fromDate, toDate))
+                    }
                 }
 
             }, onDismiss = {

@@ -57,8 +57,10 @@ import com.aarav.geowav.core.utils.toLocalDateInIndia
 import com.aarav.geowav.data.model.TimelineItem
 import com.aarav.geowav.presentation.activity.DateRangePickerModal
 import com.aarav.geowav.presentation.activity.FilterRow
+import com.aarav.geowav.presentation.components.MyAlertDialog
 import com.aarav.geowav.presentation.theme.manrope
 import java.text.SimpleDateFormat
+import java.time.LocalDate
 import java.util.Date
 import java.util.Locale
 
@@ -117,12 +119,29 @@ fun TimelineScreen(
                 mutableStateOf(TimelineOptions.OTHERS_TIMELINE)
             }
 
+            var showFutureDateAlert by remember { mutableStateOf(false) }
+
+            MyAlertDialog(
+                shouldShowDialog = showFutureDateAlert,
+                onDismissRequest = { showFutureDateAlert = false },
+                title = "Invalid Date Range",
+                message = "You cannot select dates in the future. Please choose a date range up to today.",
+                confirmButtonText = "OK",
+                onConfirmClick = { showFutureDateAlert = false }
+            )
+
             if (uiState.showDatePicker) {
                 DateRangePickerModal(onDateRangeSelected = { (from, to) ->
                     if (from != null && to != null) {
                         val fromDate = from.toLocalDateInIndia()
                         val toDate = to.toLocalDateInIndia()
-                        timelineViewModel.onFilterChanged(ActivityFilter.Between(fromDate, toDate), userId)
+                        val today = LocalDate.now()
+
+                        if (fromDate.isAfter(today) || toDate.isAfter(today)) {
+                            showFutureDateAlert = true
+                        } else {
+                            timelineViewModel.onFilterChanged(ActivityFilter.Between(fromDate, toDate), userId)
+                        }
                     }
 
                 }, onDismiss = {

@@ -130,7 +130,7 @@ class NotificationService : Service() {
                     this,
                     "geo_channel",
                     "Geofence Alert",
-                    "${event.geofence.title} ${event.geofence.subtitle} at ${event.geofence.time}"
+                    "${event.geofence.userName} ${event.geofence.title} at ${event.geofence.time}"
                 )
             }
         }
