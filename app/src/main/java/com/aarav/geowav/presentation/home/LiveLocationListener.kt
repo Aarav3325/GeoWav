@@ -618,7 +618,7 @@ fun ObserveLiveLocationCard(
             HorizontalFloatingToolbar(
                 modifier = Modifier
                     .align(Alignment.BottomCenter)
-                    .offset(y = (-24).dp)
+                    .offset(y = (-36).dp)
                     .zIndex(1f),
                 expanded = true,
                 leadingContent = {

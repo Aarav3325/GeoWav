@@ -2,7 +2,6 @@ package com.aarav.geowav.presentation.timeline
 
 import android.graphics.Bitmap
 import android.graphics.Canvas
-import android.graphics.Color
 import android.graphics.Paint
 import android.util.Log
 import androidx.compose.animation.AnimatedVisibility
@@ -16,18 +15,23 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ContainedLoadingIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
+import androidx.compose.material3.FilledIconButton
 import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.HorizontalFloatingToolbar
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.IconButtonDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
@@ -40,6 +44,7 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -49,32 +54,32 @@ import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.zIndex
+import androidx.core.graphics.createBitmap
 import com.aarav.geowav.R
 import com.aarav.geowav.data.model.TimelineItem
-import com.aarav.geowav.data.model.toTimelineItem
+import com.aarav.geowav.data.model.toLatLng
 import com.aarav.geowav.presentation.theme.GeoWavTheme
 import com.aarav.geowav.presentation.theme.manrope
 import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.model.BitmapDescriptor
 import com.google.android.gms.maps.model.BitmapDescriptorFactory
 import com.google.android.gms.maps.model.LatLng
+import com.google.android.gms.maps.model.LatLngBounds
 import com.google.maps.android.compose.GoogleMap
+import com.google.maps.android.compose.MapProperties
+import com.google.maps.android.compose.MapType
 import com.google.maps.android.compose.MapUiSettings
 import com.google.maps.android.compose.Marker
 import com.google.maps.android.compose.MarkerState
 import com.google.maps.android.compose.rememberCameraPositionState
+import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
-import androidx.core.graphics.createBitmap
-import com.aarav.geowav.data.model.toLatLng
-import com.google.maps.android.compose.MapProperties
-import com.google.maps.android.compose.MapType
-import com.google.maps.android.compose.Polyline
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3ExpressiveApi::class)
 @Composable
@@ -87,6 +92,9 @@ fun TimelineMapPreview(
 ) {
 
     val currentSession by viewModel.currentSession.collectAsState()
+
+
+    var mapType by remember { mutableStateOf(MapType.NORMAL) }
 
     LaunchedEffect(sessionId) {
         viewModel.getSessionInfo(sessionId, userId)
@@ -129,18 +137,19 @@ fun TimelineMapPreview(
                 .padding(padding)
         ) {
 
-            if(!mapLoaded) {
+            if (!mapLoaded) {
                 ContainedLoadingIndicator(
                     Modifier.align(Alignment.Center)
                 )
             }
 
             GoogleMap(
-                modifier = Modifier.fillMaxSize()
+                modifier = Modifier
+                    .fillMaxSize()
                     .clip(RoundedCornerShape(16.dp)),
                 cameraPositionState = cameraPositionState,
                 properties = MapProperties(
-                    mapType = MapType.NORMAL
+                    mapType = mapType
                 ),
                 uiSettings = MapUiSettings(
                     zoomControlsEnabled = true,
@@ -193,7 +202,7 @@ fun TimelineMapPreview(
                         val stayPos = LatLng(stay.lat, stay.lng)
                         val mins = stay.durationMillis / 60_000
                         val durationText = if (mins < 60) "Stayed $mins min"
-                                           else "${mins / 60}h ${mins % 60}m"
+                        else "${mins / 60}h ${mins % 60}m"
 
                         val timeFormatter = remember {
                             java.text.SimpleDateFormat("hh:mm a", java.util.Locale.getDefault())
@@ -233,12 +242,97 @@ fun TimelineMapPreview(
                 }
             }
 
+            val scope = rememberCoroutineScope()
+
+            HorizontalFloatingToolbar(
+                modifier = Modifier
+                    .align(Alignment.BottomCenter)
+                    .offset(y = (-36).dp)
+                    .zIndex(1f),
+                expanded = true,
+                content = {
+                    // Tray toggle
+                    IconButton(
+                        colors = IconButtonDefaults.iconButtonColors(
+                            containerColor = if(showTray) MaterialTheme.colorScheme.tertiaryContainer else MaterialTheme.colorScheme.surfaceContainer,
+                            contentColor = if(showTray) MaterialTheme.colorScheme.onTertiaryContainer else MaterialTheme.colorScheme.onSurface
+                        ),
+                        onClick = {
+                            if (showTray) showTray = false
+                            else showTray = true
+                        }
+                    ) {
+                        Icon(
+                            painter = painterResource(R.drawable.info),
+                            contentDescription = "Toggle Tray",
+                            modifier = Modifier.size(24.dp)
+                        )
+                    }
+                    // Fit All markers
+                    IconButton(
+                        onClick = {
+                            currentSession?.let {
+                                scope.launch {
+                                    val boundsBuilder = LatLngBounds.builder()
+                                        .include(LatLng(it.startLat, it.startLng))
+                                        .include(LatLng(it.endLat, it.endLng))
+
+                                    it.stayPoints.forEach {
+                                        boundsBuilder.include(LatLng(it.lat, it.lng))
+                                    }
+
+
+                                    val bounds = boundsBuilder.build()
+
+                                    cameraPositionState.animate(
+                                        CameraUpdateFactory.newLatLngBounds(bounds, 80)
+                                    )
+                                }
+                            }
+                        },
+                        colors = IconButtonDefaults.iconButtonColors(
+                            contentColor = MaterialTheme.colorScheme.onPrimary,
+                            containerColor = MaterialTheme.colorScheme.primary
+                        )
+                    ) {
+                        Icon(
+                            painter = painterResource(R.drawable.gps),
+                            contentDescription = "Fit All",
+                            modifier = Modifier.size(24.dp)
+                        )
+                    }
+                    // Map type toggle
+                    IconButton(
+                        onClick = {
+                            mapType = when (mapType) {
+                                MapType.NORMAL -> MapType.SATELLITE
+                                MapType.SATELLITE -> MapType.TERRAIN
+                                MapType.TERRAIN -> MapType.HYBRID
+                                else -> MapType.NORMAL
+                            }
+                        }
+                    ) {
+                        Icon(
+                            painter = painterResource(R.drawable.map_trifold),
+                            contentDescription = when (mapType) {
+                                MapType.NORMAL -> "Normal"
+                                MapType.SATELLITE -> "Satellite"
+                                MapType.TERRAIN -> "Terrain"
+                                MapType.HYBRID -> "Hybrid"
+                                else -> "Map"
+                            },
+                            modifier = Modifier.size(22.dp)
+                        )
+                    }
+                }
+            )
+
             // Tray
             currentSession?.let { session ->
 
                 AnimatedVisibility(
                     visible = showTray,
-                    modifier = Modifier.align(Alignment.BottomCenter)
+                    modifier = Modifier.align(Alignment.TopCenter)
                 ) {
                     SessionPreviewTray(
                         session = session,
@@ -247,34 +341,33 @@ fun TimelineMapPreview(
                     )
                 }
 
-                AnimatedVisibility(
-                    visible = !showTray,
-                    modifier = Modifier
-                        .align(Alignment.BottomStart)
-                        .padding(vertical = 32.dp, horizontal = 16.dp)
-                ) {
-                    Surface(
-                        shape = CircleShape,
-                        color = MaterialTheme.colorScheme.primaryContainer,
-                        modifier = Modifier
-                            .size(62.dp)
-                            .clickable { showTray = true }
-                    ) {
-                        Image(
-                            painter = painterResource(R.drawable.info),
-                            contentDescription = null,
-                            colorFilter = ColorFilter.tint(
-                                MaterialTheme.colorScheme.onPrimaryContainer
-                            ),
-                            modifier = Modifier.padding(12.dp)
-                        )
-                    }
-                }
+//                AnimatedVisibility(
+//                    visible = !showTray,
+//                    modifier = Modifier
+//                        .align(Alignment.BottomStart)
+//                        .padding(vertical = 32.dp, horizontal = 16.dp)
+//                ) {
+//                    Surface(
+//                        shape = CircleShape,
+//                        color = MaterialTheme.colorScheme.primaryContainer,
+//                        modifier = Modifier
+//                            .size(62.dp)
+//                            .clickable { showTray = true }
+//                    ) {
+//                        Image(
+//                            painter = painterResource(R.drawable.info),
+//                            contentDescription = null,
+//                            colorFilter = ColorFilter.tint(
+//                                MaterialTheme.colorScheme.onPrimaryContainer
+//                            ),
+//                            modifier = Modifier.padding(12.dp)
+//                        )
+//                    }
+//                }
             }
         }
     }
 }
-
 
 
 @Composable
@@ -404,7 +497,7 @@ fun SessionPreviewTray(
                 val stayCount = session.stayPoints.size
                 val totalStayMins = session.stayPoints.sumOf { it.durationMillis } / 60_000
                 val totalStayText = if (totalStayMins < 60) "$totalStayMins min"
-                                    else "${totalStayMins / 60}h ${totalStayMins % 60}m"
+                else "${totalStayMins / 60}h ${totalStayMins % 60}m"
 
                 Column(
                     verticalArrangement = Arrangement.spacedBy(4.dp)
