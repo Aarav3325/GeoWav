@@ -1,8 +1,10 @@
 package com.aarav.geowav.presentation.home
 
+import android.content.Intent
 import android.graphics.Bitmap
 import android.graphics.Canvas
 import android.graphics.Paint
+import android.net.Uri
 import android.util.Log
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.Animatable
@@ -34,6 +36,7 @@ import androidx.compose.material3.Divider
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.RichTooltip
 import androidx.compose.material3.Surface
@@ -67,6 +70,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.platform.LocalContext
 import com.aarav.geowav.R
 import com.aarav.geowav.core.utils.ViewerLocationState
 import com.aarav.geowav.core.utils.formatTime
@@ -640,6 +644,8 @@ fun RichTooltipExample(
     }
 
 
+    val context = LocalContext.current
+
     TooltipBox(
         modifier = modifier,
         positionProvider = TooltipDefaults.rememberRichTooltipPositionProvider(
@@ -661,7 +667,8 @@ fun RichTooltipExample(
                 },
                 action = {
                     Row(
-                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceAround
                     ) {
 
                         TextButton(
@@ -684,6 +691,31 @@ fun RichTooltipExample(
                             shape = RoundedCornerShape(12.dp)
                         ) {
                             Text("Show on Map")
+                        }
+
+                        IconButton(
+                            onClick = {
+                                scope.launch { tooltipState.dismiss() }
+                                location?.let {
+                                    val uri = Uri.parse("google.navigation:q=${it.lat},${it.lng}")
+                                    val intent = Intent(Intent.ACTION_VIEW, uri)
+                                    intent.setPackage("com.google.android.apps.maps")
+                                    context.startActivity(intent)
+                                }
+                            }
+                        ) {
+                            Surface(
+                                color = MaterialTheme.colorScheme.primaryFixed,
+                                modifier = Modifier.size(48.dp),
+                                shape = CircleShape
+                            ) {
+                                Icon(
+                                    painter = painterResource(R.drawable.directions),
+                                    contentDescription = "Directions",
+                                    tint = MaterialTheme.colorScheme.onPrimaryFixed,
+                                    modifier = Modifier.size(24.dp).padding(6.dp)
+                                )
+                            }
                         }
                     }
                 }
