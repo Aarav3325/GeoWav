@@ -38,8 +38,7 @@ object ServiceModule {
     @Provides
     @Singleton
     fun provideLocationManager(
-        @ApplicationContext context: Context,
-        fusedClient: FusedLocationProviderClient
+        @ApplicationContext context: Context, fusedClient: FusedLocationProviderClient
     ): LocationManager {
         return LocationManager(context, fusedClient)
     }
@@ -68,10 +67,8 @@ object ServiceModule {
     @Provides
     @Singleton
     fun provideRetrofit(): Retrofit {
-        return Retrofit.Builder()
-            .baseUrl(BASE_URL)
-            .addConverterFactory(GsonConverterFactory.create())
-            .build()
+        return Retrofit.Builder().baseUrl(BASE_URL)
+            .addConverterFactory(GsonConverterFactory.create()).build()
     }
 
     @Provides

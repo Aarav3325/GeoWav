@@ -1,5 +1,7 @@
 package com.aarav.geowav.platform
 
+import com.aarav.geowav.data.model.GeoAlert
+
 sealed class SocialEvent {
     data class InviteReceived(
         val senderId: String,
@@ -29,5 +31,9 @@ sealed class SocialEvent {
     data class EmergencyStopped(
         val userId: String,
         val userName: String
+    ): SocialEvent()
+
+    data class Geofence(
+        val geofence: GeoAlert
     ): SocialEvent()
 }

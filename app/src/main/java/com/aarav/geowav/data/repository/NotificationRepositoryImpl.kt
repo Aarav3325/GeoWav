@@ -1,5 +1,9 @@
 package com.aarav.geowav.data.repository
 
+import android.util.Log
+import com.aarav.geowav.data.mapper.FirebaseActivity
+import com.aarav.geowav.data.mapper.toGeoAlert
+import com.aarav.geowav.data.model.GeoAlert
 import com.aarav.geowav.platform.SocialEvent
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.database.ChildEventListener
@@ -39,6 +43,7 @@ class NotificationRepositoryImpl @Inject constructor(
 
     // Store user and listener references preventing duplicate listener to avoid memory leaks
     private val listenerMap = mutableMapOf<String, ValueEventListener>()
+    private val geofenceListenerMap = mutableMapOf<String, ChildEventListener>()
 
     private val emergencyListenerMap = mutableMapOf<String, ValueEventListener>()
 
@@ -46,6 +51,7 @@ class NotificationRepositoryImpl @Inject constructor(
     private val sharingStateCache = mutableMapOf<String, Boolean>()
 
     private val emergencyStateCache = mutableMapOf<String, Boolean>()
+    private val geofenceCache = mutableMapOf<String, Boolean>()
 
     // Using coroutine scope to avoid leaks
     private val repositoryScope =
@@ -64,11 +70,73 @@ class NotificationRepositoryImpl @Inject constructor(
                 attachSharingListener(memberId, userId)
             }
 
+            if(!geofenceListenerMap.containsKey(memberId)) {
+                listenToGeofence(memberId)
+            }
+
             // Attach emergency listener if not already attached
             if (!emergencyListenerMap.containsKey(memberId)) {
                 attachEmergencySharingListener(memberId, userId)
             }
         }
+    }
+
+    private fun listenToGeofence(memberId: String) {
+
+        if(geofenceListenerMap.contains(memberId)) return
+
+
+        Log.i("NOTI", "listenToGeofenceCalled")
+
+        val geofenceRef = firebaseDatabase.getReference("geofence_activity")
+            .child(memberId)
+
+        val listener = object : ChildEventListener {
+            override fun onChildAdded(
+                snapshot: DataSnapshot,
+                previousChildName: String?
+            ) {
+//                val geofence = snapshot.getValue(GeoAlert::class.java)
+//                if(geofence != null) {
+//                    CoroutineScope(Dispatchers.IO).launch {
+//                        _events.emit(SocialEvent.Geofence(geofence))
+//                    }
+//                }
+            }
+
+            override fun onChildChanged(
+                snapshot: DataSnapshot,
+                previousChildName: String?
+            ) {
+                val geofence = snapshot.getValue(FirebaseActivity::class.java)
+                val geoAlert = geofence?.toGeoAlert(id = snapshot.key ?: "")
+                Log.i("NOTI", "onChildChanged: $geoAlert")
+                if(geoAlert != null) {
+                    CoroutineScope(Dispatchers.IO).launch {
+                        _events.emit(SocialEvent.Geofence(geoAlert))
+                    }
+                }
+            }
+
+            override fun onChildRemoved(snapshot: DataSnapshot) {
+
+            }
+
+            override fun onChildMoved(
+                snapshot: DataSnapshot,
+                previousChildName: String?
+            ) {
+
+            }
+
+            override fun onCancelled(error: DatabaseError) {
+
+            }
+
+        }
+
+        geofenceRef.addChildEventListener(listener)
+        geofenceListenerMap[memberId] = listener
     }
 
     // Listen to new invite events and notify user
@@ -403,6 +471,7 @@ class NotificationRepositoryImpl @Inject constructor(
                 .removeEventListener(listener)
         }
 
+        geofenceListenerMap.clear()
         listenerMap.clear()
         emergencyListenerMap.clear()
         sharingStateCache.clear()

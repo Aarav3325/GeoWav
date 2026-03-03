@@ -124,6 +124,15 @@ class NotificationService : Service() {
                     "${event.userName} has ended emergency mode."
                 )
             }
+
+            is SocialEvent.Geofence -> {
+                GeoNotificationHelper.show(
+                    this,
+                    "geo_channel",
+                    "Geofence Alert",
+                    "${event.geofence.title} ${event.geofence.subtitle} at ${event.geofence.time}"
+                )
+            }
         }
     }
 
