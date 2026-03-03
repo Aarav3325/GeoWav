@@ -34,7 +34,10 @@ import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Divider
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
+import androidx.compose.material3.FilledIconButton
 import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.HorizontalFloatingToolbar
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -57,6 +60,9 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.offset
+import androidx.compose.ui.zIndex
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
@@ -83,6 +89,8 @@ import com.google.android.gms.maps.model.CameraPosition
 import com.google.android.gms.maps.model.JointType
 import com.google.android.gms.maps.model.LatLng
 import com.google.android.gms.maps.model.LatLngBounds
+import com.google.maps.android.compose.MapProperties
+import com.google.maps.android.compose.MapType
 import com.google.android.gms.maps.model.RoundCap
 import com.google.maps.android.compose.CameraMoveStartedReason
 import com.google.maps.android.compose.GoogleMap
@@ -96,6 +104,7 @@ import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
 
 
+@OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Preview(showBackground = true)
 @Composable
 fun ObserveLiveLocationCard(
@@ -104,6 +113,7 @@ fun ObserveLiveLocationCard(
     isFullScreen: Boolean,
     showTray: Boolean = false,
     onHideClick: () -> Unit,
+    onShowTray: () -> Unit = {},
     navigateToObserve: () -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -176,12 +186,17 @@ fun ObserveLiveLocationCard(
     var uiSettings by remember {
         mutableStateOf(
             MapUiSettings(
-                myLocationButtonEnabled = false, // currently set to false as have a FAB in fullscreen mode
-                zoomControlsEnabled = true, // set to true later
+                myLocationButtonEnabled = false,
+                zoomControlsEnabled = false,
                 compassEnabled = true,
                 mapToolbarEnabled = false
             )
         )
+    }
+
+    var mapType by remember { mutableStateOf(MapType.NORMAL) }
+    val mapProperties = remember(mapType) {
+        MapProperties(mapType = mapType)
     }
 
     val initialCameraPosition = remember(locations) {
@@ -476,6 +491,7 @@ fun ObserveLiveLocationCard(
             onMapClick = {},
             onMapLongClick = {},
             uiSettings = uiSettings,
+            properties = mapProperties,
             onMapLoaded = { mapLoaded = true }
         ) {
             locations.forEach { (userId, state) ->
@@ -592,34 +608,155 @@ fun ObserveLiveLocationCard(
             }
         }
 
-        if (
-            isFullScreen &&
-            emergencyLat != null &&
-            emergencyLng != null &&
-            isUserPanning
-        ) {
-            androidx.compose.material3.FloatingActionButton(
-                onClick = {
-                    isUserPanning = false
-                    scope.launch {
-                        cameraPositionState.animate(
-                            CameraUpdateFactory.newLatLngZoom(
-                                LatLng(emergencyLat, emergencyLng),
-                                16f
-                            )
+        // ── HorizontalFloatingToolbar ──
+        if (isFullScreen) {
+            val liveCount = locations.count {
+                it.value is ViewerLocationState.NormalSharing ||
+                        it.value is ViewerLocationState.EmergencySharing
+            }
+
+            HorizontalFloatingToolbar(
+                modifier = Modifier
+                    .align(Alignment.BottomCenter)
+                    .offset(y = (-24).dp)
+                    .zIndex(1f),
+                expanded = true,
+                leadingContent = {
+                    Surface(
+                        shape = RoundedCornerShape(12.dp),
+                        color = if (isEmergencyActive)
+                            MaterialTheme.colorScheme.error.copy(alpha = 0.15f)
+                        else
+                            MaterialTheme.colorScheme.primary.copy(alpha = 0.15f),
+                        modifier = Modifier.padding(start = 4.dp)
+                    ) {
+                        Text(
+                            text = "$liveCount Live",
+                            fontFamily = manrope,
+                            fontWeight = FontWeight.SemiBold,
+                            fontSize = 13.sp,
+                            color = if (isEmergencyActive)
+                                MaterialTheme.colorScheme.error
+                            else
+                                MaterialTheme.colorScheme.primary,
+                            modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp)
+                        )
+                    }
+
+
+                    Spacer(Modifier.width(8.dp))
+                },
+                trailingContent = {
+                    // Tray toggle
+                    IconButton(
+                        onClick = {
+                            if (showTray) onHideClick() else onShowTray()
+                        }
+                    ) {
+                        Icon(
+                            painter = painterResource(R.drawable.tray),
+                            contentDescription = "Toggle Tray",
+                            modifier = Modifier.size(22.dp)
+                        )
+                    }
+                    // Fit All markers
+                    IconButton(
+                        onClick = {
+                            if (visibleLatLngs.isNotEmpty()) {
+                                isUserPanning = false
+                                scope.launch {
+                                    val bounds = LatLngBounds.builder().apply {
+                                        visibleLatLngs.forEach { include(it) }
+                                    }.build()
+                                    cameraPositionState.animate(
+                                        CameraUpdateFactory.newLatLngBounds(bounds, 80)
+                                    )
+                                }
+                            }
+                        }
+                    ) {
+                        Icon(
+                            painter = painterResource(R.drawable.full_screen),
+                            contentDescription = "Fit All",
+                            modifier = Modifier.size(24.dp)
+                        )
+                    }
+                    // Map type toggle
+                    IconButton(
+                        onClick = {
+                            mapType = when (mapType) {
+                                MapType.NORMAL -> MapType.SATELLITE
+                                MapType.SATELLITE -> MapType.TERRAIN
+                                MapType.TERRAIN -> MapType.HYBRID
+                                else -> MapType.NORMAL
+                            }
+                        }
+                    ) {
+                        Icon(
+                            painter = painterResource(R.drawable.map_trifold),
+                            contentDescription = when (mapType) {
+                                MapType.NORMAL -> "Normal"
+                                MapType.SATELLITE -> "Satellite"
+                                MapType.TERRAIN -> "Terrain"
+                                MapType.HYBRID -> "Hybrid"
+                                else -> "Map"
+                            },
+                            modifier = Modifier.size(22.dp)
                         )
                     }
                 },
-                modifier = Modifier
-                    .align(Alignment.BottomStart)
-                    .padding(vertical = 36.dp, horizontal = 24.dp),
-                containerColor = MaterialTheme.colorScheme.primary
-            ) {
-                Icon(
-                    painter = painterResource(R.drawable.emergency),
-                    contentDescription = "Follow Emergency"
-                )
-            }
+                content = {
+                    FilledIconButton(
+                        modifier = Modifier
+                            .size(48.dp),
+                        onClick = {
+                            if (emergencyLat != null && emergencyLng != null) {
+                                isUserPanning = false
+                                scope.launch {
+                                    cameraPositionState.animate(
+                                        CameraUpdateFactory.newLatLngZoom(
+                                            LatLng(emergencyLat, emergencyLng),
+                                            16f
+                                        )
+                                    )
+                                }
+                            } else if (visibleLatLngs.isNotEmpty()) {
+                                isUserPanning = false
+                                scope.launch {
+                                    val bounds = LatLngBounds.builder().apply {
+                                        visibleLatLngs.forEach { include(it) }
+                                    }.build()
+                                    cameraPositionState.animate(
+                                        CameraUpdateFactory.newLatLngBounds(bounds, 80)
+                                    )
+                                }
+                            }
+                        },
+                        colors = androidx.compose.material3.IconButtonDefaults.filledIconButtonColors(
+                            containerColor = if (isEmergencyActive)
+                                MaterialTheme.colorScheme.error
+                            else
+                                MaterialTheme.colorScheme.primary,
+                            contentColor = if (isEmergencyActive)
+                                MaterialTheme.colorScheme.onError
+                            else
+                                MaterialTheme.colorScheme.onPrimary
+                        )
+                    ) {
+                        Icon(
+                            painter = painterResource(
+                                if (isEmergencyActive) R.drawable.emergency
+                                else R.drawable.gps
+                            ),
+                            contentDescription = if (isEmergencyActive)
+                                "Center on Emergency"
+                            else
+                                "Fit All Users",
+                            modifier = Modifier.size(22.dp)
+                        )
+                    }
+                },
+            )
         }
     }
 

@@ -357,6 +357,7 @@ fun GeoWavHomeScreen(
                                 false,
                                 false,
                                 onHideClick = {},
+                                onShowTray = {},
                                 navigateToObserve,
                                 Modifier
                                     .height(220.dp)
