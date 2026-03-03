@@ -13,6 +13,8 @@ import com.aarav.geowav.domain.repository.SessionHistoryRepository
 import com.google.firebase.database.DataSnapshot
 import com.google.firebase.database.DatabaseError
 import com.google.firebase.database.FirebaseDatabase
+import com.google.firebase.database.MutableData
+import com.google.firebase.database.Transaction
 import com.google.firebase.database.ValueEventListener
 import jakarta.inject.Inject
 import kotlinx.coroutines.channels.awaitClose
@@ -29,11 +31,37 @@ class SessionHistoryRepositoryImpl
     val rootRef = firebaseDatabase.reference
 
     override suspend fun saveSession(session: SessionHistory) {
-        rootRef.child("sessions")
+        val sessionRef = rootRef.child("sessions")
             .child(session.userId)
             .child(session.id)
-            .setValue(session)
-            .await()
+
+        // Only write if this session doesn't already exist
+        // Prevents duplicate writes when multiple observers see Blocked
+        sessionRef.runTransaction(object : Transaction.Handler {
+            override fun doTransaction(currentData: MutableData): Transaction.Result {
+                // If data already exists, skip the write
+                if (currentData.value != null) {
+                    return Transaction.abort()
+                }
+                // No data yet, write the session
+                currentData.value = session
+                return Transaction.success(currentData)
+            }
+
+            override fun onComplete(
+                error: DatabaseError?,
+                committed: Boolean,
+                currentData: DataSnapshot?
+            ) {
+                if (error != null) {
+                    Log.e("SessionHistoryRepo", "Transaction failed: ${error.message}")
+                } else if (committed) {
+                    Log.d("SessionHistoryRepo", "Session saved successfully")
+                } else {
+                    Log.w("SessionHistoryRepo", "Transaction aborted - session likely already exists")
+                }
+            }
+        })
     }
 
     override fun getSessionsVisibleTo(

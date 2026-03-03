@@ -302,8 +302,15 @@ class HomeScreenVM @Inject constructor(
                                             }
 
                                             if(startAddress != null && endAddress != null) {
+
+                                                // Use deterministic ID so all observers
+                                                // write to the same Firebase path
+                                                // even if multiple observers save, they overwrite
+                                                // the same node with identical data - no duplicates
+                                                val sessionId = "${userId}_${safeStartedAt}"
+
                                                 val sessionHistory = SessionHistory(
-                                                    id = UUID.randomUUID().toString(),
+                                                    id = sessionId,
                                                     userId = userId,
                                                     userName = it.alias ?: it.profileName,
                                                     startLat = start.latitude,
