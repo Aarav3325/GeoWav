@@ -14,6 +14,7 @@ import androidx.core.app.NotificationCompat
 import androidx.core.content.edit
 import com.aarav.geowav.R
 import com.aarav.geowav.core.managers.KillSwitchManager
+import com.aarav.geowav.core.tracking.StayPointTracker
 import com.aarav.geowav.core.utils.ServiceState
 import com.aarav.geowav.data.authentication.GoogleSignInClient
 import com.aarav.geowav.domain.repository.LiveLocationSharingRepository
@@ -60,6 +61,8 @@ class LiveLocationService : Service() {
     lateinit var sharedPreferences: SharedPreferences
 
     private var hasStartedSharing = false
+
+    private val stayPointTracker = StayPointTracker()
 
     private fun setSharingState(state: ServiceState) {
         sharedPreferences.edit(commit = true) {
@@ -183,9 +186,11 @@ class LiveLocationService : Service() {
 
     private suspend fun sendLocation(location: Location) {
         val userId = googleSignInClient.getUserId()
+        val username = googleSignInClient.getUserName()
 
         if (!hasStartedSharing) {
             liveLocationSharingRepository.startSharing(
+                username,
                 userId,
                 location.latitude,
                 location.longitude
@@ -198,6 +203,28 @@ class LiveLocationService : Service() {
                 location.latitude,
                 location.longitude
             )
+        }
+
+        stayPointTracker.onLocationUpdate(
+            location.latitude,
+            location.longitude,
+            System.currentTimeMillis()
+        )
+
+        stayPointTracker.activeQualifiedStay?.let { stay ->
+
+            // Persist only once when it qualifies
+            liveLocationSharingRepository.saveStayPoint(
+                userId,
+                stay
+            )
+
+            // Reset active stay so we don't keep pushing same stay
+            val newStay = stayPointTracker.consumeQualifiedStay()
+
+            if (newStay != null) {
+                liveLocationSharingRepository.saveStayPoint(userId, newStay)
+            }
         }
     }
 
@@ -299,8 +326,17 @@ class LiveLocationService : Service() {
 
         serviceScope.cancel()
 
+
+
         CoroutineScope(Dispatchers.IO + NonCancellable).launch {
+
+
             googleSignInClient.getUserId()?.let {
+                val newStay = stayPointTracker.consumeQualifiedStay()
+
+                if (newStay != null) {
+                    liveLocationSharingRepository.saveStayPoint(it, newStay)
+                }
                 liveLocationSharingRepository.stopSharingLiveLocation(it)
             }
         }

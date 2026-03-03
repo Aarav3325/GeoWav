@@ -45,6 +45,15 @@ class StayPointTracker {
             } else null
         }
 
+    fun consumeQualifiedStay(): StayPoint? {
+        val qualified = activeQualifiedStay ?: return null
+
+        finalizeActiveIfQualified()
+        _activeStay = null
+
+        return qualified
+    }
+
     // Update with a new location
 
     /**
