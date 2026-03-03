@@ -85,7 +85,7 @@ class SettingsVM @Inject constructor(
         }
     }
 
-    fun logout() {
+    fun logout(onComplete: () -> Unit = {}) {
         val context = getApplication<Application>()
 
         // Stop all foreground services before signing out
@@ -97,6 +97,8 @@ class SettingsVM @Inject constructor(
             withContext(Dispatchers.IO) {
                 googleSignInClient.signOut()
             }
+            // Navigate only after sign-out is complete
+            onComplete()
         }
     }
 

@@ -90,6 +90,10 @@ class NotificationRepositoryImpl @Inject constructor(
         val geofenceRef = firebaseDatabase.getReference("geofence_activity")
             .child(memberId)
 
+        // Record when this listener starts so we can skip old events
+        // onChildAdded fires for ALL existing children on first attach
+        val listenerStartTime = System.currentTimeMillis()
+
         val listener = object : ChildEventListener {
             override fun onChildAdded(
                 snapshot: DataSnapshot,
@@ -97,6 +101,11 @@ class NotificationRepositoryImpl @Inject constructor(
             ) {
                 val geofence = snapshot.getValue(FirebaseActivity::class.java)
                 val geoAlert = geofence?.toGeoAlert(id = snapshot.key ?: "")
+
+                // Skip events that existed before this listener started
+                val eventTime = geofence?.timestamp ?: 0L
+                if (eventTime < listenerStartTime) return
+
                 Log.i("NOTI", "onChildAdded: $geoAlert")
                 if (geoAlert != null) {
                     CoroutineScope(Dispatchers.IO).launch {

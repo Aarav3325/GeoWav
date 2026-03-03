@@ -317,8 +317,7 @@ fun SettingsScreen(
                         index = 0,
                         count = 1,
                         onClick = {
-                            settingsVM.logout()
-                            onLogout()
+                            settingsVM.logout(onComplete = onLogout)
                         }
                     )
 

@@ -599,8 +599,7 @@ fun LovedOnesCard(
 ) {
 
     val toggleEnabled =
-        locationState is LiveLocationState.NotSharing ||
-                locationState is LiveLocationState.Sharing
+        locationState is LiveLocationState.NotSharing
 
     val lovedOnes = listOf(
         LovedOneUi(

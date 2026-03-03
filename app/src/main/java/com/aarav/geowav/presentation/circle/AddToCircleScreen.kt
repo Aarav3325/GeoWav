@@ -565,6 +565,26 @@ fun PendingInviteSection(
 
                 val icon = if (expanded) R.drawable.up_arrow else R.drawable.down_arrow
 
+                if(pendingInvites.isNotEmpty()) {
+                    Box(
+                        contentAlignment = Alignment.Center,
+                        modifier = Modifier.size(24.dp)
+                            .clip(CircleShape)
+                            .background(MaterialTheme.colorScheme.primaryFixedDim)
+                    ) {
+                        Text(
+                            text = pendingInvites.size.toString(),
+                            fontFamily = manrope,
+                            fontWeight = FontWeight.SemiBold,
+                            color = MaterialTheme.colorScheme.onPrimaryFixed,
+                            fontSize = 14.sp,
+                            textAlign = TextAlign.Center,
+                        )
+                    }
+
+                    Spacer(Modifier.width(8.dp))
+                }
+
                 Icon(
                     painter = painterResource(icon),
                     contentDescription = "icon",

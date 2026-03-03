@@ -139,6 +139,9 @@ fun TimelineMapPreview(
                 modifier = Modifier.fillMaxSize()
                     .clip(RoundedCornerShape(16.dp)),
                 cameraPositionState = cameraPositionState,
+                properties = MapProperties(
+                    mapType = MapType.NORMAL
+                ),
                 uiSettings = MapUiSettings(
                     zoomControlsEnabled = true,
                     compassEnabled = true,
