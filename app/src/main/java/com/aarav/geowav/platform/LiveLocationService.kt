@@ -269,24 +269,6 @@ class LiveLocationService : Service() {
         )
     }
 
-
-//    @SuppressLint("MissingPermission")
-//    private fun getLocationUpdates() {
-//        val request = LocationRequest.Builder(Priority.PRIORITY_HIGH_ACCURACY, 5_000L)
-//            .setMinUpdateIntervalMillis(2_000L)
-//            .build()
-//
-//        locationCallback = object : LocationCallback() {
-//            override fun onLocationResult(result: LocationResult) {
-//                val location = result.lastLocation ?: return
-////                result.lastLocation?.let { trySend(it) }
-//            }
-//        }
-//
-//        fusedLocationProviderClient.requestLocationUpdates(request, locationCallback, null)
-////        awaitClose { fusedLocationProviderClient.removeLocationUpdates(callback) }
-//    }
-
     private fun createNotification(): Notification {
         val channelId = "live_location_channel"
 
@@ -318,8 +300,6 @@ class LiveLocationService : Service() {
         }
 
         serviceScope.cancel()
-
-
 
         CoroutineScope(Dispatchers.IO + NonCancellable).launch {
 

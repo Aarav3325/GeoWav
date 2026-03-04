@@ -167,15 +167,6 @@ class LocationSharingVM
                     context.startForegroundService(intent)
                 }
 
-                // It should be updated by observe function or else i am done
-//                _uiState.update {
-//                    it.copy(
-//                        emergencyEndsAt = endsAt,
-//                        sharingState = LiveLocationState.EmergencySharing(
-//                            remainingTime = "30:00"
-//                        )
-//                    )
-//                }
             } catch (e: Exception) {
                 emitError("Failed to start emergency sharing")
             } finally {
@@ -327,21 +318,6 @@ class LocationSharingVM
         }
     }
 
-
-//    fun readServiceState(): LiveLocationState {
-//        return when (
-//            sharedPreferences.getString("live_location_state", "NotSharing")
-//        ) {
-//            "SHARING" -> LiveLocationState.Sharing(
-//                visibleCount = _uiState.value.selectedViewerIds.size,
-//                lastUpdatedText = "Updating..."
-//            )
-//
-//            "ERROR" -> LiveLocationState.Error("Failed to share live location")
-//            "NotSharing" -> LiveLocationState.NotSharing
-//            else -> LiveLocationState.NotSharing
-//        }
-//    }
 
     // start location sharing - normal mode
     fun startLiveLocationSharing() {
@@ -614,7 +590,5 @@ data class LiveLocationUiState(
 )
 
 sealed class LiveLocationUiEvent {
-    //    object InviteSent : LiveLocationUiEvent()
-//    object InviteAccepted : LiveLocationUiEvent()
     data class ShowError(val message: String) : LiveLocationUiEvent()
 }

@@ -285,7 +285,7 @@ fun TimelineMapPreview(
                                     val bounds = boundsBuilder.build()
 
                                     cameraPositionState.animate(
-                                        CameraUpdateFactory.newLatLngBounds(bounds, 80)
+                                        CameraUpdateFactory.newLatLngBounds(bounds, 230)
                                     )
                                 }
                             }

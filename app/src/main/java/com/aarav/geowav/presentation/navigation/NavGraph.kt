@@ -492,23 +492,9 @@ fun AddSettingsScreen(
             onThemeChange = onThemeChange,
             hasLocationPermission = true,
             notificationsEnabled = true,
-            triggerType = TriggerType.ENTER,
-            appVersion = "1.0.0",
             navigateToHome = {
                 navController.navigateUp()
-//                navController.navigate(NavRoute.HomeScreen.path) {
-//                    popUpTo(navController.graph.findStartDestination().id) {
-//                        saveState = true
-//                    }
-//                    launchSingleTop = true
-//                    restoreState = true
-//                }
             },
-            onOpenLocationSettings = {},
-            onToggleNotifications = {},
-            onTriggerTypeChange = {},
-            onAboutClick = {},
-            onTermsClick = {},
             onLogout = {
                 navController.navigate(NavRoute.Login.path) {
                     popUpTo(navController.graph.findStartDestination().id) {

@@ -38,6 +38,7 @@ class CircleVM
     private val _uiState = MutableStateFlow(CircleUiState())
     val uiState: StateFlow<CircleUiState> = _uiState.asStateFlow()
 
+    // Emit events to the UI
     private val _events = MutableSharedFlow<CircleUiEvent>()
     val events = _events.asSharedFlow()
 
@@ -65,6 +66,7 @@ class CircleVM
         validateInput()
     }
 
+    // Validate input
     fun validateInput() {
         val name = _uiState.value.name
         val email = _uiState.value.email
@@ -82,6 +84,7 @@ class CircleVM
 
     }
 
+    // Fetch loved ones
     fun loadLovedOnes() {
         if (currentUserId.isEmpty()) return
 
@@ -121,6 +124,7 @@ class CircleVM
         }
     }
 
+    // Fetch pending invites
     fun loadPendingInvites() {
         if (currentUserId.isEmpty()) {
             emitError("User not authenticated")
@@ -138,7 +142,7 @@ class CircleVM
         }
     }
 
-
+    // Send invite
     fun sendInvite(email: String, receiverName: String) {
         val trimmedEmail = encodeEmail(email)
 
@@ -162,10 +166,12 @@ class CircleVM
             return
         }
 
+        // Check if user is already invited
         val alreadyInvited = _uiState.value.pendingInvites.any {
             it.senderEmail == email
         }
 
+        // Check if user is already a loved one
         val isAlreadyLovedOne = _uiState.value.lovedOnes.any {
             it.receiverEmail == email
         }
@@ -211,6 +217,8 @@ class CircleVM
                     alias = alias ?: ""
                 )
             ) {
+
+                // Handle success and error
                 is Resource.Success -> {
                     _uiState.update { it.copy(isLoading = false) }
                     _events.emit(CircleUiEvent.InviteSent)
@@ -226,6 +234,7 @@ class CircleVM
         }
     }
 
+    // Accept invite
     fun acceptInvite(
         senderUid: String
     ) {
@@ -235,6 +244,8 @@ class CircleVM
         }
 
         viewModelScope.launch {
+
+            // Update state to disable button
             _uiState.update {
                 it.copy(acceptingInviteId = senderUid)
             }
@@ -281,6 +292,7 @@ class CircleVM
     }
 
 
+    // Reject invite
     fun rejectInvite(senderUid: String) {
         if (currentUserId.isEmpty()) {
             emitError("User not authenticated")
@@ -288,6 +300,8 @@ class CircleVM
         }
 
         viewModelScope.launch {
+
+            // Update state to disable button
             _uiState.update { it.copy(rejectingInviteId = senderUid) }
 
             when (
@@ -299,6 +313,7 @@ class CircleVM
                 is Resource.Success -> {
                     _uiState.update { it.copy(rejectingInviteId = null) }
 
+                    // Update UI
                     loadPendingInvites()
                     _events.emit(
                         CircleUiEvent.ShowError("Invite rejected")
@@ -315,6 +330,7 @@ class CircleVM
         }
     }
 
+    // Remove member from circle
     fun deleteMember(circleMemberId: String) {
         if (currentUserId.isEmpty()) {
             emitError("User not authenticated")
@@ -324,6 +340,7 @@ class CircleVM
         viewModelScope.launch {
             when (val result = circleRepository.deleteCircleMember(currentUserId, circleMemberId)) {
                 is Resource.Success -> {
+                    // Update UI
                     loadLovedOnes()
                     _events.emit(CircleUiEvent.MemberDeleted)
                 }
@@ -353,7 +370,7 @@ class CircleVM
         }
     }
 
-
+   // Emit error
     private fun emitError(message: String) {
         viewModelScope.launch {
             _events.emit(CircleUiEvent.ShowError(message))

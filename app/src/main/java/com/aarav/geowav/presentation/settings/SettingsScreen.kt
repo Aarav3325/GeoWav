@@ -81,14 +81,7 @@ fun SettingsScreen(
     onThemeChange: (ThemeMode) -> Unit,
     hasLocationPermission: Boolean,
     notificationsEnabled: Boolean,
-    triggerType: TriggerType,
-    appVersion: String,
     navigateToHome: () -> Unit,
-    onOpenLocationSettings: () -> Unit,
-    onToggleNotifications: (Boolean) -> Unit,
-    onTriggerTypeChange: (TriggerType) -> Unit,
-    onAboutClick: () -> Unit,
-    onTermsClick: () -> Unit,
     onLogout: () -> Unit,
     onDeleteAccount: () -> Unit
 ) {
@@ -221,18 +214,10 @@ fun SettingsScreen(
                         count = 2,
                     )
 
-//                    HorizontalDivider(
-//                        modifier = Modifier.padding(horizontal = 16.dp),
-//                        thickness = 0.5.dp,
-//                        color = MaterialTheme.colorScheme.outlineVariant
-//                    )
-
                     TriggerTypeSelector(
                         enabled = hasLocationPermission && notificationsEnabled,
                         index = 1,
-                        count = 2,
-                        selected = triggerType,
-                        onSelected = onTriggerTypeChange
+                        count = 2
                     )
                 }
             }
@@ -277,12 +262,6 @@ fun SettingsScreen(
                         enabled = true
                     )
 
-//                    HorizontalDivider(
-//                        modifier = Modifier.padding(horizontal = 16.dp),
-//                        thickness = 0.5.dp,
-//                        color = MaterialTheme.colorScheme.outlineVariant
-//                    )
-
                     SettingItemNew(
                         title = "About GeoWav",
                         index = 1,
@@ -291,12 +270,6 @@ fun SettingsScreen(
                             showAboutDialog = true
                         }
                     )
-
-//                    HorizontalDivider(
-//                        modifier = Modifier.padding(horizontal = 16.dp),
-//                        thickness = 0.5.dp,
-//                        color = MaterialTheme.colorScheme.outlineVariant
-//                    )
 
                     SettingItemNew(
                         title = "Terms & Privacy Policy",
@@ -323,21 +296,6 @@ fun SettingsScreen(
 
                     Spacer(modifier = Modifier.height(32.dp))
 
-//                    HorizontalDivider(
-//                        modifier = Modifier.padding(horizontal = 16.dp),
-//                        thickness = 0.5.dp,
-//                        color = MaterialTheme.colorScheme.outlineVariant
-//                    )
-
-//                    SettingItemNew(
-//                        title = "Delete Account",
-//                        index = 1,
-//                        count = 2,
-//                        titleColor = MaterialTheme.colorScheme.error,
-//                        onClick = {
-//                            settingsVM.showDeleteDialog()
-//                        }
-//                    )
                 }
             }
         }
@@ -394,16 +352,10 @@ fun Section(
             color = MaterialTheme.colorScheme.primary,
             modifier = Modifier.padding(horizontal = 4.dp)
         )
-//        Surface(
-//            shape = MaterialTheme.shapes.extraLarge,
-//            tonalElevation = 2.dp,
-//            color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f),
-//            border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f))
-//        ) {
+
         Column {
             content()
         }
-        // }
     }
 }
 
@@ -507,9 +459,7 @@ fun SwitchItem(
 fun TriggerTypeSelector(
     enabled: Boolean,
     index: Int,
-    count: Int,
-    selected: TriggerType,
-    onSelected: (TriggerType) -> Unit
+    count: Int
 ) {
     val shape = itemShape(index, count)
 
@@ -583,27 +533,6 @@ fun ThemeSelector(
             }
         }
     }
-}
-
-@RequiresApi(Build.VERSION_CODES.TIRAMISU)
-@Preview(showBackground = true)
-@Composable
-fun SettingsScreenPreview() {
-//        SettingsScreen(
-//            hasLocationPermission = true,
-//            notificationsEnabled = true,
-//            triggerType = TriggerType.ENTER,
-//            themeMode = ThemeMode.SYSTEM,
-//            appVersion = "1.0.0",
-//            onOpenLocationSettings = {},
-//            onToggleNotifications = {},
-//            onTriggerTypeChange = {},
-//            onThemeChange = {},
-//            onAboutClick = {},
-//            onTermsClick = {},
-//            onLogout = {},
-//            onDeleteAccount = {}
-//        )
 }
 
 @Composable

@@ -153,10 +153,10 @@ fun GeoWavHomeScreen(
     val scroll = rememberScrollState()
     val scrollOffset = scroll.value
 
-// Switch colors after scrolling 240px
+    // Switch colors after scrolling 240px
     val useDarkIcons = scrollOffset > 150
 
-// Animate colors smoothly
+    // Animate colors smoothly
     val textColor by animateColorAsState(
         targetValue = if (useDarkIcons) {
             if (isDarkThemeEnabled) {
@@ -269,6 +269,7 @@ fun GeoWavHomeScreen(
                     .verticalScroll(scroll)
                     .background(MaterialTheme.colorScheme.background)
             ) {
+
 
 
                 Box(
@@ -878,16 +879,6 @@ fun ConnectionStatusCard(
 
                     Spacer(Modifier.height(14.dp))
 
-//                    Row(
-//                        modifier = Modifier.fillMaxWidth(),
-//                        horizontalArrangement = Arrangement.SpaceBetween
-//                    ) {
-//                        InfoColumn("Latitude", it.lat.toString())
-//                        InfoColumn("Longitude", it.lng.toString())
-//                    }
-//
-//                    Spacer(Modifier.height(10.dp))
-
                     Row(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.SpaceBetween
@@ -910,152 +901,9 @@ fun ConnectionStatusCard(
                 }
             }
         }
-
-//            Spacer(Modifier.height(12.dp))
-//
-//            HorizontalDivider(
-//                color = MaterialTheme.colorScheme.outline.copy(alpha = 0.2f)
-//            )
-//
-//            Spacer(Modifier.height(10.dp))
-//
-//            Row(
-//                modifier = Modifier.fillMaxWidth(),
-//                horizontalArrangement = Arrangement.End
-//            ) {
-//                TextButton(
-//                    onClick = {
-//                        navigateToTimeline(member.id, name)
-//                    }
-//                ) {
-//                    Text(
-//                        text = "View Timeline",
-//                        fontFamily = manrope,
-//                        fontWeight = FontWeight.SemiBold
-//                    )
-//                }
-//            }
-//
-//        }
     }
 }
 
-
-//@Composable
-//fun ConnectionStatusCard(
-//    member: CircleMember,
-//    locationState: ViewerLocationState?
-//) {
-//
-//    val name = member.alias ?: member.profileName
-//
-//    val (statusText, statusColor) = when (locationState) {
-//        is ViewerLocationState.EmergencySharing ->
-//            "Emergency" to MaterialTheme.colorScheme.error
-//
-//        is ViewerLocationState.NormalSharing ->
-//            "Live" to MaterialTheme.colorScheme.primary
-//
-//        else ->
-//            "Not Sharing" to MaterialTheme.colorScheme.outline
-//    }
-//
-//        Card(
-//            shape = RoundedCornerShape(16.dp),
-//            colors = CardDefaults.cardColors(
-//                containerColor = MaterialTheme.colorScheme.surfaceContainerHigh
-//            ),
-//            elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
-//            modifier = Modifier.fillMaxWidth()
-//        ) {
-//
-//            Column(
-//                modifier = Modifier
-//            ) {
-//
-//                // ---------- TOP ROW ----------
-//                Row(
-//                    verticalAlignment = Alignment.CenterVertically,
-//                    horizontalArrangement = Arrangement.SpaceBetween,
-//                    modifier = Modifier.fillMaxWidth()
-//                        .padding(vertical = 8.dp, horizontal = 12.dp)
-//                ) {
-//
-//                    Column {
-//                        Text(
-//                            text = name,
-//                            fontFamily = manrope,
-//                            fontSize = 18.sp,
-//                            fontWeight = FontWeight.SemiBold,
-//                            color = MaterialTheme.colorScheme.onSurface
-//                        )
-//
-//                        Spacer(Modifier.height(2.dp))
-//
-//                        Text(
-//                            text = statusText,
-//                            fontFamily = manrope,
-//                            fontSize = 13.sp,
-//                            fontWeight = FontWeight.Medium,
-//                            color = statusColor
-//                        )
-//                    }
-//
-//                    // Status Indicator Dot
-//                    Box(
-//                        modifier = Modifier
-//                            .size(12.dp)
-//                            .background(statusColor, CircleShape)
-//                    )
-//                }
-//
-//                // ---------- LOCATION INFO ----------
-//                if (locationState is ViewerLocationState.NormalSharing ||
-//                    locationState is ViewerLocationState.EmergencySharing
-//                ) {
-//
-//                    Spacer(Modifier.height(14.dp))
-//
-//                    Divider(
-//                        color = MaterialTheme.colorScheme.outline.copy(alpha = 0.2f)
-//                    )
-//
-//                    Spacer(Modifier.height(14.dp))
-//
-//                    val locationData = when (locationState) {
-//                        is ViewerLocationState.NormalSharing -> locationState.location
-//                        is ViewerLocationState.EmergencySharing -> locationState.location
-//                        else -> null
-//                    }
-//
-//                    locationData?.let { location ->
-//
-//                        val lat = location.lat
-//                        val lng = location.lng
-//                        val time = formatTime(location.timestamp)
-//                        Row(
-//                            modifier = Modifier.fillMaxWidth(),
-//                            horizontalArrangement = Arrangement.SpaceBetween
-//                        ) {
-//                            InfoColumn("Latitude", lat.toString())
-//                            InfoColumn("Longitude", lng.toString())
-//                        }
-//
-//                        Spacer(Modifier.height(12.dp))
-//
-//                        Text(
-//                            text = "Updated $time",
-//                            fontFamily = manrope,
-//                            fontSize = 12.sp,
-//                            fontWeight = FontWeight.Medium,
-//                            color = MaterialTheme.colorScheme.outline
-//                        )
-//                    }
-//                }
-//
-//            }
-//        }
-//}
 
 @Composable
 private fun InfoColumn(label: String, value: String) {
@@ -1076,84 +924,6 @@ private fun InfoColumn(label: String, value: String) {
             fontSize = 14.sp,
             fontWeight = FontWeight.SemiBold,
             color = MaterialTheme.colorScheme.onSurface
-        )
-    }
-}
-
-
-@Composable
-fun ConnectionCard(conn: CircleMember) {
-
-    Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.width(88.dp)) {
-        Box(
-            modifier = Modifier
-                .size(64.dp)
-                .clip(CircleShape)
-                .background(
-                    Brush.radialGradient(
-                        listOf(
-                            MaterialTheme.colorScheme.onPrimary,
-                            MaterialTheme.colorScheme.inversePrimary
-                        )
-                    )
-                ),
-            contentAlignment = Alignment.BottomEnd
-        ) {
-            Text(
-                conn.alias?.take(1) ?: conn.profileName.take(1),
-                color = MaterialTheme.colorScheme.onBackground,
-                style = MaterialTheme.typography.headlineSmall.copy(
-                    fontWeight = FontWeight.W600,
-                    fontFamily = sora
-                ),
-                fontSize = 24.sp,
-                modifier = Modifier.align(Alignment.Center)
-            )
-        }
-        Spacer(modifier = Modifier.height(8.dp))
-        Text(
-            conn.profileName,
-            fontSize = 14.sp,
-            textAlign = TextAlign.Center,
-            color = MaterialTheme.colorScheme.onBackground,
-            style = MaterialTheme.typography.bodyMedium.copy(fontFamily = sora),
-            maxLines = 1
-        )
-    }
-}
-
-@Composable
-fun AddConnectionCard(onClick: () -> Unit) {
-
-    Column(
-        horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier
-            .width(84.dp)
-            .padding(start = 8.dp)
-    ) {
-        Box(
-            modifier = Modifier
-                .size(64.dp)
-                .clip(CircleShape)
-                .border(1.dp, MaterialTheme.colorScheme.tertiary, CircleShape)
-                .background(Color.Transparent)
-                .clickable {
-                    onClick()
-                },
-            contentAlignment = Alignment.Center
-        ) {
-            Icon(
-                painter = painterResource(R.drawable.plus_circle__1_),
-                contentDescription = "Add",
-                tint = MaterialTheme.colorScheme.tertiary
-            )
-        }
-        Spacer(modifier = Modifier.height(8.dp))
-        Text(
-            text = "Add",
-            fontFamily = sora,
-            fontSize = 14.sp,
-            style = MaterialTheme.typography.bodyMedium.copy(fontFamily = sora),
-            color = MaterialTheme.colorScheme.tertiary
         )
     }
 }
@@ -1248,15 +1018,13 @@ fun ZoneCard(zone: Place, onClick: () -> Unit) {
                     verticalArrangement = Arrangement.spacedBy(4.dp)
                 ) {
                     Text(
-                        if (zone.customName.isNotEmpty()) {
-                            zone.customName
-                        } else {
+                        zone.customName.ifEmpty {
                             zone.placeName
                         },
                         fontSize = 14.sp,
                         color = MaterialTheme.colorScheme.onSurface,
                         style = MaterialTheme.typography.bodyMedium.copy(
-                            fontWeight = FontWeight.SemiBold,
+                            fontWeight = FontWeight.Normal,
                             fontFamily = sora
                         )
                     )

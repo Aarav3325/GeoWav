@@ -236,7 +236,8 @@ fun OnboardingScreen(
                     AnimatedVisibility(clickState) {
                         ContainedLoadingIndicator(
                             modifier = Modifier.size(32.dp),
-                            indicatorColor = MaterialTheme.colorScheme.onPrimary
+                            containerColor = MaterialTheme.colorScheme.primaryFixed,
+                            indicatorColor = MaterialTheme.colorScheme.onPrimaryFixed
                         )
                     }
                 }
