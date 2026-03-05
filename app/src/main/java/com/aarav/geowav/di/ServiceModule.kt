@@ -3,6 +3,7 @@ package com.aarav.geowav.di
 import android.content.Context
 import android.content.SharedPreferences
 import com.aarav.geowav.data.datasource.retrofit.MessageAPI
+import com.aarav.geowav.data.datasource.retrofit.RoadsApi
 import com.aarav.geowav.platform.GeofenceHelper
 import com.aarav.geowav.platform.LocationManager
 import com.google.android.gms.location.FusedLocationProviderClient
@@ -76,6 +77,12 @@ object ServiceModule {
     fun provideWhatsAppApi(retrofit: Retrofit): MessageAPI {
         return retrofit.create(MessageAPI::class.java)
     }
+
+//    @Provides
+//    @Singleton
+//    fun provideRoadsApi(retrofit: Retrofit): RoadsApi {
+//        return retrofit.create(RoadsApi::class.java)
+//    }
 
     @Provides
     @Singleton

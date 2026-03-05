@@ -50,6 +50,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
@@ -68,6 +69,7 @@ import com.google.android.gms.maps.model.BitmapDescriptor
 import com.google.android.gms.maps.model.BitmapDescriptorFactory
 import com.google.android.gms.maps.model.LatLng
 import com.google.android.gms.maps.model.LatLngBounds
+import com.google.maps.android.SphericalUtil
 import com.google.maps.android.compose.CameraMoveStartedReason
 import com.google.maps.android.compose.GoogleMap
 import com.google.maps.android.compose.MapProperties
@@ -92,6 +94,7 @@ fun TimelineMapPreview(
 ) {
 
     val currentSession by viewModel.currentSession.collectAsState()
+    val snappedPath by viewModel.snappedPath.collectAsState()
 
     // Current playback state
     var isPlaying by remember {
@@ -169,6 +172,7 @@ fun TimelineMapPreview(
         viewModel.getSessionInfo(sessionId, userId)
     }
 
+
     val cameraPositionState = rememberCameraPositionState()
 
     var showTray by remember { mutableStateOf(true) }
@@ -228,9 +232,37 @@ fun TimelineMapPreview(
             }
         }
 
-        val userPaths = currentSession?.userPath?.map {
-            it.toLatLng()
+        val userPaths = remember(currentSession) {
+            currentSession?.userPath?.map { it.toLatLng() }
         }
+
+        val path = userPaths?.joinToString("|") {
+            "${it.latitude},${it.longitude}"
+        }
+
+        val context = LocalContext.current
+
+        LaunchedEffect(path) {
+            if (!path.isNullOrEmpty()) {
+                viewModel.getSnappedPath(
+                    path,
+                    true,
+                    context.getString(R.string.maps_api)
+                )
+            }
+        }
+
+        val finalSnappedPath = remember(snappedPath) {
+            snappedPath.map {
+                LatLng(it.location.latitude, it.location.longitude)
+            }
+        }
+
+
+        Log.i(
+            "SNAP",
+            "path: " + path.toString()
+        )
 
         Box(
             modifier = Modifier
@@ -299,6 +331,7 @@ fun TimelineMapPreview(
                         )
                     }
 
+
                     // Show user path polyline during playback (animated path)
                     if (animatedPath.isNotEmpty()) {
                         com.google.maps.android.compose.Polyline(
@@ -310,7 +343,7 @@ fun TimelineMapPreview(
                         // Show user path polyline when playback is not active (show whole path)
                         if (userPaths != null) {
                             com.google.maps.android.compose.Polyline(
-                                points = userPaths,
+                                points = finalSnappedPath,
                                 color = androidx.compose.ui.graphics.Color(0xFF0A6780),
                                 width = 10f
                             )
@@ -319,29 +352,56 @@ fun TimelineMapPreview(
 
 
                     // Replay Stay Point Markers
-                    revealedStayPoints.forEach { stay ->
+                    if (revealedStayPoints.isNotEmpty()) {
+                        revealedStayPoints.forEach { stay ->
 
-                        val stayPos = LatLng(stay.lat, stay.lng)
+                            val stayPos = LatLng(stay.lat, stay.lng)
 
-                        val mins = stay.durationMillis / 60_000
-                        val durationText =
-                            if (mins < 60) "Stayed $mins min"
-                            else "${mins / 60}h ${mins % 60}m"
+                            val mins = stay.durationMillis / 60_000
+                            val durationText =
+                                if (mins < 60) "Stayed $mins min"
+                                else "${mins / 60}h ${mins % 60}m"
 
-                        val timeFormatter = remember {
-                            SimpleDateFormat("hh:mm a", Locale.getDefault())
+                            val timeFormatter = remember {
+                                SimpleDateFormat("hh:mm a", Locale.getDefault())
+                            }
+
+                            val startStr = timeFormatter.format(Date(stay.startedAt))
+                            val endStr = timeFormatter.format(Date(stay.endedAt))
+
+                            Marker(
+                                state = MarkerState(position = stayPos),
+                                icon = stayIcon,
+                                title = durationText,
+                                snippet = "$startStr – $endStr",
+                                anchor = Offset(0.5f, 0.5f)
+                            )
                         }
+                    } else {
+                        session.stayPoints.forEach { stay ->
 
-                        val startStr = timeFormatter.format(Date(stay.startedAt))
-                        val endStr = timeFormatter.format(Date(stay.endedAt))
+                            val stayPos = LatLng(stay.lat, stay.lng)
 
-                        Marker(
-                            state = MarkerState(position = stayPos),
-                            icon = stayIcon,
-                            title = durationText,
-                            snippet = "$startStr – $endStr",
-                            anchor = Offset(0.5f, 0.5f)
-                        )
+                            val mins = stay.durationMillis / 60_000
+                            val durationText =
+                                if (mins < 60) "Stayed $mins min"
+                                else "${mins / 60}h ${mins % 60}m"
+
+                            val timeFormatter = remember {
+                                SimpleDateFormat("hh:mm a", Locale.getDefault())
+                            }
+
+                            val startStr = timeFormatter.format(Date(stay.startedAt))
+                            val endStr = timeFormatter.format(Date(stay.endedAt))
+
+                            Marker(
+                                state = MarkerState(position = stayPos),
+                                icon = stayIcon,
+                                title = durationText,
+                                snippet = "$startStr – $endStr",
+                                anchor = Offset(0.5f, 0.5f)
+                            )
+                        }
                     }
 
                     // Animate camera once
@@ -367,7 +427,7 @@ fun TimelineMapPreview(
                 }
             }
 
-            val mapMode = when(mapType) {
+            val mapMode = when (mapType) {
                 MapType.NORMAL -> "Normal"
                 MapType.SATELLITE -> "Satellite"
                 MapType.TERRAIN -> "Terrain"
@@ -377,7 +437,8 @@ fun TimelineMapPreview(
 
             AnimatedVisibility(
                 show,
-                modifier = Modifier.align(Alignment.TopCenter)
+                modifier = Modifier
+                    .align(Alignment.TopCenter)
                     .padding(top = 16.dp)
             ) {
 
@@ -388,7 +449,7 @@ fun TimelineMapPreview(
                     Text(
                         text = "Switched to $mapMode mode",
                         color = MaterialTheme.colorScheme.onSurface,
-                        fontSize = 16.sp,
+                        fontSize = 14.sp,
                         fontWeight = FontWeight.SemiBold,
                         fontFamily = manrope,
                         modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp)
@@ -409,7 +470,7 @@ fun TimelineMapPreview(
 
                     // Iterate through path segments
                     // playbackIndex stores current segment
-                    for (i in playbackIndex until userPaths.size - 1) {
+                    for (i in playbackIndex until finalSnappedPath.size - 1) {
 
                         // Ensure the loop exits immediately if playback is paused
                         if (!isPlaying) return@LaunchedEffect
@@ -418,14 +479,20 @@ fun TimelineMapPreview(
                             This prevent the marker from jumping back to segment start point when playback resumes
                          */
                         val start = lastPosition ?: userPaths[i]
-                        val end = userPaths[i + 1] // end point
+                        val end = finalSnappedPath[i + 1] // end point
 
+                        val distance = com.google.maps.android.SphericalUtil
+                            .computeDistanceBetween(start, end)
+
+                        val baseSpeed = 35.0 // meters per second
+                        val duration = (distance / (baseSpeed * speed) * 1000).toLong()
+
+                        val steps = (duration / 16).toInt().coerceAtLeast(1)
                         /*
                          Instead of jumping directly between 2 points,
                          we interpolate 20 intermediate points between them
                          in order to create a smooth playback experience
                          */
-                        val steps = 20
 
                         // Calculate intermediate positions between start and end points
                         for (step in 0..steps) {
@@ -437,11 +504,7 @@ fun TimelineMapPreview(
 //                                val interpolated = SphericalUtil.interpolate(start, end, fraction.toDouble())
 
                             // Compute the interpolated LatLng using the provided function
-                            val interpolated = interpolateLatLng(
-                                fraction,
-                                start,
-                                end
-                            )
+                            val interpolated = SphericalUtil.interpolate(start, end, fraction.toDouble())
 
                             // update user marker position
                             movingMarkerState.position = interpolated
@@ -457,20 +520,20 @@ fun TimelineMapPreview(
                             /*
                                 If follow is enabled then the map camera moves with playback marker
                              */
-                            if (followUser) {
+                            if (step % 2 == 0 && followUser) {
                                 cameraPositionState.move(
                                     CameraUpdateFactory.newLatLng(interpolated)
                                 )
                             }
 
-                            delay((250 / speed).toLong())
+                            delay((duration/steps))
                         }
 
                         // update the current segment
                         playbackIndex = i + 1
 
                         // Detect stay points
-                        val currentPoint = userPaths[playbackIndex] // actual reached point
+                        val currentPoint = finalSnappedPath[playbackIndex] // actual reached point
 
                         currentSession?.stayPoints?.forEach { stay ->
 
