@@ -1,5 +1,6 @@
 package com.aarav.geowav.data.datasource.retrofit
 
+import com.aarav.geowav.BuildConfig
 import com.aarav.geowav.data.model.SnapToRoadResponse
 import retrofit2.Response
 import retrofit2.http.GET
@@ -11,7 +12,7 @@ interface RoadsApi {
     suspend fun snapToRoads(
         @Query("interpolate") interpolate: Boolean,
         @Query("path") path: String,
-        @Query("key") apiKey: String
+        @Query("key") apiKey: String = BuildConfig.GOOGLE_MAPS_API_KEY
     ): Response<SnapToRoadResponse>
 
 }

@@ -109,8 +109,6 @@ fun GeoWavHomeScreen(
     val uiState by homeScreenVM.uiState.collectAsState()
     val locations by homeScreenVM.locations.collectAsState()
 
-//    val sessionHistory by homeScreenVM.userSessionHistory.collectAsState()
-
     val notificationPermission =
         rememberPermissionState(Manifest.permission.POST_NOTIFICATIONS)
 
@@ -703,7 +701,6 @@ fun ConnectionStatusCard(
     val finalName = name.split(" ").first()
     val emergencyState = locationState as? ViewerLocationState.EmergencySharing
     val isSharingActive = locationState as? ViewerLocationState.NormalSharing
-    val initialRemaining = emergencyState?.endsAt?.minus(System.currentTimeMillis())
 
     // Emergency count down
     val remaining by produceState(
@@ -728,7 +725,7 @@ fun ConnectionStatusCard(
             Triple("Live", MaterialTheme.colorScheme.primary, true)
 
         else ->
-            Triple("Offline", MaterialTheme.colorScheme.outline, false)
+            Triple("Not Sharing", MaterialTheme.colorScheme.outline, false)
     }
 
     Card(
@@ -813,7 +810,7 @@ fun ConnectionStatusCard(
 
                 Surface(
                     shape = CircleShape,
-                    color = MaterialTheme.colorScheme.secondaryContainer,
+                    color = MaterialTheme.colorScheme.tertiary,
                     modifier = Modifier
                         .clip(CircleShape)
                         .clickable {
@@ -824,7 +821,7 @@ fun ConnectionStatusCard(
                     Icon(
                         painter = painterResource(R.drawable.timeline),
                         contentDescription = "View Timeline",
-                        tint = MaterialTheme.colorScheme.onSecondaryContainer,
+                        tint = MaterialTheme.colorScheme.onTertiary,
                         modifier = Modifier
                             .size(24.dp)
                             .padding(6.dp)

@@ -13,16 +13,14 @@ class SnapToRoadRepository(
 ) {
     suspend fun snapToRoad(
         path: String,
-        interpolate: Boolean,
-        apiKey: String
+        interpolate: Boolean
     ): Resource<List<SnappedPoint>> {
         return try {
 
             Log.i("SNAP", "repo call")
             val response = roadsApi.snapToRoads(
                 path = path,
-                interpolate = interpolate,
-                apiKey = apiKey
+                interpolate = interpolate
             )
 
             if (response.isSuccessful) {

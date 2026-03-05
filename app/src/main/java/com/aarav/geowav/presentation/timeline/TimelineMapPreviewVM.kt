@@ -45,15 +45,13 @@ class TimelineMapPreviewVM
 
     fun getSnappedPath(
         path: String,
-        interpolate: Boolean,
-        apiKey: String
+        interpolate: Boolean
     ) {
         Log.i("SNAP", "snap res: called")
         viewModelScope.launch {
             when (val result = snapToRoadRepository.snapToRoad(
                 path = path,
-                interpolate = interpolate,
-                apiKey = apiKey
+                interpolate = interpolate
             )) {
                 is Resource.Success -> {
                     _snappedPath.value = result.data ?: emptyList()

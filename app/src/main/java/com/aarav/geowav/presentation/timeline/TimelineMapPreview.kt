@@ -246,8 +246,7 @@ fun TimelineMapPreview(
             if (!path.isNullOrEmpty()) {
                 viewModel.getSnappedPath(
                     path,
-                    true,
-                    context.getString(R.string.maps_api)
+                    true
                 )
             }
         }

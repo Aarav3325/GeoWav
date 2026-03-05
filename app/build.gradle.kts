@@ -9,6 +9,8 @@ plugins {
     id("com.google.firebase.crashlytics")
 }
 
+val mapsApiKey: String = project.findProperty("GOOGLE_MAPS_API_KEY") as String? ?: ""
+
 android {
     namespace = "com.aarav.geowav"
     compileSdk = 36
@@ -23,13 +25,25 @@ android {
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
+
     buildTypes {
+
+        debug {
+
+            manifestPlaceholders["GOOGLE_MAPS_API_KEY"] = mapsApiKey
+            buildConfigField("String", "GOOGLE_MAPS_API_KEY", "\"$mapsApiKey\"")
+        }
+
         release {
             isMinifyEnabled = false
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
             )
+
+            manifestPlaceholders["GOOGLE_MAPS_API_KEY"] = mapsApiKey
+
+            buildConfigField("String", "GOOGLE_MAPS_API_KEY", "\"$mapsApiKey\"")
         }
     }
     compileOptions {
@@ -41,6 +55,7 @@ android {
     }
     buildFeatures {
         compose = true
+        buildConfig = true
     }
 
     kapt {
