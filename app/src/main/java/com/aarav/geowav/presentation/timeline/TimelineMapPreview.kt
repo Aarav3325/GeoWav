@@ -29,6 +29,7 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.IconButtonDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
@@ -67,7 +68,6 @@ import com.google.android.gms.maps.model.BitmapDescriptor
 import com.google.android.gms.maps.model.BitmapDescriptorFactory
 import com.google.android.gms.maps.model.LatLng
 import com.google.android.gms.maps.model.LatLngBounds
-import com.google.maps.android.SphericalUtil
 import com.google.maps.android.compose.CameraMoveStartedReason
 import com.google.maps.android.compose.GoogleMap
 import com.google.maps.android.compose.MapProperties
@@ -157,12 +157,12 @@ fun TimelineMapPreview(
 
     // Moving marker icon
     val movingIcon = remember(mapLoaded) {
-        if(mapLoaded) movingPlaybackMarkerIcon() else null
+        if (mapLoaded) movingPlaybackMarkerIcon() else null
     }
 
     // Stay point marker icon
     val stayIcon = remember(mapLoaded) {
-        if(mapLoaded) replayStayPointMarkerIcon() else null
+        if (mapLoaded) replayStayPointMarkerIcon() else null
     }
 
     LaunchedEffect(sessionId) {
@@ -172,6 +172,13 @@ fun TimelineMapPreview(
     val cameraPositionState = rememberCameraPositionState()
 
     var showTray by remember { mutableStateOf(true) }
+
+    var show by remember { mutableStateOf(false) }
+
+    LaunchedEffect(show) {
+        delay(1500)
+        show = false
+    }
 
     // Check if camera is moving or not
     LaunchedEffect(cameraPositionState) {
@@ -184,6 +191,8 @@ fun TimelineMapPreview(
             }
         }
     }
+
+    Log.i("MAP", mapType.toString())
 
     Scaffold(
         topBar = {
@@ -228,6 +237,7 @@ fun TimelineMapPreview(
                 .fillMaxSize()
                 .padding(padding)
         ) {
+
 
             if (!mapLoaded) {
                 ContainedLoadingIndicator(
@@ -280,7 +290,7 @@ fun TimelineMapPreview(
                        Only show when playback is active also in order to handle pause and resume case
                        we use lastPosition check so it does not disappear when user pauses playback
                      */
-                    if(playbackIndex != 0 || lastPosition != null) {
+                    if (playbackIndex != 0 || lastPosition != null) {
                         Marker(
                             state = movingMarkerState,
                             icon = movingIcon,
@@ -290,16 +300,15 @@ fun TimelineMapPreview(
                     }
 
                     // Show user path polyline during playback (animated path)
-                    if(animatedPath.isNotEmpty()) {
+                    if (animatedPath.isNotEmpty()) {
                         com.google.maps.android.compose.Polyline(
                             points = animatedPath.toList(),
                             color = androidx.compose.ui.graphics.Color(0xFF0A6780),
                             width = 10f
                         )
-                    }
-                    else {
+                    } else {
                         // Show user path polyline when playback is not active (show whole path)
-                        if(userPaths != null) {
+                        if (userPaths != null) {
                             com.google.maps.android.compose.Polyline(
                                 points = userPaths,
                                 color = androidx.compose.ui.graphics.Color(0xFF0A6780),
@@ -358,6 +367,36 @@ fun TimelineMapPreview(
                 }
             }
 
+            val mapMode = when(mapType) {
+                MapType.NORMAL -> "Normal"
+                MapType.SATELLITE -> "Satellite"
+                MapType.TERRAIN -> "Terrain"
+                MapType.HYBRID -> "Hybrid"
+                else -> "Map"
+            }
+
+            AnimatedVisibility(
+                show,
+                modifier = Modifier.align(Alignment.TopCenter)
+                    .padding(top = 16.dp)
+            ) {
+
+                Surface(
+                    shape = RoundedCornerShape(24.dp),
+                    color = MaterialTheme.colorScheme.surfaceContainerLow
+                ) {
+                    Text(
+                        text = "Switched to $mapMode mode",
+                        color = MaterialTheme.colorScheme.onSurface,
+                        fontSize = 16.sp,
+                        fontWeight = FontWeight.SemiBold,
+                        fontFamily = manrope,
+                        modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp)
+                    )
+                }
+            }
+
+
             /*
             User path playback logic
              */
@@ -366,7 +405,7 @@ fun TimelineMapPreview(
 
                 if (!isPlaying) return@LaunchedEffect
 
-                if(userPaths != null) {
+                if (userPaths != null) {
 
                     // Iterate through path segments
                     // playbackIndex stores current segment
@@ -574,6 +613,7 @@ fun TimelineMapPreview(
                                 MapType.TERRAIN -> MapType.HYBRID
                                 else -> MapType.NORMAL
                             }
+                            show = true
                         }
                     ) {
                         Icon(

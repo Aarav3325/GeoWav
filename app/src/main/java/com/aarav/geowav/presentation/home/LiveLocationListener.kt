@@ -120,6 +120,7 @@ fun ObserveLiveLocationCard(
     var isUserPanning by remember { mutableStateOf(false) }
 
 
+    var show by remember { mutableStateOf(false) }
 
 
     val locations by viewModel.locations.collectAsState()
@@ -534,7 +535,7 @@ fun ObserveLiveLocationCard(
                 }
             }
 
-            // ── Live Stay Point Markers ──
+            // Live Stay Point Markers
             val liveStays by viewModel.liveStayPoints.collectAsState()
 
             liveStays.forEach { (_, stayPoints) ->
@@ -585,6 +586,35 @@ fun ObserveLiveLocationCard(
                         navigateToObserve()
                     }
             )
+        }
+
+        val mapMode = when(mapType) {
+            MapType.NORMAL -> "Normal"
+            MapType.SATELLITE -> "Satellite"
+            MapType.TERRAIN -> "Terrain"
+            MapType.HYBRID -> "Hybrid"
+            else -> "Map"
+        }
+
+        AnimatedVisibility(
+            show,
+            modifier = Modifier.align(Alignment.TopCenter)
+                .padding(top = 16.dp)
+        ) {
+
+            Surface(
+                shape = RoundedCornerShape(24.dp),
+                color = MaterialTheme.colorScheme.surfaceContainerLow
+            ) {
+                Text(
+                    text = "Switched to $mapMode mode",
+                    color = MaterialTheme.colorScheme.onSurface,
+                    fontSize = 16.sp,
+                    fontWeight = FontWeight.SemiBold,
+                    fontFamily = manrope,
+                    modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp)
+                )
+            }
         }
 
         AnimatedVisibility (isFullScreen && showTray) {
@@ -690,6 +720,7 @@ fun ObserveLiveLocationCard(
                                 MapType.TERRAIN -> MapType.HYBRID
                                 else -> MapType.NORMAL
                             }
+                            show = true
                         }
                     ) {
                         Icon(
