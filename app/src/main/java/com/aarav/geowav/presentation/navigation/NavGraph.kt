@@ -430,7 +430,7 @@ fun AddTimelineScreen(
             },
             navigateToPreview = {
                 sessionId, name, userId ->
-                navController.navigate(NavRoute.TimelinePreview.createRoute(sessionId, name, userId))
+                navController.navigate(NavRoute.TimelinePreview.createRoute(sessionId, userId))
             },
             userId = userId,
             name= name
@@ -443,15 +443,10 @@ fun AddTimelinePreviewScreen(
     navGraphBuilder: NavGraphBuilder
 ) {
     navGraphBuilder.composable(
-        route = NavRoute.TimelinePreview.path.plus("/{sessionId}/{name}/{userId}"),
+        route = NavRoute.TimelinePreview.path.plus("/{sessionId}/{userId}"),
         arguments = listOf(
             navArgument(
                 "sessionId"
-            ) {
-                type = NavType.StringType
-            },
-            navArgument(
-                "name"
             ) {
                 type = NavType.StringType
             },
@@ -463,7 +458,6 @@ fun AddTimelinePreviewScreen(
         )
     ) {
         val sessionId = it.arguments?.getString("sessionId") ?: ""
-        val name = it.arguments?.getString("name") ?: ""
         val userId = it.arguments?.getString("userId") ?: ""
 
         TimelineMapPreview(
@@ -472,7 +466,6 @@ fun AddTimelinePreviewScreen(
                 navController.popBackStack()
             },
             sessionId,
-            name,
             userId
         )
     }
