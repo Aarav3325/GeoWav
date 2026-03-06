@@ -546,7 +546,7 @@ fun ObserveLiveLocationCard(
                     // Updates reactively as the StateFlow emits new snapshots
                     val mins = stay.durationMillis / 60_000
                     val durationText = if (mins < 60) "Stayed $mins min"
-                                       else "${mins / 60}h ${mins % 60}m"
+                    else "${mins / 60}h ${mins % 60}m"
 
                     Marker(
                         state = MarkerState(position = stayPos),

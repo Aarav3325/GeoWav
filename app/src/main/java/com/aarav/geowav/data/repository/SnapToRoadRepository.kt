@@ -17,8 +17,8 @@ class SnapToRoadRepository(
     ): Resource<List<SnappedPoint>> {
         return try {
 
-            Log.i("SNAP", "repo call" + path)
-
+            Log.i("SNAP", "repo call" + path.split(",").size)
+            
             val response = roadsApi.snapToRoads(
                 path = path,
                 interpolate = interpolate
@@ -30,7 +30,12 @@ class SnapToRoadRepository(
                 val body = response.body()
 
                 if (body != null) {
-                    Log.i("SNAP", "body" + body.snappedPoints.toString())
+                    val error = response.errorBody()?.string()
+
+                    Log.e("SNAP", "Snap API error: $error")
+
+                    Log.e("SNAP", "API ERROR: $error")
+                    Log.e("SNAP", "HTTP CODE: ${response.code()}")
                     Resource.Success(body.snappedPoints)
                 } else {
                     Resource.Error("Response body is null")
@@ -38,17 +43,18 @@ class SnapToRoadRepository(
 
             } else {
 
-                Log.i("SNAP", "body:" + response.errorBody().toString())
+                val error = response.errorBody()?.string()
+                Log.e("SNAP", "error body: $error")
+                Log.i("SNAP", "error body:" + response.errorBody().toString())
                 Resource.Error(response.message())
             }
 
-        }
-        catch (e: IOException) {
-            Resource.Error("Network error")
-        }
-        catch (e: Exception) {
-            Log.i("SNAP", "repo error:" + e.message)
-            Resource.Error("Server error" + e.message)
+        } catch (t: Throwable) {
+
+            Log.e("SNAP", "Throwable caught: ${t.message}")
+            t.printStackTrace()
+
+            Resource.Error(t.message ?: "Unknown error")
         }
     }
 }

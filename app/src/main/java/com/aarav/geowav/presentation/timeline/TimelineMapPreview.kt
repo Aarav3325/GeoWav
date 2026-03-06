@@ -379,29 +379,31 @@ fun TimelineMapPreview(
                             )
                         }
                     } else {
-                        session.stayPoints.forEach { stay ->
+                        if(!isPlaying && lastPosition == null) {
+                            session.stayPoints.forEach { stay ->
 
-                            val stayPos = LatLng(stay.lat, stay.lng)
+                                val stayPos = LatLng(stay.lat, stay.lng)
 
-                            val mins = stay.durationMillis / 60_000
-                            val durationText =
-                                if (mins < 60) "Stayed $mins min"
-                                else "${mins / 60}h ${mins % 60}m"
+                                val mins = stay.durationMillis / 60_000
+                                val durationText =
+                                    if (mins < 60) "Stayed $mins min"
+                                    else "${mins / 60}h ${mins % 60}m"
 
-                            val timeFormatter = remember {
-                                SimpleDateFormat("hh:mm a", Locale.getDefault())
+                                val timeFormatter = remember {
+                                    SimpleDateFormat("hh:mm a", Locale.getDefault())
+                                }
+
+                                val startStr = timeFormatter.format(Date(stay.startedAt))
+                                val endStr = timeFormatter.format(Date(stay.endedAt))
+
+                                Marker(
+                                    state = MarkerState(position = stayPos),
+                                    icon = stayIcon,
+                                    title = durationText,
+                                    snippet = "$startStr – $endStr",
+                                    anchor = Offset(0.5f, 0.5f)
+                                )
                             }
-
-                            val startStr = timeFormatter.format(Date(stay.startedAt))
-                            val endStr = timeFormatter.format(Date(stay.endedAt))
-
-                            Marker(
-                                state = MarkerState(position = stayPos),
-                                icon = stayIcon,
-                                title = durationText,
-                                snippet = "$startStr – $endStr",
-                                anchor = Offset(0.5f, 0.5f)
-                            )
                         }
                     }
 
