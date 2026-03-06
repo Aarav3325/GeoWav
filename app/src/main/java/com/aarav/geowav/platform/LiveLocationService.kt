@@ -210,15 +210,6 @@ class LiveLocationService : Service() {
             location.longitude,
             System.currentTimeMillis()
         )
-
-        val newStay = stayPointTracker.consumeQualifiedStay()
-
-        if (newStay != null) {
-            liveLocationSharingRepository.saveStayPoint(
-                userId,
-                newStay
-            )
-        }
     }
 
     @SuppressLint("MissingPermission")
@@ -305,11 +296,15 @@ class LiveLocationService : Service() {
 
 
             googleSignInClient.getUserId()?.let {
-                val newStay = stayPointTracker.consumeQualifiedStay()
+                val finalStays = stayPointTracker.finalizeAll()
 
-                if (newStay != null) {
-                    liveLocationSharingRepository.saveStayPoint(it, newStay)
+                finalStays.forEach { stay ->
+                    liveLocationSharingRepository.saveStayPoint(
+                        it,
+                        stay
+                    )
                 }
+
                 liveLocationSharingRepository.stopSharingLiveLocation(it)
             }
         }
