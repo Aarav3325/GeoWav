@@ -258,9 +258,11 @@ fun TimelineMapPreview(
         }
 
 
+
+
         Log.i(
             "SNAP",
-            "path: " + path.toString()
+            "path: " + finalSnappedPath.toString()
         )
 
         Box(

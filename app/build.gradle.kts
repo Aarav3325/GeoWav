@@ -1,3 +1,10 @@
+import java.util.Properties
+
+val localProperties = Properties()
+localProperties.load(rootProject.file("local.properties").inputStream())
+
+val mapsApiKey = localProperties.getProperty("GOOGLE_MAPS_API_KEY") ?: ""
+
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
@@ -8,8 +15,6 @@ plugins {
     id("com.google.gms.google-services")
     id("com.google.firebase.crashlytics")
 }
-
-val mapsApiKey: String = project.findProperty("GOOGLE_MAPS_API_KEY") as String? ?: ""
 
 android {
     namespace = "com.aarav.geowav"

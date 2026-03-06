@@ -17,7 +17,8 @@ class SnapToRoadRepository(
     ): Resource<List<SnappedPoint>> {
         return try {
 
-            Log.i("SNAP", "repo call")
+            Log.i("SNAP", "repo call" + path)
+
             val response = roadsApi.snapToRoads(
                 path = path,
                 interpolate = interpolate
@@ -37,7 +38,7 @@ class SnapToRoadRepository(
 
             } else {
 
-                Log.i("SNAP", "body" + response.errorBody())
+                Log.i("SNAP", "body:" + response.errorBody().toString())
                 Resource.Error(response.message())
             }
 

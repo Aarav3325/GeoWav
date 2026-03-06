@@ -213,6 +213,7 @@ class LiveLocationSharingRepositoryImpl
                 )
 
                 val address = geocoder.getFromLocation(lat, lng, 1)
+//                address?.firstOrNull()?.featureName
                 address?.firstOrNull()?.getAddressLine(0)
             } catch (e: Exception) {
                 Log.e("GEOCODER", "Error: ${e.message}")
