@@ -37,8 +37,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableIntStateOf
-import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -50,7 +48,6 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
@@ -69,14 +66,13 @@ import com.google.android.gms.maps.model.BitmapDescriptor
 import com.google.android.gms.maps.model.BitmapDescriptorFactory
 import com.google.android.gms.maps.model.LatLng
 import com.google.android.gms.maps.model.LatLngBounds
-import com.google.maps.android.SphericalUtil
 import com.google.maps.android.compose.CameraMoveStartedReason
 import com.google.maps.android.compose.GoogleMap
 import com.google.maps.android.compose.MapProperties
-import com.google.maps.android.compose.MapType
 import com.google.maps.android.compose.MapUiSettings
 import com.google.maps.android.compose.Marker
 import com.google.maps.android.compose.MarkerState
+import com.google.maps.android.compose.Polyline
 import com.google.maps.android.compose.rememberCameraPositionState
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -93,98 +89,61 @@ fun TimelineMapPreview(
     userId: String
 ) {
 
-    val currentSession by viewModel.currentSession.collectAsState()
-    val snappedPath by viewModel.snappedPath.collectAsState()
+    val uiState by viewModel.uiState.collectAsState()
 
-    // Current playback state
-    var isPlaying by remember {
-        mutableStateOf(false)
-    }
-
-    // Used to check if camera is moving
     var followUser by remember { mutableStateOf(true) }
-
-    // Index of current playback point
-    var playbackIndex by remember {
-        mutableIntStateOf(0)
-    }
-
-    // Animated path for playback polyline rendering
-    val animatedPath = remember {
-        androidx.compose.runtime.mutableStateListOf<LatLng>()
-    }
-
-    // Determines playback speed
-    var speed by remember {
-        mutableStateOf(1f)
-    }
-
-    // Stay points for current session
-    val revealedStayPoints = remember {
-        mutableStateListOf<StayPoint>()
-    }
-
-    // Marker state for moving marker
-    val movingMarkerState = remember { MarkerState() }
-
-    // Determine last marker position during playback in order to
-    // play and pause playback precisely
-    var lastPosition by remember { mutableStateOf<LatLng?>(null) }
-
-    // Used to change map type
-    var mapType by remember { mutableStateOf(MapType.NORMAL) }
-
-    // Check if map is loaded
     var mapLoaded by remember { mutableStateOf(false) }
+    var showTray by remember { mutableStateOf(true) }
+    var showMapModeToast by remember { mutableStateOf(false) }
+
+    val movingMarkerState = remember { MarkerState() }
+    val startMarkerState = remember { MarkerState() }
+    val endMarkerState = remember { MarkerState() }
+
+    val startIcon = remember(mapLoaded) {
+        if (mapLoaded) timelineMarkerIcon(Color(0xFF515B92), true) else null
+    }
+    val endIcon = remember(mapLoaded) {
+        if (mapLoaded) timelineMarkerIcon(Color(0xFF904A44), false) else null
+    }
+    val movingIcon = remember(mapLoaded) {
+        if (mapLoaded) movingPlaybackMarkerIcon() else null
+    }
+    val stayIcon = remember(mapLoaded) {
+        if (mapLoaded) replayStayPointMarkerIcon() else null
+    }
+
+    val currentSession = uiState.session
+    val snappedPath = uiState.snappedPath
 
     val startLatLng = remember(currentSession?.id) {
         currentSession?.let { LatLng(it.startLat, it.startLng) }
     }
 
-    val endLatLng = remember(currentSession?.id) {
-        currentSession?.let { LatLng(it.endLat, it.endLng) }
+    val userPaths = remember(currentSession) {
+        currentSession?.userPath?.map { it.toLatLng() }
     }
 
-    // Start and end marker states for current session
-    val startMarkerState = remember { MarkerState() }
-    val endMarkerState = remember { MarkerState() }
-
-    // Start and end marker icons
-    val startIcon = remember(mapLoaded) {
-        if (mapLoaded) timelineMarkerIcon(Color(0xFF515B92), true) else null
-    }
-
-    val endIcon = remember(mapLoaded) {
-        if (mapLoaded) timelineMarkerIcon(Color(0xFF904A44), false) else null
-    }
-
-    // Moving marker icon
-    val movingIcon = remember(mapLoaded) {
-        if (mapLoaded) movingPlaybackMarkerIcon() else null
-    }
-
-    // Stay point marker icon
-    val stayIcon = remember(mapLoaded) {
-        if (mapLoaded) replayStayPointMarkerIcon() else null
+    val finalSnappedPath = remember(snappedPath) {
+        snappedPath.map { LatLng(it.location.latitude, it.location.longitude) }
     }
 
     LaunchedEffect(sessionId) {
         viewModel.getSessionInfo(sessionId, userId)
     }
 
+    val pathString = userPaths?.joinToString("|") {
+        "${it.latitude},${it.longitude}"
+    }
+    LaunchedEffect(pathString) {
+        if (!pathString.isNullOrEmpty()) {
+            viewModel.getSnappedPath(pathString, true)
+        }
+    }
 
     val cameraPositionState = rememberCameraPositionState()
 
-    var showTray by remember { mutableStateOf(true) }
 
-    var show by remember { mutableStateOf(false) }
-
-    LaunchedEffect(show) {
-        delay(1500)
-        show = false
-    }
-
-    // Check if camera is moving or not
     LaunchedEffect(cameraPositionState) {
         snapshotFlow {
             cameraPositionState.isMoving to
@@ -196,8 +155,42 @@ fun TimelineMapPreview(
         }
     }
 
-    Log.i("MAP", mapType.toString())
+    LaunchedEffect(uiState.lastPosition) {
+        uiState.lastPosition?.let { pos ->
+            movingMarkerState.position = pos
+            if (followUser) {
+                cameraPositionState.move(CameraUpdateFactory.newLatLng(pos))
+            }
+        }
+    }
 
+    LaunchedEffect(uiState.isPlaying) {
+        if (uiState.isPlaying && finalSnappedPath.isNotEmpty()) {
+            viewModel.runPlayback(
+                path = finalSnappedPath,
+                stayPoints = currentSession?.stayPoints ?: emptyList()
+            )
+        }
+    }
+
+
+    LaunchedEffect(showMapModeToast) {
+        if (showMapModeToast) {
+            delay(1500)
+            showMapModeToast = false
+        }
+    }
+
+
+    LaunchedEffect(currentSession?.id) {
+        currentSession?.let {
+            startMarkerState.position = LatLng(it.startLat, it.startLng)
+            endMarkerState.position = LatLng(it.endLat, it.endLng)
+        }
+    }
+
+    val scope = rememberCoroutineScope()
+    
     Scaffold(
         topBar = {
             TopAppBar(
@@ -210,9 +203,7 @@ fun TimelineMapPreview(
                     )
                 },
                 navigationIcon = {
-                    IconButton(
-                        onClick = back
-                    ) {
+                    IconButton(onClick = back) {
                         Icon(
                             painter = painterResource(R.drawable.back),
                             contentDescription = "back",
@@ -225,45 +216,7 @@ fun TimelineMapPreview(
         contentWindowInsets = WindowInsets(0, 0, 0, 0)
     ) { padding ->
 
-        LaunchedEffect(currentSession?.id) {
-            currentSession?.let {
-                startMarkerState.position = LatLng(it.startLat, it.startLng)
-                endMarkerState.position = LatLng(it.endLat, it.endLng)
-            }
-        }
-
-        val userPaths = remember(currentSession) {
-            currentSession?.userPath?.map { it.toLatLng() }
-        }
-
-        val path = userPaths?.joinToString("|") {
-            "${it.latitude},${it.longitude}"
-        }
-
-        val context = LocalContext.current
-
-        LaunchedEffect(path) {
-            if (!path.isNullOrEmpty()) {
-                viewModel.getSnappedPath(
-                    path,
-                    true
-                )
-            }
-        }
-
-        val finalSnappedPath = remember(snappedPath) {
-            snappedPath.map {
-                LatLng(it.location.latitude, it.location.longitude)
-            }
-        }
-
-
-
-
-        Log.i(
-            "SNAP",
-            "path: " + finalSnappedPath.toString()
-        )
+        Log.i("SNAP", "path: $finalSnappedPath")
 
         Box(
             modifier = Modifier
@@ -271,20 +224,18 @@ fun TimelineMapPreview(
                 .padding(padding)
         ) {
 
-
             if (!mapLoaded) {
                 ContainedLoadingIndicator(
                     Modifier.align(Alignment.Center)
                 )
             }
-
             GoogleMap(
                 modifier = Modifier
                     .fillMaxSize()
                     .clip(RoundedCornerShape(16.dp)),
                 cameraPositionState = cameraPositionState,
                 properties = MapProperties(
-                    mapType = mapType
+                    mapType = uiState.mapType
                 ),
                 uiSettings = MapUiSettings(
                     zoomControlsEnabled = true,
@@ -299,31 +250,28 @@ fun TimelineMapPreview(
                     val start = LatLng(session.startLat, session.startLng)
                     val end = LatLng(session.endLat, session.endLng)
 
+
                     startIcon?.let {
                         Marker(
                             state = startMarkerState,
-                            icon = startIcon,
+                            icon = it,
                             title = "Start: ${session.startAddress}",
                             anchor = Offset(0.5f, 0.5f)
                         )
                     }
 
+
                     endIcon?.let {
                         Marker(
                             state = endMarkerState,
-                            icon = endIcon,
+                            icon = it,
                             title = "End: ${session.endAddress}",
                             anchor = Offset(0.5f, 0.5f)
                         )
                     }
 
-                    Log.i("SESSION", session.userPath.toString())
 
-                    /* Moving marker
-                       Only show when playback is active also in order to handle pause and resume case
-                       we use lastPosition check so it does not disappear when user pauses playback
-                     */
-                    if (playbackIndex != 0 || lastPosition != null) {
+                    if (uiState.playbackIndex != 0 || uiState.lastPosition != null) {
                         Marker(
                             state = movingMarkerState,
                             icon = movingIcon,
@@ -333,118 +281,71 @@ fun TimelineMapPreview(
                     }
 
 
-                    // Show user path polyline during playback (animated path)
-                    if (animatedPath.isNotEmpty()) {
-                        com.google.maps.android.compose.Polyline(
-                            points = animatedPath.toList(),
-                            color = androidx.compose.ui.graphics.Color(0xFF0A6780),
+                    if (uiState.animatedPath.isNotEmpty()) {
+                        Polyline(
+                            points = uiState.animatedPath,
+                            color = Color(0xFF0A6780),
                             width = 10f
                         )
                     } else {
-                        // Show user path polyline when playback is not active (show whole path)
-                        if (userPaths != null) {
-                            com.google.maps.android.compose.Polyline(
+
+                        if (finalSnappedPath.isNotEmpty()) {
+                            Polyline(
                                 points = finalSnappedPath,
-                                color = androidx.compose.ui.graphics.Color(0xFF0A6780),
+                                color = Color(0xFF0A6780),
                                 width = 10f
                             )
                         }
                     }
 
 
-                    // Replay Stay Point Markers
-                    if (revealedStayPoints.isNotEmpty()) {
-                        revealedStayPoints.forEach { stay ->
-
-                            val stayPos = LatLng(stay.lat, stay.lng)
-
-                            val mins = stay.durationMillis / 60_000
-                            val durationText =
-                                if (mins < 60) "Stayed $mins min"
-                                else "${mins / 60}h ${mins % 60}m"
-
-                            val timeFormatter = remember {
-                                SimpleDateFormat("hh:mm a", Locale.getDefault())
-                            }
-
-                            val startStr = timeFormatter.format(Date(stay.startedAt))
-                            val endStr = timeFormatter.format(Date(stay.endedAt))
-
-                            Marker(
-                                state = MarkerState(position = stayPos),
-                                icon = stayIcon,
-                                title = durationText,
-                                snippet = "$startStr – $endStr",
-                                anchor = Offset(0.5f, 0.5f)
-                            )
+                    if (uiState.revealedStayPoints.isNotEmpty()) {
+                        uiState.revealedStayPoints.forEach { stay ->
+                            StayPointMarker(stay, stayIcon)
                         }
                     } else {
-                        if(!isPlaying && lastPosition == null) {
+                        if (!uiState.isPlaying && uiState.lastPosition == null) {
                             session.stayPoints.forEach { stay ->
-
-                                val stayPos = LatLng(stay.lat, stay.lng)
-
-                                val mins = stay.durationMillis / 60_000
-                                val durationText =
-                                    if (mins < 60) "Stayed $mins min"
-                                    else "${mins / 60}h ${mins % 60}m"
-
-                                val timeFormatter = remember {
-                                    SimpleDateFormat("hh:mm a", Locale.getDefault())
-                                }
-
-                                val startStr = timeFormatter.format(Date(stay.startedAt))
-                                val endStr = timeFormatter.format(Date(stay.endedAt))
-
-                                Marker(
-                                    state = MarkerState(position = stayPos),
-                                    icon = stayIcon,
-                                    title = durationText,
-                                    snippet = "$startStr – $endStr",
-                                    anchor = Offset(0.5f, 0.5f)
-                                )
+                                StayPointMarker(stay, stayIcon)
                             }
                         }
                     }
 
-                    // Animate camera once
+
                     LaunchedEffect(mapLoaded) {
                         if (mapLoaded) {
-                            val boundsBuilder = com.google.android.gms.maps.model.LatLngBounds
-                                .builder()
+                            val boundsBuilder = LatLngBounds.builder()
                                 .include(start)
                                 .include(end)
 
-                            // Include stay points in camera bounds
                             session.stayPoints.forEach { stay ->
                                 boundsBuilder.include(LatLng(stay.lat, stay.lng))
                             }
 
-                            val bounds = boundsBuilder.build()
-
                             cameraPositionState.animate(
-                                CameraUpdateFactory.newLatLngBounds(bounds, 230)
+                                CameraUpdateFactory.newLatLngBounds(
+                                    boundsBuilder.build(), 230
+                                )
                             )
                         }
                     }
                 }
             }
 
-            val mapMode = when (mapType) {
-                MapType.NORMAL -> "Normal"
-                MapType.SATELLITE -> "Satellite"
-                MapType.TERRAIN -> "Terrain"
-                MapType.HYBRID -> "Hybrid"
+            val mapMode = when (uiState.mapType) {
+                com.google.maps.android.compose.MapType.NORMAL -> "Normal"
+                com.google.maps.android.compose.MapType.SATELLITE -> "Satellite"
+                com.google.maps.android.compose.MapType.TERRAIN -> "Terrain"
+                com.google.maps.android.compose.MapType.HYBRID -> "Hybrid"
                 else -> "Map"
             }
 
             AnimatedVisibility(
-                show,
+                showMapModeToast,
                 modifier = Modifier
                     .align(Alignment.TopCenter)
                     .padding(top = 16.dp)
             ) {
-
                 Surface(
                     shape = RoundedCornerShape(24.dp),
                     color = MaterialTheme.colorScheme.surfaceContainerLow
@@ -460,109 +361,6 @@ fun TimelineMapPreview(
                 }
             }
 
-
-            /*
-            User path playback logic
-             */
-
-            LaunchedEffect(isPlaying) {
-
-                if (!isPlaying) return@LaunchedEffect
-
-                if (userPaths != null) {
-
-                    // Iterate through path segments
-                    // playbackIndex stores current segment
-                    for (i in playbackIndex until finalSnappedPath.size - 1) {
-
-                        // Ensure the loop exits immediately if playback is paused
-                        if (!isPlaying) return@LaunchedEffect
-
-                        /*  Start is either last animated coordinate or segment start point
-                            This prevent the marker from jumping back to segment start point when playback resumes
-                         */
-                        val start = lastPosition ?: userPaths[i]
-                        val end = finalSnappedPath[i + 1] // end point
-
-                        val distance = com.google.maps.android.SphericalUtil
-                            .computeDistanceBetween(start, end)
-
-                        val baseSpeed = 35.0 // meters per second
-                        val duration = (distance / (baseSpeed * speed) * 1000).toLong()
-
-                        val steps = (duration / 16).toInt().coerceAtLeast(1)
-                        /*
-                         Instead of jumping directly between 2 points,
-                         we interpolate 20 intermediate points between them
-                         in order to create a smooth playback experience
-                         */
-
-                        // Calculate intermediate positions between start and end points
-                        for (step in 0..steps) {
-
-                            if (!isPlaying) return@LaunchedEffect
-
-                            val fraction = step / steps.toFloat()
-
-//                                val interpolated = SphericalUtil.interpolate(start, end, fraction.toDouble())
-
-                            // Compute the interpolated LatLng using the provided function
-                            val interpolated = SphericalUtil.interpolate(start, end, fraction.toDouble())
-
-                            // update user marker position
-                            movingMarkerState.position = interpolated
-
-                            // draw path gradually
-                            animatedPath.add(interpolated)
-
-                            /* Update last position for pause and resume
-                               so that camera continues from last interpolated coordinate
-                             */
-                            lastPosition = interpolated
-
-                            /*
-                                If follow is enabled then the map camera moves with playback marker
-                             */
-                            if (step % 2 == 0 && followUser) {
-                                cameraPositionState.move(
-                                    CameraUpdateFactory.newLatLng(interpolated)
-                                )
-                            }
-
-                            delay((duration/steps))
-                        }
-
-                        // update the current segment
-                        playbackIndex = i + 1
-
-                        // Detect stay points
-                        val currentPoint = finalSnappedPath[playbackIndex] // actual reached point
-
-                        currentSession?.stayPoints?.forEach { stay ->
-
-                            // Prevent duplicate stay point markers
-                            if (revealedStayPoints.contains(stay)) return@forEach
-
-                            val stayPos = LatLng(stay.lat, stay.lng)
-
-                            // Compute distance between current point and stay point
-                            val distance =
-                                com.google.maps.android.SphericalUtil
-                                    .computeDistanceBetween(currentPoint, stayPos)
-
-                            // Add stay point if distance is less than 30 meters
-                            if (distance < 30) {
-                                revealedStayPoints.add(stay)
-                            }
-                        }
-                    }
-                }
-
-                isPlaying = false
-            }
-
-            val scope = rememberCoroutineScope()
-
             HorizontalFloatingToolbar(
                 modifier = Modifier
                     .align(Alignment.BottomCenter)
@@ -570,43 +368,41 @@ fun TimelineMapPreview(
                     .zIndex(1f),
                 expanded = true,
                 leadingContent = {
-                    // Play/Pause button
+
+
                     IconButton(
                         colors = IconButtonDefaults.iconButtonColors(
-                            containerColor = if (isPlaying) MaterialTheme.colorScheme.tertiaryContainer else MaterialTheme.colorScheme.surfaceContainer,
-                            contentColor = if (isPlaying) MaterialTheme.colorScheme.onTertiaryContainer else MaterialTheme.colorScheme.onSurface
+                            containerColor = if (uiState.isPlaying)
+                                MaterialTheme.colorScheme.tertiaryContainer
+                            else MaterialTheme.colorScheme.surfaceContainer,
+                            contentColor = if (uiState.isPlaying)
+                                MaterialTheme.colorScheme.onTertiaryContainer
+                            else MaterialTheme.colorScheme.onSurface
                         ),
                         onClick = {
-                            if (isPlaying) {
-                                isPlaying = false
-                            } else {
-                                isPlaying = true
-                            }
+                            if (uiState.isPlaying)
+                                viewModel.pausePlayback()
+                            else
+                                viewModel.startPlayback()
                         }
                     ) {
                         Icon(
-                            painter = painterResource(if (isPlaying) R.drawable.pause else R.drawable.play),
+                            painter = painterResource(
+                                if (uiState.isPlaying) R.drawable.pause else R.drawable.play
+                            ),
                             contentDescription = "play/pause",
                             modifier = Modifier.size(24.dp)
                         )
                     }
 
-                    // Restart button
+
                     IconButton(
                         colors = IconButtonDefaults.iconButtonColors(
                             containerColor = MaterialTheme.colorScheme.surfaceContainer,
                             contentColor = MaterialTheme.colorScheme.onSurface
                         ),
                         onClick = {
-                            isPlaying = false
-                            lastPosition = null
-                            playbackIndex = 0
-                            animatedPath.clear()
-                            revealedStayPoints.clear()
-                            startLatLng?.let {
-                                movingMarkerState.position = startLatLng
-                            }
-
+                            startLatLng?.let { viewModel.restartPlayback(it) }
                         }
                     ) {
                         Icon(
@@ -617,16 +413,18 @@ fun TimelineMapPreview(
                     }
                 },
                 content = {
-                    // Tray toggle
+
+
                     IconButton(
                         colors = IconButtonDefaults.iconButtonColors(
-                            containerColor = if (showTray) MaterialTheme.colorScheme.tertiaryContainer else MaterialTheme.colorScheme.surfaceContainer,
-                            contentColor = if (showTray) MaterialTheme.colorScheme.onTertiaryContainer else MaterialTheme.colorScheme.onSurface
+                            containerColor = if (showTray)
+                                MaterialTheme.colorScheme.tertiaryContainer
+                            else MaterialTheme.colorScheme.surfaceContainer,
+                            contentColor = if (showTray)
+                                MaterialTheme.colorScheme.onTertiaryContainer
+                            else MaterialTheme.colorScheme.onSurface
                         ),
-                        onClick = {
-                            if (showTray) showTray = false
-                            else showTray = true
-                        }
+                        onClick = { showTray = !showTray }
                     ) {
                         Icon(
                             painter = painterResource(R.drawable.info),
@@ -634,24 +432,24 @@ fun TimelineMapPreview(
                             modifier = Modifier.size(24.dp)
                         )
                     }
-                    // Fit All markers
+
+
                     IconButton(
                         onClick = {
-                            currentSession?.let {
+                            currentSession?.let { session ->
                                 scope.launch {
                                     val boundsBuilder = LatLngBounds.builder()
-                                        .include(LatLng(it.startLat, it.startLng))
-                                        .include(LatLng(it.endLat, it.endLng))
+                                        .include(LatLng(session.startLat, session.startLng))
+                                        .include(LatLng(session.endLat, session.endLng))
 
-                                    it.stayPoints.forEach {
+                                    session.stayPoints.forEach {
                                         boundsBuilder.include(LatLng(it.lat, it.lng))
                                     }
 
-
-                                    val bounds = boundsBuilder.build()
-
                                     cameraPositionState.animate(
-                                        CameraUpdateFactory.newLatLngBounds(bounds, 230)
+                                        CameraUpdateFactory.newLatLngBounds(
+                                            boundsBuilder.build(), 230
+                                        )
                                     )
 
                                     delay(1000)
@@ -670,36 +468,24 @@ fun TimelineMapPreview(
                             modifier = Modifier.size(24.dp)
                         )
                     }
-                    // Map type toggle
+
+
                     IconButton(
                         onClick = {
-                            mapType = when (mapType) {
-                                MapType.NORMAL -> MapType.SATELLITE
-                                MapType.SATELLITE -> MapType.TERRAIN
-                                MapType.TERRAIN -> MapType.HYBRID
-                                else -> MapType.NORMAL
-                            }
-                            show = true
+                            viewModel.toggleMapType()
+                            showMapModeToast = true
                         }
                     ) {
                         Icon(
                             painter = painterResource(R.drawable.map_trifold),
-                            contentDescription = when (mapType) {
-                                MapType.NORMAL -> "Normal"
-                                MapType.SATELLITE -> "Satellite"
-                                MapType.TERRAIN -> "Terrain"
-                                MapType.HYBRID -> "Hybrid"
-                                else -> "Map"
-                            },
+                            contentDescription = mapMode,
                             modifier = Modifier.size(22.dp)
                         )
                     }
                 }
             )
 
-            // Tray
             currentSession?.let { session ->
-
                 AnimatedVisibility(
                     visible = showTray,
                     modifier = Modifier.align(Alignment.TopCenter)
@@ -710,33 +496,36 @@ fun TimelineMapPreview(
                         Modifier.padding(bottom = 32.dp)
                     )
                 }
-
-//                AnimatedVisibility(
-//                    visible = !showTray,
-//                    modifier = Modifier
-//                        .align(Alignment.BottomStart)
-//                        .padding(vertical = 32.dp, horizontal = 16.dp)
-//                ) {
-//                    Surface(
-//                        shape = CircleShape,
-//                        color = MaterialTheme.colorScheme.primaryContainer,
-//                        modifier = Modifier
-//                            .size(62.dp)
-//                            .clickable { showTray = true }
-//                    ) {
-//                        Image(
-//                            painter = painterResource(R.drawable.info),
-//                            contentDescription = null,
-//                            colorFilter = ColorFilter.tint(
-//                                MaterialTheme.colorScheme.onPrimaryContainer
-//                            ),
-//                            modifier = Modifier.padding(12.dp)
-//                        )
-//                    }
-//                }
             }
         }
     }
+}
+
+
+@Composable
+private fun StayPointMarker(stay: StayPoint, icon: BitmapDescriptor?) {
+
+    val stayPos = LatLng(stay.lat, stay.lng)
+
+    val mins = stay.durationMillis / 60_000
+    val durationText =
+        if (mins < 60) "Stayed $mins min"
+        else "${mins / 60}h ${mins % 60}m"
+
+    val timeFormatter = remember {
+        SimpleDateFormat("hh:mm a", Locale.getDefault())
+    }
+
+    val startStr = timeFormatter.format(Date(stay.startedAt))
+    val endStr = timeFormatter.format(Date(stay.endedAt))
+
+    Marker(
+        state = MarkerState(position = stayPos),
+        icon = icon,
+        title = durationText,
+        snippet = "$startStr – $endStr",
+        anchor = Offset(0.5f, 0.5f)
+    )
 }
 
 
@@ -834,8 +623,6 @@ fun SessionPreviewTray(
                     text = session.startAddress,
                     style = MaterialTheme.typography.bodyMedium,
                     fontFamily = manrope,
-//                    maxLines = 2,
-//                    overflow = TextOverflow.Ellipsis
                 )
             }
 
@@ -853,12 +640,10 @@ fun SessionPreviewTray(
                     text = session.endAddress,
                     style = MaterialTheme.typography.bodyMedium,
                     fontFamily = manrope,
-//                    maxLines = 2,
-//                    overflow = TextOverflow.Ellipsis
                 )
             }
 
-            // Stay Points summary
+
             if (session.stayPoints.isNotEmpty()) {
                 HorizontalDivider(
                     color = MaterialTheme.colorScheme.outline
@@ -876,7 +661,7 @@ fun SessionPreviewTray(
                         text = "$stayCount Stay Point${if (stayCount > 1) "s" else ""}",
                         style = MaterialTheme.typography.labelMedium,
                         fontFamily = manrope,
-                        color = androidx.compose.ui.graphics.Color(0xFFFF9800)
+                        color = Color(0xFFFF9800)
                     )
 
                     Text(
@@ -900,17 +685,17 @@ fun createTimelineMarkerBitmap(
     val canvas = Canvas(bitmap)
     val paint = Paint(Paint.ANTI_ALIAS_FLAG)
 
-    // Outer soft glow
+
     paint.color = color
     paint.alpha = 60
     canvas.drawCircle(size / 2f, size / 2f, size / 2.2f, paint)
 
-    // Main circle
+
     paint.alpha = 255
     paint.color = color
     canvas.drawCircle(size / 2f, size / 2f, size / 3f, paint)
 
-    // White border
+
     paint.style = Paint.Style.STROKE
     paint.strokeWidth = 6f
     paint.color = android.graphics.Color.WHITE
@@ -920,7 +705,7 @@ fun createTimelineMarkerBitmap(
 }
 
 fun timelineMarkerIcon(
-    color: androidx.compose.ui.graphics.Color,
+    color: Color,
     isStart: Boolean
 ): BitmapDescriptor {
     return BitmapDescriptorFactory.fromBitmap(
@@ -931,32 +716,29 @@ fun timelineMarkerIcon(
     )
 }
 
-/**
- * Orange marker icon for stay points shown in session replay.
- */
 fun replayStayPointMarkerIcon(): BitmapDescriptor {
     val size = 72
     val bitmap = createBitmap(size, size)
     val canvas = Canvas(bitmap)
     val paint = Paint(Paint.ANTI_ALIAS_FLAG)
 
-    // Outer glow
+
     paint.color = android.graphics.Color.parseColor("#FF9800")
     paint.alpha = 60
     canvas.drawCircle(size / 2f, size / 2f, size / 2.2f, paint)
 
-    // Main circle
+
     paint.alpha = 255
     paint.color = android.graphics.Color.parseColor("#FF9800")
     canvas.drawCircle(size / 2f, size / 2f, size / 3f, paint)
 
-    // White border
+
     paint.style = Paint.Style.STROKE
     paint.strokeWidth = 5f
     paint.color = android.graphics.Color.WHITE
     canvas.drawCircle(size / 2f, size / 2f, size / 3f, paint)
 
-    // Inner dot
+
     paint.style = Paint.Style.FILL
     paint.color = android.graphics.Color.WHITE
     canvas.drawCircle(size / 2f, size / 2f, size / 8f, paint)
@@ -1009,17 +791,17 @@ fun movingPlaybackMarkerIcon(): BitmapDescriptor {
     val canvas = Canvas(bitmap)
     val paint = Paint(Paint.ANTI_ALIAS_FLAG)
 
-    // outer glow
+
     paint.color = android.graphics.Color.parseColor("#2196F3")
     paint.alpha = 80
     canvas.drawCircle(size / 2f, size / 2f, size / 2.1f, paint)
 
-    // main circle
+
     paint.alpha = 255
     paint.color = android.graphics.Color.parseColor("#2196F3")
     canvas.drawCircle(size / 2f, size / 2f, size / 3f, paint)
 
-    // white border
+
     paint.style = Paint.Style.STROKE
     paint.strokeWidth = 6f
     paint.color = android.graphics.Color.WHITE
