@@ -25,12 +25,10 @@ import javax.inject.Inject
 
 @HiltViewModel
 class TimelineMapPreviewVM @Inject constructor(
-    private val sessionHistoryRepository: SessionHistoryRepository
+    private val sessionHistoryRepository: SessionHistoryRepository,
+    private val snapToRoadRepository: SnapToRoadRepository
 ) : ViewModel() {
 
-    private val snapToRoadRepository = SnapToRoadRepository(
-        GoogleRoadsRetrofitInstance.getRoadsApi()
-    )
 
     private val _uiState = MutableStateFlow(TimelinePreviewUiState())
     val uiState: StateFlow<TimelinePreviewUiState> = _uiState.asStateFlow()
@@ -73,161 +71,142 @@ class TimelineMapPreviewVM @Inject constructor(
     }
 
 
-    fun getSnappedPath(path: List<LatLng>, interpolate: Boolean) {
+    fun getSnappedPath(
+        path: List<LatLng>,
+        interpolate: Boolean
+    ) {
         Log.i("SNAP", "snap res: called")
         viewModelScope.launch {
 
-            val snapped = mutableListOf<SnappedPoint>()
+            val sessionId = _uiState.value.session?.id ?: return@launch
 
-            val chunks = path.chunkForSnap()
-            Log.i("CHUNK", "chunk" + chunks.size)
+            when (val result =
+                snapToRoadRepository.snapToRoad(sessionId, path, interpolate)) {
 
-            chunks.forEachIndexed { index, chunk ->
+                is Resource.Success -> {
 
-
-                val path = chunk.joinToString("|") {
-                    "${it.latitude},${it.longitude}"
+                    _uiState.update {
+                        it.copy(snappedPath = result.data ?: emptyList())
+                    }
                 }
 
-                Log.i("CHUNK", "iteration" + path.split(",").size)
-
-
-                when (val result = snapToRoadRepository.snapToRoad(path, true)) {
-
-                    is Resource.Success -> {
-
-                        val data = result.data ?: emptyList()
-
-                        if (index == 0) {
-                            snapped.addAll(data)
-                        } else {
-                            // skip first point (overlap)
-                            snapped.addAll(data.drop(1))
-                        }
-                    }
-
-                    is Resource.Error -> {
-                        Log.e("SNAP", "chunk failed: ${result.message}")
-                    }
-
-                    else -> Unit
+                is Resource.Error -> {
+                    Log.e("SNAP", "error: ${result.message}")
                 }
-            }
 
-            _uiState.update {
-                it.copy(snappedPath = snapped)
+                else -> Unit
             }
         }
     }
 
 
-    fun startPlayback() {
-        _uiState.update { it.copy(isPlaying = true) }
+fun startPlayback() {
+    _uiState.update { it.copy(isPlaying = true) }
+}
+
+fun pausePlayback() {
+    _uiState.update { it.copy(isPlaying = false) }
+    playbackJob?.cancel()
+    playbackJob = null
+}
+
+fun restartPlayback(startLatLng: LatLng) {
+    playbackJob?.cancel()
+    playbackJob = null
+    _uiState.update {
+        it.copy(
+            isPlaying = false,
+            playbackIndex = 0,
+            animatedPath = emptyList(),
+            revealedStayPoints = emptyList(),
+            lastPosition = null
+        )
     }
-
-    fun pausePlayback() {
-        _uiState.update { it.copy(isPlaying = false) }
-        playbackJob?.cancel()
-        playbackJob = null
-    }
-
-    fun restartPlayback(startLatLng: LatLng) {
-        playbackJob?.cancel()
-        playbackJob = null
-        _uiState.update {
-            it.copy(
-                isPlaying = false,
-                playbackIndex = 0,
-                animatedPath = emptyList(),
-                revealedStayPoints = emptyList(),
-                lastPosition = null
-            )
-        }
-    }
+}
 
 
-    fun runPlayback(path: List<LatLng>, stayPoints: List<StayPoint>) {
-        playbackJob?.cancel()
+fun runPlayback(path: List<LatLng>, stayPoints: List<StayPoint>) {
+    playbackJob?.cancel()
 
-        playbackJob = viewModelScope.launch {
+    playbackJob = viewModelScope.launch {
 
-            val state = _uiState.value
+        val state = _uiState.value
 
-            for (i in state.playbackIndex until path.size - 1) {
+        for (i in state.playbackIndex until path.size - 1) {
+
+            if (!_uiState.value.isPlaying) return@launch
+
+            val start = _uiState.value.lastPosition ?: path[i]
+            val end = path[i + 1]
+
+            val distance = SphericalUtil.computeDistanceBetween(start, end)
+
+            val currentSpeed = _uiState.value.speed
+            val duration = (distance / (35.0 * currentSpeed) * 1000).toLong()
+
+            val steps = (duration / 16).toInt().coerceAtLeast(1)
+
+            for (step in 0..steps) {
 
                 if (!_uiState.value.isPlaying) return@launch
 
-                val start = _uiState.value.lastPosition ?: path[i]
-                val end = path[i + 1]
+                val fraction = step / steps.toFloat()
 
-                val distance = SphericalUtil.computeDistanceBetween(start, end)
+                val interpolated =
+                    SphericalUtil.interpolate(start, end, fraction.toDouble())
 
-                val currentSpeed = _uiState.value.speed
-                val duration = (distance / (35.0 * currentSpeed) * 1000).toLong()
+                _uiState.update { current ->
+                    current.copy(
+                        animatedPath = current.animatedPath + interpolated,
+                        lastPosition = interpolated
+                    )
+                }
 
-                val steps = (duration / 16).toInt().coerceAtLeast(1)
+                delay(duration / steps)
+            }
 
-                for (step in 0..steps) {
+            _uiState.update {
+                it.copy(playbackIndex = i + 1)
+            }
 
-                    if (!_uiState.value.isPlaying) return@launch
+            val currentPoint = path[_uiState.value.playbackIndex]
 
-                    val fraction = step / steps.toFloat()
+            stayPoints.forEach { stay ->
+                if (_uiState.value.revealedStayPoints.contains(stay)) return@forEach
 
-                    val interpolated =
-                        SphericalUtil.interpolate(start, end, fraction.toDouble())
+                val stayPos = LatLng(stay.lat, stay.lng)
+                val dist = SphericalUtil.computeDistanceBetween(currentPoint, stayPos)
 
+                if (dist < 30) {
                     _uiState.update { current ->
                         current.copy(
-                            animatedPath = current.animatedPath + interpolated,
-                            lastPosition = interpolated
+                            revealedStayPoints = current.revealedStayPoints + stay
                         )
-                    }
-
-                    delay(duration / steps)
-                }
-
-                _uiState.update {
-                    it.copy(playbackIndex = i + 1)
-                }
-
-                val currentPoint = path[_uiState.value.playbackIndex]
-
-                stayPoints.forEach { stay ->
-                    if (_uiState.value.revealedStayPoints.contains(stay)) return@forEach
-
-                    val stayPos = LatLng(stay.lat, stay.lng)
-                    val dist = SphericalUtil.computeDistanceBetween(currentPoint, stayPos)
-
-                    if (dist < 30) {
-                        _uiState.update { current ->
-                            current.copy(
-                                revealedStayPoints = current.revealedStayPoints + stay
-                            )
-                        }
                     }
                 }
             }
-
-            _uiState.update { it.copy(isPlaying = false) }
         }
+
+        _uiState.update { it.copy(isPlaying = false) }
     }
+}
 
 
-    fun toggleMapType() {
-        val next = when (_uiState.value.mapType) {
-            MapType.NORMAL -> MapType.SATELLITE
-            MapType.SATELLITE -> MapType.TERRAIN
-            MapType.TERRAIN -> MapType.HYBRID
-            else -> MapType.NORMAL
-        }
-        _uiState.update { it.copy(mapType = next) }
+fun toggleMapType() {
+    val next = when (_uiState.value.mapType) {
+        MapType.NORMAL -> MapType.SATELLITE
+        MapType.SATELLITE -> MapType.TERRAIN
+        MapType.TERRAIN -> MapType.HYBRID
+        else -> MapType.NORMAL
     }
+    _uiState.update { it.copy(mapType = next) }
+}
 
-    override fun onCleared() {
-        super.onCleared()
-        Log.i("PLAYBACK", "onCleared called ${_uiState.value.session}")
-        playbackJob?.cancel()
-    }
+override fun onCleared() {
+    super.onCleared()
+    Log.i("PLAYBACK", "onCleared called ${_uiState.value.session}")
+    playbackJob?.cancel()
+}
 }
 
 data class TimelinePreviewUiState(

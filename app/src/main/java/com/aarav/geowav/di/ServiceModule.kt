@@ -20,7 +20,16 @@ import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
+import javax.inject.Qualifier
 import javax.inject.Singleton
+
+@Qualifier
+@Retention(AnnotationRetention.BINARY)
+annotation class WhatsAppRetrofit
+
+@Qualifier
+@Retention(AnnotationRetention.BINARY)
+annotation class RoadsRetrofit
 
 @Module
 @InstallIn(SingletonComponent::class)
@@ -65,6 +74,7 @@ object ServiceModule {
 
     private const val BASE_URL = "https://graph.facebook.com/v22.0/890118200844088/"
 
+    @WhatsAppRetrofit
     @Provides
     @Singleton
     fun provideRetrofit(): Retrofit {
@@ -72,9 +82,25 @@ object ServiceModule {
             .addConverterFactory(GsonConverterFactory.create()).build()
     }
 
+    @RoadsRetrofit
     @Provides
     @Singleton
-    fun provideWhatsAppApi(retrofit: Retrofit): MessageAPI {
+    fun provideRoadsRetrofit(): Retrofit {
+        return Retrofit.Builder()
+            .baseUrl("https://roads.googleapis.com/v1/")
+            .addConverterFactory(GsonConverterFactory.create())
+            .build()
+    }
+
+    @Provides
+    @Singleton
+    fun provideRoadsApi(@RoadsRetrofit retrofit: Retrofit): RoadsApi {
+        return retrofit.create(RoadsApi::class.java)
+    }
+
+    @Provides
+    @Singleton
+    fun provideWhatsAppApi(@WhatsAppRetrofit retrofit: Retrofit): MessageAPI {
         return retrofit.create(MessageAPI::class.java)
     }
 

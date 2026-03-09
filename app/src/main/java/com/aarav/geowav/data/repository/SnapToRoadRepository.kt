@@ -3,52 +3,74 @@ package com.aarav.geowav.data.repository
 import android.util.Log
 import com.aarav.geowav.core.utils.Resource
 import com.aarav.geowav.data.datasource.retrofit.RoadsApi
-import com.aarav.geowav.data.model.SnapToRoadResponse
 import com.aarav.geowav.data.model.SnappedPoint
 import com.google.android.gms.maps.model.LatLng
-import com.google.gson.Gson
-import java.io.IOException
+import javax.inject.Inject
+import javax.inject.Singleton
 
-class SnapToRoadRepository(
+@Singleton
+class SnapToRoadRepository @Inject constructor(
     val roadsApi: RoadsApi
 ) {
+
+
+    private val sessionCache = mutableMapOf<String, List<SnappedPoint>>()
+
     suspend fun snapToRoad(
-        path: String,
+        sessionId: String,
+        path: List<LatLng>,
         interpolate: Boolean
     ): Resource<List<SnappedPoint>> {
         return try {
 
-            Log.i("SNAP", "repo call" + path.split(",").size)
-            
-            val response = roadsApi.snapToRoads(
-                path = path,
-                interpolate = interpolate
-            )
+            sessionCache[sessionId]?.let {
+                Log.i("SNAP", "cache hit")
+                return Resource.Success(it)
+            }
 
-            if (response.isSuccessful) {
-                Log.i("SNAP", "repo call success")
+            val snapped = mutableListOf<SnappedPoint>()
 
-                val body = response.body()
+            val chunks = path.chunked(100)
 
-                if (body != null) {
+            Log.i("SNAP", "repo call" + chunks.size)
+
+            for ((index, chunk) in chunks.withIndex()) {
+
+                val pathString = chunk.joinToString("|") {
+                    "${it.latitude},${it.longitude}"
+                }
+
+                val response = roadsApi.snapToRoads(
+                    path = pathString,
+                    interpolate = interpolate
+                )
+
+                if (!response.isSuccessful) {
+
                     val error = response.errorBody()?.string()
 
                     Log.e("SNAP", "Snap API error: $error")
 
                     Log.e("SNAP", "API ERROR: $error")
                     Log.e("SNAP", "HTTP CODE: ${response.code()}")
-                    Resource.Success(body.snappedPoints)
-                } else {
-                    Resource.Error("Response body is null")
+
+                    return Resource.Error(response.message())
                 }
 
-            } else {
 
-                val error = response.errorBody()?.string()
-                Log.e("SNAP", "error body: $error")
-                Log.i("SNAP", "error body:" + response.errorBody().toString())
-                Resource.Error(response.message())
+                val data = response.body()?.snappedPoints ?: emptyList()
+
+                snapped.addAll(
+                    if (index == 0) data
+                    else data.drop(1) // remove overlap
+                )
             }
+
+
+            sessionCache[sessionId] = snapped
+            Log.i("SNAP", "cached" + sessionCache.size)
+
+            Resource.Success(snapped)
 
         } catch (t: Throwable) {
 
