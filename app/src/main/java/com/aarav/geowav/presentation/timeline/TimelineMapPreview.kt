@@ -91,14 +91,28 @@ fun TimelineMapPreview(
 
     val uiState by viewModel.uiState.collectAsState()
 
-    var followUser by remember { mutableStateOf(true) }
-    var mapLoaded by remember { mutableStateOf(false) }
-    var showTray by remember { mutableStateOf(true) }
-    var showMapModeToast by remember { mutableStateOf(false) }
+    var followUser by remember {
+        mutableStateOf(true)
+    }
+    var mapLoaded by remember {
+        mutableStateOf(false)
+    }
+    var showTray by remember {
+        mutableStateOf(true)
+    }
+    var showMapModeToast by remember {
+        mutableStateOf(false)
+    }
 
-    val movingMarkerState = remember { MarkerState() }
-    val startMarkerState = remember { MarkerState() }
-    val endMarkerState = remember { MarkerState() }
+    val movingMarkerState = remember {
+        MarkerState()
+    }
+    val startMarkerState = remember {
+        MarkerState()
+    }
+    val endMarkerState = remember {
+        MarkerState()
+    }
 
     val startIcon = remember(mapLoaded) {
         if (mapLoaded) timelineMarkerIcon(Color(0xFF515B92), true) else null
@@ -135,6 +149,7 @@ fun TimelineMapPreview(
     val pathString = userPaths?.joinToString("|") {
         "${it.latitude},${it.longitude}"
     }
+
     LaunchedEffect(pathString) {
         if (!pathString.isNullOrEmpty()) {
             viewModel.getSnappedPath(pathString, true)
@@ -159,7 +174,7 @@ fun TimelineMapPreview(
         uiState.lastPosition?.let { pos ->
             movingMarkerState.position = pos
             if (followUser) {
-                cameraPositionState.move(CameraUpdateFactory.newLatLng(pos))
+                cameraPositionState.animate(CameraUpdateFactory.newLatLng(pos))
             }
         }
     }
@@ -190,7 +205,7 @@ fun TimelineMapPreview(
     }
 
     val scope = rememberCoroutineScope()
-    
+
     Scaffold(
         topBar = {
             TopAppBar(

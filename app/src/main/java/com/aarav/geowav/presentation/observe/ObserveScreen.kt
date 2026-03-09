@@ -104,6 +104,7 @@ fun ObserveScreen(
             shouldShowDialog = showStopDialog,
             onDismissRequest = {
                 showStopDialog = false
+                back()
             },
             icon = R.drawable.new_logo,
             title = "Sharing Inactive",

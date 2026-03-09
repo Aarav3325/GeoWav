@@ -71,6 +71,8 @@ class HomeScreenVM @Inject constructor(
     private val _userPaths = MutableStateFlow<Map<String, UserPath>>(emptyMap())
     val userPaths = _userPaths.asStateFlow()
 
+    private var pathJob: Job? = null
+
 
     // The UI (LiveLocationListener) observes this to draw orange stay markers on the map
     // e.g. {"user_abc" -> [StayPoint(coffee shop), StayPoint(park)]}
@@ -300,6 +302,75 @@ class HomeScreenVM @Inject constructor(
         getUserProfile()
     }
 
+    fun drawAnimatedPath(
+        path: List<LatLng>
+    ) {
+
+        if (path.size <= _uiState.value.playbackIndex + 1) return
+
+        pathJob?.cancel()
+
+        pathJob = viewModelScope.launch {
+            for(i in _uiState.value.playbackIndex until path.size - 1) {
+
+                val start = _uiState.value.lastPosition ?: path[i]
+                val end = path[i + 1]
+
+                val distance = SphericalUtil.computeDistanceBetween(start, end)
+                val speed = _uiState.value.speed
+                val duration = (distance / (35.0 * speed) * 1000).toLong()
+
+                val steps = (duration / 16).toInt().coerceAtLeast(1)
+
+                for(step in 0..steps) {
+                    val fraction = step / steps.toFloat()
+                    val interpolated = SphericalUtil.interpolate(start, end, fraction.toDouble())
+
+                    _uiState.update { current ->
+                        current.copy(
+                            animatedPath = current.animatedPath + interpolated,
+                            lastPosition = interpolated,
+                            playbackIndex = i
+                        )
+                    }
+
+                    delay(duration / steps)
+                }
+
+
+                _uiState.update {
+                    it.copy(playbackIndex = i + 1)
+                }
+            }
+        }
+    }
+
+    fun updateLastLocation(
+        location: LatLng
+    ) {
+        _uiState.update {
+            it.copy(
+                lastPosition = location
+            )
+        }
+    }
+
+    fun setPlaybackIndex(index: Int) {
+        _uiState.update {
+            it.copy(playbackIndex = index)
+        }
+    }
+
+    fun resetAnimatedPath() {
+        _uiState.update {
+            it.copy(
+                animatedPath = emptyList(),
+                playbackIndex = 0,
+                lastPosition = null
+            )
+        }
+    }
+
 
     fun getUserProfile() {
         viewModelScope.launch {
@@ -310,6 +381,11 @@ class HomeScreenVM @Inject constructor(
                 )
             }
         }
+    }
+
+    override fun onCleared() {
+        super.onCleared()
+        pathJob?.cancel()
     }
 
     fun signOut() {
@@ -333,6 +409,10 @@ data class HomeScreenUiState(
     val lovedOnes: List<CircleMember> = emptyList(),
     val currentViewers: List<User> = emptyList(),
     val currentSessionParticipants: List<String> = emptyList(),
+    val animatedPath: List<LatLng> = emptyList(),
+    val lastPosition: LatLng? = null,
+    val playbackIndex: Int = 0,
+    val speed: Float = 1f,
     val alertsList: List<GeoAlert> = emptyList(),
     val userAvatar: String? = null,
     val username: String? = null,

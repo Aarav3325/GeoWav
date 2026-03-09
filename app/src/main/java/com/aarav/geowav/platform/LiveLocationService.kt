@@ -62,6 +62,8 @@ class LiveLocationService : Service() {
 
     private var hasStartedSharing = false
 
+    private val pushedStays = mutableSetOf<String>()
+
     private val stayPointTracker = StayPointTracker()
 
     private fun setSharingState(state: ServiceState) {
@@ -210,6 +212,22 @@ class LiveLocationService : Service() {
             location.longitude,
             System.currentTimeMillis()
         )
+
+        val stay = stayPointTracker.consumeQualifiedStay()
+
+        stay?.let {
+
+            val key = "${it.lat}_${it.lng}_${it.startedAt}"
+
+            if (!pushedStays.contains(key)) {
+                pushedStays.add(key)
+
+                liveLocationSharingRepository.saveStayPoint(
+                    userId,
+                    it
+                )
+            }
+        }
     }
 
     @SuppressLint("MissingPermission")
@@ -299,10 +317,18 @@ class LiveLocationService : Service() {
                 val finalStays = stayPointTracker.finalizeAll()
 
                 finalStays.forEach { stay ->
-                    liveLocationSharingRepository.saveStayPoint(
-                        it,
-                        stay
-                    )
+
+                    val key = "${stay.lat}_${stay.lng}_${stay.startedAt}"
+
+                    if (!pushedStays.contains(key)) {
+
+                        pushedStays.add(key)
+
+                        liveLocationSharingRepository.saveStayPoint(
+                            it,
+                            stay
+                        )
+                    }
                 }
 
                 liveLocationSharingRepository.stopSharingLiveLocation(it)

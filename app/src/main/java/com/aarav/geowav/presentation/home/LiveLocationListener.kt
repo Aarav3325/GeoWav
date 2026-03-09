@@ -20,10 +20,10 @@ import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -32,7 +32,6 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.Divider
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.FilledIconButton
@@ -54,15 +53,13 @@ import androidx.compose.runtime.State
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.offset
-import androidx.compose.ui.zIndex
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
@@ -70,18 +67,20 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.zIndex
 import com.aarav.geowav.R
 import com.aarav.geowav.core.utils.ViewerLocationState
 import com.aarav.geowav.core.utils.formatTime
 import com.aarav.geowav.data.model.CircleMember
 import com.aarav.geowav.presentation.theme.manrope
+import com.aarav.geowav.presentation.timeline.movingPlaybackMarkerIcon
 import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.model.BitmapDescriptor
 import com.google.android.gms.maps.model.BitmapDescriptorFactory
@@ -89,18 +88,18 @@ import com.google.android.gms.maps.model.CameraPosition
 import com.google.android.gms.maps.model.JointType
 import com.google.android.gms.maps.model.LatLng
 import com.google.android.gms.maps.model.LatLngBounds
-import com.google.maps.android.compose.MapProperties
-import com.google.maps.android.compose.MapType
 import com.google.android.gms.maps.model.RoundCap
 import com.google.maps.android.compose.CameraMoveStartedReason
 import com.google.maps.android.compose.GoogleMap
+import com.google.maps.android.compose.MapProperties
+import com.google.maps.android.compose.MapType
 import com.google.maps.android.compose.MapUiSettings
 import com.google.maps.android.compose.Marker
 import com.google.maps.android.compose.MarkerState
 import com.google.maps.android.compose.Polyline
 import com.google.maps.android.compose.rememberCameraPositionState
-import com.google.maps.android.compose.rememberMarkerState
 import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
 
@@ -119,8 +118,24 @@ fun ObserveLiveLocationCard(
 ) {
     var isUserPanning by remember { mutableStateOf(false) }
 
+    var mapLoaded by remember { mutableStateOf(false) }
 
-    var show by remember { mutableStateOf(false) }
+    var showMapModeToast by remember { mutableStateOf(false) }
+
+    val markerStates = remember {
+        mutableStateMapOf<String, MarkerState>()
+    }
+
+    val movingIcon = remember(mapLoaded) {
+        if (mapLoaded) movingPlaybackMarkerIcon() else null
+    }
+
+    LaunchedEffect(showMapModeToast) {
+        if (showMapModeToast) {
+            delay(1500)
+            showMapModeToast = false
+        }
+    }
 
 
     val locations by viewModel.locations.collectAsState()
@@ -163,13 +178,11 @@ fun ObserveLiveLocationCard(
         }
 
 
-
     // Find if any user is in emergency state
     val emergencyUser = locations
         .entries
         .firstOrNull { it.value is ViewerLocationState.EmergencySharing }
 
-    var mapLoaded by remember { mutableStateOf(false) }
 
 
     LaunchedEffect(visibleLatLngs, mapLoaded) {
@@ -181,7 +194,6 @@ fun ObserveLiveLocationCard(
     }
 
     val viewerInfo = uiState.currentViewers
-
 
 
     var uiSettings by remember {
@@ -496,9 +508,15 @@ fun ObserveLiveLocationCard(
             onMapLoaded = { mapLoaded = true }
         ) {
             locations.forEach { (userId, state) ->
+                val markerState = markerStates.getOrPut(userId) {
+                    MarkerState()
+                }
+
                 UserMarker(
                     userId = userId,
-                    state = state
+                    markerState = markerState,
+                    state = state,
+                    isSelected = selectedUser == userId
                 )
             }
 
@@ -515,7 +533,7 @@ fun ObserveLiveLocationCard(
                         state is ViewerLocationState.EmergencySharing
 
                     Polyline(
-                        points = path.points,
+                        points = path.points.take(uiState.playbackIndex + 1),
                         color = when {
                             isEmergency ->
                                 Color.Red
@@ -576,6 +594,51 @@ fun ObserveLiveLocationCard(
 //            )
 //        }
 
+        var lastUser by remember { mutableStateOf<String?>(null) }
+
+        val currentPathState = userPaths[selectedUser]
+        val selectedUserPath = currentPathState?.points
+
+        LaunchedEffect(selectedUser, selectedUserPath) {
+
+            if (selectedUserPath.isNullOrEmpty()) return@LaunchedEffect
+
+            if (selectedUser != lastUser) {
+                viewModel.resetAnimatedPath()
+                lastUser = selectedUser
+
+                // place marker at latest location
+                markerStates[selectedUser]?.position = selectedUserPath.last()
+
+                viewModel.setPlaybackIndex(selectedUserPath.size - 1)
+                markerStates[selectedUser]?.position?.let {
+                    viewModel.updateLastLocation(it)
+                }
+
+                return@LaunchedEffect
+            }
+
+            viewModel.drawAnimatedPath(selectedUserPath)
+        }
+
+
+        LaunchedEffect(uiState.lastPosition, selectedUser) {
+
+
+            val location = selectedUserPath?.last()
+
+            if (uiState.lastPosition != null) {
+                markerStates[selectedUser]?.position = uiState.lastPosition
+            } else {
+
+                location?.let {
+                    markerStates[selectedUser]?.position = it
+                    viewModel.setPlaybackIndex(selectedUserPath.size - 1)
+                }
+            }
+
+        }
+
 
         if (!isFullScreen) {
             FullScreenIcon(
@@ -588,7 +651,7 @@ fun ObserveLiveLocationCard(
             )
         }
 
-        val mapMode = when(mapType) {
+        val mapMode = when (mapType) {
             MapType.NORMAL -> "Normal"
             MapType.SATELLITE -> "Satellite"
             MapType.TERRAIN -> "Terrain"
@@ -597,8 +660,9 @@ fun ObserveLiveLocationCard(
         }
 
         AnimatedVisibility(
-            show,
-            modifier = Modifier.align(Alignment.TopCenter)
+            showMapModeToast,
+            modifier = Modifier
+                .align(Alignment.TopCenter)
                 .padding(top = 16.dp)
         ) {
 
@@ -617,12 +681,17 @@ fun ObserveLiveLocationCard(
             }
         }
 
-        AnimatedVisibility (isFullScreen && showTray) {
+        AnimatedVisibility(isFullScreen && showTray) {
             ViewerTrayOverlay(
-                Modifier.align(Alignment.TopCenter).padding(vertical = 16.dp),
+                Modifier
+                    .align(Alignment.TopCenter)
+                    .padding(vertical = 16.dp),
                 uiState.lovedOnes,
                 locations,
-                onHideClick = onHideClick,
+                onHideClick = {
+                    selectedUser = null
+                    onHideClick()
+                },
                 onUserClick = {
                     selectedUser = it
                 }
@@ -638,7 +707,6 @@ fun ObserveLiveLocationCard(
             }
         }
 
-        // ── HorizontalFloatingToolbar ──
         if (isFullScreen) {
             val liveCount = locations.count {
                 it.value is ViewerLocationState.NormalSharing ||
@@ -720,7 +788,7 @@ fun ObserveLiveLocationCard(
                                 MapType.TERRAIN -> MapType.HYBRID
                                 else -> MapType.NORMAL
                             }
-                            show = true
+                            showMapModeToast = true
                         }
                     ) {
                         Icon(
@@ -881,7 +949,9 @@ fun RichTooltipExample(
                                     painter = painterResource(R.drawable.directions),
                                     contentDescription = "Directions",
                                     tint = MaterialTheme.colorScheme.onPrimaryFixed,
-                                    modifier = Modifier.size(24.dp).padding(6.dp)
+                                    modifier = Modifier
+                                        .size(24.dp)
+                                        .padding(6.dp)
                                 )
                             }
                         }
@@ -992,7 +1062,6 @@ fun RichTooltipExample(
 }
 
 
-
 /*
 Text(
                 "Watching: $text",
@@ -1046,7 +1115,8 @@ fun ViewerTrayOverlay(
             TextButton(
                 onClick = onHideClick,
                 modifier = Modifier
-                    .padding(top = 68.dp).align(Alignment.BottomEnd)
+                    .padding(top = 68.dp)
+                    .align(Alignment.BottomEnd)
             ) {
                 Text(
                     "Hide Tray",
@@ -1314,9 +1384,12 @@ fun animateLatLngAsState(
 @Composable
 fun UserMarker(
     userId: String,
-    state: ViewerLocationState
+    markerState: MarkerState,
+    state: ViewerLocationState,
+    isSelected: Boolean
 ) {
     if (state is ViewerLocationState.Blocked) return
+
 
     val location = when (state) {
         is ViewerLocationState.NormalSharing -> state.location
@@ -1326,10 +1399,11 @@ fun UserMarker(
 
     val target = LatLng(location.lat, location.lng)
 
-    val markerState = rememberMarkerState()
-
-    LaunchedEffect(target) {
-        markerState.position = target
+    // Only update automatically if not selected
+    if (!isSelected) {
+        LaunchedEffect(target) {
+            markerState.position = target
+        }
     }
 
     val isEmergency = state is ViewerLocationState.EmergencySharing

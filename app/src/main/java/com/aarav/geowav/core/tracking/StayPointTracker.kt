@@ -110,6 +110,12 @@ class StayPointTracker {
         return _finalizedStays.toList()
     }
 
+    fun consumeFinalizedStays(): List<StayPoint> {
+        val stays = _finalizedStays.toList()
+        _finalizedStays.clear()
+        return stays
+    }
+
     /**
      * Clears all state. Call when a user's session is fully done
      * and the tracker instance is being discarded / recycled.

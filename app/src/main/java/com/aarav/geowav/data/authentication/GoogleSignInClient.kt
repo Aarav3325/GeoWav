@@ -16,10 +16,7 @@ import com.google.android.libraries.identity.googleid.GoogleIdTokenCredential
 import com.google.android.libraries.identity.googleid.GoogleIdTokenParsingException
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.GoogleAuthProvider
-import com.google.firebase.database.DataSnapshot
-import com.google.firebase.database.DatabaseError
 import com.google.firebase.database.FirebaseDatabase
-import com.google.firebase.database.ValueEventListener
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.tasks.await
@@ -129,13 +126,13 @@ class GoogleSignInClient @Inject constructor(
 //                .await()
 
 
-            val user = firebaseAuth.createUserWithEmailAndPassword(finalEmail, finalPass).await().user
+            val user =
+                firebaseAuth.createUserWithEmailAndPassword(finalEmail, finalPass).await().user
 
-            if(user != null) {
+            if (user != null) {
                 storeUserData(finalEmail, username)
                 return true
-            }
-            else {
+            } else {
                 return false
             }
         } catch (e: Exception) {
@@ -158,7 +155,7 @@ class GoogleSignInClient @Inject constructor(
 
             val user = firebaseAuth.signInWithEmailAndPassword(finalEmail, finalPass).await().user
 
-            if(user != null) return true else return false
+            if (user != null) return true else return false
         } catch (e: Exception) {
             Log.i(tag, e.message.toString())
             return false
@@ -233,7 +230,6 @@ class GoogleSignInClient @Inject constructor(
             ""
         }
     }
-
 
 
     // get profile picture of current user
