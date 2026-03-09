@@ -142,6 +142,7 @@ fun TimelineMapPreview(
         snappedPath.map { LatLng(it.location.latitude, it.location.longitude) }
     }
 
+
     LaunchedEffect(sessionId) {
         viewModel.getSessionInfo(sessionId, userId)
     }
@@ -150,9 +151,9 @@ fun TimelineMapPreview(
         "${it.latitude},${it.longitude}"
     }
 
-    LaunchedEffect(pathString) {
-        if (!pathString.isNullOrEmpty()) {
-            viewModel.getSnappedPath(pathString, true)
+    LaunchedEffect(userPaths) {
+        if (!userPaths.isNullOrEmpty()) {
+            viewModel.getSnappedPath(userPaths, true)
         }
     }
 

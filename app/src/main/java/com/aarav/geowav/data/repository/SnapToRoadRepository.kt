@@ -5,6 +5,7 @@ import com.aarav.geowav.core.utils.Resource
 import com.aarav.geowav.data.datasource.retrofit.RoadsApi
 import com.aarav.geowav.data.model.SnapToRoadResponse
 import com.aarav.geowav.data.model.SnappedPoint
+import com.google.android.gms.maps.model.LatLng
 import com.google.gson.Gson
 import java.io.IOException
 

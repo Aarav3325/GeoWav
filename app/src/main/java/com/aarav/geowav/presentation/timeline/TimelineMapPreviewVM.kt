@@ -47,27 +47,75 @@ class TimelineMapPreviewVM @Inject constructor(
         }
     }
 
+    fun <T> List<T>.chunkForSnap(size: Int = 100): List<List<T>> {
 
-    fun getSnappedPath(path: String, interpolate: Boolean) {
+        if (this.isEmpty()) return emptyList()
+
+        val chunks = mutableListOf<List<T>>()
+        var start = 0
+
+        while (start < this.size) {
+
+            val end = minOf(start + size, this.size)
+
+            val chunk = if (start == 0) {
+                subList(start, end)
+            } else {
+                subList(start - 1, end) // overlap previous point
+            }
+
+            chunks.add(chunk)
+
+            start += size
+        }
+
+        return chunks
+    }
+
+
+    fun getSnappedPath(path: List<LatLng>, interpolate: Boolean) {
         Log.i("SNAP", "snap res: called")
         viewModelScope.launch {
-            when (val result = snapToRoadRepository.snapToRoad(
-                path = path,
-                interpolate = interpolate
-            )) {
-                is Resource.Success -> {
-                    _uiState.update {
-                        it.copy(snappedPath = result.data ?: emptyList())
+
+            val snapped = mutableListOf<SnappedPoint>()
+
+            val chunks = path.chunkForSnap()
+            Log.i("CHUNK", "chunk" + chunks.size)
+
+            chunks.forEachIndexed { index, chunk ->
+
+
+                val path = chunk.joinToString("|") {
+                    "${it.latitude},${it.longitude}"
+                }
+
+                Log.i("CHUNK", "iteration" + path.split(",").size)
+
+
+                when (val result = snapToRoadRepository.snapToRoad(path, true)) {
+
+                    is Resource.Success -> {
+
+                        val data = result.data ?: emptyList()
+
+                        if (index == 0) {
+                            snapped.addAll(data)
+                        } else {
+                            // skip first point (overlap)
+                            snapped.addAll(data.drop(1))
+                        }
                     }
-                    Log.i("SNAP", "snap res: " + result.data)
-                }
 
-                is Resource.Error -> {
-                    _uiState.update { it.copy(snappedPath = emptyList()) }
-                    Log.i("SNAP", "snap error: " + result.message)
-                }
+                    is Resource.Error -> {
+                        Log.e("SNAP", "chunk failed: ${result.message}")
+                    }
 
-                else -> Unit
+                    else -> Unit
+                }
+            }
+
+            _uiState.update {
+                it.copy(snappedPath = snapped)
             }
         }
     }
