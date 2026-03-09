@@ -6,16 +6,20 @@ import android.graphics.Paint
 import android.util.Log
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.background
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -29,10 +33,13 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.IconButtonDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Slider
+import androidx.compose.material3.SliderDefaults
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.rememberSliderState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -50,6 +57,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -61,6 +69,15 @@ import com.aarav.geowav.data.model.TimelineItem
 import com.aarav.geowav.data.model.toLatLng
 import com.aarav.geowav.presentation.theme.GeoWavTheme
 import com.aarav.geowav.presentation.theme.manrope
+import com.aarav.geowav.presentation.theme.onBackgroundDark
+import com.aarav.geowav.presentation.theme.onBackgroundLight
+import com.aarav.geowav.presentation.theme.onPrimaryLight
+import com.aarav.geowav.presentation.theme.outlineLight
+import com.aarav.geowav.presentation.theme.outlineVariantLight
+import com.aarav.geowav.presentation.theme.primaryLight
+import com.aarav.geowav.presentation.theme.surfaceContainerDark
+import com.aarav.geowav.presentation.theme.surfaceDark
+import com.aarav.geowav.presentation.theme.surfaceLight
 import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.model.BitmapDescriptor
 import com.google.android.gms.maps.model.BitmapDescriptorFactory
@@ -79,6 +96,7 @@ import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
+import kotlin.math.roundToInt
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3ExpressiveApi::class)
 @Composable
@@ -90,6 +108,10 @@ fun TimelineMapPreview(
 ) {
 
     val uiState by viewModel.uiState.collectAsState()
+
+    var showPlaybackSpeedControls by remember {
+        mutableStateOf(false)
+    }
 
     var followUser by remember {
         mutableStateOf(true)
@@ -340,7 +362,7 @@ fun TimelineMapPreview(
 
                             cameraPositionState.animate(
                                 CameraUpdateFactory.newLatLngBounds(
-                                    boundsBuilder.build(), 230
+                                    boundsBuilder.build(), 300
                                 )
                             )
                         }
@@ -377,126 +399,245 @@ fun TimelineMapPreview(
                 }
             }
 
+            val speeds = listOf(5f, 8f, 10f)
+
+            val sliderState = rememberSliderState(
+                value = 0f,
+                valueRange = 0f..2f,
+                onValueChangeFinished = {
+                    Log.i("SLIDER", "value: change")
+                },
+                steps = 1
+            )
+
+            LaunchedEffect(sliderState.value) {
+
+                val index = sliderState.value.roundToInt()
+                val speed = speeds[index]
+
+                Log.i("SLIDER", "change to $speed")
+                viewModel.updateSpeed(speed)
+            }
+
+            AnimatedVisibility(
+                showPlaybackSpeedControls,
+                modifier = Modifier.align(Alignment.BottomCenter)
+                        .padding(bottom = 116.dp, start = 16.dp, end = 16.dp)
+            ) {
+                Column {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth(),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        Speed.entries.forEach { speed ->
+
+                            Surface(
+                                modifier = Modifier
+                                    .height(26.dp)
+                                    .padding(horizontal = 4.dp),
+                                color = surfaceContainerDark,
+                                shape = RoundedCornerShape(6.dp)
+                            ) {
+                                Box(
+                                    contentAlignment = Alignment.Center,
+                                    modifier = Modifier.padding(horizontal = 10.dp, vertical = 3.dp)
+                                ) {
+                                    Text(
+                                        text = speed.label,
+                                        fontFamily = manrope,
+                                        fontSize = 12.sp,
+                                        fontWeight = FontWeight.Bold,
+                                        color = onBackgroundDark
+                                    )
+                                }
+                            }
+                        }
+                    }
+
+                    Spacer(Modifier.height(12.dp))
+
+                    Slider(
+                        modifier = Modifier
+                            .background(surfaceLight.copy(alpha = 0.85f), RoundedCornerShape(16.dp))
+                            .padding(8.dp),
+                        state = sliderState,
+                        thumb = {
+                            SliderDefaults.Thumb(
+                                interactionSource = remember { MutableInteractionSource() },
+                                colors = SliderDefaults.colors(
+                                    thumbColor = primaryLight
+                                )
+                            )
+                        },
+                        track = {
+                            SliderDefaults.Track(
+                                colors = SliderDefaults.colors(
+                                    thumbColor = primaryLight,
+                                    activeTrackColor = primaryLight,
+                                    inactiveTrackColor = outlineVariantLight,
+                                    activeTickColor = onPrimaryLight,
+                                    inactiveTickColor = outlineLight
+                                ),
+                                enabled = true,
+                                sliderState = sliderState
+                            )
+                        }
+                    )
+                }
+            }
+
+
             HorizontalFloatingToolbar(
                 modifier = Modifier
                     .align(Alignment.BottomCenter)
                     .offset(y = (-36).dp)
                     .zIndex(1f),
                 expanded = true,
-                leadingContent = {
-
-
-                    IconButton(
-                        colors = IconButtonDefaults.iconButtonColors(
-                            containerColor = if (uiState.isPlaying)
-                                MaterialTheme.colorScheme.tertiaryContainer
-                            else MaterialTheme.colorScheme.surfaceContainer,
-                            contentColor = if (uiState.isPlaying)
-                                MaterialTheme.colorScheme.onTertiaryContainer
-                            else MaterialTheme.colorScheme.onSurface
-                        ),
-                        onClick = {
-                            if (uiState.isPlaying)
-                                viewModel.pausePlayback()
-                            else
-                                viewModel.startPlayback()
-                        }
-                    ) {
-                        Icon(
-                            painter = painterResource(
-                                if (uiState.isPlaying) R.drawable.pause else R.drawable.play
-                            ),
-                            contentDescription = "play/pause",
-                            modifier = Modifier.size(24.dp)
-                        )
-                    }
-
-
-                    IconButton(
-                        colors = IconButtonDefaults.iconButtonColors(
-                            containerColor = MaterialTheme.colorScheme.surfaceContainer,
-                            contentColor = MaterialTheme.colorScheme.onSurface
-                        ),
-                        onClick = {
-                            startLatLng?.let { viewModel.restartPlayback(it) }
-                        }
-                    ) {
-                        Icon(
-                            painter = painterResource(R.drawable.restart),
-                            contentDescription = "restart",
-                            modifier = Modifier.size(24.dp)
-                        )
-                    }
-                },
                 content = {
-
-
-                    IconButton(
-                        colors = IconButtonDefaults.iconButtonColors(
-                            containerColor = if (showTray)
-                                MaterialTheme.colorScheme.tertiaryContainer
-                            else MaterialTheme.colorScheme.surfaceContainer,
-                            contentColor = if (showTray)
-                                MaterialTheme.colorScheme.onTertiaryContainer
-                            else MaterialTheme.colorScheme.onSurface
-                        ),
-                        onClick = { showTray = !showTray }
+                    Row(
+                        modifier = Modifier,
+                        horizontalArrangement = Arrangement.SpaceAround,
+                        verticalAlignment = Alignment.CenterVertically
                     ) {
-                        Icon(
-                            painter = painterResource(R.drawable.info),
-                            contentDescription = "Toggle Tray",
-                            modifier = Modifier.size(24.dp)
-                        )
-                    }
 
-
-                    IconButton(
-                        onClick = {
-                            currentSession?.let { session ->
-                                scope.launch {
-                                    val boundsBuilder = LatLngBounds.builder()
-                                        .include(LatLng(session.startLat, session.startLng))
-                                        .include(LatLng(session.endLat, session.endLng))
-
-                                    session.stayPoints.forEach {
-                                        boundsBuilder.include(LatLng(it.lat, it.lng))
-                                    }
-
-                                    cameraPositionState.animate(
-                                        CameraUpdateFactory.newLatLngBounds(
-                                            boundsBuilder.build(), 230
-                                        )
-                                    )
-
-                                    delay(1000)
-                                    followUser = true
-                                }
+                        IconButton(
+                            modifier = Modifier.size(40.dp),
+                            colors = IconButtonDefaults.iconButtonColors(
+                                containerColor = if (uiState.isPlaying)
+                                    MaterialTheme.colorScheme.tertiaryContainer
+                                else MaterialTheme.colorScheme.surfaceContainer,
+                                contentColor = if (uiState.isPlaying)
+                                    MaterialTheme.colorScheme.onTertiaryContainer
+                                else MaterialTheme.colorScheme.onSurface
+                            ),
+                            onClick = {
+                                if (uiState.isPlaying)
+                                    viewModel.pausePlayback()
+                                else
+                                    viewModel.startPlayback()
                             }
-                        },
-                        colors = IconButtonDefaults.iconButtonColors(
-                            contentColor = MaterialTheme.colorScheme.onPrimary,
-                            containerColor = MaterialTheme.colorScheme.primary
-                        )
-                    ) {
-                        Icon(
-                            painter = painterResource(R.drawable.gps),
-                            contentDescription = "Fit All",
-                            modifier = Modifier.size(24.dp)
-                        )
-                    }
-
-
-                    IconButton(
-                        onClick = {
-                            viewModel.toggleMapType()
-                            showMapModeToast = true
+                        ) {
+                            Icon(
+                                painter = painterResource(
+                                    if (uiState.isPlaying) R.drawable.pause else R.drawable.play_v2
+                                ),
+                                contentDescription = "play/pause",
+                                modifier = Modifier.size(22.dp)
+                            )
                         }
-                    ) {
-                        Icon(
-                            painter = painterResource(R.drawable.map_trifold),
-                            contentDescription = mapMode,
-                            modifier = Modifier.size(22.dp)
-                        )
+
+                        IconButton(
+                            modifier = Modifier.size(40.dp),
+                            colors = IconButtonDefaults.iconButtonColors(
+                                containerColor = MaterialTheme.colorScheme.surfaceContainer,
+                                contentColor = MaterialTheme.colorScheme.onSurface
+                            ),
+                            onClick = {
+                                startLatLng?.let { viewModel.restartPlayback(it) }
+                            }
+                        ) {
+                            Icon(
+                                painter = painterResource(R.drawable.restart),
+                                contentDescription = "restart",
+                                modifier = Modifier.size(24.dp)
+                            )
+                        }
+
+                        IconButton(
+                            modifier = Modifier.size(40.dp),
+                            colors = IconButtonDefaults.iconButtonColors(
+                                containerColor = MaterialTheme.colorScheme.surfaceContainer,
+                                contentColor = MaterialTheme.colorScheme.onSurface
+                            ),
+                            onClick = {
+                                showPlaybackSpeedControls = !showPlaybackSpeedControls
+                            }
+                        ) {
+                            Icon(
+                                painter = painterResource(R.drawable.playback_speed),
+                                contentDescription = "playback_speed",
+                                modifier = Modifier.size(24.dp)
+                            )
+                        }
+
+
+                        Spacer(Modifier.width(8.dp))
+
+                        IconButton(
+                            modifier = Modifier.size(40.dp),
+                            colors = IconButtonDefaults.iconButtonColors(
+                                containerColor = if (showTray)
+                                    MaterialTheme.colorScheme.tertiaryContainer
+                                else MaterialTheme.colorScheme.surfaceContainer,
+                                contentColor = if (showTray)
+                                    MaterialTheme.colorScheme.onTertiaryContainer
+                                else MaterialTheme.colorScheme.onSurface
+                            ),
+                            onClick = { showTray = !showTray }
+                        ) {
+                            Icon(
+                                painter = painterResource(R.drawable.info),
+                                contentDescription = "Toggle Tray",
+                                modifier = Modifier.size(24.dp)
+                            )
+                        }
+
+                        Spacer(Modifier.width(10.dp))
+
+                        IconButton(
+                            modifier = Modifier.size(40.dp),
+                            onClick = {
+                                currentSession?.let { session ->
+                                    scope.launch {
+                                        val boundsBuilder = LatLngBounds.builder()
+                                            .include(LatLng(session.startLat, session.startLng))
+                                            .include(LatLng(session.endLat, session.endLng))
+
+                                        session.stayPoints.forEach {
+                                            boundsBuilder.include(LatLng(it.lat, it.lng))
+                                        }
+
+                                        cameraPositionState.animate(
+                                            CameraUpdateFactory.newLatLngBounds(
+                                                boundsBuilder.build(), 230
+                                            )
+                                        )
+
+                                        delay(1000)
+                                        followUser = true
+                                    }
+                                }
+                            },
+                            colors = IconButtonDefaults.iconButtonColors(
+                                containerColor = MaterialTheme.colorScheme.primary,
+                                contentColor = MaterialTheme.colorScheme.onPrimary
+                            )
+                        ) {
+                            Icon(
+                                painter = painterResource(R.drawable.gps),
+                                contentDescription = "Fit All",
+                                modifier = Modifier.size(24.dp)
+                            )
+                        }
+
+
+                        Spacer(Modifier.width(8.dp))
+
+                        IconButton(
+                            modifier = Modifier.size(40.dp),
+                            onClick = {
+                                viewModel.toggleMapType()
+                                showMapModeToast = true
+                            }
+                        ) {
+                            Icon(
+                                painter = painterResource(R.drawable.map_trifold),
+                                contentDescription = mapMode,
+                                modifier = Modifier.size(24.dp)
+                            )
+                        }
                     }
                 }
             )
@@ -824,4 +965,10 @@ fun movingPlaybackMarkerIcon(): BitmapDescriptor {
     canvas.drawCircle(size / 2f, size / 2f, size / 3f, paint)
 
     return BitmapDescriptorFactory.fromBitmap(bitmap)
+}
+
+enum class Speed(val value: Float, val label: String) {
+    LOW(1f, "0.5x"),
+    MEDIUM(2f, "1x"),
+    HIGH(3f, "2x")
 }
