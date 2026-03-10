@@ -2,7 +2,11 @@ package com.aarav.geowav.presentation.home
 
 import android.content.Context
 import android.location.Geocoder
+import android.net.Uri
 import android.util.Log
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.aarav.geowav.core.tracking.StayPointTracker
@@ -15,17 +19,21 @@ import com.aarav.geowav.data.authentication.GoogleSignInClient
 import com.aarav.geowav.data.model.CircleMember
 import com.aarav.geowav.data.model.GeoAlert
 import com.aarav.geowav.data.model.GeoConnection
+import com.aarav.geowav.data.model.PaymentTransactions
 import com.aarav.geowav.data.model.Place
 import com.aarav.geowav.data.model.SessionHistory
 import com.aarav.geowav.data.model.StayPoint
+import com.aarav.geowav.data.model.UpiApp
 import com.aarav.geowav.data.model.User
 import com.aarav.geowav.data.model.UserPath
 import com.aarav.geowav.data.model.toUserPathLatLng
 import com.aarav.geowav.data.repository.GeoActivityRepositoryImpl
 import com.aarav.geowav.data.repository.GeoConnectionRepositoryImpl
+import com.aarav.geowav.data.repository.PaymentRepositoryImpl
 import com.aarav.geowav.data.repository.PlaceRepositoryImpl
 import com.aarav.geowav.domain.repository.CircleRepository
 import com.aarav.geowav.domain.repository.LiveLocationSharingRepository
+import com.aarav.geowav.domain.repository.PaymentRepository
 import com.aarav.geowav.domain.repository.SessionHistoryRepository
 import com.aarav.geowav.domain.repository.ViewerLocationRepository
 import com.google.android.gms.maps.model.LatLng
@@ -58,7 +66,7 @@ class HomeScreenVM @Inject constructor(
     private val geoActivityRepositoryImpl: GeoActivityRepositoryImpl,
     private val circleRepository: CircleRepository,
     private val viewerLocationRepository: ViewerLocationRepository,
-    private val sessionHistoryRepository: SessionHistoryRepository
+    private val paymentRepository: PaymentRepository
 ) : ViewModel() {
 
     private val _uiState: MutableStateFlow<HomeScreenUiState> =
@@ -381,6 +389,61 @@ class HomeScreenVM @Inject constructor(
                 )
             }
         }
+    }
+
+    var upiApps by mutableStateOf<List<UpiApp>>(emptyList())
+
+    var paymentState by mutableStateOf("IDLE")
+
+    private var currentUri: Uri? = null
+
+    fun preparePayment(
+        context: Context,
+        amount: String,
+        upiId: String,
+        name: String,
+        note: String
+    ) {
+        currentUri = paymentRepository.createUpiUri(
+            upiId,
+            name,
+            amount,
+            note
+        )
+
+        currentUri?.let {
+            Log.i("UPI", currentUri.toString())
+            upiApps = paymentRepository.getUpiApps(context, it)
+        }
+    }
+
+    fun getPaymentUri(): Uri? = currentUri
+
+    fun handlePaymentResult(
+        response: String?,
+        amount: Double
+    ) {
+        val data = paymentRepository.parseUpiResponse(response)
+
+        val status = data["Status"] ?: "FAILED"
+        val txnId = data["txnId"] ?: ""
+
+        paymentState = if (status.equals("SUCCESS", true)) {
+            "SUCCESS"
+        } else {
+            "FAILED"
+        }
+
+        val transaction = PaymentTransactions(
+            orderId = UUID.randomUUID().toString(),
+            amount = amount,
+            status = status,
+            txnId = txnId,
+            upiRef = data["txnRef"] ?: "",
+            userId = viewerId
+        )
+
+        paymentRepository.savePayment(transaction)
     }
 
     override fun onCleared() {

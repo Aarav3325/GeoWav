@@ -2,7 +2,10 @@ package com.aarav.geowav.presentation.home
 
 
 import android.Manifest
+import android.content.Intent
 import android.util.Log
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.EaseInOut
@@ -28,10 +31,14 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.wrapContentHeight
+import androidx.compose.foundation.lazy.grid.GridCells
+import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
+import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
@@ -66,7 +73,6 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -79,15 +85,14 @@ import com.aarav.geowav.core.utils.formatRemainingForEmergency
 import com.aarav.geowav.core.utils.formatTime
 import com.aarav.geowav.data.model.CircleMember
 import com.aarav.geowav.data.model.Place
-import com.aarav.geowav.presentation.components.SnackbarManager
 import com.aarav.geowav.presentation.theme.GeoWavTheme
 import com.aarav.geowav.presentation.theme.manrope
 import com.aarav.geowav.presentation.theme.sora
+import com.google.accompanist.drawablepainter.rememberDrawablePainter
 import com.google.accompanist.permissions.ExperimentalPermissionsApi
 import com.google.accompanist.permissions.isGranted
 import com.google.accompanist.permissions.rememberPermissionState
 import kotlinx.coroutines.delay
-import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalPermissionsApi::class)
 @Composable
@@ -119,6 +124,101 @@ fun GeoWavHomeScreen(
         }
     }
 
+
+    val context = LocalContext.current
+
+    val upiLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.StartActivityForResult()
+    ) { result ->
+        val response = result.data?.getStringExtra("response")
+
+        homeScreenVM.handlePaymentResult(
+            response,
+            1.0
+        )
+    }
+
+//    val intent = Intent(Intent.ACTION_VIEW).apply {
+//        data = Uri.parse("upi://pay")
+//    }
+//
+//    context.startActivity(intent)
+
+    val apss = homeScreenVM.upiApps
+
+    if (false) {
+        AlertDialog(
+            onDismissRequest = {}
+        ) {
+            Card(
+                shape = RoundedCornerShape(16.dp),
+                modifier = Modifier
+                    .padding(16.dp)
+                    .fillMaxWidth()
+            ) {
+                Box(
+                    modifier = Modifier, contentAlignment = Alignment.Center
+                ) {
+                    Column(
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.Center,
+                        modifier = Modifier
+                            .padding(16.dp)
+                    ) {
+
+                        Text("Pay using UPI")
+
+                        Spacer(Modifier.height(20.dp))
+
+                        LazyVerticalGrid(
+                            columns = GridCells.Fixed(3)
+                        ) {
+
+                            items(apss) { app ->
+                                Column(
+                                    modifier = Modifier
+                                        .padding(12.dp)
+                                        .clickable {
+
+                                            val uri = homeScreenVM.getPaymentUri()
+
+                                            val intent = Intent(Intent.ACTION_VIEW).apply {
+                                                data = uri
+                                                setPackage(app.packageName)
+                                            }
+
+                                            upiLauncher.launch(intent)
+                                        },
+                                    horizontalAlignment = Alignment.CenterHorizontally
+                                ) {
+
+                                    Image(
+                                        painter = rememberDrawablePainter(app.icon),
+                                        contentDescription = app.name,
+                                        modifier = Modifier.size(48.dp)
+                                    )
+
+                                    Text(app.name)
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    LaunchedEffect(Unit) {
+        homeScreenVM.preparePayment(
+            context,
+            "1",
+            "aaravhalvadia@okhdfcbank",
+            "GeoWav Pay Test Mode",
+            "UPI_PAYMENT_FLOW_TEST"
+        )
+    }
+
+    val apps = homeScreenVM.upiApps
 
 
     LaunchedEffect(uiState.lovedOnes) {
@@ -181,6 +281,8 @@ fun GeoWavHomeScreen(
         animationSpec = tween(durationMillis = 800),
         label = "BackgroundColorAnimation"
     )
+
+
 
     Scaffold(
         modifier = Modifier.fillMaxSize(),
@@ -267,7 +369,6 @@ fun GeoWavHomeScreen(
                     .verticalScroll(scroll)
                     .background(MaterialTheme.colorScheme.background)
             ) {
-
 
 
                 Box(
@@ -786,7 +887,7 @@ fun ConnectionStatusCard(
                 }
 
                 // Status label on right
-                if(isSharingActive != null || emergencyState != null) {
+                if (isSharingActive != null || emergencyState != null) {
                     Surface(
                         shape = RoundedCornerShape(25),
                         color = statusColor.copy(alpha = 0.12f)
@@ -944,7 +1045,11 @@ fun ActiveZonesSection(
         Spacer(modifier = Modifier.height(12.dp))
         Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
             if (zones.isNotEmpty()) {
-                zones.forEach { zone -> ZoneCard(zone = zone, onClick = { onZoneClick(zone) }) }
+                zones.forEach { zone ->
+                    ZoneCard(
+                        zone = zone,
+                        onClick = { onZoneClick(zone) })
+                }
             } else {
                 Column(
                     modifier = Modifier
@@ -1052,7 +1157,10 @@ fun ZoneCard(zone: Place, onClick: () -> Unit) {
 
 @Composable
 fun QuickActionsRow(onAddZone: () -> Unit, onShare: () -> Unit, onAlerts: () -> Unit) {
-    Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.spacedBy(12.dp)
+    ) {
         QuickActionButton(R.drawable.plus_circle__1_, "Add Zone", onAddZone)
     }
 }
@@ -1104,7 +1212,6 @@ fun RecentAlertsList(
     alerts: List<com.aarav.geowav.data.model.GeoAlert>,
     isDarkThemeEnabled: Boolean
 ) {
-
 
 
     Column(

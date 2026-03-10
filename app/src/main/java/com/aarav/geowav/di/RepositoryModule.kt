@@ -6,6 +6,7 @@ import com.aarav.geowav.data.repository.GeoActivityRepositoryImpl
 import com.aarav.geowav.data.repository.LiveLocationSharingRepositoryImpl
 import com.aarav.geowav.data.repository.LocationPermissionRepositoryImpl
 import com.aarav.geowav.data.repository.NotificationRepositoryImpl
+import com.aarav.geowav.data.repository.PaymentRepositoryImpl
 import com.aarav.geowav.data.repository.PlaceRepositoryImpl
 import com.aarav.geowav.data.repository.SessionHistoryRepositoryImpl
 import com.aarav.geowav.data.repository.ViewerLocationRepositoryImpl
@@ -14,6 +15,7 @@ import com.aarav.geowav.domain.repository.EmergencySharingRepository
 import com.aarav.geowav.domain.repository.GeoActivityRepository
 import com.aarav.geowav.domain.repository.LiveLocationSharingRepository
 import com.aarav.geowav.domain.repository.LocationPermissionRepository
+import com.aarav.geowav.domain.repository.PaymentRepository
 import com.aarav.geowav.domain.repository.PlaceRepository
 import com.aarav.geowav.domain.repository.SessionHistoryRepository
 import com.aarav.geowav.domain.repository.ViewerLocationRepository
@@ -66,4 +68,9 @@ abstract class RepositoryModule {
     abstract fun bindSessionHistoryRepository(
         sessionHistoryRepositoryImpl: SessionHistoryRepositoryImpl
     ): SessionHistoryRepository
+
+    @Binds
+    abstract fun bindPaymentRepository(
+        paymentRepositoryImpl: PaymentRepositoryImpl
+    ): PaymentRepository
 }

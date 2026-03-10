@@ -16,7 +16,11 @@ class KillSwitchManager @Inject constructor(
 ) {
 
     suspend fun fetchAndActivate(): Boolean {
-        return firebaseRemoteConfig.fetchAndActivate().await()
+        return try {
+            firebaseRemoteConfig.fetchAndActivate().await()
+        } catch (e: Exception) {
+            false
+        }
     }
 
     fun isAppEnabled(): Boolean {
