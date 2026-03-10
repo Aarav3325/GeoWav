@@ -163,7 +163,6 @@ fun ObserveLiveLocationCard(
     //    ) {
 
 
-    // Get list of users who are currently sharing location
     val visibleLatLngs = locations.values
         .mapNotNull {
             when (it) {
@@ -178,7 +177,6 @@ fun ObserveLiveLocationCard(
         }
 
 
-    // Find if any user is in emergency state
     val emergencyUser = locations
         .entries
         .firstOrNull { it.value is ViewerLocationState.EmergencySharing }
@@ -371,12 +369,6 @@ fun ObserveLiveLocationCard(
             return@LaunchedEffect
         }
 
-        // Emergency just started → force follow
-//        if (!isFollowingEmergency) {
-//            isFollowingEmergency = true
-//            isUserPanning = false
-//        }
-
         if (isFullScreen && !isUserPanning) {
 
             cameraPositionState.animate(
@@ -386,24 +378,6 @@ fun ObserveLiveLocationCard(
                 )
             )
         }
-
-        /*
-        // If entering fullscreen while emergency active → force follow
-        if (isFullScreen) {
-            isUserPanning = false
-            isFollowingEmergency = true
-        }
-
-        // Only follow if user is not panning
-        if (!isUserPanning) {
-            cameraPositionState.animate(
-                CameraUpdateFactory.newLatLngZoom(
-                    LatLng(emergencyLat, emergencyLng),
-                    16f
-                )
-            )
-        }
-        */
     }
 
 
@@ -433,7 +407,6 @@ fun ObserveLiveLocationCard(
 //    }
 
 
-    // Detect when user manually moves the map
     LaunchedEffect(cameraPositionState) {
         snapshotFlow {
             cameraPositionState.isMoving to
@@ -553,15 +526,12 @@ fun ObserveLiveLocationCard(
                 }
             }
 
-            // Live Stay Point Markers
             val liveStays by viewModel.liveStayPoints.collectAsState()
 
             liveStays.forEach { (_, stayPoints) ->
                 stayPoints.forEach { stay ->
                     val stayPos = LatLng(stay.lat, stay.lng)
 
-                    // Duration text from the pre-computed durationMillis
-                    // Updates reactively as the StateFlow emits new snapshots
                     val mins = stay.durationMillis / 60_000
                     val durationText = if (mins < 60) "Stayed $mins min"
                     else "${mins / 60}h ${mins % 60}m"
@@ -745,7 +715,7 @@ fun ObserveLiveLocationCard(
                     Spacer(Modifier.width(8.dp))
                 },
                 trailingContent = {
-                    // Tray toggle
+
                     IconButton(
                         onClick = {
                             if (showTray) onHideClick() else onShowTray()
@@ -757,7 +727,7 @@ fun ObserveLiveLocationCard(
                             modifier = Modifier.size(22.dp)
                         )
                     }
-                    // Fit All markers
+
                     IconButton(
                         onClick = {
                             if (visibleLatLngs.isNotEmpty()) {
@@ -1021,7 +991,6 @@ fun RichTooltipExample(
             }
         ) {
 
-            // Avatar
             Box(
                 modifier = Modifier
                     .size(64.dp)
@@ -1046,7 +1015,6 @@ fun RichTooltipExample(
                 )
             }
 
-            // Name
             Text(
                 text = conn.alias ?: conn.profileName,
                 style = MaterialTheme.typography.bodyMedium.copy(

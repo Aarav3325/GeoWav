@@ -25,16 +25,11 @@ class NotificationRepositoryImpl @Inject constructor(
     val firebaseAuth: FirebaseAuth
 ) {
 
-    // Shared flow in order to notify user based on specific event
     private val _events = MutableSharedFlow<SocialEvent>()
 
-    // Service uses this to observe events
     val events = _events.asSharedFlow()
 
-    // Track attached members
-    private val attachedMembers = mutableSetOf<String>()
 
-    // Access circle_requests
     private var inviteRef: DatabaseReference? = null
 
     // Access circle
@@ -46,17 +41,13 @@ class NotificationRepositoryImpl @Inject constructor(
 
     private val emergencyListenerMap = mutableMapOf<String, ValueEventListener>()
 
-    // Store sharing state to avoid duplicate notifications
     private val sharingStateCache = mutableMapOf<String, Boolean>()
 
     private val emergencyStateCache = mutableMapOf<String, Boolean>()
-    private val geofenceCache = mutableMapOf<String, Boolean>()
 
-    // Using coroutine scope to avoid leaks
     private val repositoryScope =
         CoroutineScope(SupervisorJob() + Dispatchers.IO)
 
-    // Listen to all events
     fun startListening(members: List<String>) {
         val userId = firebaseAuth.currentUser?.uid ?: return
 
@@ -64,7 +55,6 @@ class NotificationRepositoryImpl @Inject constructor(
         listenToCircle(userId)
         members.forEach { memberId ->
 
-            // Attach sharing listener if not already attached
             if (!listenerMap.containsKey(memberId)) {
                 attachSharingListener(memberId, userId)
             }
@@ -73,7 +63,6 @@ class NotificationRepositoryImpl @Inject constructor(
                 listenToGeofence(memberId)
             }
 
-            // Attach emergency listener if not already attached
             if (!emergencyListenerMap.containsKey(memberId)) {
                 attachEmergencySharingListener(memberId, userId)
             }
@@ -91,7 +80,7 @@ class NotificationRepositoryImpl @Inject constructor(
             .child(memberId)
 
         // Record when this listener starts so we can skip old events
-        // onChildAdded fires for ALL existing children on first attach
+        // onChildAdded fires for all existing children on first attach
         val listenerStartTime = System.currentTimeMillis()
 
         val listener = object : ChildEventListener {
@@ -102,7 +91,6 @@ class NotificationRepositoryImpl @Inject constructor(
                 val geofence = snapshot.getValue(FirebaseActivity::class.java)
                 val geoAlert = geofence?.toGeoAlert(id = snapshot.key ?: "")
 
-                // Skip events that existed before this listener started
                 val eventTime = geofence?.timestamp ?: 0L
                 if (eventTime < listenerStartTime) return
 
@@ -142,7 +130,6 @@ class NotificationRepositoryImpl @Inject constructor(
         geofenceListenerMap[memberId] = listener
     }
 
-    // Listen to new invite events and notify user
     private fun listenToInvites(userId: String) {
         inviteRef = firebaseDatabase.getReference("circle_requests").child(userId)
 
@@ -191,7 +178,6 @@ class NotificationRepositoryImpl @Inject constructor(
         })
     }
 
-    // Listen for circle updates(specifically status change to accepted) and notify user
     private fun listenToCircle(userId: String) {
         circleEventRef = firebaseDatabase.getReference("circle").child(userId)
 
@@ -203,7 +189,6 @@ class NotificationRepositoryImpl @Inject constructor(
 
             }
 
-            // When status changes to accepted, notify user
             override fun onChildChanged(
                 snapshot: DataSnapshot,
                 previousChildName: String?
@@ -311,7 +296,6 @@ class NotificationRepositoryImpl @Inject constructor(
 //        })
 //    }
 
-    // Fetch username from database
     private fun fetchUserName(userId: String, onResult: (String) -> Unit) {
 
         firebaseDatabase.getReference("users")
@@ -324,18 +308,14 @@ class NotificationRepositoryImpl @Inject constructor(
             }
     }
 
-    // Attach listener to each member
     private fun attachSharingListener(memberId: String, myUserId: String) {
 
 
-        //  Prevent attaching multiple listeners for same member
         if (listenerMap.containsKey(memberId)) return
 
-        // Reference this member's live location node
         val ref = firebaseDatabase.getReference("live_location")
             .child(memberId)
 
-        // Attach real-time listener
         val listener = object : ValueEventListener {
 
             override fun onDataChange(snapshot: DataSnapshot) {
@@ -371,7 +351,6 @@ class NotificationRepositoryImpl @Inject constructor(
 
                         repositoryScope.launch {
 
-                            // Member started sharing
                             if (isSharingWithMe) {
                                 _events.emit(
                                     SocialEvent.SharingStarted(
@@ -380,7 +359,6 @@ class NotificationRepositoryImpl @Inject constructor(
                                     )
                                 )
                             } else {
-                                // Member stopped sharing
                                 _events.emit(
                                     SocialEvent.SharingStopped(
                                         memberId,
@@ -396,10 +374,8 @@ class NotificationRepositoryImpl @Inject constructor(
             override fun onCancelled(error: DatabaseError) {}
         }
 
-        // Attach listener
         ref.addValueEventListener(listener)
 
-        // Store it in map
         listenerMap[memberId] = listener
     }
 

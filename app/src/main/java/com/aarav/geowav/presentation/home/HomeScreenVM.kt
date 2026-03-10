@@ -82,8 +82,6 @@ class HomeScreenVM @Inject constructor(
     private var pathJob: Job? = null
 
 
-    // The UI (LiveLocationListener) observes this to draw orange stay markers on the map
-    // e.g. {"user_abc" -> [StayPoint(coffee shop), StayPoint(park)]}
     private val _liveStayPoints = MutableStateFlow<Map<String, List<StayPoint>>>(emptyMap())
     val liveStayPoints: StateFlow<Map<String, List<StayPoint>>> = _liveStayPoints.asStateFlow()
 
@@ -96,8 +94,6 @@ class HomeScreenVM @Inject constructor(
 
     private val observerJobs = mutableMapOf<String, Job>()
 
-
-    // Observe user live location updates
     fun observeUsers() {
 
         val lovedOnes = _uiState.value.lovedOnes
@@ -187,7 +183,6 @@ class HomeScreenVM @Inject constructor(
         }
     }
 
-    // job clean up when location sharing is not active
     fun cleanupRemovedUsers(activeUserIds: Set<String>) {
         observerJobs.keys
             .filter { it !in activeUserIds }
@@ -230,7 +225,6 @@ class HomeScreenVM @Inject constructor(
     val alerts = geoActivityRepositoryImpl.observeAlerts(ActivityFilter.Today)
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
 
-    // Load all loved ones
     fun loadLovedOnes() {
         Log.i("Circle", "list: called")
         if (viewerId.isEmpty()) return

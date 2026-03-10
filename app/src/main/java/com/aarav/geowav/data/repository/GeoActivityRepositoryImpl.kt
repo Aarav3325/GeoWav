@@ -25,7 +25,6 @@ class GeoActivityRepositoryImpl
     private fun uid(): String =
         auth.currentUser?.uid ?: throw IllegalStateException("User not logged in")
 
-    // get alerts based on selected time range
     override fun observeAlerts(filter: ActivityFilter): Flow<List<GeoAlert>> = callbackFlow {
         val userID = uid()
         val timeRange = rangeForFilter(filter)
@@ -33,7 +32,6 @@ class GeoActivityRepositoryImpl
         val ref = db.getReference("geofence_activity")
             .child(userID)
 
-        // Query for logs in the timestamp range
         val query = ref
             .orderByChild("timestamp")
             .startAt(timeRange.startMillis.toDouble())

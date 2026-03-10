@@ -28,12 +28,6 @@ class LocationPermissionRepositoryImpl
         updates["location_sharing/$currentUserId/$viewerId"] = true
 
         rootRef.updateChildren(updates).await()
-//        rootRef
-//            .child("location_sharing")
-//            .child(currentUserId)
-//            .child(viewerId)
-//            .setValue(true)
-//            .await()
     }
 
     override suspend fun updateSharedWith(

@@ -14,10 +14,6 @@ class GeofenceRepositoryImpl @Inject constructor(@ApplicationContext val context
                                                  val geofencingClient: GeofencingClient, val geofenceHelper : GeofenceHelper
     ) {
 
-//    @Inject
-//    lateinit var geofencingClient: GeofencingClient
-//    @Inject
-//    lateinit var geofenceHelper : GeofenceHelper
 
     @RequiresPermission(Manifest.permission.ACCESS_FINE_LOCATION)
     fun registerAllPlaces(places: List<Place>) {

@@ -35,15 +35,11 @@ class SessionHistoryRepositoryImpl
             .child(session.userId)
             .child(session.id)
 
-        // Only write if this session doesn't already exist
-        // Prevents duplicate writes when multiple observers see Blocked
         sessionRef.runTransaction(object : Transaction.Handler {
             override fun doTransaction(currentData: MutableData): Transaction.Result {
-                // If data already exists, skip the write
                 if (currentData.value != null) {
                     return Transaction.abort()
                 }
-                // No data yet, write the session
                 currentData.value = session
                 return Transaction.success(currentData)
             }

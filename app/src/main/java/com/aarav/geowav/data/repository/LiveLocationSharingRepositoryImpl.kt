@@ -53,7 +53,6 @@ class LiveLocationSharingRepositoryImpl
         awaitClose { ref.removeEventListener(listener) }
     }
 
-    // Start sharing live location
     override suspend fun startSharing(
         userName: String,
         userId: String,
@@ -86,7 +85,6 @@ class LiveLocationSharingRepositoryImpl
             .setValue(false)
     }
 
-    // Update location
     override suspend fun updateLocation(userId: String, lat: Double, long: Double) {
 
         val pathRef = rootRef.child("live_location/$userId").child("path").push()
@@ -95,12 +93,10 @@ class LiveLocationSharingRepositoryImpl
         val now = System.currentTimeMillis()
         val updates = hashMapOf<String, Any>()
 
-        // Keep existing fields for observers
         updates["live_location/$userId/lat"] = lat
         updates["live_location/$userId/lng"] = long
         updates["live_location/$userId/timestamp"] = now
 
-        // Persist path
         updates["live_location/$userId/path/${pathRef.key}"] = mapOf(
             "lat" to lat,
             "lng" to long,
@@ -111,7 +107,6 @@ class LiveLocationSharingRepositoryImpl
         rootRef.updateChildren(updates).await()
     }
 
-    // Stop sharing live location
     override suspend fun stopSharingLiveLocation(userId: String) {
 
         val liveRef = rootRef.child("live_location").child(userId)
@@ -119,7 +114,6 @@ class LiveLocationSharingRepositoryImpl
 
         if (!snapshot.exists()) return
 
-        // Only finalize if active was true or path exists
         if (snapshot.child("path").childrenCount < 2) {
             liveRef.removeValue().await()
             return
@@ -165,7 +159,6 @@ class LiveLocationSharingRepositoryImpl
             end.longitude
         ) ?: "Unknown Location"
 
-        // Get stay points
         val stayPoints = snapshot.child("stayPoints")
             .children.mapNotNull {
                 it.getValue(StayPoint::class.java)
@@ -173,7 +166,6 @@ class LiveLocationSharingRepositoryImpl
 
         val sessionId = "${userId}_${startedAt}"
 
-        // Save session history
         val sessionHistory = SessionHistory(
             id = sessionId,
             userId = userId,
@@ -200,7 +192,6 @@ class LiveLocationSharingRepositoryImpl
         liveRef.removeValue().await()
     }
 
-    // Get address from latlng using Geocoder
     private suspend fun getAddressFromLatLng(
         lat: Double,
         lng: Double
@@ -222,7 +213,6 @@ class LiveLocationSharingRepositoryImpl
         }
     }
 
-    // Save stay point
     override suspend fun saveStayPoint(
         userId: String,
         stayPoint: StayPoint
@@ -235,7 +225,6 @@ class LiveLocationSharingRepositoryImpl
             .await()
     }
 
-    // Check if user is sharing live location
     override suspend fun isLiveLocationActive(userId: String): Boolean {
         val snapshot = rootRef
             .child("live_location")
@@ -247,7 +236,6 @@ class LiveLocationSharingRepositoryImpl
         return snapshot.getValue(Boolean::class.java) == true
     }
 
-    // Get timestamp for last location update
     override fun getUpdatedTimestamp(userId: String): Flow<Long> = callbackFlow {
         val ref = rootRef.child("live_location")
             .child(userId)
