@@ -198,21 +198,21 @@ fun GeoWavHomeScreen(
                     )
                 },
                 actions = {
-                    IconButton(
-                        onClick = {
-                            scope.launch {
-                                // Toast.makeText(context, "Welcome to GeoWav", Toast.LENGTH_LONG).show()
-                                SnackbarManager.showMessage("No Notifications")
-                            }
-                        }
-                    ) {
-                        Image(
-                            painter = painterResource(R.drawable.bell),
-                            contentDescription = "bell",
-                            modifier = Modifier.size(28.dp),
-                            colorFilter = ColorFilter.tint(textColor)
-                        )
-                    }
+//                    IconButton(
+//                        onClick = {
+//                            scope.launch {
+//                                // Toast.makeText(context, "Welcome to GeoWav", Toast.LENGTH_LONG).show()
+//                                SnackbarManager.showMessage("No Notifications")
+//                            }
+//                        }
+//                    ) {
+//                        Image(
+//                            painter = painterResource(R.drawable.bell),
+//                            contentDescription = "bell",
+//                            modifier = Modifier.size(28.dp),
+//                            colorFilter = ColorFilter.tint(textColor)
+//                        )
+//                    }
 
                     IconButton(
 //                        onClick = onThemeChange
@@ -733,8 +733,7 @@ fun ConnectionStatusCard(
         colors = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.surfaceContainer
         ),
-        shape = RoundedCornerShape(16.dp),
-        elevation = CardDefaults.cardElevation(4.dp)
+        shape = RoundedCornerShape(16.dp)
     ) {
 
         Column(
@@ -982,8 +981,7 @@ fun ZoneCard(zone: Place, onClick: () -> Unit) {
         colors = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.surfaceContainer
         ),
-        shape = RoundedCornerShape(12.dp),
-        elevation = CardDefaults.cardElevation(4.dp)
+        shape = RoundedCornerShape(12.dp)
     ) {
         Row(
             modifier = Modifier

@@ -53,17 +53,16 @@ fun GeofencePlaceCard(
             modifier = Modifier
                 .fillMaxWidth()
                 .wrapContentHeight()
-                .padding(vertical = 8.dp),
+                .padding(vertical = 8.dp, horizontal = 16.dp),
             shape = RoundedCornerShape(16.dp),
             colors = CardDefaults.cardColors(
-                containerColor = MaterialTheme.colorScheme.surfaceBright
-            ),
-            elevation = CardDefaults.cardElevation(6.dp)
+                containerColor = MaterialTheme.colorScheme.surfaceContainerHigh
+            )
         ) {
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(top = 8.dp, start = 8.dp, end = 8.dp),
+                    .padding(horizontal = 16.dp, vertical = 8.dp),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
@@ -86,7 +85,7 @@ fun GeofencePlaceCard(
                 Text(
                     text = place.placeName,
                     color = MaterialTheme.colorScheme.primary,
-                    fontSize = 18.sp,
+                    fontSize = 16.sp,
                     maxLines = 2,
                     overflow = TextOverflow.Ellipsis,
                     fontFamily = manrope,
@@ -124,7 +123,7 @@ fun GeofencePlaceCard(
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(8.dp),
+                    .padding(horizontal = 16.dp, vertical = 8.dp),
                 horizontalAlignment = Alignment.Start,
                 verticalArrangement = Arrangement.spacedBy(4.dp)
             ) {
@@ -133,7 +132,7 @@ fun GeofencePlaceCard(
                     color = MaterialTheme.colorScheme.onSurface,
                     maxLines = 2,
                     overflow = TextOverflow.Ellipsis,
-                    fontSize = 16.sp,
+                    fontSize = 14.sp,
                     fontWeight = FontWeight.SemiBold,
                     fontFamily = sora,
                 )
@@ -143,7 +142,7 @@ fun GeofencePlaceCard(
                         place.latitude.toString().take(7)
                     }, Lng: ${place.latitude.toString().take(7)}",
                     color = MaterialTheme.colorScheme.onSurface,
-                    fontSize = 14.sp,
+                    fontSize = 12.sp,
                     fontWeight = FontWeight.Normal,
                     fontFamily = sora,
                 )

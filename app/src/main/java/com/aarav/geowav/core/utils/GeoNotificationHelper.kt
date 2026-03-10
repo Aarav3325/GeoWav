@@ -9,19 +9,18 @@ import android.util.Log
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
 import androidx.core.content.ContextCompat
-import androidx.core.content.PermissionChecker
 import com.aarav.geowav.MainActivity
 import com.aarav.geowav.R
 import com.aarav.geowav.presentation.navigation.NavRoute
 
 sealed class NotificationType {
-    object AcceptInvite: NotificationType()
-    object NewInvite: NotificationType()
-    object SharingStarted: NotificationType()
-    object SharingStopped: NotificationType()
-    object EmergencyStarted: NotificationType()
-    object EmergencyStopped: NotificationType()
-    object Trigger: NotificationType()
+    object AcceptInvite : NotificationType()
+    object NewInvite : NotificationType()
+    object SharingStarted : NotificationType()
+    object SharingStopped : NotificationType()
+    object EmergencyStarted : NotificationType()
+    object EmergencyStopped : NotificationType()
+    object Trigger : NotificationType()
 }
 
 object GeoNotificationHelper {
@@ -33,6 +32,7 @@ object GeoNotificationHelper {
         message: String,
         type: NotificationType
     ) {
+
         val value = when (type) {
             NotificationType.AcceptInvite -> NavRoute.Circle.path
             NotificationType.NewInvite -> NavRoute.Circle.path
@@ -42,8 +42,6 @@ object GeoNotificationHelper {
             NotificationType.EmergencyStopped -> NavRoute.HomeScreen.path
             NotificationType.Trigger -> NavRoute.HomeScreen.path
         }
-
-
 
         val intent = Intent(context, MainActivity::class.java).apply {
             flags = Intent.FLAG_ACTIVITY_SINGLE_TOP or Intent.FLAG_ACTIVITY_CLEAR_TOP

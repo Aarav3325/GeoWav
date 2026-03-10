@@ -10,6 +10,7 @@ import android.content.SharedPreferences
 import android.location.Location
 import android.os.Build
 import android.os.IBinder
+import android.util.Log
 import androidx.core.app.NotificationCompat
 import androidx.core.content.edit
 import com.aarav.geowav.R
@@ -86,17 +87,22 @@ class LiveLocationService : Service() {
 
                 setSharingState(ServiceState.NOT_SHARING)
 
-                stopForeground(STOP_FOREGROUND_REMOVE)
+                if (::locationCallback.isInitialized) {
+                    stopLocationUpdates()
+                }
+
+                stopForeground(true)
+                Log.i("SERVICE", "stopped")
 
                 val manager = getSystemService(NotificationManager::class.java)
-                manager.cancel(1)
+                manager.cancel(3)
 
                 stopSelf()
                 return START_NOT_STICKY
             }
         }
 
-        return START_STICKY
+        return START_NOT_STICKY
     }
 
 
@@ -117,6 +123,7 @@ class LiveLocationService : Service() {
     override fun onCreate() {
         super.onCreate()
 
+        Log.i("SERVICE", "started")
         serviceScope.launch {
 
             killSwitchManager.fetchAndActivate()
@@ -135,12 +142,12 @@ class LiveLocationService : Service() {
 
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
                 startForeground(
-                    1,
+                    3,
                     createNotification(),
                     android.content.pm.ServiceInfo.FOREGROUND_SERVICE_TYPE_LOCATION
                 )
             } else {
-                startForeground(1, createNotification())
+                startForeground(3, createNotification())
             }
 
             sendLastKnownLocation()

@@ -26,7 +26,7 @@ class GeoActivityRepositoryImpl
         auth.currentUser?.uid ?: throw IllegalStateException("User not logged in")
 
     // get alerts based on selected time range
-    override fun observeAlerts(filter: ActivityFilter): Flow<List<GeoAlert>> = callbackFlow{
+    override fun observeAlerts(filter: ActivityFilter): Flow<List<GeoAlert>> = callbackFlow {
         val userID = uid()
         val timeRange = rangeForFilter(filter)
 
@@ -45,9 +45,7 @@ class GeoActivityRepositoryImpl
                     val activity = snap.getValue(FirebaseActivity::class.java)
                     activity?.toGeoAlert(id = snap.key ?: "")
                 }.sortedByDescending { alert ->
-                    // If you later add timestamp to GeoAlert, sort by that.
-                    // For now, we just keep the order from Firebase (usually already by timestamp).
-                    alert.time // not perfect, but okay if readableTime is ordered
+                    alert.time
                 }
 
                 trySend(alerts)

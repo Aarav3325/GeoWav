@@ -4,32 +4,12 @@ import com.aarav.geowav.data.model.StayPoint
 import com.google.android.gms.maps.model.LatLng
 import com.google.maps.android.SphericalUtil
 
-/**
- * In-memory tracker that detects stay points for a single user.
- *
- * A stay point is created when the user remains within
- * [StayPoint.STAY_RADIUS_METERS] of an anchor point for at least
- * [StayPoint.STAY_MIN_DURATION_MS].
- */
 class StayPointTracker {
 
-    /** Finalized stay points that exceeded the minimum duration. */
     private val _finalizedStays = mutableListOf<StayPoint>()
 
-    /** Currently active (potential) stay. 'null' when the user is moving. */
     private var _activeStay: ActiveStay? = null
 
-
-    /** All finalized stay points so far. */
-    val finalizedStays: List<StayPoint> get() = _finalizedStays.toList()
-
-    /**
-     * The currently active stay if it has already exceeded the
-     * minimum duration threshold, otherwise 'null'.
-     *
-     * Use this for live UI — it returns a [StayPoint] snapshot whose
-     * `endedAt` and `durationMillis` reflect the latest update.
-     */
     val activeQualifiedStay: StayPoint?
         get() {
             val active = _activeStay ?: return null
@@ -55,11 +35,6 @@ class StayPointTracker {
     }
 
     // Update with a new location
-
-    /**
-     * Feed a new location update. Call this each time a valid
-     * location comes in from the live sharing flow.
-     */
     fun onLocationUpdate(lat: Double, lng: Double, timestamp: Long) {
         val current = _activeStay
 
@@ -97,13 +72,6 @@ class StayPointTracker {
     }
 
     // Finalization
-
-    /**
-     * Call when the session ends (Blocked state) to finalize any
-     * in-progress stay before persisting to Firebase.
-     *
-     * @return all stay points (finalized + the last active one if qualified)
-     */
     fun finalizeAll(): List<StayPoint> {
         finalizeActiveIfQualified()
         _activeStay = null
@@ -116,10 +84,6 @@ class StayPointTracker {
         return stays
     }
 
-    /**
-     * Clears all state. Call when a user's session is fully done
-     * and the tracker instance is being discarded / recycled.
-     */
     fun reset() {
         _finalizedStays.clear()
         _activeStay = null
@@ -148,9 +112,6 @@ class StayPointTracker {
         }
     }
 
-    /**
-     * Internal mutable state representing a potential stay in progress.
-     */
     private data class ActiveStay(
         val anchorLat: Double,
         val anchorLng: Double,
