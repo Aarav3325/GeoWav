@@ -1,11 +1,9 @@
 package com.aarav.geowav
 
-import com.aarav.geowav.presentation.navigation.NavGraph
 import android.Manifest
 import android.app.PendingIntent
 import android.content.Intent
 import android.content.SharedPreferences
-import android.content.pm.PackageManager
 import android.location.Location
 import android.os.Build
 import android.os.Bundle
@@ -62,6 +60,7 @@ import com.aarav.geowav.presentation.components.LocationPermissionDialog
 import com.aarav.geowav.presentation.components.NotificationDisabledDialog
 import com.aarav.geowav.presentation.components.SnackbarManager
 import com.aarav.geowav.presentation.navigation.BottomNavigationBar
+import com.aarav.geowav.presentation.navigation.NavGraph
 import com.aarav.geowav.presentation.navigation.NavRoute
 import com.aarav.geowav.presentation.settings.ThemeMode
 import com.aarav.geowav.presentation.settings.openAppSettings
@@ -99,6 +98,16 @@ class MainActivity : ComponentActivity() {
     lateinit var geofencingClient: GeofencingClient
 
     private var isAppEnabled = false
+
+    private var notificationIntent by mutableStateOf<String?>(null)
+
+    override fun onNewIntent(intent: Intent) {
+        super.onNewIntent(intent)
+
+        notificationIntent = intent.getStringExtra("type")
+
+        Log.i("NOTI", "intent: $notificationIntent")
+    }
 
 
     @RequiresPermission(Manifest.permission.ACCESS_FINE_LOCATION)
@@ -164,6 +173,7 @@ class MainActivity : ComponentActivity() {
 //        }
 
         setContent {
+
             var showAppDisabledState by remember {
                 mutableStateOf(false)
             }
@@ -177,7 +187,10 @@ class MainActivity : ComponentActivity() {
 
             LaunchedEffect(Unit) {
                 val check =
-                    ContextCompat.checkSelfPermission(context, Manifest.permission.POST_NOTIFICATIONS)
+                    ContextCompat.checkSelfPermission(
+                        context,
+                        Manifest.permission.POST_NOTIFICATIONS
+                    )
 
                 Log.i("MYTAG", "notification permissions: $check")
             }
@@ -226,7 +239,7 @@ class MainActivity : ComponentActivity() {
 //            }
 
             LaunchedEffect(Unit) {
-                if(googleSignInClient.isLoggedIn()) {
+                if (googleSignInClient.isLoggedIn()) {
                     killSwitchManager.fetchAndActivate()
                     killSwitchManager.observeAppEnabled()
                         .collect { enabled ->
@@ -369,6 +382,16 @@ class MainActivity : ComponentActivity() {
 
 
                     val navController = rememberNavController()
+
+                    LaunchedEffect(notificationIntent) {
+                        notificationIntent?.let {
+                            Log.i("NOTI", "routing")
+
+                            navController.navigate(it)
+
+                            notificationIntent = null
+                        }
+                    }
 
                     val navBackStackEntry by navController.currentBackStackEntryAsState()
                     val currentRoute = navBackStackEntry?.destination?.route

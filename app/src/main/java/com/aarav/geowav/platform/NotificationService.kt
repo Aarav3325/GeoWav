@@ -9,6 +9,7 @@ import android.os.IBinder
 import androidx.core.app.NotificationCompat
 import com.aarav.geowav.R
 import com.aarav.geowav.core.utils.GeoNotificationHelper
+import com.aarav.geowav.core.utils.NotificationType
 import com.aarav.geowav.core.utils.Resource
 import com.aarav.geowav.data.repository.NotificationRepositoryImpl
 import com.aarav.geowav.domain.repository.CircleRepository
@@ -76,7 +77,8 @@ class NotificationService : Service() {
                     this,
                     "circle_channel",
                     "New Invite",
-                    "${event.senderName} invited you to their circle"
+                    "${event.senderName} invited you to their circle",
+                    NotificationType.NewInvite
                 )
             }
 
@@ -85,7 +87,8 @@ class NotificationService : Service() {
                     this,
                     "circle_channel",
                     "Circle Update",
-                    "${event.userName} accepted your invite and joined your circle"
+                    "${event.userName} accepted your invite and joined your circle",
+                    NotificationType.AcceptInvite
                 )
             }
 
@@ -94,7 +97,8 @@ class NotificationService : Service() {
                     this,
                     "sharing_channel",
                     "Location Update",
-                    "${event.userName} started sharing location"
+                    "${event.userName} started sharing location",
+                    NotificationType.SharingStarted
                 )
             }
 
@@ -103,7 +107,8 @@ class NotificationService : Service() {
                     this,
                     "sharing_channel",
                     "Location Update",
-                    "${event.userName} stopped sharing location"
+                    "${event.userName} stopped sharing location",
+                    NotificationType.SharingStopped
                 )
             }
 
@@ -112,7 +117,8 @@ class NotificationService : Service() {
                     this,
                     "emergency_channel",
                     "Emergency Alert 🚨",
-                    "${event.userName} has activated emergency mode. Tap to view location."
+                    "${event.userName} has activated emergency mode. Tap to view location.",
+                    NotificationType.EmergencyStarted
                 )
             }
 
@@ -121,7 +127,8 @@ class NotificationService : Service() {
                     this,
                     "emergency_channel",
                     "Emergency Cleared",
-                    "${event.userName} has ended emergency mode."
+                    "${event.userName} has ended emergency mode.",
+                    NotificationType.EmergencyStopped
                 )
             }
 
@@ -130,7 +137,8 @@ class NotificationService : Service() {
                     this,
                     "geo_channel",
                     "Geofence Alert",
-                    "${event.geofence.userName} ${event.geofence.title} at ${event.geofence.time}"
+                    "${event.geofence.userName} ${event.geofence.title} at ${event.geofence.time}",
+                    NotificationType.Trigger
                 )
             }
         }

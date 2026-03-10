@@ -12,6 +12,17 @@ import androidx.core.content.ContextCompat
 import androidx.core.content.PermissionChecker
 import com.aarav.geowav.MainActivity
 import com.aarav.geowav.R
+import com.aarav.geowav.presentation.navigation.NavRoute
+
+sealed class NotificationType {
+    object AcceptInvite: NotificationType()
+    object NewInvite: NotificationType()
+    object SharingStarted: NotificationType()
+    object SharingStopped: NotificationType()
+    object EmergencyStarted: NotificationType()
+    object EmergencyStopped: NotificationType()
+    object Trigger: NotificationType()
+}
 
 object GeoNotificationHelper {
 
@@ -19,11 +30,25 @@ object GeoNotificationHelper {
         context: Context,
         channelId: String,
         title: String,
-        message: String
+        message: String,
+        type: NotificationType
     ) {
+        val value = when (type) {
+            NotificationType.AcceptInvite -> NavRoute.Circle.path
+            NotificationType.NewInvite -> NavRoute.Circle.path
+            NotificationType.SharingStarted -> NavRoute.ObserveUsers.path
+            NotificationType.SharingStopped -> NavRoute.HomeScreen.path
+            NotificationType.EmergencyStarted -> NavRoute.ObserveUsers.path
+            NotificationType.EmergencyStopped -> NavRoute.HomeScreen.path
+            NotificationType.Trigger -> NavRoute.HomeScreen.path
+        }
+
+
+
         val intent = Intent(context, MainActivity::class.java).apply {
             flags = Intent.FLAG_ACTIVITY_SINGLE_TOP or Intent.FLAG_ACTIVITY_CLEAR_TOP
-        }
+        }.putExtra("type", value)
+
 
         val pendingIntent = PendingIntent.getActivity(
             context,

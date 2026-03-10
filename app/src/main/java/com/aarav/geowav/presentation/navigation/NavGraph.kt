@@ -28,7 +28,6 @@ import com.aarav.geowav.presentation.observe.ObserveScreen
 import com.aarav.geowav.presentation.onboard.OnboardingScreen
 import com.aarav.geowav.presentation.settings.SettingsScreen
 import com.aarav.geowav.presentation.settings.ThemeMode
-import com.aarav.geowav.presentation.settings.TriggerType
 import com.aarav.geowav.presentation.timeline.TimelineMapPreview
 import com.aarav.geowav.presentation.timeline.TimelineScreen
 import com.aarav.geowav.presentation.yourplace.YourPlacesScreen
@@ -47,11 +46,17 @@ fun NavGraph(
     val isLoggedIn = googleSignInClient.isLoggedIn()
     val isOnboarded = sharedPreferences.getBoolean("isOnboarded", false)
 
+    val startDestination = when {
+        isLoggedIn && isOnboarded -> "home_graph"
+        !isOnboarded -> NavRoute.OnBoard.path
+        !isLoggedIn && isOnboarded -> NavRoute.Login.path
+        else -> NavRoute.SignUp.path
+    }
+
     NavHost(
         modifier = modifier,
         navController = navHostController,
-        startDestination = if (isLoggedIn && isOnboarded) "home_graph" else if (!isOnboarded) NavRoute.OnBoard.path
-        else if (!isLoggedIn && isOnboarded) NavRoute.Login.path else NavRoute.SignUp.path
+        startDestination = startDestination
     ) {
         AddMapsScreen(
             isDarkThemeEnabled,
