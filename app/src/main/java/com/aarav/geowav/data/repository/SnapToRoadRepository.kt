@@ -13,7 +13,6 @@ class SnapToRoadRepository @Inject constructor(
     val roadsApi: RoadsApi
 ) {
 
-
     private val sessionCache = mutableMapOf<String, List<SnappedPoint>>()
 
     suspend fun snapToRoad(

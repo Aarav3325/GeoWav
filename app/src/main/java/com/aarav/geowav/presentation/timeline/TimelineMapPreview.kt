@@ -197,7 +197,7 @@ fun TimelineMapPreview(
         uiState.lastPosition?.let { pos ->
             movingMarkerState.position = pos
             if (followUser) {
-                cameraPositionState.animate(CameraUpdateFactory.newLatLng(pos))
+                cameraPositionState.move(CameraUpdateFactory.newLatLng(pos))
             }
         }
     }
