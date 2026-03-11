@@ -254,8 +254,8 @@ fun TimelineMapPreview(
         },
         contentWindowInsets = WindowInsets(0, 0, 0, 0)
     ) { padding ->
-
-        Log.i("SNAP", "path: $finalSnappedPath")
+//
+//        Log.i("SNAP", "path: $finalSnappedPath")
 
         Box(
             modifier = Modifier
@@ -400,7 +400,7 @@ fun TimelineMapPreview(
                 }
             }
 
-            val speeds = listOf(5f, 8f, 10f)
+            val speeds = listOf(2f, 5f, 8f)
 
             val sliderState = rememberSliderState(
                 value = 0f,
@@ -600,9 +600,15 @@ fun TimelineMapPreview(
                                             boundsBuilder.include(LatLng(it.lat, it.lng))
                                         }
 
+                                        if(uiState.isPlaying && uiState.lastPosition != null) {
+                                            uiState.lastPosition?.let {
+                                                boundsBuilder.include(it)
+                                            }
+                                        }
+
                                         cameraPositionState.animate(
                                             CameraUpdateFactory.newLatLngBounds(
-                                                boundsBuilder.build(), 230
+                                                boundsBuilder.build(), 200
                                             )
                                         )
 

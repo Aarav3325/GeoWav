@@ -15,20 +15,22 @@ abstract class PlaceDatabase : RoomDatabase() {
     abstract val connectionDao : ConnectionDao
 //    abstract val sessionHistoryDao : SessionHistoryDao
 
-    companion object{
+    companion object {
 
         @Volatile
-        private var INSTANCE : PlaceDatabase? = null
+        private var INSTANCE: PlaceDatabase? = null
 
-        fun getInstance(context: Context) : PlaceDatabase{
+        fun getInstance(context: Context): PlaceDatabase {
 
-            synchronized(this){
+            synchronized(this) {
                 var instance = INSTANCE
 
-                if(instance == null){
-                    instance = Room.databaseBuilder(context,
+                if (instance == null) {
+                    instance = Room.databaseBuilder(
+                        context,
                         PlaceDatabase::class.java,
-                        "place_database")
+                        "place_database"
+                    )
                         .fallbackToDestructiveMigration()
                         .build()
                 }

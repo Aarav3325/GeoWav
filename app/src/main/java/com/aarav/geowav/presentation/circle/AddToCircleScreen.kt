@@ -18,6 +18,8 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardActions
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -47,9 +49,11 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -314,7 +318,7 @@ fun AddLovedOneCard(
                 ), shape = RoundedCornerShape(12.dp)
             )
 
-
+            val focusManager = LocalFocusManager.current
 
             Spacer(Modifier.height(6.dp))
 
@@ -352,7 +356,14 @@ fun AddLovedOneCard(
                             )
                         )
                     }
-                },
+                },keyboardOptions = KeyboardOptions(
+                    imeAction = ImeAction.Done
+                ),
+                keyboardActions = KeyboardActions(
+                    onDone = {
+                        focusManager.clearFocus()
+                    }
+                ),
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(), singleLine = true, leadingIcon = {
@@ -375,6 +386,7 @@ fun AddLovedOneCard(
             Spacer(Modifier.height(6.dp))
 
             SendInviteButton(!isLoading) {
+                focusManager.clearFocus()
                 onSendInvite(uiState.email, uiState.name)
             }
         }

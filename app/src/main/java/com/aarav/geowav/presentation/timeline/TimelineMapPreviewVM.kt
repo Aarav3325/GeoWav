@@ -126,7 +126,6 @@ class TimelineMapPreviewVM @Inject constructor(
                     if (!_uiState.value.isPlaying) return@launch
 
                     val speed = _uiState.value.speed
-                    Log.i("SLIDER", "current speed $speed")
                     val duration = (baseDuration / speed).toLong()
                     val fraction = step / steps.toFloat()
 

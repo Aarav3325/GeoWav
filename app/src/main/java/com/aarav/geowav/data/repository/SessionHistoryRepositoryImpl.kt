@@ -76,9 +76,6 @@ class SessionHistoryRepositoryImpl
             .endAt(timeRange.endMillis.toDouble())
 
 
-
-        Log.i("SESSION", "allowed")
-
         val listener = object : ValueEventListener {
 
             override fun onDataChange(snapshot: DataSnapshot) {
@@ -87,7 +84,7 @@ class SessionHistoryRepositoryImpl
 
                     val session = child.getValue(SessionHistory::class.java)
 
-                    Log.i("SESSION", "other: " + session.toString())
+                    //Log.i("SESSION", "other: " + session.toString())
                     if (session != null &&
                         session.sharedWith.contains(viewerId)
                     ) {
@@ -132,7 +129,7 @@ class SessionHistoryRepositoryImpl
 
             override fun onDataChange(snapshot: DataSnapshot) {
 
-                Log.i("SESSION", "session: $snapshot")
+                //Log.i("SESSION", "session: $snapshot")
                 val sessions = snapshot.children.mapNotNull {
                     val session = it.getValue(SessionHistory::class.java)
 
@@ -143,7 +140,7 @@ class SessionHistoryRepositoryImpl
 
 
                     }
-                Log.i("SESSION", "data: $sessions")
+                //Log.i("SESSION", "data: $sessions")
 
 
                 trySend(sessions)
@@ -173,7 +170,7 @@ class SessionHistoryRepositoryImpl
             .await()
             .getValue(SessionHistory::class.java)
 
-        Log.i("SESSIONS", "session by id: " + session?.userPath.toString())
+        //Log.i("SESSIONS", "session by id: " + session?.userPath.toString())
 
         return session?.toTimelineItem(session.userName)
     }

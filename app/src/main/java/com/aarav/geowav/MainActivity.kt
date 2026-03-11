@@ -270,7 +270,7 @@ class MainActivity : ComponentActivity() {
                 locationManager.getLocationUpdates().distinctUntilChanged().collectLatest {
                     location = it
 
-                    Log.i("LOCATION", "lat: ${location?.latitude}, long: ${location?.longitude}")
+                   // Log.i("LOCATION", "lat: ${location?.latitude}, long: ${location?.longitude}")
 
                 }
 

@@ -427,7 +427,7 @@ fun ObserveLiveLocationCard(
 
 
 
-    Log.i("OBSERVE", "current viewer: " + viewerInfo.toString())
+//    Log.i("OBSERVE", "current viewer: " + viewerInfo.toString())
 
 
     //    Column(
@@ -493,7 +493,7 @@ fun ObserveLiveLocationCard(
                 )
             }
 
-            Log.i("POLYLINE", "selected user: $selectedUser")
+//            Log.i("POLYLINE", "selected user: $selectedUser")
 
             userPaths.forEach { (userId, path) ->
 

@@ -512,7 +512,6 @@ fun MapPreviewCard(
     Surface(
         color = MaterialTheme.colorScheme.surfaceContainerHigh,
         shape = RoundedCornerShape(24.dp),
-        shadowElevation = 6.dp,
         tonalElevation = 4.dp,
         modifier = Modifier
             .fillMaxWidth()

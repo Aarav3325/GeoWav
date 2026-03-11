@@ -43,7 +43,9 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.ContainedLoadingIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
@@ -72,6 +74,7 @@ import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -94,7 +97,10 @@ import com.google.accompanist.permissions.isGranted
 import com.google.accompanist.permissions.rememberPermissionState
 import kotlinx.coroutines.delay
 
-@OptIn(ExperimentalMaterial3Api::class, ExperimentalPermissionsApi::class)
+@OptIn(
+    ExperimentalMaterial3Api::class, ExperimentalPermissionsApi::class,
+    ExperimentalMaterial3ExpressiveApi::class
+)
 @Composable
 fun GeoWavHomeScreen(
     isDarkThemeEnabled: Boolean,
@@ -237,7 +243,7 @@ fun GeoWavHomeScreen(
         homeScreenVM.loadLovedOnes()
     }
 
-    Log.i("HOME", uiState.lovedOnes.toString())
+//    Log.i("HOME", uiState.lovedOnes.toString())
 
     LaunchedEffect(locations) {
         if (locations.isNotEmpty()) {
@@ -288,18 +294,19 @@ fun GeoWavHomeScreen(
         modifier = Modifier.fillMaxSize(),
         contentWindowInsets = WindowInsets(0),
         topBar = {
-            TopAppBar(
-                title = {
-                    Text(
-                        text = "GeoWav",
-                        style = MaterialTheme.typography.headlineLarge.copy(
-                            color = textColor
-                        ),
-                        fontFamily = manrope,
-                        fontWeight = FontWeight.Bold
-                    )
-                },
-                actions = {
+            if (!uiState.username.isNullOrEmpty()) {
+                TopAppBar(
+                    title = {
+                        Text(
+                            text = "GeoWav",
+                            style = MaterialTheme.typography.headlineLarge.copy(
+                                color = textColor
+                            ),
+                            fontFamily = manrope,
+                            fontWeight = FontWeight.Bold
+                        )
+                    },
+                    actions = {
 //                    IconButton(
 //                        onClick = {
 //                            scope.launch {
@@ -316,27 +323,29 @@ fun GeoWavHomeScreen(
 //                        )
 //                    }
 
-                    IconButton(
+                        IconButton(
 //                        onClick = onThemeChange
-                        onClick = {
-                            navigateToSettings()
+                            onClick = {
+                                navigateToSettings()
 //                            homeScreenVM.signOut()
 //                            navigateToAuth()
+                            }
+                        ) {
+                            Image(
+                                painter = painterResource(R.drawable.gear_six),
+                                contentDescription = "setting",
+                                modifier = Modifier.size(28.dp),
+                                colorFilter = ColorFilter.tint(textColor)
+                            )
                         }
-                    ) {
-                        Image(
-                            painter = painterResource(R.drawable.gear_six),
-                            contentDescription = "setting",
-                            modifier = Modifier.size(28.dp),
-                            colorFilter = ColorFilter.tint(textColor)
-                        )
-                    }
-                },
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = backgroundColor
+                    },
+                    colors = TopAppBarDefaults.topAppBarColors(
+                        containerColor = backgroundColor
+                    )
                 )
-            )
+            }
         }
+
     ) { innerPadding ->
 
         Box(
@@ -345,81 +354,87 @@ fun GeoWavHomeScreen(
                 .background(MaterialTheme.colorScheme.background)
         ) {
 
-            locations.forEach { (ownerId, state) ->
-                when (state) {
-                    is ViewerLocationState.NormalSharing -> {
-                        Log.i("OBSERVE", "user: $ownerId, location: ${state.location}")
-                    }
+//            locations.forEach { (ownerId, state) ->
+//                when (state) {
+//                    is ViewerLocationState.NormalSharing -> {
+//                        Log.i("OBSERVE", "user: $ownerId, location: ${state.location}")
+//                    }
+//
+//
+//                    is ViewerLocationState.EmergencySharing -> {
+//                        Log.i(
+//                            "OBSERVE",
+//                            "user: $ownerId, location: ${state.location}, remaining: ${state.endsAt}"
+//                        )
+//                    }
+//
+//                    ViewerLocationState.Blocked -> Unit
+//                }
+//            }
 
+            if (uiState.username.isNullOrEmpty()) {
+                ContainedLoadingIndicator(
+                    Modifier.align(Alignment.Center)
+                )
+            } else {
 
-                    is ViewerLocationState.EmergencySharing -> {
-                        Log.i(
-                            "OBSERVE",
-                            "user: $ownerId, location: ${state.location}, remaining: ${state.endsAt}"
-                        )
-                    }
-
-                    ViewerLocationState.Blocked -> Unit
-                }
-            }
-
-            Column(
-                modifier = modifier
-                    .fillMaxSize()
-                    .verticalScroll(scroll)
-                    .background(MaterialTheme.colorScheme.background)
-            ) {
-
-
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-
+                Column(
+                    modifier = modifier
+                        .fillMaxSize()
+                        .verticalScroll(scroll)
                         .background(MaterialTheme.colorScheme.background)
                 ) {
 
-
-                    Image(
-                        painter = if (isDarkThemeEnabled) painterResource(R.drawable.dark_bg_geowav_new_2) else painterResource(
-                            R.drawable.light_bg_geowav_new
-                        ),
-                        contentDescription = "bg",
-                        contentScale = ContentScale.FillBounds,
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(250.dp)
-                    )
 
                     Box(
                         modifier = Modifier
-                            .matchParentSize()
-                            .background(
-                                Brush.verticalGradient(
-                                    colors = listOf(
-                                        MaterialTheme.colorScheme.background.copy(alpha = 0.1f),
-                                        Color.Transparent,
-                                        MaterialTheme.colorScheme.onBackground.copy(alpha = 0.1f)
+                            .fillMaxWidth()
+
+                            .background(MaterialTheme.colorScheme.background)
+                    ) {
+
+
+                        Image(
+                            painter = if (isDarkThemeEnabled) painterResource(R.drawable.dark_bg_geowav_new_2) else painterResource(
+                                R.drawable.light_bg_geowav_new
+                            ),
+                            contentDescription = "bg",
+                            contentScale = ContentScale.FillBounds,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(250.dp)
+                        )
+
+                        Box(
+                            modifier = Modifier
+                                .matchParentSize()
+                                .background(
+                                    Brush.verticalGradient(
+                                        colors = listOf(
+                                            MaterialTheme.colorScheme.background.copy(alpha = 0.1f),
+                                            Color.Transparent,
+                                            MaterialTheme.colorScheme.onBackground.copy(alpha = 0.1f)
+                                        )
                                     )
                                 )
-                            )
-                    )
+                        )
 
 
-                    ProfileCard(
-                        avatar = uiState.userAvatar,
-                        userName = uiState.username,
+                        ProfileCard(
+                            avatar = uiState.userAvatar,
+                            userName = uiState.username,
+                            modifier = Modifier
+                                .align(Alignment.Center)
+                                .padding(top = 92.dp),
+                            isDarkThemeEnabled = isDarkThemeEnabled
+                        )
+                    }
+
+                    Column(
                         modifier = Modifier
-                            .align(Alignment.Center)
-                            .padding(top = 92.dp),
-                        isDarkThemeEnabled = isDarkThemeEnabled
-                    )
-                }
-
-                Column(
-                    modifier = Modifier
-                        .padding(horizontal = 12.dp)
-                        .background(MaterialTheme.colorScheme.background)
-                ) {
+                            .padding(horizontal = 12.dp)
+                            .background(MaterialTheme.colorScheme.background)
+                    ) {
 
 //                    val hasAnyLiveSharing = uiState.locations.values.any {
 //                        it is ViewerLocationState.NormalSharing ||
@@ -428,42 +443,42 @@ fun GeoWavHomeScreen(
 //
 //                    val viewerInfo = uiState.currentViewers
 
-                    val activeViewerIds = locations
-                        .filterValues {
-                            it is ViewerLocationState.NormalSharing ||
-                                    it is ViewerLocationState.EmergencySharing
-                        }
-                        .keys
-
-                    val hasAnyLiveSharing = activeViewerIds.isNotEmpty()
-
-
-                    AnimatedVisibility(hasAnyLiveSharing) {
-                        Column(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(top = 16.dp)
-                        ) {
-
-                            val viewers = uiState.lovedOnes.filter {
-                                it.id in activeViewerIds
+                        val activeViewerIds = locations
+                            .filterValues {
+                                it is ViewerLocationState.NormalSharing ||
+                                        it is ViewerLocationState.EmergencySharing
                             }
+                            .keys
 
-                            ViewerCardHome(viewers, navigateToObserve)
+                        val hasAnyLiveSharing = activeViewerIds.isNotEmpty()
 
-                            ObserveLiveLocationCard(
-                                homeScreenVM,
-                                uiState,
-                                false,
-                                false,
-                                onHideClick = {},
-                                onShowTray = {},
-                                navigateToObserve,
-                                Modifier
-                                    .height(220.dp)
-                            )
+
+                        AnimatedVisibility(hasAnyLiveSharing) {
+                            Column(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(top = 16.dp)
+                            ) {
+
+                                val viewers = uiState.lovedOnes.filter {
+                                    it.id in activeViewerIds
+                                }
+
+                                ViewerCardHome(viewers, navigateToObserve)
+
+                                ObserveLiveLocationCard(
+                                    homeScreenVM,
+                                    uiState,
+                                    false,
+                                    false,
+                                    onHideClick = {},
+                                    onShowTray = {},
+                                    navigateToObserve,
+                                    Modifier
+                                        .height(220.dp)
+                                )
+                            }
                         }
-                    }
 
 //                    ObserveLiveLocationCard(
 //                        homeScreenVM, uiState, false, navigateToObserve, Modifier
@@ -481,83 +496,82 @@ fun GeoWavHomeScreen(
 //                    }
 
 
-                    ConnectionsList(
-                        title = "Your Circle",
-                        connections = uiState.lovedOnes,
-                        locationStates = locations,
-                        onManage = navigateToCircle,
-                        navigateToTimeline = navigateToTimeline
-                    )
-
-                    ActiveZonesSection(
-                        zones = uiState.placesList,
-                        onZoneClick = {}
-                    )
-
-                    if (uiState.placesList.isEmpty()) {
-                        QuickActionsRow(
-                            onAddZone = onAddZone,
-                            onShare = onShareLocation,
-                            onAlerts = onOpenAlerts
-                        )
-                    }
-
-                    Row(
-                        modifier = Modifier
-                            .padding(top = 8.dp)
-                            .fillMaxWidth(),
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.SpaceBetween
-                    ) {
-                        Text(
-                            "Recent Alerts",
-                            color = MaterialTheme.colorScheme.onBackground,
-                            style = MaterialTheme.typography.titleMedium.copy(
-                                fontWeight = FontWeight.SemiBold,
-                                fontFamily = manrope
-                            ),
-                            fontSize = 16.sp,
+                        ConnectionsList(
+                            title = "Your Circle",
+                            connections = uiState.lovedOnes,
+                            locationStates = locations,
+                            onManage = navigateToCircle,
+                            navigateToTimeline = navigateToTimeline
                         )
 
-                        TextButton(onClick = navigateToActivity) {
-                            Text(
-                                "View All",
-                                fontSize = 16.sp,
-                                color = MaterialTheme.colorScheme.secondary,
-                                fontFamily = manrope
+                        ActiveZonesSection(
+                            zones = uiState.placesList,
+                            onZoneClick = {}
+                        )
+
+                        if (uiState.placesList.isEmpty()) {
+                            QuickActionsRow(
+                                onAddZone = onAddZone,
+                                onShare = onShareLocation,
+                                onAlerts = onOpenAlerts
                             )
                         }
-                    }
 
-                    RecentAlertsList(uiState.alertsList.take(5), isDarkThemeEnabled)
-
-
-                    Column(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(vertical = 24.dp),
-                        horizontalAlignment = Alignment.CenterHorizontally,
-                        verticalArrangement = Arrangement.spacedBy(12.dp)
-                    ) {
-                        Surface(
-                            color = Color(0xFFBAC3FF),
-                            shape = CircleShape
+                        Row(
+                            modifier = Modifier
+                                .padding(top = 8.dp)
+                                .fillMaxWidth(),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.SpaceBetween
                         ) {
-                            Icon(
-                                painter = painterResource(R.drawable.new_logo),
-                                contentDescription = "logo",
-                                tint = Color(0xFF222C61),
-                                modifier = Modifier.size(56.dp),
+                            Text(
+                                "Recent Alerts",
+                                color = MaterialTheme.colorScheme.onBackground,
+                                style = MaterialTheme.typography.titleMedium.copy(
+                                    fontFamily = manrope,
+                                ),
+                                fontSize = 16.sp,
                             )
+
+                            TextButton(onClick = navigateToActivity) {
+                                Text(
+                                    "View All",
+                                    fontSize = 16.sp,
+                                    color = MaterialTheme.colorScheme.secondary,
+                                    fontFamily = manrope
+                                )
+                            }
                         }
 
-                        Text(
-                            text = "GeoWav",
-                            color = MaterialTheme.colorScheme.onBackground,
-                            fontSize = 24.sp,
-                            fontFamily = manrope,
-                            fontWeight = FontWeight.Bold
-                        )
+                        RecentAlertsList(uiState.alertsList.take(5), isDarkThemeEnabled)
+
+
+                        Column(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(vertical = 24.dp),
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                            verticalArrangement = Arrangement.spacedBy(12.dp)
+                        ) {
+                            Surface(
+                                color = Color(0xFFBAC3FF),
+                                shape = CircleShape
+                            ) {
+                                Icon(
+                                    painter = painterResource(R.drawable.new_logo),
+                                    contentDescription = "logo",
+                                    tint = Color(0xFF222C61),
+                                    modifier = Modifier.size(56.dp),
+                                )
+                            }
+
+                            Text(
+                                text = "GeoWav",
+                                color = MaterialTheme.colorScheme.onBackground,
+                                fontSize = 24.sp,
+                                fontFamily = manrope,
+                                fontWeight = FontWeight.Bold
+                            )
 
 //                        Row(
 //                            horizontalArrangement = Arrangement.spacedBy(8.dp)
@@ -577,6 +591,7 @@ fun GeoWavHomeScreen(
 //                                tint = MaterialTheme.colorScheme.error
 //                            )
 //                        }
+                        }
                     }
                 }
             }
@@ -1038,7 +1053,6 @@ fun ActiveZonesSection(
             fontSize = 16.sp,
             color = MaterialTheme.colorScheme.onBackground,
             style = MaterialTheme.typography.titleMedium.copy(
-                fontWeight = FontWeight.SemiBold,
                 fontFamily = manrope
             )
         )
@@ -1124,8 +1138,9 @@ fun ZoneCard(zone: Place, onClick: () -> Unit) {
                         fontSize = 14.sp,
                         color = MaterialTheme.colorScheme.onSurface,
                         style = MaterialTheme.typography.bodyMedium.copy(
-                            fontWeight = FontWeight.Normal,
-                            fontFamily = sora
+                            fontWeight = FontWeight.SemiBold,
+                            fontFamily = manrope,
+                            lineHeight = 17.sp
                         )
                     )
 

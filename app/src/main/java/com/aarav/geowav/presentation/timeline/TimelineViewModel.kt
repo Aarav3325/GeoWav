@@ -70,7 +70,7 @@ class TimelineViewModel
             viewModelScope.launch {
                 sessionHistoryRepository.getSessionsForCurrentUser(currentUserId, filter).collect { list ->
 
-                    Log.i("SESSIONS", "currentUserId: ${list.toString()}")
+                  //  Log.i("SESSIONS", "currentUserId: ${list.toString()}")
                     _uiState.update {
                         it.copy(
                             mySessions = list,

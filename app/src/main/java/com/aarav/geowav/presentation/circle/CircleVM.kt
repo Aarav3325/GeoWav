@@ -102,7 +102,7 @@ class CircleVM
                 is Resource.Success -> {
                     _uiState.update {
 
-                        Log.i("Circle", "list: ${result.data}")
+                        //Log.i("Circle", "list: ${result.data}")
                         it.copy(
                             lovedOnes = result.data ?: emptyList(),
                             isLoading = false
@@ -156,7 +156,7 @@ class CircleVM
             return
         }
 
-        if (trimmedEmail == currentUserEmail.lowercase()) {
+        if (trimmedEmail == encodeEmail(currentUserEmail)) {
             emitError("You cannot invite yourself")
             return
         }
