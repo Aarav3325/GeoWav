@@ -136,10 +136,10 @@ class CircleRepositoryImpl
 
 
             val lovedOnes = snapshot.children.mapNotNull { child ->
-                Log.i("CircleRepositoryImpl", "getAcceptedLovedOnes: $child")
+                //Log.i("CircleRepositoryImpl", "getAcceptedLovedOnes: $child")
                 val status = child.child("status").getValue(String::class.java)
                 if (status == "accepted") {
-                    Log.i("CircleRepositoryImpl", "getAcceptedLovedOnes: $child")
+                    //Log.i("CircleRepositoryImpl", "getAcceptedLovedOnes: $child")
 
                     CircleMember(
                         id = child.key!!,

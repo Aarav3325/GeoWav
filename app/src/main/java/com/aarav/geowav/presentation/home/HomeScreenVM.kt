@@ -65,7 +65,7 @@ class HomeScreenVM @Inject constructor(
     private val placeRepository: PlaceRepositoryImpl,
     private val geoActivityRepositoryImpl: GeoActivityRepositoryImpl,
     private val circleRepository: CircleRepository,
-    private val viewerLocationRepository: ViewerLocationRepository,
+    private val viewerLocatiid("com.google.devtools.ksp") version "2.3.4" apply falseonRepository: ViewerLocationRepository,
     private val paymentRepository: PaymentRepository
 ) : ViewModel() {
 
@@ -238,7 +238,7 @@ class HomeScreenVM @Inject constructor(
                 is Resource.Success -> {
                     _uiState.update {
 
-                        Log.i("Circle", "list: ${result.data}")
+                       // Log.i("Circle", "list: ${result.data}")
                         it.copy(
                             lovedOnes = result.data ?: emptyList(),
                         )

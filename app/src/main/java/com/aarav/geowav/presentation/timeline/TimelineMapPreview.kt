@@ -317,7 +317,7 @@ fun TimelineMapPreview(
                             state = movingMarkerState,
                             icon = movingIcon,
                             anchor = Offset(0.5f, 0.5f),
-                            title = "Playback"
+                            title = currentSession.name
                         )
                     }
 
