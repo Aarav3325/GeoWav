@@ -26,6 +26,8 @@ import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ContainedLoadingIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
+import androidx.compose.material3.FloatingToolbarColors
+import androidx.compose.material3.FloatingToolbarDefaults
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.HorizontalFloatingToolbar
 import androidx.compose.material3.Icon
@@ -489,18 +491,23 @@ fun TimelineMapPreview(
                 }
             }
 
-
             HorizontalFloatingToolbar(
+                colors = FloatingToolbarColors(
+                    toolbarContainerColor = MaterialTheme.colorScheme.surfaceBright.copy(alpha = 0.85f),
+                    toolbarContentColor = MaterialTheme.colorScheme.onSurface,
+                    fabContentColor = MaterialTheme.colorScheme.onSurface,
+                    fabContainerColor = MaterialTheme.colorScheme.surfaceContainer
+                ),
                 modifier = Modifier
                     .align(Alignment.BottomCenter)
-                    .offset(y = (-36).dp)
+                    .offset(y = (-32).dp)
                     .zIndex(1f),
                 expanded = true,
                 content = {
                     Row(
-                        modifier = Modifier,
-                        horizontalArrangement = Arrangement.SpaceAround,
-                        verticalAlignment = Alignment.CenterVertically
+                        modifier = Modifier.padding(horizontal = 4.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(6.dp)
                     ) {
 
                         IconButton(
@@ -542,7 +549,7 @@ fun TimelineMapPreview(
                             Icon(
                                 painter = painterResource(R.drawable.restart),
                                 contentDescription = "restart",
-                                modifier = Modifier.size(24.dp)
+                                modifier = Modifier.size(22.dp)
                             )
                         }
 
@@ -559,12 +566,9 @@ fun TimelineMapPreview(
                             Icon(
                                 painter = painterResource(R.drawable.playback_speed),
                                 contentDescription = "playback_speed",
-                                modifier = Modifier.size(24.dp)
+                                modifier = Modifier.size(22.dp)
                             )
                         }
-
-
-                        Spacer(Modifier.width(8.dp))
 
                         IconButton(
                             modifier = Modifier.size(40.dp),
@@ -581,11 +585,9 @@ fun TimelineMapPreview(
                             Icon(
                                 painter = painterResource(R.drawable.info),
                                 contentDescription = "Toggle Tray",
-                                modifier = Modifier.size(24.dp)
+                                modifier = Modifier.size(22.dp)
                             )
                         }
-
-                        Spacer(Modifier.width(10.dp))
 
                         IconButton(
                             modifier = Modifier.size(40.dp),
@@ -600,7 +602,7 @@ fun TimelineMapPreview(
                                             boundsBuilder.include(LatLng(it.lat, it.lng))
                                         }
 
-                                        if(uiState.isPlaying && uiState.lastPosition != null) {
+                                        if (uiState.isPlaying && uiState.lastPosition != null) {
                                             uiState.lastPosition?.let {
                                                 boundsBuilder.include(it)
                                             }
@@ -625,24 +627,25 @@ fun TimelineMapPreview(
                             Icon(
                                 painter = painterResource(R.drawable.gps),
                                 contentDescription = "Fit All",
-                                modifier = Modifier.size(24.dp)
+                                modifier = Modifier.size(22.dp)
                             )
                         }
-
-
-                        Spacer(Modifier.width(8.dp))
 
                         IconButton(
                             modifier = Modifier.size(40.dp),
                             onClick = {
                                 viewModel.toggleMapType()
                                 showMapModeToast = true
-                            }
+                            },
+                            colors = IconButtonDefaults.iconButtonColors(
+                                containerColor = MaterialTheme.colorScheme.surfaceContainer,
+                                contentColor = MaterialTheme.colorScheme.onSurface
+                            )
                         ) {
                             Icon(
                                 painter = painterResource(R.drawable.map_trifold),
                                 contentDescription = mapMode,
-                                modifier = Modifier.size(24.dp)
+                                modifier = Modifier.size(22.dp)
                             )
                         }
                     }

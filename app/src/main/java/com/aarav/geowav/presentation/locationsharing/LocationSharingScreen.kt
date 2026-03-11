@@ -63,6 +63,7 @@ import com.aarav.geowav.core.utils.LiveLocationState
 import com.aarav.geowav.data.model.CircleMember
 import com.aarav.geowav.presentation.components.EmergencyShareDialog
 import com.aarav.geowav.presentation.theme.manrope
+import com.aarav.geowav.presentation.theme.primaryLight
 import com.aarav.geowav.presentation.theme.sora
 import com.google.android.gms.maps.model.CameraPosition
 import com.google.android.gms.maps.model.LatLng
@@ -284,7 +285,7 @@ fun StatusCard(
             Triple(
                 "Not sharing location",
                 "Tap to start sharing",
-                MaterialTheme.colorScheme.inversePrimary
+                MaterialTheme.colorScheme.primary
             )
         }
 
@@ -353,7 +354,7 @@ fun StatusCard(
                         Icon(
                             painter = painterResource(R.drawable.new_logo),
                             contentDescription = null,
-                            tint = color,
+                            tint = primaryLight,
                             modifier = Modifier.size(32.dp)
                         )
                     }
