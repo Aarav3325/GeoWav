@@ -108,6 +108,7 @@ class TimelineMapPreviewVM @Inject constructor(
         playbackJob = viewModelScope.launch {
 
             val state = _uiState.value
+            val animated = _uiState.value.animatedPath.toMutableList()
 
             for (i in state.playbackIndex until path.size - 1) {
 
@@ -132,11 +133,21 @@ class TimelineMapPreviewVM @Inject constructor(
                     val interpolated =
                         SphericalUtil.interpolate(start, end, fraction.toDouble())
 
-                    _uiState.update { current ->
-                        current.copy(
-                            animatedPath = current.animatedPath + interpolated,
-                            lastPosition = interpolated
-                        )
+                    animated.add(interpolated)
+//                    _uiState.update { current ->
+//                        current.copy(
+//                            animatedPath = current.animatedPath + interpolated,
+//                            lastPosition = interpolated
+//                        )
+//                    }
+
+                    if (step % 3 == 0) {
+                        _uiState.update {
+                            it.copy(
+                                animatedPath = animated.toList(),
+                                lastPosition = interpolated
+                            )
+                        }
                     }
 
                     delay(duration / steps)

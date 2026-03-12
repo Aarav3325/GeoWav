@@ -65,7 +65,7 @@ class HomeScreenVM @Inject constructor(
     private val placeRepository: PlaceRepositoryImpl,
     private val geoActivityRepositoryImpl: GeoActivityRepositoryImpl,
     private val circleRepository: CircleRepository,
-    private val viewerLocatiid("com.google.devtools.ksp") version "2.3.4" apply falseonRepository: ViewerLocationRepository,
+    private val viewerLocationRepository: ViewerLocationRepository,
     private val paymentRepository: PaymentRepository
 ) : ViewModel() {
 
@@ -375,6 +375,7 @@ class HomeScreenVM @Inject constructor(
 
 
     fun getUserProfile() {
+        Log.i("PROFILE", "fetch profile")
         viewModelScope.launch {
             _uiState.update {
                 it.copy(
@@ -415,9 +416,10 @@ class HomeScreenVM @Inject constructor(
 
     fun handlePaymentResult(
         response: String?,
-        amount: Double
+        amount: String
     ) {
         val data = paymentRepository.parseUpiResponse(response)
+        Log.i("UPI", data.toString())
 
         val status = data["Status"] ?: "FAILED"
         val txnId = data["txnId"] ?: ""

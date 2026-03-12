@@ -2,7 +2,9 @@ package com.aarav.geowav.presentation.home
 
 
 import android.Manifest
+import android.app.Activity.RESULT_OK
 import android.content.Intent
+import android.net.Uri
 import android.util.Log
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
@@ -96,6 +98,7 @@ import com.google.accompanist.permissions.ExperimentalPermissionsApi
 import com.google.accompanist.permissions.isGranted
 import com.google.accompanist.permissions.rememberPermissionState
 import kotlinx.coroutines.delay
+import androidx.core.net.toUri
 
 @OptIn(
     ExperimentalMaterial3Api::class, ExperimentalPermissionsApi::class,
@@ -136,12 +139,19 @@ fun GeoWavHomeScreen(
     val upiLauncher = rememberLauncherForActivityResult(
         ActivityResultContracts.StartActivityForResult()
     ) { result ->
-        val response = result.data?.getStringExtra("response")
 
-        homeScreenVM.handlePaymentResult(
-            response,
-            1.0
-        )
+        if (result.resultCode == RESULT_OK || result.resultCode == 11) {
+
+            val response = result.data?.dataString
+
+            homeScreenVM.handlePaymentResult(
+                response,
+                "1"
+            )
+
+        } else {
+            homeScreenVM.handlePaymentResult(null, "1")
+        }
     }
 
 //    val intent = Intent(Intent.ACTION_VIEW).apply {
@@ -186,11 +196,12 @@ fun GeoWavHomeScreen(
                                         .padding(12.dp)
                                         .clickable {
 
-                                            val uri = homeScreenVM.getPaymentUri()
-
+//                                            val uri = homeScreenVM.getPaymentUri()
+                                            val uri =
+                                                "upi://pay?pa=aaravhalvadia@okhdfcbank&pn=Aarav&tn=Test&am=1&cu=INR".toUri()
+                                            Log.i("UPI_URI", uri.toString())
                                             val intent = Intent(Intent.ACTION_VIEW).apply {
                                                 data = uri
-                                                setPackage(app.packageName)
                                             }
 
                                             upiLauncher.launch(intent)
@@ -219,7 +230,7 @@ fun GeoWavHomeScreen(
             context,
             "1",
             "aaravhalvadia@okhdfcbank",
-            "GeoWav Pay Test Mode",
+            "GeoWavPayTestMode",
             "UPI_PAYMENT_FLOW_TEST"
         )
     }
@@ -799,7 +810,9 @@ fun ConnectionsList(
                     )
                 }
 
-                QuickActionButton(R.drawable.plus_circle__1_, "Add", onManage)
+                if(connections.isEmpty()) {
+                    QuickActionButton(R.drawable.plus_circle__1_, "Add", onManage)
+                }
             }
         }
     }
@@ -1145,7 +1158,7 @@ fun ZoneCard(zone: Place, onClick: () -> Unit) {
                     )
 
                     Text(
-                        "${zone.radius.toInt()}m • ENTER/EXIT Trigger",
+                        "${zone.radius.toInt()}m • Enter/Exit Trigger",
                         style = MaterialTheme.typography.bodySmall.copy(
                             color = MaterialTheme.colorScheme.secondary,
                             fontFamily = sora

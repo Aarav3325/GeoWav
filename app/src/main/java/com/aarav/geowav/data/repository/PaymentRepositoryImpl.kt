@@ -22,7 +22,16 @@ class PaymentRepositoryImpl @Inject constructor(
         amount: String,
         note: String
     ): Uri {
-        return "upi://pay?pa=$upiId&pn=$name&tn=$note&am=$amount&cu=INR".toUri()
+
+        return Uri.Builder()
+            .scheme("upi")
+            .authority("pay")
+            .appendQueryParameter("pa", upiId)
+            .appendQueryParameter("pn", name)
+            .appendQueryParameter("tn", note)
+            .appendQueryParameter("am", amount)
+            .appendQueryParameter("cu", "INR")
+            .build()
     }
 
     override fun getUpiApps(
@@ -30,7 +39,7 @@ class PaymentRepositoryImpl @Inject constructor(
         uri: Uri
     ): List<UpiApp> {
         val intent = Intent(Intent.ACTION_VIEW).apply {
-            data = Uri.parse("upi://pay")
+            data = uri
         }
 
         val pm = context.packageManager

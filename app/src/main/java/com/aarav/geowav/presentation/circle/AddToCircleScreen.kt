@@ -58,15 +58,11 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import com.aarav.geowav.R
 import com.aarav.geowav.data.model.CircleMember
 import com.aarav.geowav.data.model.PendingInvite
 import com.aarav.geowav.presentation.components.DeleteDialog
-import com.aarav.geowav.presentation.components.MyAlertDialog
-import com.aarav.geowav.presentation.locationsharing.LovedOneUi
 import com.aarav.geowav.presentation.locationsharing.itemShape
-import com.aarav.geowav.presentation.theme.GeoWavTheme
 import com.aarav.geowav.presentation.theme.manrope
 import com.aarav.geowav.presentation.theme.sora
 
@@ -280,7 +276,7 @@ fun AddLovedOneCard(
                 placeholder = {
                     Text(
                         "Enter a Loved One’s Name",
-                        fontFamily = sora,
+                        fontFamily = manrope,
                         fontSize = 14.sp,
                         color = MaterialTheme.colorScheme.inverseSurface
                     )
@@ -320,7 +316,7 @@ fun AddLovedOneCard(
 
             val focusManager = LocalFocusManager.current
 
-            Spacer(Modifier.height(6.dp))
+            Spacer(Modifier.height(2.dp))
 
             Text(
                 text = "Email",
@@ -338,7 +334,7 @@ fun AddLovedOneCard(
                 placeholder = {
                     Text(
                         "Enter a Loved One’s Email",
-                        fontFamily = sora,
+                        fontFamily = manrope,
                         fontSize = 14.sp,
                         color = MaterialTheme.colorScheme.inverseSurface
                     )
@@ -350,13 +346,13 @@ fun AddLovedOneCard(
                             text = uiState.emailError,
                             style = TextStyle(
                                 fontSize = 14.sp,
-                                fontFamily = sora,
+                                fontFamily = manrope,
                                 fontWeight = FontWeight.Medium,
                                 color = MaterialTheme.colorScheme.error
                             )
                         )
                     }
-                },keyboardOptions = KeyboardOptions(
+                }, keyboardOptions = KeyboardOptions(
                     imeAction = ImeAction.Done
                 ),
                 keyboardActions = KeyboardActions(
@@ -577,10 +573,11 @@ fun PendingInviteSection(
 
                 val icon = if (expanded) R.drawable.up_arrow else R.drawable.down_arrow
 
-                if(pendingInvites.isNotEmpty()) {
+                if (pendingInvites.isNotEmpty()) {
                     Box(
                         contentAlignment = Alignment.Center,
-                        modifier = Modifier.size(24.dp)
+                        modifier = Modifier
+                            .size(24.dp)
                             .clip(CircleShape)
                             .background(MaterialTheme.colorScheme.primaryFixedDim)
                     ) {
@@ -713,7 +710,11 @@ fun LovedOneCardCircle(
         Surface(
             shape = CircleShape,
             color = MaterialTheme.colorScheme.errorContainer,
-            shadowElevation = 2.dp
+            shadowElevation = 2.dp,
+            modifier = Modifier.clip(CircleShape).clickable {
+                onDeleteMember()
+                confirmDelete(connection.id)
+            }
         ) {
             Icon(
                 painter = painterResource(R.drawable.trash),
@@ -722,10 +723,6 @@ fun LovedOneCardCircle(
                 modifier = Modifier
                     .size(36.dp)
                     .padding(6.dp)
-                    .clickable {
-                        onDeleteMember()
-                        confirmDelete(connection.id)
-                    }
             )
         }
 
