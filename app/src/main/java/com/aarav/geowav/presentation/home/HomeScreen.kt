@@ -107,7 +107,7 @@ import androidx.core.net.toUri
 @Composable
 fun GeoWavHomeScreen(
     isDarkThemeEnabled: Boolean,
-    navigateToAuth: () -> Unit,
+    navigateToYourPlaces: () -> Unit,
     onAddZone: () -> Unit,
     navigateToObserve: () -> Unit,
     onShareLocation: () -> Unit,
@@ -517,7 +517,10 @@ fun GeoWavHomeScreen(
 
                         ActiveZonesSection(
                             zones = uiState.placesList,
-                            onZoneClick = {}
+                            onZoneClick = {},
+                            onViewAllClick = {
+                                navigateToYourPlaces()
+                            }
                         )
 
                         if (uiState.placesList.isEmpty()) {
@@ -703,7 +706,7 @@ fun CurrentLocationCard(city: String, lastUpdated: String, onViewMap: () -> Unit
                     city,
                     style = MaterialTheme.typography.titleMedium.copy(
                         fontWeight = FontWeight.SemiBold,
-                        fontFamily = sora,
+                        fontFamily = manrope,
                         color = MaterialTheme.colorScheme.onBackground
                     )
                 )
@@ -712,7 +715,7 @@ fun CurrentLocationCard(city: String, lastUpdated: String, onViewMap: () -> Unit
                     "Last updated • $lastUpdated",
                     style = MaterialTheme.typography.bodySmall.copy(
                         color = Accent,
-                        fontFamily = sora
+                        fontFamily = manrope
                     )
                 )
             }
@@ -722,7 +725,7 @@ fun CurrentLocationCard(city: String, lastUpdated: String, onViewMap: () -> Unit
                 shape = RoundedCornerShape(10.dp),
                 colors = ButtonDefaults.buttonColors(containerColor = Primary)
             ) {
-                Text("View", color = Color.White, fontFamily = sora)
+                Text("View", color = Color.White, fontFamily = manrope)
             }
         }
     }
@@ -740,7 +743,7 @@ fun ConnectionsList(
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(bottom = 16.dp, top = 8.dp)
+            .padding(bottom = 8.dp, top = 8.dp)
     ) {
 
         Row(
@@ -793,7 +796,7 @@ fun ConnectionsList(
                         "No connections yet",
                         style = MaterialTheme.typography.bodyMedium.copy(
                             color = MaterialTheme.colorScheme.onBackground,
-                            fontFamily = sora
+                            fontFamily = manrope
                         )
                     )
                 }
@@ -1056,20 +1059,40 @@ private fun InfoColumn(label: String, value: String) {
 @Composable
 fun ActiveZonesSection(
     zones: List<Place>,
-    onZoneClick: (com.aarav.geowav.data.model.Place) -> Unit
+    onZoneClick: (com.aarav.geowav.data.model.Place) -> Unit,
+    onViewAllClick: () -> Unit
 ) {
     Column(
-        modifier = Modifier.padding(vertical = 8.dp)
+        modifier = Modifier.padding(vertical = 0.dp)
     ) {
-        Text(
-            "Active Zones",
-            fontSize = 16.sp,
-            color = MaterialTheme.colorScheme.onBackground,
-            style = MaterialTheme.typography.titleMedium.copy(
-                fontFamily = manrope
+
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text(
+                "Active Zones",
+                fontSize = 16.sp,
+                color = MaterialTheme.colorScheme.onBackground,
+                style = MaterialTheme.typography.titleMedium.copy(
+                    fontFamily = manrope
+                )
             )
-        )
-        Spacer(modifier = Modifier.height(12.dp))
+
+            TextButton(onClick = {
+                onViewAllClick()
+            }) {
+                Text(
+                    "View All",
+                    fontSize = 16.sp,
+                    color = MaterialTheme.colorScheme.secondary,
+                    fontFamily = manrope
+                )
+            }
+        }
+
+        Spacer(modifier = Modifier.height(6.dp))
         Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
             if (zones.isNotEmpty()) {
                 zones.forEach { zone ->
@@ -1095,7 +1118,7 @@ fun ActiveZonesSection(
                         "No zones are added yet",
                         style = MaterialTheme.typography.bodyMedium.copy(
                             color = MaterialTheme.colorScheme.onBackground,
-                            fontFamily = sora
+                            fontFamily = manrope
                         )
                     )
                 }
@@ -1113,7 +1136,7 @@ fun ZoneCard(zone: Place, onClick: () -> Unit) {
         colors = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.surfaceContainer
         ),
-        shape = RoundedCornerShape(12.dp)
+        shape = RoundedCornerShape(16.dp)
     ) {
         Row(
             modifier = Modifier
@@ -1161,7 +1184,7 @@ fun ZoneCard(zone: Place, onClick: () -> Unit) {
                         "${zone.radius.toInt()}m • Enter/Exit Trigger",
                         style = MaterialTheme.typography.bodySmall.copy(
                             color = MaterialTheme.colorScheme.secondary,
-                            fontFamily = sora
+                            fontFamily = manrope
                         ),
                         fontSize = 12.sp
                     )
@@ -1172,7 +1195,7 @@ fun ZoneCard(zone: Place, onClick: () -> Unit) {
                     Text(
                         "Active",
                         fontSize = 14.sp,
-                        fontFamily = sora,
+                        fontFamily = manrope,
                         fontWeight = FontWeight.SemiBold,
                         color = MaterialTheme.colorScheme.tertiary
                     )
@@ -1226,7 +1249,7 @@ fun QuickActionButton(
             Text(
                 label,
                 style = MaterialTheme.typography.bodyMedium.copy(
-                    fontFamily = sora,
+                    fontFamily = manrope,
                     color = MaterialTheme.colorScheme.onSurface
                 ),
                 fontSize = 14.sp
@@ -1267,7 +1290,7 @@ fun RecentAlertsList(
                     "No recent alerts. You’re all clear!",
                     style = MaterialTheme.typography.bodyMedium.copy(
                         color = MaterialTheme.colorScheme.onBackground,
-                        fontFamily = sora
+                        fontFamily = manrope
                     )
                 )
             }
@@ -1286,7 +1309,7 @@ fun AlertItem(alert: com.aarav.geowav.data.model.GeoAlert, isDarkThemeEnabled: B
     val relativeTime = buildRelativeSubtitle(type, alert.readableTime)
 
     Card(
-        shape = RoundedCornerShape(12.dp),
+        shape = RoundedCornerShape(16.dp),
         modifier = Modifier.fillMaxWidth(),
         colors = CardDefaults.cardColors(
             containerColor = if (isDarkThemeEnabled) {
@@ -1331,19 +1354,19 @@ fun AlertItem(alert: com.aarav.geowav.data.model.GeoAlert, isDarkThemeEnabled: B
                     fontSize = 14.sp,
                     style = MaterialTheme.typography.bodyMedium.copy(
                         fontWeight = FontWeight.SemiBold,
-                        fontFamily = sora
+                        fontFamily = manrope
                     )
                 )
                 Text(
                     relativeTime,
                     fontSize = 12.sp,
-                    style = MaterialTheme.typography.bodySmall.copy(fontFamily = sora),
+                    style = MaterialTheme.typography.bodySmall.copy(fontFamily = manrope),
                     maxLines = 2
                 )
             }
             Text(
                 alert.time,
-                fontFamily = sora,
+                fontFamily = manrope,
                 fontWeight = FontWeight.SemiBold,
                 fontSize = 14.sp
             )
@@ -1379,7 +1402,7 @@ fun ProfileCard(
             Column {
                 Text(
                     text = "Welcome,",
-                    fontFamily = sora,
+                    fontFamily = manrope,
                     fontSize = 18.sp,
                     color = Color.Black,
                     fontWeight = FontWeight.SemiBold,

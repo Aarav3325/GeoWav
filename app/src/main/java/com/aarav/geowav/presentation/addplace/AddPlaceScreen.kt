@@ -218,7 +218,7 @@ fun AddPlaceScreen(
                                 text = "Save Place",
                                 style = MaterialTheme.typography.titleMedium,
                                 color = MaterialTheme.colorScheme.onPrimary,
-                                fontFamily = sora,
+                                fontFamily = manrope,
                                 fontSize = 18.sp,
                                 fontWeight = FontWeight.SemiBold
                             )
@@ -296,7 +296,7 @@ fun AddPlaceScreen(
                                     fontSize = 16.sp,
                                     textAlign = TextAlign.Center,
                                     fontWeight = FontWeight.SemiBold,
-                                    fontFamily = sora,
+                                    fontFamily = manrope,
                                 )
 
                                 Text(
@@ -306,7 +306,7 @@ fun AddPlaceScreen(
                                     color = MaterialTheme.colorScheme.onSurface,
                                     fontSize = 14.sp,
                                     fontWeight = FontWeight.W500,
-                                    fontFamily = sora,
+                                    fontFamily = manrope,
                                 )
 
                             }
@@ -373,7 +373,7 @@ fun AddPlaceScreen(
                         text = "Preview",
                         style = MaterialTheme.typography.titleMedium,
                         color = MaterialTheme.colorScheme.onSurface,
-                        fontFamily = sora,
+                        fontFamily = manrope,
                         fontSize = 16.sp,
                         fontWeight = FontWeight.SemiBold
                     )

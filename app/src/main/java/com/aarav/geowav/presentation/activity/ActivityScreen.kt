@@ -402,7 +402,7 @@ fun NewLog(
                     text = alert.title,
                     fontSize = 14.sp,
                     style = MaterialTheme.typography.bodyMedium.copy(
-                        fontWeight = FontWeight.SemiBold, fontFamily = sora
+                        fontWeight = FontWeight.SemiBold, fontFamily = manrope
                     ),
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis
@@ -413,7 +413,7 @@ fun NewLog(
                     text = relativeTime,
                     fontSize = 12.sp,
                     style = MaterialTheme.typography.bodySmall.copy(
-                        fontFamily = sora
+                        fontFamily = manrope
                     ),
                     maxLines = 2,
                     overflow = TextOverflow.Ellipsis
@@ -428,7 +428,7 @@ fun NewLog(
                         text = "TRIGGER TYPE :",
                         fontSize = 11.sp,
                         style = MaterialTheme.typography.labelSmall.copy(
-                            fontFamily = sora, fontWeight = FontWeight.Medium
+                            fontFamily = manrope, fontWeight = FontWeight.Medium
                         )
                     )
 
@@ -446,7 +446,7 @@ fun NewLog(
             ) {
                 Text(
                     text = alert.time,
-                    fontFamily = sora,
+                    fontFamily = manrope,
                     fontWeight = FontWeight.SemiBold,
                     fontSize = 13.sp,
                     maxLines = 1
@@ -478,7 +478,7 @@ private fun TypeChip(isEnter: Boolean) {
             fontSize = 10.sp,
             color = textColor,
             fontWeight = FontWeight.SemiBold,
-            fontFamily = sora
+            fontFamily = manrope
         )
     }
 }

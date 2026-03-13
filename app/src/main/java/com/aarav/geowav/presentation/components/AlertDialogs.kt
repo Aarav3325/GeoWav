@@ -108,24 +108,24 @@ fun PermissionAlertDialog(
             ) {
                 Text(
                     text = "GeoWav needs access to your location to provide accurate tracking and nearby service updates.",
-                    fontFamily = sora
+                    fontFamily = manrope
                 )
                 Text(
                     text = "\nPermissions requested:",
-                    fontFamily = sora
+                    fontFamily = manrope
                 )
                 Text(
                     text = "• Precise location (while using the app)\n" +
                             "• Background location (even when the app is closed or not in use)",
-                    fontFamily = sora
+                    fontFamily = manrope
                 )
                 Text(
                     text = "\nWhen asked, please choose “Allow all the time” to enable background location access.",
-                    fontFamily = sora
+                    fontFamily = manrope
                 )
                 Text(
                     text = "\nYou can change these permissions anytime in your device settings.",
-                    fontFamily = sora
+                    fontFamily = manrope
                 )
             }
         },
@@ -220,7 +220,7 @@ fun DeleteDialog(
             text = {
                 Text(
                     text = message,
-                    fontFamily = sora,
+                    fontFamily = manrope,
                     textAlign = TextAlign.Center,
                     fontSize = 12.sp,
                     color = MaterialTheme.colorScheme.onBackground
@@ -278,7 +278,7 @@ fun MyAlertDialog(
             text = {
                 Text(
                     text = message,
-                    fontFamily = sora,
+                    fontFamily = manrope,
                     textAlign = TextAlign.Center,
                     fontSize = 12.sp,
                     color = MaterialTheme.colorScheme.onBackground
@@ -319,7 +319,7 @@ fun AboutDialog(
             text = {
                 Text(
                     text = message,
-                    fontFamily = sora,
+                    fontFamily = manrope,
                     textAlign = TextAlign.Center,
                     fontSize = 12.sp,
                     color = MaterialTheme.colorScheme.onPrimaryFixed,
@@ -390,7 +390,7 @@ fun LocationPermissionDialog(
             text = {
                 Text(
                     text = "GeoWav needs location access to detect entry, exit, and safety alerts even when the app is not open.",
-                    fontFamily = sora,
+                    fontFamily = manrope,
                     textAlign = TextAlign.Center,
                     fontSize = 12.sp,
                     color = MaterialTheme.colorScheme.onPrimaryFixed,
@@ -452,7 +452,7 @@ fun TermsAndConditionsDialog(
             text = {
                 Text(
                     text = "By continuing, you agree to GeoWav’s Terms & Conditions and Privacy Policy. GeoWav uses location data to provide safety alerts and location-based features.",
-                    fontFamily = sora,
+                    fontFamily = manrope,
                     textAlign = TextAlign.Center,
                     fontSize = 12.sp,
                     color = MaterialTheme.colorScheme.onPrimaryFixed,

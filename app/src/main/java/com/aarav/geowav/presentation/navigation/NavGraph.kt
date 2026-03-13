@@ -205,7 +205,7 @@ fun AddNewPlaceScreen(
             navigateToYourPlaces = {
                 navController.navigate(NavRoute.YourPlaces.path) {
                     popUpTo(NavRoute.HomeScreen.path) {
-                        inclusive = true   // removes AddPlace AND Map
+                        inclusive = true
                     }
                     launchSingleTop = true
                 }
@@ -302,8 +302,14 @@ fun AddHomeScreen(
 
         GeoWavHomeScreen(
             isDarkThemeEnabled = isDarkThemeEnabled,
-            navigateToAuth = {
-                navController.navigate(NavRoute.Login.path)
+            navigateToYourPlaces = {
+                navController.navigate(NavRoute.YourPlaces.path) {
+                    popUpTo(navController.graph.findStartDestination().id) {
+                        saveState = true
+                    }
+                    launchSingleTop = true
+                    restoreState = true
+                }
             },
             onAddZone = {
                 navController.navigate(NavRoute.MapScreen.path)

@@ -11,6 +11,7 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import jakarta.inject.Inject
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import androidx.core.content.edit
 
 @HiltViewModel
 class MainVM @Inject constructor(
@@ -21,7 +22,7 @@ class MainVM @Inject constructor(
     val themeMode = _themeMode.asStateFlow()
 
     fun setThemeMode(mode: ThemeMode) {
-        prefs.edit().putString("theme_mode", mode.name).apply()
+        prefs.edit { putString("theme_mode", mode.name) }
         _themeMode.value = mode
     }
 

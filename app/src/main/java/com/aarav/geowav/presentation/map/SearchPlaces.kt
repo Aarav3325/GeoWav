@@ -35,6 +35,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.aarav.geowav.R
 import com.aarav.geowav.presentation.components.SearchItem
+import com.aarav.geowav.presentation.theme.manrope
 import com.aarav.geowav.presentation.theme.sora
 import com.aarav.geowav.presentation.theme.surfaceContainerLowDarkHighContrast
 import com.aarav.geowav.presentation.theme.surfaceContainerLowestLightHighContrast
@@ -126,7 +127,7 @@ fun NewSearch(
                     },
                     expanded = expanded,
                     onExpandedChange = onExpandedChange,
-                    placeholder = { Text("Search here", fontFamily = sora) },
+                    placeholder = { Text("Search here", fontFamily = manrope) },
                     colors = TextFieldDefaults.colors(
                         //unfocusedContainerColor = MaterialTheme.colorScheme.secondaryContainer,
                         focusedContainerColor = MaterialTheme.colorScheme.surface,
@@ -152,7 +153,7 @@ fun NewSearch(
                 ) {
                     Text(
                         text = "No Recent Places Found",
-                        fontFamily = sora,
+                        fontFamily = manrope,
                         color = MaterialTheme.colorScheme.onBackground,
                         fontSize = 16.sp
                     )
@@ -174,7 +175,7 @@ fun NewSearch(
 
                     Text(
                         text = "No Places Found",
-                        fontFamily = sora,
+                        fontFamily = manrope,
                         color = MaterialTheme.colorScheme.onBackground,
                         fontSize = 16.sp
                     )

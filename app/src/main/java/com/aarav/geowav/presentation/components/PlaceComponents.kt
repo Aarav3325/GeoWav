@@ -134,7 +134,7 @@ fun GeofencePlaceCard(
                     overflow = TextOverflow.Ellipsis,
                     fontSize = 14.sp,
                     fontWeight = FontWeight.SemiBold,
-                    fontFamily = sora,
+                    fontFamily = manrope,
                 )
 
                 Text(
@@ -144,7 +144,7 @@ fun GeofencePlaceCard(
                     color = MaterialTheme.colorScheme.onSurface,
                     fontSize = 12.sp,
                     fontWeight = FontWeight.Normal,
-                    fontFamily = sora,
+                    fontFamily = manrope,
                 )
 
                 Text(
@@ -152,7 +152,7 @@ fun GeofencePlaceCard(
                     color = MaterialTheme.colorScheme.tertiary,
                     fontSize = 12.sp,
                     fontWeight = FontWeight.W600,
-                    fontFamily = sora,
+                    fontFamily = manrope,
                 )
             }
         }
@@ -198,7 +198,7 @@ fun SearchItem(prediction: AutocompletePrediction, onClick: () -> Unit) {
                 overflow = TextOverflow.Ellipsis,
                 fontSize = 18.sp,
                 fontWeight = FontWeight.SemiBold,
-                fontFamily = sora,
+                fontFamily = manrope,
             )
 
             Text(
@@ -208,7 +208,7 @@ fun SearchItem(prediction: AutocompletePrediction, onClick: () -> Unit) {
                 maxLines = 2,
                 fontSize = 12.sp,
                 fontWeight = FontWeight.Normal,
-                fontFamily = sora,
+                fontFamily = manrope,
             )
 
             Spacer(
@@ -258,13 +258,13 @@ fun PlaceTextField(
             label = {
                 Text(
                     text = labelText,
-                    fontFamily = sora
+                    fontFamily = manrope
                 )
             },
             placeholder = {
                 Text(
                     placeHolder,
-                    fontFamily = sora,
+                    fontFamily = manrope,
                     fontWeight = FontWeight.Normal,
                     color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
                 )
@@ -309,7 +309,7 @@ fun RadiusChipGroup(
                         onClick = {
                             onRadiusSelected(radius)
                         },
-                        label = { Text("${radius.roundToInt()} m", fontFamily = sora) },
+                        label = { Text("${radius.roundToInt()} m", fontFamily = manrope) },
                         shape = RoundedCornerShape(12.dp),
                         colors = FilterChipDefaults.filterChipColors(
                             selectedContainerColor = MaterialTheme.colorScheme.primary,
@@ -338,7 +338,7 @@ fun CustomChip(
             )
         },
         onClick = {}, // disabled / not clickable
-        label = { Text(label, fontFamily = sora) },
+        label = { Text(label, fontFamily = manrope) },
         enabled = true, // disables interaction
         colors = FilterChipDefaults.filterChipColors(
             selectedContainerColor = MaterialTheme.colorScheme.tertiaryContainer,

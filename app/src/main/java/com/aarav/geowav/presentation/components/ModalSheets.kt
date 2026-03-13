@@ -29,6 +29,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.aarav.geowav.R
+import com.aarav.geowav.presentation.theme.manrope
 import com.aarav.geowav.presentation.theme.sora
 import com.google.android.libraries.places.api.model.Place
 
@@ -97,7 +98,7 @@ fun SheetContent(
             Text(
                 text = place?.displayName ?: "Invalid Place",
                 style = MaterialTheme.typography.titleMedium,
-                fontFamily = sora,
+                fontFamily = manrope,
                 fontSize = 20.sp
             )
         }
@@ -105,7 +106,7 @@ fun SheetContent(
         Text(
             text = place?.shortFormattedAddress ?: "Address not available",
             style = MaterialTheme.typography.bodyMedium,
-            fontFamily = sora,
+            fontFamily = manrope,
             fontSize = 16.sp,
             color = MaterialTheme.colorScheme.onSurfaceVariant
         )
@@ -138,7 +139,7 @@ fun SheetContent(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
-                    "Add Place", fontFamily = sora, fontWeight = FontWeight.SemiBold,
+                    "Add Place", fontFamily = manrope, fontWeight = FontWeight.SemiBold,
                     fontSize = 16.sp
                 )
 

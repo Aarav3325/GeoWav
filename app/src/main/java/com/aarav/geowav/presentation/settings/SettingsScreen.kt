@@ -64,7 +64,7 @@ import com.aarav.geowav.presentation.components.AboutDialog
 import com.aarav.geowav.presentation.components.TermsAndConditionsDialog
 import com.aarav.geowav.presentation.locationsharing.itemShape
 import com.aarav.geowav.presentation.theme.manrope
-import com.aarav.geowav.presentation.theme.sora
+import com.aarav.geowav.presentation.theme.manrope
 import com.google.accompanist.permissions.ExperimentalPermissionsApi
 import com.google.accompanist.permissions.isGranted
 import com.google.accompanist.permissions.rememberPermissionState
@@ -310,7 +310,7 @@ fun SettingsScreen(
             },
             title = { Text("Delete account?", fontFamily = manrope, fontWeight = FontWeight.Bold) },
             text = {
-                Text("This action is permanent and cannot be undone.", fontFamily = sora)
+                Text("This action is permanent and cannot be undone.", fontFamily = manrope)
             },
             confirmButton = {
                 TextButton(
@@ -400,7 +400,7 @@ fun SettingItem(
                 it,
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
-                fontFamily = sora,
+                fontFamily = manrope,
                 modifier = Modifier.padding(top = 4.dp)
             )
         }
@@ -558,7 +558,7 @@ fun TriggerTypeChips(
         label = {
             Text(
                 text = label,
-                fontFamily = sora,
+                fontFamily = manrope,
                 fontWeight = FontWeight.Medium
             )
         },
@@ -616,7 +616,7 @@ fun ThemeChips(
         label = {
             Text(
                 text = label,
-                fontFamily = sora,
+                fontFamily = manrope,
                 fontWeight = FontWeight.Medium
             )
         },
@@ -686,7 +686,7 @@ fun SettingItemNew(
                     it,
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    fontFamily = sora,
+                    fontFamily = manrope,
                     modifier = Modifier.padding(top = 4.dp)
                 )
             }

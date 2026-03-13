@@ -124,7 +124,7 @@ fun LoginScreen(
             Text(
                 text = "Stay synced with your circle",
                 fontSize = 16.sp,
-                fontFamily = sora,
+                fontFamily = manrope,
                 fontWeight = FontWeight.Medium,
                 color = MaterialTheme.colorScheme.onBackground,
                 textAlign = TextAlign.Center
@@ -180,7 +180,7 @@ fun LoginScreen(
             Text(
                 text = "Or login with email",
                 fontSize = 14.sp,
-                fontFamily = sora,
+                fontFamily = manrope,
                 color = MaterialTheme.colorScheme.inverseSurface
             )
 
@@ -190,7 +190,7 @@ fun LoginScreen(
             TextField(
                 value = uiState.email, onValueChange = { loginVM.updateEmail(it) }, label = {
                     Text(
-                        "Email", fontFamily = sora, color = MaterialTheme.colorScheme.inverseSurface
+                        "Email", fontFamily = manrope, color = MaterialTheme.colorScheme.inverseSurface
                     )
                 },
                 isError = uiState.emailError != null,
@@ -200,7 +200,7 @@ fun LoginScreen(
                             text = uiState.emailError.toString(),
                             style = TextStyle(
                                 fontSize = 14.sp,
-                                fontFamily = sora,
+                                fontFamily = manrope,
                                 fontWeight = FontWeight.Medium,
                                 color = MaterialTheme.colorScheme.error
                             )
@@ -262,7 +262,7 @@ fun LoginScreen(
                 label = {
                     Text(
                         "Password",
-                        fontFamily = sora,
+                        fontFamily = manrope,
                         color = MaterialTheme.colorScheme.inverseSurface
                     )
                 },
@@ -273,7 +273,7 @@ fun LoginScreen(
                             text = uiState.passwordError.toString(),
                             style = TextStyle(
                                 fontSize = 14.sp,
-                                fontFamily = sora,
+                                fontFamily = manrope,
                                 fontWeight = FontWeight.Medium,
                                 color = MaterialTheme.colorScheme.error
                             )
@@ -340,7 +340,7 @@ fun LoginScreen(
                     text = "New to GeoWav?",
                     color = MaterialTheme.colorScheme.onBackground,
                     fontSize = 14.sp,
-                    fontFamily = sora
+                    fontFamily = manrope
                 )
 
                 Spacer(modifier = Modifier.width(0.dp))
@@ -357,7 +357,7 @@ fun LoginScreen(
                         text = "Sign Up",
                         color = MaterialTheme.colorScheme.primary,
                         fontSize = 14.sp,
-                        fontFamily = sora
+                        fontFamily = manrope
                     )
                 }
             }

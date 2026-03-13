@@ -19,7 +19,6 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -27,7 +26,6 @@ import androidx.compose.material3.ContainedLoadingIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.FloatingToolbarColors
-import androidx.compose.material3.FloatingToolbarDefaults
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.HorizontalFloatingToolbar
 import androidx.compose.material3.Icon
@@ -59,7 +57,6 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -72,13 +69,11 @@ import com.aarav.geowav.data.model.toLatLng
 import com.aarav.geowav.presentation.theme.GeoWavTheme
 import com.aarav.geowav.presentation.theme.manrope
 import com.aarav.geowav.presentation.theme.onBackgroundDark
-import com.aarav.geowav.presentation.theme.onBackgroundLight
 import com.aarav.geowav.presentation.theme.onPrimaryLight
 import com.aarav.geowav.presentation.theme.outlineLight
 import com.aarav.geowav.presentation.theme.outlineVariantLight
 import com.aarav.geowav.presentation.theme.primaryLight
 import com.aarav.geowav.presentation.theme.surfaceContainerDark
-import com.aarav.geowav.presentation.theme.surfaceDark
 import com.aarav.geowav.presentation.theme.surfaceLight
 import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.model.BitmapDescriptor
@@ -172,10 +167,6 @@ fun TimelineMapPreview(
         viewModel.getSessionInfo(sessionId, userId)
     }
 
-    val pathString = userPaths?.joinToString("|") {
-        "${it.latitude},${it.longitude}"
-    }
-
     LaunchedEffect(userPaths) {
         if (!userPaths.isNullOrEmpty()) {
             viewModel.getSnappedPath(userPaths, true)
@@ -231,6 +222,24 @@ fun TimelineMapPreview(
     }
 
     val scope = rememberCoroutineScope()
+
+    LaunchedEffect(mapLoaded) {
+        if (mapLoaded && currentSession != null) {
+            val boundsBuilder = LatLngBounds.builder()
+                .include(LatLng(currentSession.startLat, currentSession.startLng))
+                .include(LatLng(currentSession.endLat, currentSession.endLng))
+
+            currentSession.stayPoints.forEach { stay ->
+                boundsBuilder.include(LatLng(stay.lat, stay.lng))
+            }
+
+            cameraPositionState.animate(
+                CameraUpdateFactory.newLatLngBounds(
+                    boundsBuilder.build(), 300
+                )
+            )
+        }
+    }
 
     Scaffold(
         topBar = {
@@ -288,9 +297,8 @@ fun TimelineMapPreview(
 
                 currentSession?.let { session ->
 
-                    val start = LatLng(session.startLat, session.startLng)
-                    val end = LatLng(session.endLat, session.endLng)
-
+                    val start = remember(session.id) { LatLng(session.startLat, session.startLng) }
+                    val end = remember(session.id) { LatLng(session.endLat, session.endLng) }
 
                     startIcon?.let {
                         Marker(
@@ -351,25 +359,6 @@ fun TimelineMapPreview(
                             }
                         }
                     }
-
-
-                    LaunchedEffect(mapLoaded) {
-                        if (mapLoaded) {
-                            val boundsBuilder = LatLngBounds.builder()
-                                .include(start)
-                                .include(end)
-
-                            session.stayPoints.forEach { stay ->
-                                boundsBuilder.include(LatLng(stay.lat, stay.lng))
-                            }
-
-                            cameraPositionState.animate(
-                                CameraUpdateFactory.newLatLngBounds(
-                                    boundsBuilder.build(), 300
-                                )
-                            )
-                        }
-                    }
                 }
             }
 
@@ -424,8 +413,9 @@ fun TimelineMapPreview(
 
             AnimatedVisibility(
                 showPlaybackSpeedControls,
-                modifier = Modifier.align(Alignment.BottomCenter)
-                        .padding(bottom = 116.dp, start = 16.dp, end = 16.dp)
+                modifier = Modifier
+                    .align(Alignment.BottomCenter)
+                    .padding(bottom = 116.dp, start = 16.dp, end = 16.dp)
             ) {
                 Column {
                     Row(

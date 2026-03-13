@@ -97,7 +97,7 @@ fun YourPlacesScreen(
                             text = "Add a location to start tracking your zones",
                             fontSize = 14.sp,
                             textAlign = TextAlign.Center,
-                            fontFamily = sora,
+                            fontFamily = manrope,
                             color = MaterialTheme.colorScheme.onBackground,
                             fontWeight = FontWeight.Normal,
                         )

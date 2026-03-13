@@ -125,7 +125,7 @@ fun SignupScreen(
             Text(
                 text = "Create your GeoWav account",
                 fontSize = 16.sp,
-                fontFamily = sora,
+                fontFamily = manrope,
                 fontWeight = FontWeight.Medium,
                 color = MaterialTheme.colorScheme.onBackground,
                 textAlign = TextAlign.Center
@@ -174,7 +174,7 @@ fun SignupScreen(
             Text(
                 text = "Or sign up with email",
                 fontSize = 14.sp,
-                fontFamily = sora,
+                fontFamily = manrope,
                 color = MaterialTheme.colorScheme.inverseSurface
             )
 
@@ -185,7 +185,7 @@ fun SignupScreen(
                 onValueChange = { signUpVM.updateUsername(it) },
                 label = {
                     Text(
-                        "Name", fontFamily = sora, color = MaterialTheme.colorScheme.inverseSurface
+                        "Name", fontFamily = manrope, color = MaterialTheme.colorScheme.inverseSurface
                     )
                 },
                 leadingIcon = {
@@ -202,7 +202,7 @@ fun SignupScreen(
                             text = uiState.usernameError.toString(),
                             style = TextStyle(
                                 fontSize = 14.sp,
-                                fontFamily = sora,
+                                fontFamily = manrope,
                                 fontWeight = FontWeight.Medium,
                                 color = MaterialTheme.colorScheme.error
                             )
@@ -230,7 +230,7 @@ fun SignupScreen(
                 onValueChange = { signUpVM.updateEmail(it) },
                 label = {
                     Text(
-                        "Email", fontFamily = sora, color = MaterialTheme.colorScheme.inverseSurface
+                        "Email", fontFamily = manrope, color = MaterialTheme.colorScheme.inverseSurface
                     )
                 },
                 leadingIcon = {
@@ -247,7 +247,7 @@ fun SignupScreen(
                             text = uiState.emailError.toString(),
                             style = TextStyle(
                                 fontSize = 14.sp,
-                                fontFamily = sora,
+                                fontFamily = manrope,
                                 fontWeight = FontWeight.Medium,
                                 color = MaterialTheme.colorScheme.error
                             )
@@ -305,7 +305,7 @@ fun SignupScreen(
                 label = {
                     Text(
                         "Password",
-                        fontFamily = sora,
+                        fontFamily = manrope,
                         color = MaterialTheme.colorScheme.inverseSurface
                     )
                 },
@@ -323,7 +323,7 @@ fun SignupScreen(
                             text = uiState.passwordError.toString(),
                             style = TextStyle(
                                 fontSize = 14.sp,
-                                fontFamily = sora,
+                                fontFamily = manrope,
                                 fontWeight = FontWeight.Medium,
                                 color = MaterialTheme.colorScheme.error
                             )
@@ -384,7 +384,7 @@ fun SignupScreen(
             ) {
                 Text(
                     text = "Already have an account?",
-                    fontFamily = sora,
+                    fontFamily = manrope,
                     fontSize = 14.sp,
                     color = MaterialTheme.colorScheme.onBackground
                 )
@@ -402,7 +402,7 @@ fun SignupScreen(
                     Text(
                         text = "Login",
                         fontSize = 14.sp,
-                        fontFamily = sora,
+                        fontFamily = manrope,
                         color = MaterialTheme.colorScheme.primary
                     )
                 }

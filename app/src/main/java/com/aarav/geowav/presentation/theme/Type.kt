@@ -20,12 +20,12 @@ val AppTypography = Typography(
     titleMedium = Typography().titleMedium.copy(fontFamily = manrope),
     titleSmall = Typography().titleSmall.copy(fontFamily = manrope),
 
-    bodyLarge = Typography().bodyLarge.copy(fontFamily = sora),
-    bodyMedium = Typography().bodyMedium.copy(fontFamily = sora),
-    bodySmall = Typography().bodySmall.copy(fontFamily = sora),
+    bodyLarge = Typography().bodyLarge.copy(fontFamily = manrope),
+    bodyMedium = Typography().bodyMedium.copy(fontFamily = manrope),
+    bodySmall = Typography().bodySmall.copy(fontFamily = manrope),
 
-    labelLarge = Typography().labelLarge.copy(fontFamily = sora),
-    labelMedium = Typography().labelMedium.copy(fontFamily = sora),
-    labelSmall = Typography().labelSmall.copy(fontFamily = sora),
+    labelLarge = Typography().labelLarge.copy(fontFamily = manrope),
+    labelMedium = Typography().labelMedium.copy(fontFamily = manrope),
+    labelSmall = Typography().labelSmall.copy(fontFamily = manrope),
 )
 

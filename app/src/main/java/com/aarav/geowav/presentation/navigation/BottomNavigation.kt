@@ -16,6 +16,7 @@ import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.compose.currentBackStackEntryAsState
+import com.aarav.geowav.presentation.theme.manrope
 import com.aarav.geowav.presentation.theme.sora
 
 @Composable
@@ -65,7 +66,7 @@ fun BottomNavigationBar(
                     )
                 },
                 label = {
-                    Text(destination.name, fontFamily = sora)
+                    Text(destination.name, fontFamily = manrope)
                 },
                 colors = NavigationBarItemDefaults.colors(
                     selectedIconColor = MaterialTheme.colorScheme.primary,

@@ -134,12 +134,6 @@ class TimelineMapPreviewVM @Inject constructor(
                         SphericalUtil.interpolate(start, end, fraction.toDouble())
 
                     animated.add(interpolated)
-//                    _uiState.update { current ->
-//                        current.copy(
-//                            animatedPath = current.animatedPath + interpolated,
-//                            lastPosition = interpolated
-//                        )
-//                    }
 
                     if (step % 3 == 0) {
                         _uiState.update {

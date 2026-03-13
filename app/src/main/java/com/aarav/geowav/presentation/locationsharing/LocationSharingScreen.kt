@@ -327,7 +327,7 @@ fun StatusCard(
     }
 
     Card(
-        shape = RoundedCornerShape(24.dp),
+        shape = RoundedCornerShape(16.dp),
         colors = CardDefaults.cardColors(
             containerColor = containerColor
         ),
@@ -512,7 +512,7 @@ fun MapPreviewCard(
 
     Surface(
         color = MaterialTheme.colorScheme.surfaceContainerHigh,
-        shape = RoundedCornerShape(24.dp),
+        shape = RoundedCornerShape(16.dp),
         tonalElevation = 4.dp,
         modifier = Modifier
             .fillMaxWidth()
@@ -524,7 +524,7 @@ fun MapPreviewCard(
         ) {
 //            Text(
 //                "Google Map Preview",
-//                fontFamily = sora,
+//                fontFamily = manrope,
 //                fontWeight = FontWeight.SemiBold,
 //                color = MaterialTheme.colorScheme.onBackground,
 //                style = MaterialTheme.typography.labelLarge,
@@ -559,7 +559,7 @@ fun MapPreviewCard(
             GoogleMap(
                 modifier = Modifier
                     .fillMaxSize()
-                    .clip(RoundedCornerShape(8.dp)),
+                    .clip(RoundedCornerShape(16.dp)),
                 cameraPositionState = cameraPosition,
                 uiSettings = uiSettings,
                 properties = mapProperties,
@@ -628,7 +628,7 @@ fun LovedOnesCard(
         colors = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.surfaceContainerHigh
         ),
-        shape = RoundedCornerShape(24.dp)
+        shape = RoundedCornerShape(16.dp)
     ) {
 
         Column(
@@ -673,7 +673,7 @@ fun LovedOnesCard(
                         fontSize = 14.sp,
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(0.dp)
+                            .padding(bottom = 8.dp)
                     )
                 }
 
@@ -1112,7 +1112,7 @@ fun LastUpdatedText(lastUpdatedAt: Long) {
     }
     Text(
         text,
-        fontFamily = sora,
+        fontFamily = manrope,
         fontWeight = FontWeight.SemiBold,
         color = MaterialTheme.colorScheme.onSecondary,
         style = MaterialTheme.typography.labelSmall,

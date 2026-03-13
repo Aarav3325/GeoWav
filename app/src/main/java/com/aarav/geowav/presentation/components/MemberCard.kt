@@ -63,7 +63,7 @@ fun MemberInfoCard(
                     color = MaterialTheme.colorScheme.onBackground,
                     style = MaterialTheme.typography.headlineSmall.copy(
                         fontWeight = FontWeight.W600,
-                        fontFamily = sora
+                        fontFamily = manrope
                     ),
                     fontSize = 24.sp,
                     modifier = Modifier.align(Alignment.Center)

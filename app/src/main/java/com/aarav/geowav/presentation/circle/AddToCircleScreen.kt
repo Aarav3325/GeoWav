@@ -242,7 +242,7 @@ fun AddLovedOneCard(
     onSendInvite: (String, String) -> Unit
 ) {
     Card(
-        shape = RoundedCornerShape(24.dp),
+        shape = RoundedCornerShape(16.dp),
         colors = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.surfaceContainerHigh
         ),
@@ -402,7 +402,7 @@ fun SendInviteButton(
             .fillMaxWidth()
             .padding(vertical = 8.dp, horizontal = 0.dp)
             .height(52.dp),
-        shape = RoundedCornerShape(14.dp),
+        shape = RoundedCornerShape(16.dp),
         colors = ButtonDefaults.buttonColors(
             containerColor = MaterialTheme.colorScheme.primary,
             contentColor = MaterialTheme.colorScheme.onPrimary
@@ -463,7 +463,7 @@ fun MyCircleSection(
         colors = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.surfaceContainerHigh
         ),
-        shape = RoundedCornerShape(24.dp)
+        shape = RoundedCornerShape(16.dp)
     ) {
 
         Column(
@@ -543,7 +543,7 @@ fun PendingInviteSection(
         colors = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.surfaceContainerHigh
         ),
-        shape = RoundedCornerShape(24.dp)
+        shape = RoundedCornerShape(16.dp)
     ) {
 
         Column(
@@ -752,7 +752,6 @@ fun PendingInviteRow(
         verticalAlignment = Alignment.CenterVertically
     ) {
 
-        // Avatar (same as LovedOne)
         Box(
             modifier = Modifier
                 .size(42.dp)
@@ -785,6 +784,7 @@ fun PendingInviteRow(
 
         TextButton(
             enabled = acceptingInviteId != connection.senderId,
+            shape = RoundedCornerShape(16.dp),
             onClick = {
                 onAccept(connection.senderId)
             }) {
@@ -795,8 +795,11 @@ fun PendingInviteRow(
             )
         }
 
+        Spacer(Modifier.width(6.dp))
+
         TextButton(
             enabled = rejectingInviteId != connection.senderId,
+            shape = RoundedCornerShape(16.dp),
             onClick = {
                 onDecline(connection.senderId)
             }) {
