@@ -23,10 +23,15 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.ContainedLoadingIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.LoadingIndicator
+import androidx.compose.material3.LoadingIndicatorDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
@@ -64,10 +69,9 @@ import com.aarav.geowav.data.model.PendingInvite
 import com.aarav.geowav.presentation.components.DeleteDialog
 import com.aarav.geowav.presentation.locationsharing.itemShape
 import com.aarav.geowav.presentation.theme.manrope
-import com.aarav.geowav.presentation.theme.sora
 
 
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 fun CircleScreen(
     viewModel: CircleVM,
@@ -133,18 +137,26 @@ fun CircleScreen(
         containerColor = MaterialTheme.colorScheme.background,
         snackbarHost = { SnackbarHost(snackbarHostState, Modifier.padding(bottom = 36.dp)) }
     ) { padding ->
-        CircleContent(
-            modifier = Modifier.padding(padding),
-            uiState = uiState,
-            updateName = viewModel::updateName,
-            updateEmail = viewModel::updateEmail,
-            onSendInvite = viewModel::sendInvite,
-            onAcceptInvite = viewModel::acceptInvite,
-            onRejectInvite = viewModel::rejectInvite,
-            onDeleteMember = viewModel::showDeleteDialog,
-            dismissDialog = viewModel::hideDeleteDialog,
-            deleteMember = viewModel::deleteMember
-        )
+        when {
+            uiState.isLoading -> {
+                ContainedLoadingIndicator()
+            }
+
+            else -> {
+                CircleContent(
+                    modifier = Modifier.padding(padding),
+                    uiState = uiState,
+                    updateName = viewModel::updateName,
+                    updateEmail = viewModel::updateEmail,
+                    onSendInvite = viewModel::sendInvite,
+                    onAcceptInvite = viewModel::acceptInvite,
+                    onRejectInvite = viewModel::rejectInvite,
+                    onDeleteMember = viewModel::showDeleteDialog,
+                    dismissDialog = viewModel::hideDeleteDialog,
+                    deleteMember = viewModel::deleteMember
+                )
+            }
+        }
     }
 }
 
@@ -204,7 +216,7 @@ fun CircleContent(
                 uiState,
                 nameUpdate = updateName,
                 emailUpdate = updateEmail,
-                isLoading = uiState.isLoading,
+                isLoading = uiState.sendingRequest,
                 onSendInvite = onSendInvite
             )
         }
@@ -390,6 +402,7 @@ fun AddLovedOneCard(
 }
 
 
+@OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 fun SendInviteButton(
     isEnabled: Boolean,
@@ -400,7 +413,7 @@ fun SendInviteButton(
         onClick = onClick,
         modifier = Modifier
             .fillMaxWidth()
-            .padding(vertical = 8.dp, horizontal = 0.dp)
+            .padding(vertical = 4.dp, horizontal = 0.dp)
             .height(52.dp),
         shape = RoundedCornerShape(16.dp),
         colors = ButtonDefaults.buttonColors(
@@ -408,19 +421,26 @@ fun SendInviteButton(
             contentColor = MaterialTheme.colorScheme.onPrimary
         )
     ) {
-        Text(
-            "Send Invite",
-            fontFamily = manrope,
-            fontWeight = FontWeight.SemiBold
-        )
+        if(isEnabled) {
+            Text(
+                "Send Invite",
+                fontFamily = manrope,
+                fontWeight = FontWeight.SemiBold
+            )
 
-        Spacer(Modifier.width(12.dp))
+            Spacer(Modifier.width(12.dp))
 
-        Icon(
-            painter = painterResource(R.drawable.send_invite),
-            contentDescription = null,
-            modifier = Modifier.size(18.dp)
-        )
+            Icon(
+                painter = painterResource(R.drawable.send_invite),
+                contentDescription = null,
+                modifier = Modifier.size(18.dp)
+            )
+        }
+        else {
+            CircularProgressIndicator(
+                Modifier.size(36.dp)
+            )
+        }
 
     }
 }
@@ -486,7 +506,7 @@ fun MyCircleSection(
             }
 
 
-            Spacer(Modifier.height(24.dp))
+            Spacer(Modifier.height(16.dp))
 
             if (lovedOnesList.isEmpty()) {
 
@@ -498,7 +518,7 @@ fun MyCircleSection(
                     ),
                     textAlign = TextAlign.Center,
                     modifier = Modifier.fillMaxWidth(),
-                    fontSize = 16.sp
+                    fontSize = 14.sp
                 )
             } else {
 
@@ -549,14 +569,15 @@ fun PendingInviteSection(
         Column(
             modifier = Modifier
                 .animateContentSize()
+                .clickable(
+                    enabled = pendingInvites.isNotEmpty()
+                ) {
+                    expanded = !expanded
+                }
         ) {
             Row(
                 modifier = Modifier
-                    .clickable(
-                        enabled = pendingInvites.isNotEmpty()
-                    ) {
-                        expanded = !expanded
-                    }
+
                     .fillMaxWidth()
                     .padding(vertical = 16.dp, horizontal = 16.dp),
                 verticalAlignment = Alignment.CenterVertically
@@ -627,8 +648,6 @@ fun PendingInviteSection(
                 }
             } else {
 
-                Spacer(Modifier.height(16.dp))
-
                 Text(
                     text = "No Pending Invites",
                     style = MaterialTheme.typography.titleMedium.copy(
@@ -641,7 +660,7 @@ fun PendingInviteSection(
                         .padding(
                             bottom = 16.dp,
                         ),
-                    fontSize = 16.sp
+                    fontSize = 14.sp
                 )
             }
         }
@@ -711,10 +730,12 @@ fun LovedOneCardCircle(
             shape = CircleShape,
             color = MaterialTheme.colorScheme.errorContainer,
             shadowElevation = 2.dp,
-            modifier = Modifier.clip(CircleShape).clickable {
-                onDeleteMember()
-                confirmDelete(connection.id)
-            }
+            modifier = Modifier
+                .clip(CircleShape)
+                .clickable {
+                    onDeleteMember()
+                    confirmDelete(connection.id)
+                }
         ) {
             Icon(
                 painter = painterResource(R.drawable.trash),

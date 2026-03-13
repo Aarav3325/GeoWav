@@ -37,9 +37,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.aarav.geowav.R
 import com.aarav.geowav.data.model.Place
-import com.aarav.geowav.presentation.theme.GeoWavTheme
 import com.aarav.geowav.presentation.theme.manrope
-import com.aarav.geowav.presentation.theme.sora
 import com.google.android.libraries.places.api.model.AutocompletePrediction
 import kotlin.math.roundToInt
 
@@ -49,26 +47,29 @@ fun GeofencePlaceCard(
     place: Place,
     onDeleteClick: (Place) -> Unit
 ) {
-        Card(
-            modifier = Modifier
-                .fillMaxWidth()
-                .wrapContentHeight()
-                .padding(vertical = 8.dp, horizontal = 16.dp),
-            shape = RoundedCornerShape(16.dp),
-            colors = CardDefaults.cardColors(
-                containerColor = MaterialTheme.colorScheme.surfaceContainerHigh
-            )
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .wrapContentHeight()
+            .padding(vertical = 8.dp, horizontal = 16.dp),
+        shape = RoundedCornerShape(16.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surfaceContainerHigh
+        )
+    ) {
+        Column(
+            modifier = Modifier.fillMaxWidth()
+                .padding(16.dp)
         ) {
             Row(
                 modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 16.dp, vertical = 8.dp),
+                    .fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Surface(
                     modifier = Modifier.size(36.dp),
-                    color = MaterialTheme.colorScheme.tertiaryContainer,
+                    color = MaterialTheme.colorScheme.secondaryContainer,
                     shape = CircleShape,
                 ) {
                     Image(
@@ -76,15 +77,15 @@ fun GeofencePlaceCard(
                         contentDescription = "navigation arrow",
                         modifier = Modifier
                             .size(24.dp)
-                            .padding(6.dp),
-                        colorFilter = ColorFilter.tint(MaterialTheme.colorScheme.onTertiaryContainer)
+                            .padding(7.dp),
+                        colorFilter = ColorFilter.tint(MaterialTheme.colorScheme.onSecondaryContainer)
                     )
                 }
 
 
                 Text(
-                    text = place.placeName,
-                    color = MaterialTheme.colorScheme.primary,
+                    text = place.customName.ifBlank { place.placeName },
+                    color = MaterialTheme.colorScheme.onSurface,
                     fontSize = 16.sp,
                     maxLines = 2,
                     overflow = TextOverflow.Ellipsis,
@@ -119,11 +120,12 @@ fun GeofencePlaceCard(
 
             }
 
+            Spacer(Modifier.height(12.dp))
+
 
             Column(
                 modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 16.dp, vertical = 8.dp),
+                    .fillMaxWidth(),
                 horizontalAlignment = Alignment.Start,
                 verticalArrangement = Arrangement.spacedBy(4.dp)
             ) {
@@ -156,6 +158,7 @@ fun GeofencePlaceCard(
                 )
             }
         }
+    }
 }
 
 @Composable
@@ -289,38 +292,38 @@ fun RadiusChipGroup(
     onRadiusSelected: (Float) -> Unit
 ) {
 
-        Column {
-            Text(
-                text = "Select Radius",
-                style = MaterialTheme.typography.titleMedium,
-                color = MaterialTheme.colorScheme.onSurface,
-                fontFamily = manrope,
-                fontSize = 16.sp,
-                fontWeight = FontWeight.SemiBold
-            )
+    Column {
+        Text(
+            text = "Select Radius",
+            style = MaterialTheme.typography.titleMedium,
+            color = MaterialTheme.colorScheme.onSurface,
+            fontFamily = manrope,
+            fontSize = 16.sp,
+            fontWeight = FontWeight.SemiBold
+        )
 
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(10.dp)
-            ) {
-                chips.forEach { radius ->
-                    FilterChip(
-                        selected = selectedRadius == radius,
-                        onClick = {
-                            onRadiusSelected(radius)
-                        },
-                        label = { Text("${radius.roundToInt()} m", fontFamily = manrope) },
-                        shape = RoundedCornerShape(12.dp),
-                        colors = FilterChipDefaults.filterChipColors(
-                            selectedContainerColor = MaterialTheme.colorScheme.primary,
-                            selectedLabelColor = MaterialTheme.colorScheme.onPrimary,
-                            containerColor = MaterialTheme.colorScheme.surface,
-                            labelColor = MaterialTheme.colorScheme.primary
-                        )
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(10.dp)
+        ) {
+            chips.forEach { radius ->
+                FilterChip(
+                    selected = selectedRadius == radius,
+                    onClick = {
+                        onRadiusSelected(radius)
+                    },
+                    label = { Text("${radius.roundToInt()} m", fontFamily = manrope) },
+                    shape = RoundedCornerShape(12.dp),
+                    colors = FilterChipDefaults.filterChipColors(
+                        selectedContainerColor = MaterialTheme.colorScheme.primary,
+                        selectedLabelColor = MaterialTheme.colorScheme.onPrimary,
+                        containerColor = MaterialTheme.colorScheme.surface,
+                        labelColor = MaterialTheme.colorScheme.primary
                     )
-                }
+                )
             }
         }
+    }
 }
 
 @Preview(showBackground = true)

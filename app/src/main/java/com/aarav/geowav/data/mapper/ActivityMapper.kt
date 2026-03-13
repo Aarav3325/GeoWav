@@ -18,10 +18,11 @@ data class FirebaseActivity(
 )
 
 // Mappers.kt
-fun FirebaseActivity.toGeoAlert(id: String): GeoAlert? {
+fun FirebaseActivity.toGeoAlert(id: String, username: String): GeoAlert? {
     val geofenceId = geofenceId ?: return null
     val transition = transitionType ?: "UNKNOWN"
     val readable = readableTime ?: ""
+
 
     val ts = timestamp ?: return null
     val type = if (transition.equals("reached", ignoreCase = true)) "enter" else "exit"
@@ -29,8 +30,8 @@ fun FirebaseActivity.toGeoAlert(id: String): GeoAlert? {
     val zoneLabel = geofenceId
 
     val title = when (type) {
-        "enter" -> "Reached $zoneLabel"
-        else    -> "Left $zoneLabel"
+        "enter" -> "$username Reached $zoneLabel"
+        else    -> "$username Left $zoneLabel"
     }
 
     val relativeTime = buildRelativeSubtitle(type, ts)
@@ -43,7 +44,8 @@ fun FirebaseActivity.toGeoAlert(id: String): GeoAlert? {
         time = readable,
         readableTime = ts,
         type = type,
-        userName = userName ?: ""
+        timestamp = timestamp,
+        userName = username
     )
 }
 

@@ -48,27 +48,29 @@ class MessageRepo {
     fun sendMessageSync(request: TemplateMessageRequest, activityData: Map<String, Any>) {
 
         Log.i("MYTAG", "sendMessageSync called")
-        val messageAPI = RetrofitInstance.getMessagesAPI()
-        try {
-            val response = messageAPI.postMessage(request).execute()
-            if (response.isSuccessful) {
-                Log.i("MYTAG", "WhatsApp message sent: ${response.body()}")
+//        val messageAPI = RetrofitInstance.getMessagesAPI()
+//        try {
+//            val response = messageAPI.postMessage(request).execute()
+//            if (response.isSuccessful) {
+//                Log.i("MYTAG", "WhatsApp message sent: ${response.body()}")
 
                 val firebaseDatabase = FirebaseDatabase.getInstance()
 
-                val userId = FirebaseAuth.getInstance().currentUser?.uid ?: "user123"
-                firebaseDatabase.getReference("geofence_activity")
-                    .child(userId)
-                    .push()
-                    .setValue(activityData)
-                    .addOnSuccessListener { Log.i("MYTAG", "Firebase write success") }
-                    .addOnFailureListener { e -> Log.e("MYTAG", "Firebase write failed", e) }
-            } else {
-                Log.e("MYTAG", "WhatsApp message failed: ${response.errorBody()?.string()}")
-            }
-        } catch (e: Exception) {
-            Log.e("MYTAG", "WhatsApp API error", e)
-        }
+                val userId = FirebaseAuth.getInstance().currentUser?.uid
+                userId?.let {
+                    firebaseDatabase.getReference("geofence_activity")
+                        .child(it)
+                        .push()
+                        .setValue(activityData)
+                        .addOnSuccessListener { Log.i("MYTAG", "Firebase write success") }
+                        .addOnFailureListener { e -> Log.e("MYTAG", "Firebase write failed", e) }
+                }
+//            } else {
+//                Log.e("MYTAG", "WhatsApp message failed: ${response.errorBody()?.string()}")
+//            }
+//        } catch (e: Exception) {
+//            Log.e("MYTAG", "WhatsApp API error", e)
+//        }
     }
 
 

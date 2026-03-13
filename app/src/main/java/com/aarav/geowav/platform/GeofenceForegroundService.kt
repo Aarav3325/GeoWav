@@ -55,6 +55,7 @@ class GeofenceForegroundService : Service() {
     @Inject
     lateinit var killSwitchManager: KillSwitchManager
 
+
     override fun onBind(intent: Intent?): IBinder? {
         TODO("Not yet implemented")
     }
@@ -63,6 +64,8 @@ class GeofenceForegroundService : Service() {
         super.onCreate()
 
         scope.launch {
+
+
 
             killSwitchManager.fetchAndActivate()
 
@@ -118,7 +121,7 @@ class GeofenceForegroundService : Service() {
 
         val geofenceList = list.map {
             Geofence.Builder()
-                .setRequestId(it.placeName)
+                .setRequestId(it.customName.ifEmpty { it.placeName })
                 .setCircularRegion(it.latitude, it.longitude, it.radius)
                 .setExpirationDuration(Geofence.NEVER_EXPIRE)
                 .setTransitionTypes(Geofence.GEOFENCE_TRANSITION_ENTER or Geofence.GEOFENCE_TRANSITION_EXIT)

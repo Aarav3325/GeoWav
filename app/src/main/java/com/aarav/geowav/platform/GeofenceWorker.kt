@@ -59,8 +59,7 @@ class GeofenceWorker(
             "location" to mapOf(
                 "latitude" to latitude,
                 "longitude" to longitude
-            ),
-            "userName" to ""
+            )
         )
 
 

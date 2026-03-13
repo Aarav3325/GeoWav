@@ -43,9 +43,8 @@ fun NavGraph(
     googleSignInClient: GoogleSignInClient,
     modifier: Modifier
 ) {
-    val isLoggedIn = googleSignInClient.isLoggedIn()
-    val isOnboarded = sharedPreferences.getBoolean("isOnboarded", false)
-
+    val isLoggedIn = remember { googleSignInClient.isLoggedIn() }
+    val isOnboarded = remember { sharedPreferences.getBoolean("isOnboarded", false) }
     val startDestination = when {
         isLoggedIn && isOnboarded -> "home_graph"
         !isOnboarded -> NavRoute.OnBoard.path
@@ -501,11 +500,16 @@ fun AddSettingsScreen(
             },
             onLogout = {
                 navController.navigate(NavRoute.Login.path) {
-                    popUpTo(navController.graph.findStartDestination().id) {
-                        inclusive = true
-                    }
+                    popUpTo(0)
                 }
             },
+//            onLogout = {
+//                navController.navigate(NavRoute.Login.path) {
+//                    popUpTo(navController.graph.findStartDestination().id) {
+//                        inclusive = true
+//                    }
+//                }
+//            },
             onDeleteAccount = {}
         )
     }

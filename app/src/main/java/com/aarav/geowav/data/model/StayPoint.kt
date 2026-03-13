@@ -11,6 +11,6 @@ data class StayPoint(
     companion object {
         const val STAY_RADIUS_METERS = 30.0
 
-        const val STAY_MIN_DURATION_MS = 1L * 60L * 1000L // 10 minutes
+        const val STAY_MIN_DURATION_MS = 10L * 60L * 1000L // 10 minutes
     }
 }

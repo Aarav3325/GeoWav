@@ -361,6 +361,8 @@ fun NewLog(
         if (isEnter) Color(0xFF00513f) else Color(0xFF723339)
     }
 
+    val boxColor = Color(0xFFEDEDED)
+    val iconColor = Color(0xFF4A4A4A)
 
     Card(
         shape = RoundedCornerShape(16.dp),
@@ -369,27 +371,26 @@ fun NewLog(
             .padding(horizontal = 12.dp, vertical = 0.dp),
         colors = CardDefaults.cardColors(
             containerColor = containerColor, contentColor = contentColor
-        ),
-        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
+        )
     ) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(10.dp),
+                .padding(12.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
             Box(
                 modifier = Modifier
                     .size(44.dp)
                     .clip(RoundedCornerShape(12.dp))
-                    .background(MaterialTheme.colorScheme.inverseSurface.copy(alpha = 0.9f)),
+                    .background(boxColor),
                 contentAlignment = Alignment.Center
             ) {
                 Icon(
                     painter = painterResource(R.drawable.map_pin),
                     contentDescription = null,
                     modifier = Modifier.size(24.dp),
-                    tint = MaterialTheme.colorScheme.inverseOnSurface
+                    tint = iconColor
                 )
             }
 
@@ -425,7 +426,7 @@ fun NewLog(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Text(
-                        text = "TRIGGER TYPE :",
+                        text = "Trigger:",
                         fontSize = 11.sp,
                         style = MaterialTheme.typography.labelSmall.copy(
                             fontFamily = manrope, fontWeight = FontWeight.Medium
@@ -459,19 +460,15 @@ fun NewLog(
 @Composable
 private fun TypeChip(isEnter: Boolean) {
     val label = if (isEnter) "ENTERED" else "LEFT"
-    val bg = if (isEnter) {
-        MaterialTheme.colorScheme.inverseSurface.copy(alpha = 0.25f)
-    } else {
-        MaterialTheme.colorScheme.inverseSurface.copy(alpha = 0.25f)
-    }
+    val bg = Color(0xFFEDEDED)
 
-    val textColor = MaterialTheme.colorScheme.onSurface
+    val textColor = Color(0xFF4A4A4A)
 
     Box(
         modifier = Modifier
-            .clip(RoundedCornerShape(8.dp))
+            .clip(RoundedCornerShape(4.dp))
             .background(bg)
-            .padding(horizontal = 8.dp, vertical = 2.dp), contentAlignment = Alignment.Center
+            .padding(horizontal = 8.dp, vertical = 0.dp), contentAlignment = Alignment.Center
     ) {
         Text(
             text = label,

@@ -17,6 +17,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.ButtonDefaults
@@ -168,16 +169,30 @@ fun LocationSharingContent(
     EmergencyShareDialog(
         showEmergencyDialog,
         onConfirm = {
-            onStartEmergency(1)
+            onStartEmergency(15)
             showEmergencyDialog = false
         },
         onDismiss = { showEmergencyDialog = false }
     )
 
+    val lazyState = rememberLazyListState()
+
+    var expanded by remember {
+        mutableStateOf(false)
+    }
+
+    LaunchedEffect(expanded) {
+        if (expanded) {
+            lazyState.animateScrollToItem(2)
+        }
+    }
+
+
     Column(
         modifier = modifier
     ) {
         LazyColumn(
+            state = lazyState,
             modifier = Modifier
                 .fillMaxSize()
                 .background(MaterialTheme.colorScheme.background)
@@ -210,6 +225,10 @@ fun LocationSharingContent(
 
             item {
                 LovedOnesCard(
+                    expanded,
+                    onExpandChange = {
+                        expanded = !expanded
+                    },
                     locationUiState.lovedOnes,
                     locationUiState.sharingState,
                     locationUiState.selectedViewerIds,
@@ -591,6 +610,8 @@ fun MapPreviewCard(
 
 @Composable
 fun LovedOnesCard(
+    expanded: Boolean,
+    onExpandChange: () -> Unit,
     lovedOnesList: List<CircleMember>,
     locationState: LiveLocationState,
     selectedViewerIds: Set<String>,
@@ -618,8 +639,6 @@ fun LovedOnesCard(
             true
         ),
     )
-
-    var expanded by remember { mutableStateOf(false) }
 
     Card(
         modifier = Modifier
@@ -649,7 +668,7 @@ fun LovedOnesCard(
                     modifier = Modifier.weight(1f)
                 )
 
-                TextButton(onClick = { expanded = !expanded }) {
+                TextButton(onClick = onExpandChange) {
                     Text(
                         if (expanded) "Collapse" else "Edit",
                         fontFamily = manrope,

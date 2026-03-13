@@ -280,11 +280,7 @@ fun GeoWavHomeScreen(
                 Color.Black
             }
         } else {
-            if (isDarkThemeEnabled) {
-                Color.Black
-            } else {
-                Color.Black
-            }
+            Color.Black
         },
         animationSpec = tween(durationMillis = 800), // smooth 0.8s fade
         label = "TextColorAnimation"
@@ -539,7 +535,7 @@ fun GeoWavHomeScreen(
                             horizontalArrangement = Arrangement.SpaceBetween
                         ) {
                             Text(
-                                "Recent Alerts",
+                                "Your Activity",
                                 color = MaterialTheme.colorScheme.onBackground,
                                 style = MaterialTheme.typography.titleMedium.copy(
                                     fontFamily = manrope,
@@ -1103,7 +1099,8 @@ fun ActiveZonesSection(
             } else {
                 Column(
                     modifier = Modifier
-                        .fillMaxWidth(),
+                        .fillMaxWidth()
+                        .padding(bottom = 16.dp),
                     horizontalAlignment = Alignment.CenterHorizontally,
                     verticalArrangement = Arrangement.spacedBy(4.dp)
                 ) {
@@ -1269,7 +1266,7 @@ fun RecentAlertsList(
         verticalArrangement = Arrangement.spacedBy(10.dp),
         modifier = Modifier
             .fillMaxWidth()
-            .padding(bottom = 24.dp, top = 8.dp)
+            .padding(vertical = 8.dp)
     ) {
         if (alerts.isEmpty()) {
             Column(
@@ -1305,31 +1302,34 @@ fun AlertItem(alert: com.aarav.geowav.data.model.GeoAlert, isDarkThemeEnabled: B
 
     val type = if (alert.type.equals("ENTER", ignoreCase = true)) "enter" else "exit"
 
-
+    val isEnter = alert.type.equals("ENTER", true)
     val relativeTime = buildRelativeSubtitle(type, alert.readableTime)
+
+
+    val boxColor = Color(0xFFEDEDED)
+    val iconColor = Color(0xFF4A4A4A)
 
     Card(
         shape = RoundedCornerShape(16.dp),
-        modifier = Modifier.fillMaxWidth(),
+        modifier = Modifier.fillMaxWidth().padding(vertical = 0.dp),
         colors = CardDefaults.cardColors(
             containerColor = if (isDarkThemeEnabled) {
-                if (alert.type.equals("enter")) Color(0xFF00513f) else Color(0xFF723339)
+                if (isEnter) Color(0xFF00513f) else Color(0xFF723339)
             } else {
-                if (alert.type.equals("enter")) Color(0xFFa3f2d6) else Color(0xFFffdadb)
+                if (isEnter) Color(0xFFa3f2d6) else Color(0xFFffdadb)
             },
             contentColor =
                 if (isDarkThemeEnabled) {
-                    if (alert.type.equals("enter")) Color(0XFFa3f2d6) else Color(0xFFffdadb)
+                    if (isEnter) Color(0XFFa3f2d6) else Color(0xFFffdadb)
                 } else {
-                    if (alert.type.equals("enter")) Color(0xFF00513f) else Color(0xFF723339)
+                    if (isEnter) Color(0xFF00513f) else Color(0xFF723339)
                 }
-        ),
-        elevation = CardDefaults.cardElevation(4.dp)
+        )
     ) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(8.dp),
+                .padding(12.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
             Box(
@@ -1337,14 +1337,16 @@ fun AlertItem(alert: com.aarav.geowav.data.model.GeoAlert, isDarkThemeEnabled: B
                     .size(44.dp)
                     .clip(RoundedCornerShape(8.dp))
                     //.background(Color(0xFFBAFFDF)),
-                    .background(MaterialTheme.colorScheme.inverseSurface),
+                    .background(
+                        boxColor
+                    ),
                 contentAlignment = Alignment.Center
             ) {
                 Icon(
                     painter = painterResource(R.drawable.map_pin),
                     contentDescription = null,
                     modifier = Modifier.size(24.dp),
-                    tint = MaterialTheme.colorScheme.inverseOnSurface
+                    tint = iconColor
                 )
             }
             Spacer(modifier = Modifier.width(12.dp))

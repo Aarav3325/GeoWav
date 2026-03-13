@@ -1,6 +1,5 @@
 package com.aarav.geowav.presentation.circle
 
-import android.util.Log
 import android.util.Patterns
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -189,18 +188,18 @@ class CircleVM
 
 
         viewModelScope.launch {
-            _uiState.update { it.copy(isLoading = true) }
+            _uiState.update { it.copy(sendingRequest = true) }
 
             val currentUser = googleSignInClient.findUserByUserId(currentUserId)
             if (currentUser == null) {
-                _uiState.update { it.copy(isLoading = false) }
+                _uiState.update { it.copy(sendingRequest = false) }
                 emitError("Unable to send invite")
                 return@launch
             }
 
             val receiverUid = circleRepository.findUserByEmail(trimmedEmail)
             if (receiverUid == null) {
-                _uiState.update { it.copy(isLoading = false) }
+                _uiState.update { it.copy(sendingRequest = false) }
                 emitError("User with email $trimmedEmail not found")
                 return@launch
             }
@@ -220,12 +219,20 @@ class CircleVM
 
                 // Handle success and error
                 is Resource.Success -> {
-                    _uiState.update { it.copy(isLoading = false) }
+                    _uiState.update {
+                        it.copy(
+                            sendingRequest = false,
+                            name = "",
+                            nameError = null,
+                            email = "",
+                            emailError = null
+                        )
+                    }
                     _events.emit(CircleUiEvent.InviteSent)
                 }
 
                 is Resource.Error -> {
-                    _uiState.update { it.copy(isLoading = false) }
+                    _uiState.update { it.copy(sendingRequest = false) }
                     emitError(result.message ?: "Failed to send invite")
                 }
 
@@ -252,14 +259,14 @@ class CircleVM
 
             val receiver = googleSignInClient.findUserByUserId(currentUserId)
             if (receiver == null) {
-                _uiState.update { it.copy(isLoading = false) }
+                _uiState.update { it.copy(acceptingInviteId = null) }
                 emitError("Unable to accept invite")
                 return@launch
             }
 
             val sender = googleSignInClient.findUserByUserId(senderUid)
             if (sender == null) {
-                _uiState.update { it.copy(isLoading = false) }
+                _uiState.update { it.copy(acceptingInviteId = null) }
                 emitError("Unable to accept invite")
                 return@launch
             }
@@ -370,7 +377,7 @@ class CircleVM
         }
     }
 
-   // Emit error
+    // Emit error
     private fun emitError(message: String) {
         viewModelScope.launch {
             _events.emit(CircleUiEvent.ShowError(message))
@@ -382,6 +389,7 @@ data class CircleUiState(
     val lovedOnes: List<CircleMember> = emptyList(),
     val pendingInvites: List<PendingInvite> = emptyList(),
     val isLoading: Boolean = false,
+    val sendingRequest: Boolean = false,
     val acceptingInviteId: String? = null,
     val rejectingInviteId: String? = null,
     val name: String = "",
@@ -396,7 +404,7 @@ sealed class CircleUiEvent {
     object InviteSent : CircleUiEvent()
     object InviteAccepted : CircleUiEvent()
 
-    object MemberDeleted: CircleUiEvent()
+    object MemberDeleted : CircleUiEvent()
     data class ShowError(val message: String) : CircleUiEvent()
 }
 

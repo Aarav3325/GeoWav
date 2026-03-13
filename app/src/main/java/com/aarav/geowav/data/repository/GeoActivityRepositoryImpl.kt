@@ -15,11 +15,13 @@ import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
 import javax.inject.Inject
+import com.aarav.geowav.data.authentication.GoogleSignInClient
 
 class GeoActivityRepositoryImpl
 @Inject constructor(
     private val db: FirebaseDatabase,
-    private val auth: FirebaseAuth
+    private val auth: FirebaseAuth,
+    private val googleSignInClient: GoogleSignInClient
 ) : GeoActivityRepository {
 
     private fun uid(): String =
@@ -32,6 +34,8 @@ class GeoActivityRepositoryImpl
         val ref = db.getReference("geofence_activity")
             .child(userID)
 
+        val username = googleSignInClient.getUserName()
+
         val query = ref
             .orderByChild("timestamp")
             .startAt(timeRange.startMillis.toDouble())
@@ -41,9 +45,9 @@ class GeoActivityRepositoryImpl
             override fun onDataChange(snapshot: DataSnapshot) {
                 val alerts = snapshot.children.mapNotNull { snap ->
                     val activity = snap.getValue(FirebaseActivity::class.java)
-                    activity?.toGeoAlert(id = snap.key ?: "")
+                    activity?.toGeoAlert(id = snap.key ?: "", username = username)
                 }.sortedByDescending { alert ->
-                    alert.time
+                    alert.timestamp
                 }
 
                 trySend(alerts)
