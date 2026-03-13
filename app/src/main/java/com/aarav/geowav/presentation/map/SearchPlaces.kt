@@ -1,9 +1,11 @@
 package com.aarav.geowav.presentation.map
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -30,6 +32,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -37,6 +40,8 @@ import com.aarav.geowav.R
 import com.aarav.geowav.presentation.components.SearchItem
 import com.aarav.geowav.presentation.theme.manrope
 import com.aarav.geowav.presentation.theme.sora
+import com.aarav.geowav.presentation.theme.surfaceContainerHighDark
+import com.aarav.geowav.presentation.theme.surfaceContainerHighLight
 import com.aarav.geowav.presentation.theme.surfaceContainerLowDarkHighContrast
 import com.aarav.geowav.presentation.theme.surfaceContainerLowestLightHighContrast
 import com.google.android.libraries.places.api.model.AutocompletePrediction
@@ -57,21 +62,22 @@ fun NewSearch(
 
     Box(
         modifier = modifier
+            .background(if(expanded) MaterialTheme.colorScheme.surface else Color.Transparent)
             .fillMaxWidth()
-            .padding(top = if (expanded) 56.dp else 66.dp)
+            .padding(top = if(expanded) 54.dp else 66.dp)
             .padding(horizontal = if (!expanded) 12.dp else 0.dp)
     ) {
         SearchBar(
             shadowElevation = 16.dp,
             colors = SearchBarDefaults.colors(
-                containerColor = if (!isDarkThemeEnabled) surfaceContainerLowestLightHighContrast else surfaceContainerLowDarkHighContrast,
+                containerColor = MaterialTheme.colorScheme.surface,
                 dividerColor = MaterialTheme.colorScheme.primary
             ),
             expanded = expanded,
             onExpandedChange = onExpandedChange,
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(0.dp),
+                .padding(horizontal = if (!expanded) 0.dp else 0.dp),
             inputField = {
                 SearchBarDefaults.InputField(
                     modifier = Modifier
@@ -79,13 +85,16 @@ fun NewSearch(
                         .clip(
                             shape = RoundedCornerShape(16.dp)
                         )
-                        .padding(0.dp),
+                        .padding(horizontal = if (expanded) 12.dp else 0.dp),
                     query = textFieldState.text.toString(),
                     onQueryChange = onQueryChange,
                     onSearch = {},
                     leadingIcon = {
                         if (expanded) {
-                            IconButton(onClick = { onExpandedChange(false) }) {
+                            IconButton(onClick = {
+                                onExpandedChange(false)
+                                textFieldState.clearText()
+                            }) {
                                 Icon(
                                     painter = painterResource(R.drawable.back),
                                     contentDescription = "back",
@@ -106,13 +115,15 @@ fun NewSearch(
                     },
                     trailingIcon = {
                         if (expanded) {
-                            IconButton(onClick = { textFieldState.clearText() }) {
-                                Icon(
-                                    painter = painterResource(R.drawable.clear),
-                                    contentDescription = "clear",
-                                    modifier = Modifier.size(24.dp),
-                                    tint = MaterialTheme.colorScheme.tertiary
-                                )
+                            if(textFieldState.text.isNotEmpty()){
+                                IconButton(onClick = { textFieldState.clearText() }) {
+                                    Icon(
+                                        painter = painterResource(R.drawable.clear),
+                                        contentDescription = "clear",
+                                        modifier = Modifier.size(24.dp),
+                                        tint = MaterialTheme.colorScheme.tertiary
+                                    )
+                                }
                             }
                         } else {
                             IconButton(onClick = {}) {
@@ -129,8 +140,8 @@ fun NewSearch(
                     onExpandedChange = onExpandedChange,
                     placeholder = { Text("Search here", fontFamily = manrope) },
                     colors = TextFieldDefaults.colors(
-                        //unfocusedContainerColor = MaterialTheme.colorScheme.secondaryContainer,
-                        focusedContainerColor = MaterialTheme.colorScheme.surface,
+                        unfocusedContainerColor = MaterialTheme.colorScheme.surfaceContainer,
+                        focusedContainerColor = MaterialTheme.colorScheme.surfaceContainer,
                         focusedTextColor = MaterialTheme.colorScheme.onSurface,
                         focusedIndicatorColor = MaterialTheme.colorScheme.primary,
                         cursorColor = MaterialTheme.colorScheme.primary
@@ -183,7 +194,8 @@ fun NewSearch(
             }
             else {
                 LazyColumn(
-                    modifier = Modifier.fillMaxWidth()
+                    modifier = Modifier.fillMaxWidth(),
+                    contentPadding = PaddingValues(top = 8.dp)
                 ) {
                     items(predictions) { prediction ->
                         SearchItem(prediction) {

@@ -115,7 +115,7 @@ fun MapScreen(
         topBar = {
             TopAppBar(
                 colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = if (!isDarkThemeEnabled) surfaceContainerLowestLightHighContrast else surfaceContainerLowDarkHighContrast,
+                    containerColor = MaterialTheme.colorScheme.background,
                 ),
                 title = {
                     Text(
@@ -143,7 +143,6 @@ fun MapScreen(
                 onClick = {
                     location?.let { (lat, lng) ->
                         scope.launch {
-//                            mapViewModel.fetchUserLocation()
                             cameraPositionState.animate(
                                 CameraUpdateFactory.newLatLngZoom(LatLng(lat, lng), 16f)
                             )

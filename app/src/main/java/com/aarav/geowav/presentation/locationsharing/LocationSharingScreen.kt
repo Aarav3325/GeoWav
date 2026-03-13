@@ -554,9 +554,10 @@ fun MapPreviewCard(
             var uiSettings by remember {
                 mutableStateOf(
                     MapUiSettings(
-                        myLocationButtonEnabled = false,
+                        myLocationButtonEnabled = true,
                         zoomControlsEnabled = false,
                         compassEnabled = true,
+                        mapToolbarEnabled = false
                     )
                 )
             }

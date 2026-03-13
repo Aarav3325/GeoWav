@@ -107,6 +107,9 @@ fun TimelineMapPreview(
 
     val uiState by viewModel.uiState.collectAsState()
 
+    val animatedPath by viewModel.animatedPath.collectAsState()
+    val lastPosition by viewModel.lastPosition.collectAsState()
+
     var showPlaybackSpeedControls by remember {
         mutableStateOf(false)
     }
@@ -187,8 +190,8 @@ fun TimelineMapPreview(
         }
     }
 
-    LaunchedEffect(uiState.lastPosition) {
-        uiState.lastPosition?.let { pos ->
+    LaunchedEffect(lastPosition) {
+        lastPosition?.let { pos ->
             movingMarkerState.position = pos
             if (followUser) {
                 cameraPositionState.move(CameraUpdateFactory.newLatLng(pos))
@@ -320,7 +323,7 @@ fun TimelineMapPreview(
                     }
 
 
-                    if (uiState.playbackIndex != 0 || uiState.lastPosition != null) {
+                    if (uiState.playbackIndex != 0 || lastPosition != null) {
                         Marker(
                             state = movingMarkerState,
                             icon = movingIcon,
@@ -330,9 +333,9 @@ fun TimelineMapPreview(
                     }
 
 
-                    if (uiState.animatedPath.isNotEmpty()) {
+                    if (animatedPath.isNotEmpty()) {
                         Polyline(
-                            points = uiState.animatedPath,
+                            points = animatedPath.toList(),
                             color = Color(0xFF0A6780),
                             width = 10f
                         )
@@ -353,7 +356,7 @@ fun TimelineMapPreview(
                             StayPointMarker(stay, stayIcon)
                         }
                     } else {
-                        if (!uiState.isPlaying && uiState.lastPosition == null) {
+                        if (!uiState.isPlaying && lastPosition == null) {
                             session.stayPoints.forEach { stay ->
                                 StayPointMarker(stay, stayIcon)
                             }
@@ -592,8 +595,8 @@ fun TimelineMapPreview(
                                             boundsBuilder.include(LatLng(it.lat, it.lng))
                                         }
 
-                                        if (uiState.isPlaying && uiState.lastPosition != null) {
-                                            uiState.lastPosition?.let {
+                                        if (uiState.isPlaying && lastPosition != null) {
+                                            lastPosition?.let {
                                                 boundsBuilder.include(it)
                                             }
                                         }

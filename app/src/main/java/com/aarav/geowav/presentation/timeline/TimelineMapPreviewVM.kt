@@ -29,10 +29,17 @@ class TimelineMapPreviewVM @Inject constructor(
 ) : ViewModel() {
 
 
+    private val _animatedPath  = MutableStateFlow(emptyList<LatLng>())
+    val animatedPath : StateFlow<List<LatLng>> = _animatedPath.asStateFlow()
+    private val _lastPosition = MutableStateFlow<LatLng?>(null)
+    val lastPosition  : StateFlow<LatLng?> = _lastPosition.asStateFlow()
+
     private val _uiState = MutableStateFlow(TimelinePreviewUiState())
     val uiState: StateFlow<TimelinePreviewUiState> = _uiState.asStateFlow()
 
     private var playbackJob: Job? = null
+
+
 
 
     fun getSessionInfo(sessionId: String, userId: String) {
@@ -94,11 +101,12 @@ class TimelineMapPreviewVM @Inject constructor(
             it.copy(
                 isPlaying = false,
                 playbackIndex = 0,
-                animatedPath = emptyList(),
-                revealedStayPoints = emptyList(),
-                lastPosition = null
+                revealedStayPoints = emptyList()
             )
         }
+
+        _animatedPath.value = emptyList()
+        _lastPosition.value = null
     }
 
 
@@ -108,13 +116,13 @@ class TimelineMapPreviewVM @Inject constructor(
         playbackJob = viewModelScope.launch {
 
             val state = _uiState.value
-            val animated = _uiState.value.animatedPath.toMutableList()
+            val animated = _animatedPath.value.toMutableList()
 
             for (i in state.playbackIndex until path.size - 1) {
 
                 if (!_uiState.value.isPlaying) return@launch
 
-                val start = _uiState.value.lastPosition ?: path[i]
+                val start = _lastPosition.value ?: path[i]
                 val end = path[i + 1]
 
                 val distance = SphericalUtil.computeDistanceBetween(start, end)
@@ -135,16 +143,12 @@ class TimelineMapPreviewVM @Inject constructor(
 
                     animated.add(interpolated)
 
-                    if (step % 3 == 0) {
-                        _uiState.update {
-                            it.copy(
-                                animatedPath = animated.toList(),
-                                lastPosition = interpolated
-                            )
-                        }
+                    if (step % 4 == 0) {
+                        _animatedPath.value = animated
+                        _lastPosition.value = interpolated
                     }
 
-                    delay(duration / steps)
+                    delay((duration / steps))
                 }
 
                 _uiState.update {
@@ -197,9 +201,7 @@ data class TimelinePreviewUiState(
     val isPlaying: Boolean = false,
     val playbackIndex: Int = 0,
     val speed: Float = 1f,
-    val animatedPath: List<LatLng> = emptyList(),
     val revealedStayPoints: List<StayPoint> = emptyList(),
     val mapType: MapType = MapType.NORMAL,
-    val lastPosition: LatLng? = null,
     val loading: Boolean = false
 )

@@ -6,6 +6,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -47,9 +48,18 @@ fun PlaceModalSheet(
 
     AnimatedVisibility(showSheet) {
         ModalBottomSheet(
+            dragHandle = {
+                Surface(
+                    shape = CircleShape,
+                    modifier = Modifier.padding(top = 12.dp).width(60.dp).height(3.dp),
+                    color = MaterialTheme.colorScheme.secondary,
+                ) {
+
+                }
+            },
             onDismissRequest = onDismissRequest,
             sheetState = sheetState,
-            shape = RoundedCornerShape(16.dp),
+            shape = RoundedCornerShape(24.dp),
             containerColor = MaterialTheme.colorScheme.surface,
             contentColor = MaterialTheme.colorScheme.onSurface
         ) {
@@ -80,7 +90,7 @@ fun SheetContent(
 
             Surface(
                 modifier = Modifier.size(32.dp),
-                color = MaterialTheme.colorScheme.primaryContainer,
+                color = MaterialTheme.colorScheme.secondaryContainer,
                 shape = CircleShape,
             ) {
                 Icon(
@@ -89,16 +99,17 @@ fun SheetContent(
                     modifier = Modifier
                         .size(24.dp)
                         .padding(4.dp),
-                    tint = MaterialTheme.colorScheme.primary
+                    tint = MaterialTheme.colorScheme.onSecondaryContainer
                 )
             }
 
-            Spacer(Modifier.width(10.dp))
+            Spacer(Modifier.width(12.dp))
 
             Text(
                 text = place?.displayName ?: "Invalid Place",
                 style = MaterialTheme.typography.titleMedium,
                 fontFamily = manrope,
+                fontWeight = FontWeight.SemiBold,
                 fontSize = 20.sp
             )
         }
@@ -106,6 +117,7 @@ fun SheetContent(
         Text(
             text = place?.shortFormattedAddress ?: "Address not available",
             style = MaterialTheme.typography.bodyMedium,
+            fontWeight = FontWeight.SemiBold,
             fontFamily = manrope,
             fontSize = 16.sp,
             color = MaterialTheme.colorScheme.onSurfaceVariant
@@ -117,6 +129,7 @@ fun SheetContent(
             }, Lng: ${place?.location?.longitude?.toString()?.take(7)}",
             style = MaterialTheme.typography.labelMedium,
             fontSize = 14.sp,
+            fontFamily = manrope,
             color = MaterialTheme.colorScheme.onSurfaceVariant
         )
 

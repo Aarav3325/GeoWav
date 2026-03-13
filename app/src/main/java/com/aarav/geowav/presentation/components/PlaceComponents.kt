@@ -168,7 +168,7 @@ fun SearchItem(prediction: AutocompletePrediction, onClick: () -> Unit) {
             .clickable {
                 onClick()
             }
-            .padding(horizontal = 8.dp, vertical = 4.dp)
+            .padding(start = 12.dp, top = 4.dp, bottom = 4.dp)
             .fillMaxWidth()
             .wrapContentHeight(),
         horizontalArrangement = Arrangement.Start,
@@ -249,7 +249,7 @@ fun PlaceTextField(
             fontWeight = FontWeight.SemiBold
         )
 
-        Spacer(modifier = Modifier.height(4.dp))
+        Spacer(modifier = Modifier.height(6.dp))
 
         OutlinedTextField(
             modifier = Modifier
@@ -257,7 +257,7 @@ fun PlaceTextField(
                 .height(60.dp),
             value = name,
             onValueChange = onValueChange,
-            maxLines = 1,
+            singleLine = true,
             label = {
                 Text(
                     text = labelText,
@@ -274,8 +274,8 @@ fun PlaceTextField(
             },
             shape = RoundedCornerShape(12.dp),
             colors = OutlinedTextFieldDefaults.colors(
-                unfocusedContainerColor = MaterialTheme.colorScheme.surface,
-                focusedContainerColor = MaterialTheme.colorScheme.surface,
+                unfocusedContainerColor = MaterialTheme.colorScheme.background,
+                focusedContainerColor = MaterialTheme.colorScheme.background,
                 focusedTextColor = MaterialTheme.colorScheme.onSurface,
                 unfocusedBorderColor = MaterialTheme.colorScheme.outline.copy(alpha = 0.4f),
                 cursorColor = MaterialTheme.colorScheme.primary,

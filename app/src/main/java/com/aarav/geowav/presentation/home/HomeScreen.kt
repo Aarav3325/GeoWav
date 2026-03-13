@@ -282,7 +282,7 @@ fun GeoWavHomeScreen(
         } else {
             Color.Black
         },
-        animationSpec = tween(durationMillis = 800), // smooth 0.8s fade
+        animationSpec = tween(durationMillis = 500), // smooth 0.8s fade
         label = "TextColorAnimation"
     )
 
@@ -291,7 +291,7 @@ fun GeoWavHomeScreen(
             MaterialTheme.colorScheme.primaryContainer
         else
             Color.Transparent,
-        animationSpec = tween(durationMillis = 800),
+        animationSpec = tween(durationMillis = 500),
         label = "BackgroundColorAnimation"
     )
 
@@ -1149,7 +1149,7 @@ fun ZoneCard(zone: Place, onClick: () -> Unit) {
                     modifier = Modifier
                         .size(44.dp)
                         .clip(RoundedCornerShape(10.dp))
-                        .background(MaterialTheme.colorScheme.secondary.copy(alpha = 0.12f)),
+                        .background(MaterialTheme.colorScheme.outline.copy(alpha = 0.12f)),
                     contentAlignment = Alignment.Center
                 ) {
                     Icon(
@@ -1183,6 +1183,7 @@ fun ZoneCard(zone: Place, onClick: () -> Unit) {
                             color = MaterialTheme.colorScheme.secondary,
                             fontFamily = manrope
                         ),
+                        fontWeight = FontWeight.SemiBold,
                         fontSize = 12.sp
                     )
                 }

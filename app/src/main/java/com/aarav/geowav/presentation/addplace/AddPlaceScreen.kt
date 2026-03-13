@@ -170,7 +170,7 @@ fun AddPlaceScreen(
                             spotShadowColor = Color.White.copy(alpha = 0.25f)
                         },
                     colors = CardDefaults.cardColors(
-                        containerColor = if (!isDarkThemeEnabled) surfaceContainerLight else surfaceContainerHighDark,
+                        containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
                         contentColor = MaterialTheme.colorScheme.onSurface
                     )
                 ) {
@@ -208,7 +208,8 @@ fun AddPlaceScreen(
                                 ).show()
 
                             },
-                            modifier = Modifier.fillMaxWidth(),
+                            modifier = Modifier.fillMaxWidth()
+                                .height(48.dp),
                             colors = ButtonDefaults.buttonColors(
                                 containerColor = MaterialTheme.colorScheme.primary
                             ),
@@ -253,7 +254,7 @@ fun AddPlaceScreen(
                         elevation = CardDefaults.cardElevation(4.dp),
                         shape = RoundedCornerShape(16.dp),
                         colors = CardDefaults.cardColors(
-                            containerColor = if (!isDarkThemeEnabled) surfaceContainerLight else surfaceContainerHighDark,
+                            containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
                             contentColor = MaterialTheme.colorScheme.onSurface
                         )
                     ) {
@@ -281,8 +282,9 @@ fun AddPlaceScreen(
                                 Text(
                                     text = place.displayName ?: "Place Name Unavailable",
                                     color = MaterialTheme.colorScheme.onSurface,
-                                    fontSize = 20.sp,
+                                    fontSize = 16.sp,
                                     maxLines = 2,
+                                    overflow = TextOverflow.Ellipsis,
                                     textAlign = TextAlign.Center,
                                     fontFamily = manrope,
                                     fontWeight = FontWeight.Bold,
@@ -293,7 +295,7 @@ fun AddPlaceScreen(
                                     color = MaterialTheme.colorScheme.onSurface,
                                     maxLines = 3,
                                     overflow = TextOverflow.Ellipsis,
-                                    fontSize = 16.sp,
+                                    fontSize = 14.sp,
                                     textAlign = TextAlign.Center,
                                     fontWeight = FontWeight.SemiBold,
                                     fontFamily = manrope,
@@ -304,7 +306,7 @@ fun AddPlaceScreen(
                                         place.location?.latitude?.toString()?.take(7)
                                     }, Lng: ${place.location?.longitude?.toString()?.take(7)}",
                                     color = MaterialTheme.colorScheme.onSurface,
-                                    fontSize = 14.sp,
+                                    fontSize = 12.sp,
                                     fontWeight = FontWeight.W500,
                                     fontFamily = manrope,
                                 )
@@ -367,61 +369,69 @@ fun AddPlaceScreen(
                         cameraPositionState.position = CameraPosition.fromLatLngZoom(latlng, 16f)
                     }
 
-                    Spacer(modifier = Modifier.height(10.dp))
+                    Spacer(modifier = Modifier.height(12.dp))
 
-                    Text(
-                        text = "Preview",
-                        style = MaterialTheme.typography.titleMedium,
-                        color = MaterialTheme.colorScheme.onSurface,
-                        fontFamily = manrope,
-                        fontSize = 16.sp,
-                        fontWeight = FontWeight.SemiBold
-                    )
-                    Spacer(modifier = Modifier.height(10.dp))
 
-                    GoogleMap(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .border(
-                                1.dp,
-                                MaterialTheme.colorScheme.outline,
-                                RoundedCornerShape(16.dp)
-                            )
-                            .height(220.dp)
-                            .clip(RoundedCornerShape(16.dp)),
-                        cameraPositionState = cameraPositionState,
-                        uiSettings = MapUiSettings(
-                            compassEnabled = false,
-                            indoorLevelPickerEnabled = false,
-                            mapToolbarEnabled = false,
-                            myLocationButtonEnabled = false,
-                            rotationGesturesEnabled = false,
-                            scrollGesturesEnabled = false,
-                            scrollGesturesEnabledDuringRotateOrZoom = false,
-                            tiltGesturesEnabled = false,
-                            zoomControlsEnabled = false,
-                            zoomGesturesEnabled = false
-                        )
+                    Box(
+                        modifier = Modifier.fillMaxWidth()
                     ) {
+                        GoogleMap(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .border(
+                                    1.dp,
+                                    MaterialTheme.colorScheme.outline,
+                                    RoundedCornerShape(16.dp)
+                                )
+                                .height(220.dp)
+                                .clip(RoundedCornerShape(16.dp)),
+                            cameraPositionState = cameraPositionState,
+                            uiSettings = MapUiSettings(
+                                compassEnabled = false,
+                                indoorLevelPickerEnabled = false,
+                                mapToolbarEnabled = false,
+                                myLocationButtonEnabled = false,
+                                rotationGesturesEnabled = false,
+                                scrollGesturesEnabled = false,
+                                scrollGesturesEnabledDuringRotateOrZoom = false,
+                                tiltGesturesEnabled = false,
+                                zoomControlsEnabled = false,
+                                zoomGesturesEnabled = false
+                            )
+                        ) {
 
-                        if (latlng.latitude != 0.0 && latlng.longitude != 0.0) {
-                            Marker(
-                                state = MarkerState(
-                                    latlng,
+                            if (latlng.latitude != 0.0 && latlng.longitude != 0.0) {
+                                Marker(
+                                    state = MarkerState(
+                                        latlng,
 //                            LatLng(
 //                            selectedPlace?.location?.latitude ?: 0.0,
 //                            selectedPlace?.location?.longitude ?: 0.0
 //                        )
-                                ),
-                                title = selectedPlace?.displayName ?: ""
-                            )
+                                    ),
+                                    title = selectedPlace?.displayName ?: ""
+                                )
+                            }
+
                         }
 
+                        Surface(
+                            modifier = Modifier.align(Alignment.TopStart)
+                                .padding(12.dp),
+                            shape = RoundedCornerShape(8.dp),
+                            color = MaterialTheme.colorScheme.secondaryContainer
+                        ) {
+                            Text(
+                                text = "Preview",
+                                style = MaterialTheme.typography.titleMedium,
+                                color = MaterialTheme.colorScheme.onSecondaryContainer,
+                                fontFamily = manrope,
+                                fontSize = 16.sp,
+                                modifier = Modifier.padding(horizontal = 12.dp, vertical = 4.dp),
+                                fontWeight = FontWeight.SemiBold
+                            )
+                        }
                     }
-
-                    Spacer(modifier = Modifier.height(16.dp))
-
-
                 }
             }
         }
