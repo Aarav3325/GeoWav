@@ -2,6 +2,7 @@ package com.aarav.geowav.presentation.home
 
 
 import android.Manifest
+import android.app.Activity
 import android.app.Activity.RESULT_OK
 import android.content.Intent
 import android.net.Uri
@@ -99,6 +100,7 @@ import com.google.accompanist.permissions.isGranted
 import com.google.accompanist.permissions.rememberPermissionState
 import kotlinx.coroutines.delay
 import androidx.core.net.toUri
+import com.aarav.geowav.presentation.navigation.NavItem
 
 @OptIn(
     ExperimentalMaterial3Api::class, ExperimentalPermissionsApi::class,
@@ -135,6 +137,7 @@ fun GeoWavHomeScreen(
 
 
     val context = LocalContext.current
+    val activity = context as? Activity
 
     val upiLauncher = rememberLauncherForActivityResult(
         ActivityResultContracts.StartActivityForResult()
@@ -314,21 +317,20 @@ fun GeoWavHomeScreen(
                         )
                     },
                     actions = {
-//                    IconButton(
-//                        onClick = {
-//                            scope.launch {
-//                                // Toast.makeText(context, "Welcome to GeoWav", Toast.LENGTH_LONG).show()
-//                                SnackbarManager.showMessage("No Notifications")
-//                            }
-//                        }
-//                    ) {
-//                        Image(
-//                            painter = painterResource(R.drawable.bell),
-//                            contentDescription = "bell",
-//                            modifier = Modifier.size(28.dp),
-//                            colorFilter = ColorFilter.tint(textColor)
-//                        )
-//                    }
+                    IconButton(
+                        onClick = {
+                            activity?.let {
+                                homeScreenVM.launchBillingFlow(it)
+                            }
+                        }
+                    ) {
+                        Image(
+                            painter = painterResource(R.drawable.payment),
+                            contentDescription = "payment",
+                            modifier = Modifier.size(28.dp),
+                            colorFilter = ColorFilter.tint(textColor)
+                        )
+                    }
 
                         IconButton(
 //                        onClick = onThemeChange

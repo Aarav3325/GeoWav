@@ -23,7 +23,6 @@ import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ContainedLoadingIndicator
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.FilledTonalButton
@@ -51,7 +50,8 @@ import androidx.compose.ui.unit.sp
 import androidx.core.content.edit
 import com.aarav.geowav.presentation.components.PermissionAlertDialog
 import com.aarav.geowav.presentation.theme.manrope
-import com.aarav.geowav.presentation.theme.sora
+import com.aarav.geowav.presentation.theme.onPrimaryDark
+import com.aarav.geowav.presentation.theme.primaryDark
 import com.google.accompanist.permissions.ExperimentalPermissionsApi
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -65,7 +65,9 @@ fun OnboardingScreen(
 ) {
 
     val uiState by onBoardVM.uiState.collectAsState()
-
+    var clickState by remember {
+        mutableStateOf(false)
+    }
 
     val showLocationDialog = uiState.showPermissionDialog
 
@@ -77,6 +79,7 @@ fun OnboardingScreen(
 //    }
 
     val pages = uiState.pages
+
 
     val pagerState = rememberPagerState(
         initialPage = 0,
@@ -93,7 +96,10 @@ fun OnboardingScreen(
     AnimatedVisibility(uiState.showPermissionDialog) {
         PermissionAlertDialog(
             showDialog = uiState.showPermissionDialog,
-            onDismiss = { onBoardVM.onPermissionDialogDismiss() },
+            onDismiss = {
+                onBoardVM.onPermissionDialogDismiss()
+                clickState = false
+            },
             onPermissionsGranted = {
                 onBoardVM.onFineLocationResult(true)
                 onBoardVM.onBackgroundLocationResult(true)
@@ -124,7 +130,7 @@ fun OnboardingScreen(
             state = pagerState,
             modifier = Modifier.weight(0.75f)
         ) { page ->
-            OnboardingPageContent(page = pages[page])
+            OnboardingPageContent(index = page, page = pages[page])
 
             Log.i("MYTAG", "page : " + pages[page])
 
@@ -192,9 +198,7 @@ fun OnboardingScreen(
 
                 Spacer(modifier = Modifier.height(16.dp))
 
-                var clickState by remember {
-                    mutableStateOf(false)
-                }
+
 
                 FilledTonalButton(
                     onClick = {
@@ -249,6 +253,7 @@ fun OnboardingScreen(
 @Preview(showBackground = true)
 @Composable
 fun OnboardingPageContent(
+    index: Int,
     page: OnBoardingPage
 ) {
 
@@ -274,9 +279,9 @@ fun OnboardingPageContent(
         ) {
             Surface(
                 modifier = Modifier
-                    .size(154.dp)
+                    .size(136.dp)
                     .align(Alignment.Center),
-                color = MaterialTheme.colorScheme.tertiaryContainer,
+                color = if (index == 0) primaryDark else MaterialTheme.colorScheme.secondary,
                 shape = CircleShape,
             ) {
                 Image(
@@ -285,7 +290,7 @@ fun OnboardingPageContent(
                     modifier = Modifier
                         .size(24.dp)
                         .padding(24.dp),
-                    colorFilter = ColorFilter.tint(MaterialTheme.colorScheme.onTertiaryContainer)
+                    colorFilter = ColorFilter.tint(if (index == 0) onPrimaryDark else MaterialTheme.colorScheme.onSecondary)
                 )
             }
         }
@@ -295,7 +300,7 @@ fun OnboardingPageContent(
         Text(
             text = page.title,
             fontFamily = manrope,
-            style = MaterialTheme.typography.titleLarge,
+            fontSize = 16.sp,
             color = MaterialTheme.colorScheme.onBackground,
             fontWeight = FontWeight.Bold
         )
@@ -327,7 +332,7 @@ fun DotsIndicator(
     ) {
         repeat(totalDots) { index ->
 
-            val width = if (index == currentPage) 25.dp else 15.dp
+            val width = if (index == currentPage) 25.dp else 10.dp
             val color =
                 if (index == currentPage) MaterialTheme.colorScheme.onBackground else MaterialTheme.colorScheme.inversePrimary
             Box(

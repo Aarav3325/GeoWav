@@ -8,19 +8,19 @@ data class OnBoardingPage(val title: String, val description: String, val imageR
 object OnBoardContent {
     val pages = listOf(
         OnBoardingPage(
-            "Stay Connected in Real-Time",
-            "GeoWav keeps you updated about your friends and loved ones with live location sharing. See who’s nearby and never miss a moment.",
-            R.drawable.gps
-        ),
-        OnBoardingPage(
-            "Smart Geofences & Alerts",
-            "Set places that matter — home, school, or office. Get notified when someone arrives or leaves, automatically and effortlessly.",
+            "Live Location Sharing",
+            "Stay connected with friends and family through real-time location sharing. See where everyone is on the map instantly.",
             R.drawable.navigation_arrow
         ),
         OnBoardingPage(
-            "Your Safety, Our Priority",
-            "GeoWav values privacy and security. Your location is shared only with people you trust. Stay safe while staying connected.",
-            R.drawable.vault
+            "Track & Replay Your Sessions",
+            "GeoWav records your movement and shows your routes on the map. Replay past sessions with timeline playback and see where you stopped along the way.",
+            R.drawable.timeline
         ),
+        OnBoardingPage(
+            "Places & Smart Geofences",
+            "Save important places and get automatic alerts when someone enters or leaves them. GeoWav also highlights stay points during your sessions.",
+            R.drawable.gps
+        )
     )
 }

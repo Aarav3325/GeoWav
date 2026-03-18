@@ -1,5 +1,6 @@
 package com.aarav.geowav.domain.repository
 
+import android.app.Activity
 import android.content.Context
 import android.net.Uri
 import com.aarav.geowav.data.model.PaymentTransactions
@@ -26,4 +27,15 @@ interface PaymentRepository {
     fun savePayment(
         payment: PaymentTransactions
     )
+
+    suspend fun createBillingClient(
+        context: Context
+    )
+
+    fun observePurchasesUpdate()
+
+    suspend fun processPurchases(
+        activity: Activity
+    )
+
 }

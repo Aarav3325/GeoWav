@@ -17,3 +17,4 @@ data class UpiApp(
     val packageName: String,
     val icon: Drawable
 )
+

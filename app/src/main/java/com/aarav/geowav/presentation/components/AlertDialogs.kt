@@ -86,11 +86,17 @@ fun PermissionAlertDialog(
 
     AlertDialog(
         icon = {
-            Icon(
-                painter = painterResource(R.drawable.navigation_arrow),
-                contentDescription = "Location icon",
-                tint = MaterialTheme.colorScheme.tertiary
-            )
+            Surface(
+                color = Color(0xFFBAC3FF),
+                shape = CircleShape
+            ) {
+                Icon(
+                    painter = painterResource(R.drawable.new_logo),
+                    contentDescription = "logo",
+                    tint = Color(0xFF222C61),
+                    modifier = Modifier.size(56.dp),
+                )
+            }
         },
         containerColor = MaterialTheme.colorScheme.surfaceContainer,
         title = {

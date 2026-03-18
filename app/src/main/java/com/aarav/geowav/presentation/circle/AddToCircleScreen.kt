@@ -266,8 +266,11 @@ fun AddLovedOneCard(
 
             Text(
                 text = "Add Loved One",
-                fontFamily = manrope,
-                style = MaterialTheme.typography.titleMedium
+                style = MaterialTheme.typography.titleMedium.copy(
+                    fontWeight = FontWeight.SemiBold,
+                    fontFamily = manrope
+                ),
+                fontSize = 16.sp
             )
 
             Spacer(Modifier.height(12.dp))
@@ -316,8 +319,8 @@ fun AddLovedOneCard(
                         modifier = Modifier.size(24.dp)
                     )
                 }, colors = TextFieldDefaults.colors(
-                    focusedContainerColor = MaterialTheme.colorScheme.surfaceContainer,
-                    unfocusedContainerColor = MaterialTheme.colorScheme.surfaceContainer,
+                    focusedContainerColor = MaterialTheme.colorScheme.surfaceContainerLow,
+                    unfocusedContainerColor = MaterialTheme.colorScheme.surfaceContainerLow,
                     focusedIndicatorColor = MaterialTheme.colorScheme.primary,
                     unfocusedIndicatorColor = Color.Transparent,
                     focusedLabelColor = MaterialTheme.colorScheme.primary,
@@ -381,8 +384,8 @@ fun AddLovedOneCard(
                         modifier = Modifier.size(24.dp)
                     )
                 }, colors = TextFieldDefaults.colors(
-                    focusedContainerColor = MaterialTheme.colorScheme.surfaceContainer,
-                    unfocusedContainerColor = MaterialTheme.colorScheme.surfaceContainer,
+                    focusedContainerColor = MaterialTheme.colorScheme.surfaceContainerLow,
+                    unfocusedContainerColor = MaterialTheme.colorScheme.surfaceContainerLow,
                     focusedIndicatorColor = MaterialTheme.colorScheme.primary,
                     unfocusedIndicatorColor = Color.Transparent,
                     focusedLabelColor = MaterialTheme.colorScheme.primary,

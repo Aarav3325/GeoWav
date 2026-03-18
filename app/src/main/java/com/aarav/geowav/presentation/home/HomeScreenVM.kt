@@ -1,5 +1,6 @@
 package com.aarav.geowav.presentation.home
 
+import android.app.Activity
 import android.content.Context
 import android.location.Geocoder
 import android.net.Uri
@@ -92,7 +93,32 @@ class HomeScreenVM @Inject constructor(
 
 //    private var countdownJob: Job? = null
 
+    init {
+        observePurchases()
+        setupBillingClient()
+    }
+
     private val observerJobs = mutableMapOf<String, Job>()
+
+    fun setupBillingClient() {
+        viewModelScope.launch {
+            paymentRepository.createBillingClient(context)
+        }
+    }
+
+    fun observePurchases() {
+        viewModelScope.launch {
+            paymentRepository.observePurchasesUpdate()
+        }
+    }
+
+    fun launchBillingFlow(
+        activity: Activity
+    ) {
+        viewModelScope.launch {
+            paymentRepository.processPurchases(activity)
+        }
+    }
 
     fun observeUsers() {
 

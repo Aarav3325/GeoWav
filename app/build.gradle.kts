@@ -74,6 +74,11 @@ android {
 
 dependencies {
 
+    // Play Billing
+    val billing_version = "8.3.0"
+
+    implementation("com.android.billingclient:billing-ktx:$billing_version")
+
     // Firebase
     implementation("com.google.firebase:firebase-auth")
 
@@ -93,7 +98,6 @@ dependencies {
     implementation("com.squareup.retrofit2:converter-gson:2.11.0")
 
     //Coil
-
     implementation("io.coil-kt:coil-compose:2.6.0")
     implementation("io.coil-kt:coil-svg:2.6.0")
 

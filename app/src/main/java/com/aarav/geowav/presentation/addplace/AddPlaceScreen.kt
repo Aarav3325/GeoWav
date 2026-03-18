@@ -170,7 +170,7 @@ fun AddPlaceScreen(
                             spotShadowColor = Color.White.copy(alpha = 0.25f)
                         },
                     colors = CardDefaults.cardColors(
-                        containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
+                        containerColor = MaterialTheme.colorScheme.surfaceContainer,
                         contentColor = MaterialTheme.colorScheme.onSurface
                     )
                 ) {
