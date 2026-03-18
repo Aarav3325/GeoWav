@@ -26,6 +26,7 @@ import com.aarav.geowav.presentation.locationsharing.LocationSharingScreen
 import com.aarav.geowav.presentation.map.MapScreen
 import com.aarav.geowav.presentation.observe.ObserveScreen
 import com.aarav.geowav.presentation.onboard.OnboardingScreen
+import com.aarav.geowav.presentation.paywall.PaywallScreen
 import com.aarav.geowav.presentation.settings.SettingsScreen
 import com.aarav.geowav.presentation.settings.ThemeMode
 import com.aarav.geowav.presentation.timeline.TimelineMapPreview
@@ -327,6 +328,9 @@ fun AddHomeScreen(
             navigateToSettings = {
                 navController.navigate(NavRoute.Settings.path)
             },
+            navigateToPaywall = {
+                navController.navigate(NavRoute.Paywall.path)
+            },
             navigateToCircle = {
                 navController.navigate(NavRoute.Circle.path)
             },
@@ -493,7 +497,11 @@ fun AddPaywallScreen(
     navGraphBuilder.composable(
         route = NavRoute.Paywall.path,
     ) {
-
+        PaywallScreen(
+            onClose = {},
+            onProClick = {},
+            onPremiumClick = {}
+        )
     }
 }
 

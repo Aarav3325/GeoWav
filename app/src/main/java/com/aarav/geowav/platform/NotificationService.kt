@@ -161,7 +161,7 @@ class NotificationService : Service() {
         )
             .setSmallIcon(R.drawable.new_logo)
             .setContentTitle("GeoWav Running")
-            .setContentText("Monitoring circle and share updates")
+            .setContentText("Syncing real-time updates from your circle")
             .setOngoing(true)
             .setPriority(NotificationCompat.PRIORITY_LOW)
             .build()

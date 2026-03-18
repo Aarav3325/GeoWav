@@ -118,6 +118,7 @@ fun GeoWavHomeScreen(
     onOpenAlerts: () -> Unit,
     homeScreenVM: HomeScreenVM,
     navigateToSettings: () -> Unit,
+    navigateToPaywall: () -> Unit,
     navigateToCircle: () -> Unit,
     navigateToTimeline: (String, String) -> Unit,
     navigateToActivity: () -> Unit,
@@ -220,6 +221,7 @@ fun GeoWavHomeScreen(
                     actions = {
                     IconButton(
                         onClick = {
+                            navigateToPaywall()
 //                            activity?.let {
 //                                homeScreenVM.launchBillingFlow(it)
 //                            }

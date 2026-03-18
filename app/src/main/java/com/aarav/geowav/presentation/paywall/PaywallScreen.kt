@@ -37,6 +37,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
@@ -433,7 +434,8 @@ fun PlanCard(
         colors = CardDefaults.cardColors(containerColor = colors.bg),
         elevation = CardDefaults.cardElevation(0.dp)
     ) {
-        Column(modifier = Modifier.padding(18.dp)) {
+        Column(modifier = Modifier
+            .padding(16.dp)) {
 
 
             if (isFeatured) {
@@ -576,11 +578,12 @@ private data class CompareRow(
 fun ComparisonTable() {
     val rows = listOf(
         CompareRow("Playback", "–", "✓", "✓"),
-        CompareRow("History", "Today", "2 days", "Full"),
+        CompareRow("Live Location Sharing", "up to 30 mins", "Unlimited", "Unlimited"),
+        CompareRow("Session History", "Today", "2 days", "Full"),
         CompareRow("Places", "2", "10", "Unlimited"),
         CompareRow("Connections", "1", "5", "Unlimited"),
         CompareRow("Insights", "–", "–", "✓"),
-        CompareRow("Export", "–", "–", "✓"),
+        CompareRow("Stay point", "-", "–", "✓"),
     )
 
     Column {
@@ -604,7 +607,7 @@ fun ComparisonTable() {
                 "Features",
                 modifier = Modifier.weight(1f),
                 fontFamily = manrope,
-                fontSize = 12.sp,
+                fontSize = 14.sp,
                 color = MaterialTheme.colorScheme.onBackground,
                 fontWeight = FontWeight.SemiBold
             )
@@ -616,7 +619,7 @@ fun ComparisonTable() {
                 Text(
                     text = label,
                     color = color,
-                    fontSize = 12.sp,
+                    fontSize = 14.sp,
                     fontWeight = FontWeight.Bold,
                     fontFamily = manrope,
                     textAlign = TextAlign.Center,
@@ -663,7 +666,7 @@ fun ComparisonTable() {
                             Icon(
                                 painter = painterResource(R.drawable.check),
                                 contentDescription = null,
-                                tint = MaterialTheme.colorScheme.tertiary,
+                                tint = color,
                                 modifier = Modifier.size(11.dp)
                             )
                         }
@@ -717,13 +720,35 @@ fun StickyUpgradeCTA(modifier: Modifier = Modifier, onClick: () -> Unit) {
             )
         }
         Spacer(Modifier.height(6.dp))
-        Text(
-            text = "Cancel anytime · Secure payment",
-            color = MaterialTheme.colorScheme.outline,
-            fontSize = 11.sp,
-            fontFamily = manrope,
-            textAlign = TextAlign.Center
-        )
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.Center,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text(
+                text = "Cancel anytime ",
+                color = MaterialTheme.colorScheme.outline,
+                fontSize = 11.sp,
+                fontFamily = manrope,
+                textAlign = TextAlign.Center
+            )
+
+            Text(
+                text = "· Secure payment",
+                color = MaterialTheme.colorScheme.outline,
+                fontSize = 11.sp,
+                fontFamily = manrope,
+                textAlign = TextAlign.Center
+            )
+
+            Icon(
+                painter = painterResource(R.drawable.secure_payment),
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.outline,
+                modifier = Modifier.padding(start = 4.dp).size(14.dp)
+            )
+
+        }
     }
 }
 
