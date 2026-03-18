@@ -146,8 +146,8 @@ class PaymentRepositoryImpl @Inject constructor(
     ) {
         val productList = listOf(
             QueryProductDetailsParams.Product.newBuilder()
-                .setProductId("android.test.purchased")
-                .setProductType(BillingClient.ProductType.INAPP)
+                .setProductId("test_subscription_1")
+                .setProductType(BillingClient.ProductType.SUBS)
                 .build()
         )
 
@@ -158,18 +158,33 @@ class PaymentRepositoryImpl @Inject constructor(
             billingClient.queryProductDetails(params.build())
         }
 
+
         val productDetailsList = productDetailsResult.productDetailsList
 
         if (productDetailsList.isNullOrEmpty()) {
             Log.e(BILLING_TAG, "No products found")
             return
         }
-        val productDetailsParamsList =
-            listOf(
-                BillingFlowParams.ProductDetailsParams.newBuilder()
-                    .setProductDetails(productDetailsList.first())
-                    .build()
-            )
+
+        val productDetails = productDetailsList.first()
+
+        Log.d("BILLING", "Offer details: ${productDetails.subscriptionOfferDetails}")
+
+        val offerToken = productDetails.subscriptionOfferDetails
+            ?.firstOrNull()
+            ?.offerToken
+
+        if (offerToken == null) {
+            Log.e(BILLING_TAG, "Offer token not found")
+            return
+        }
+
+        val productDetailsParamsList = listOf(
+            BillingFlowParams.ProductDetailsParams.newBuilder()
+                .setProductDetails(productDetails)
+                .setOfferToken(offerToken)
+                .build()
+        )
 
         val billingFlowParams = BillingFlowParams.newBuilder()
             .setProductDetailsParamsList(productDetailsParamsList)
