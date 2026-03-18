@@ -141,107 +141,6 @@ fun GeoWavHomeScreen(
     val context = LocalContext.current
     val activity = context as? Activity
 
-    val upiLauncher = rememberLauncherForActivityResult(
-        ActivityResultContracts.StartActivityForResult()
-    ) { result ->
-
-        if (result.resultCode == RESULT_OK || result.resultCode == 11) {
-
-            val response = result.data?.dataString
-
-            homeScreenVM.handlePaymentResult(
-                response,
-                "1"
-            )
-
-        } else {
-            homeScreenVM.handlePaymentResult(null, "1")
-        }
-    }
-
-//    val intent = Intent(Intent.ACTION_VIEW).apply {
-//        data = Uri.parse("upi://pay")
-//    }
-//
-//    context.startActivity(intent)
-
-    val apss = homeScreenVM.upiApps
-
-    if (false) {
-        AlertDialog(
-            onDismissRequest = {}
-        ) {
-            Card(
-                shape = RoundedCornerShape(16.dp),
-                modifier = Modifier
-                    .padding(16.dp)
-                    .fillMaxWidth()
-            ) {
-                Box(
-                    modifier = Modifier, contentAlignment = Alignment.Center
-                ) {
-                    Column(
-                        horizontalAlignment = Alignment.CenterHorizontally,
-                        verticalArrangement = Arrangement.Center,
-                        modifier = Modifier
-                            .padding(16.dp)
-                    ) {
-
-                        Text("Pay using UPI")
-
-                        Spacer(Modifier.height(20.dp))
-
-                        LazyVerticalGrid(
-                            columns = GridCells.Fixed(3)
-                        ) {
-
-                            items(apss) { app ->
-                                Column(
-                                    modifier = Modifier
-                                        .padding(12.dp)
-                                        .clickable {
-
-//                                            val uri = homeScreenVM.getPaymentUri()
-                                            val uri =
-                                                "upi://pay?pa=aaravhalvadia@okhdfcbank&pn=Aarav&tn=Test&am=1&cu=INR".toUri()
-                                            Log.i("UPI_URI", uri.toString())
-                                            val intent = Intent(Intent.ACTION_VIEW).apply {
-                                                data = uri
-                                            }
-
-                                            upiLauncher.launch(intent)
-                                        },
-                                    horizontalAlignment = Alignment.CenterHorizontally
-                                ) {
-
-                                    Image(
-                                        painter = rememberDrawablePainter(app.icon),
-                                        contentDescription = app.name,
-                                        modifier = Modifier.size(48.dp)
-                                    )
-
-                                    Text(app.name)
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        }
-    }
-
-    LaunchedEffect(Unit) {
-        homeScreenVM.preparePayment(
-            context,
-            "1",
-            "aaravhalvadia@okhdfcbank",
-            "GeoWavPayTestMode",
-            "UPI_PAYMENT_FLOW_TEST"
-        )
-    }
-
-    val apps = homeScreenVM.upiApps
-
 
     LaunchedEffect(uiState.lovedOnes) {
         if (uiState.lovedOnes.isNotEmpty()) {
@@ -321,9 +220,9 @@ fun GeoWavHomeScreen(
                     actions = {
                     IconButton(
                         onClick = {
-                            activity?.let {
-                                homeScreenVM.launchBillingFlow(it)
-                            }
+//                            activity?.let {
+//                                homeScreenVM.launchBillingFlow(it)
+//                            }
                         }
                     ) {
                         Image(

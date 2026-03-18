@@ -113,10 +113,11 @@ class HomeScreenVM @Inject constructor(
     }
 
     fun launchBillingFlow(
-        activity: Activity
+        activity: Activity,
+        productId: String
     ) {
         viewModelScope.launch {
-            paymentRepository.processPurchases(activity)
+            paymentRepository.processPurchases(activity, productId)
         }
     }
 
@@ -410,62 +411,6 @@ class HomeScreenVM @Inject constructor(
                 )
             }
         }
-    }
-
-    var upiApps by mutableStateOf<List<UpiApp>>(emptyList())
-
-    var paymentState by mutableStateOf("IDLE")
-
-    private var currentUri: Uri? = null
-
-    fun preparePayment(
-        context: Context,
-        amount: String,
-        upiId: String,
-        name: String,
-        note: String
-    ) {
-        currentUri = paymentRepository.createUpiUri(
-            upiId,
-            name,
-            amount,
-            note
-        )
-
-        currentUri?.let {
-            Log.i("UPI", currentUri.toString())
-            upiApps = paymentRepository.getUpiApps(context, it)
-        }
-    }
-
-    fun getPaymentUri(): Uri? = currentUri
-
-    fun handlePaymentResult(
-        response: String?,
-        amount: String
-    ) {
-        val data = paymentRepository.parseUpiResponse(response)
-        Log.i("UPI", data.toString())
-
-        val status = data["Status"] ?: "FAILED"
-        val txnId = data["txnId"] ?: ""
-
-        paymentState = if (status.equals("SUCCESS", true)) {
-            "SUCCESS"
-        } else {
-            "FAILED"
-        }
-
-        val transaction = PaymentTransactions(
-            orderId = UUID.randomUUID().toString(),
-            amount = amount,
-            status = status,
-            txnId = txnId,
-            upiRef = data["txnRef"] ?: "",
-            userId = viewerId
-        )
-
-        paymentRepository.savePayment(transaction)
     }
 
     override fun onCleared() {

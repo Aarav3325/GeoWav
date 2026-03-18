@@ -2,13 +2,10 @@ package com.aarav.geowav.data.repository
 
 import android.app.Activity
 import android.content.Context
-import android.content.Intent
-import android.content.pm.PackageManager
-import android.net.Uri
 import android.util.Log
-import com.aarav.geowav.data.model.PaymentTransactions
-import com.aarav.geowav.data.model.UpiApp
+import com.aarav.geowav.data.authentication.GoogleSignInClient
 import com.aarav.geowav.domain.repository.PaymentRepository
+import com.android.billingclient.api.AcknowledgePurchaseParams
 import com.android.billingclient.api.BillingClient
 import com.android.billingclient.api.BillingClientStateListener
 import com.android.billingclient.api.BillingFlowParams
@@ -17,6 +14,7 @@ import com.android.billingclient.api.PendingPurchasesParams
 import com.android.billingclient.api.Purchase
 import com.android.billingclient.api.PurchasesUpdatedListener
 import com.android.billingclient.api.QueryProductDetailsParams
+import com.android.billingclient.api.QueryPurchasesParams
 import com.android.billingclient.api.queryProductDetails
 import com.google.firebase.database.FirebaseDatabase
 import kotlinx.coroutines.Dispatchers
@@ -24,77 +22,14 @@ import kotlinx.coroutines.withContext
 import javax.inject.Inject
 
 class PaymentRepositoryImpl @Inject constructor(
-    val firebaseDatabase: FirebaseDatabase
+    val firebaseDatabase: FirebaseDatabase,
+    val googleSignInClient: GoogleSignInClient
 ) : PaymentRepository {
 
     private val BILLING_TAG = "BILLING"
 
     lateinit var purchasesUpdatedListener: PurchasesUpdatedListener
     lateinit var billingClient: BillingClient
-
-    lateinit var pendingPurchase: Purchase
-
-    override fun createUpiUri(
-        upiId: String,
-        name: String,
-        amount: String,
-        note: String
-    ): Uri {
-
-        return Uri.Builder()
-            .scheme("upi")
-            .authority("pay")
-            .appendQueryParameter("pa", upiId)
-            .appendQueryParameter("pn", name)
-            .appendQueryParameter("tn", note)
-            .appendQueryParameter("am", amount)
-            .appendQueryParameter("cu", "INR")
-            .build()
-    }
-
-    override fun getUpiApps(
-        context: Context,
-        uri: Uri
-    ): List<UpiApp> {
-        val intent = Intent(Intent.ACTION_VIEW).apply {
-            data = uri
-        }
-
-        val pm = context.packageManager
-
-        val resolveInfo = pm.queryIntentActivities(intent, PackageManager.MATCH_DEFAULT_ONLY)
-        Log.i("UPI", "apps:" + resolveInfo.size.toString())
-
-        return resolveInfo.map {
-            UpiApp(
-                name = it.loadLabel(pm).toString(),
-                packageName = it.activityInfo.packageName,
-                icon = it.loadIcon(pm)
-            )
-        }
-    }
-
-    override fun parseUpiResponse(response: String?): Map<String, String> {
-        val result = mutableMapOf<String, String>()
-
-        response?.split("&")?.forEach {
-            val pair = it.split("=")
-
-            if (pair.size >= 2) {
-                result[pair[0]] = pair[1]
-            }
-        }
-
-        return result
-    }
-
-    override fun savePayment(payment: PaymentTransactions) {
-        val ref = firebaseDatabase.getReference("payments")
-            .child(payment.userId)
-
-        ref.push()
-            .setValue(payment)
-    }
 
     override suspend fun createBillingClient(context: Context) {
         billingClient = BillingClient.newBuilder(
@@ -114,15 +49,42 @@ class PaymentRepositoryImpl @Inject constructor(
     }
 
     override fun observePurchasesUpdate() {
-        purchasesUpdatedListener = PurchasesUpdatedListener { p0, p1 ->
-            if (p0.responseCode == BillingClient.BillingResponseCode.OK && p1 != null) {
-                for (purchase in p1) {
+        purchasesUpdatedListener = PurchasesUpdatedListener { result, purchases ->
+            if (result.responseCode == BillingClient.BillingResponseCode.OK && purchases != null) {
+                for (purchase in purchases) {
                     Log.i(BILLING_TAG, "purchase success: ${purchase.orderId}")
+                    if (purchase.purchaseState == Purchase.PurchaseState.PURCHASED) {
+                        if (!purchase.isAcknowledged) {
+                            val params = AcknowledgePurchaseParams.newBuilder()
+                                .setPurchaseToken(purchase.purchaseToken)
+                                .build()
+
+                            billingClient.acknowledgePurchase(params) {
+                                Log.i(BILLING_TAG, "Purchase acknowledged")
+                            }
+                        }
+
+                        val productId = purchase.products.first()
+
+                        val plan = when (productId) {
+                            "geowav_premium" -> "PREMIUM"
+                            "geowav_pro" -> "PRO"
+                            else -> "FREE"
+                        }
+
+                        savePurchase(
+                            plan,
+                            purchase.purchaseToken,
+                            purchase.purchaseTime
+                        )
+
+                        Log.i(BILLING_TAG, "Plan detected: $plan")
+                    }
                 }
-            } else if (p0.responseCode == BillingClient.BillingResponseCode.USER_CANCELED) {
+            } else if (result.responseCode == BillingClient.BillingResponseCode.USER_CANCELED) {
                 Log.i(BILLING_TAG, "purchase cancelled")
             } else {
-                Log.i(BILLING_TAG, "purchase failed: ${p0.responseCode}")
+                Log.i(BILLING_TAG, "purchase failed: ${result.responseCode}")
             }
         }
     }
@@ -143,12 +105,91 @@ class PaymentRepositoryImpl @Inject constructor(
         })
     }
 
+    override fun savePurchase(
+        plan: String,
+        token: String,
+        purchaseTime: Long
+    ) {
+        val uid = googleSignInClient.getUserId()
+
+        if (uid.isBlank()) {
+            return
+        }
+
+        val ref = firebaseDatabase
+            .getReference("subscriptions")
+            .child(uid)
+
+
+        val data = mapOf(
+            "plan" to plan,
+            "isActive" to true,
+            "purchaseToken" to token,
+            "updatedAt" to System.currentTimeMillis()
+        )
+
+        ref.setValue(data)
+    }
+
+    override fun syncPurchases() {
+        val uid = googleSignInClient.getUserId()
+        if (uid.isBlank()) return
+
+        val params = QueryPurchasesParams.newBuilder()
+            .setProductType(BillingClient.ProductType.SUBS)
+            .build()
+
+        billingClient.queryPurchasesAsync(params) { result, purchases ->
+            if (result.responseCode == BillingClient.BillingResponseCode.OK) {
+                if (purchases.isEmpty()) {
+                    savePurchase(
+                        "FREE",
+                        "",
+                        purchaseTime = 0L
+                    )
+
+                    Log.i(BILLING_TAG, "No active subscription")
+                } else {
+                    var finalPlan = "FREE"
+                    var token = ""
+                    var purchaseTime = 0L
+
+                    for (purchase in purchases) {
+
+                        val productId = purchase.products.first()
+
+                        if (productId == "geowav_pro") {
+                            finalPlan = "PRO"
+                            token = purchase.purchaseToken
+                            purchaseTime = purchase.purchaseTime
+                            break
+                        } else if (productId == "geowav_premium") {
+                            finalPlan = "PREMIUM"
+                            token = purchase.purchaseToken
+                            purchaseTime = purchase.purchaseTime
+                        }
+                    }
+
+                    savePurchase(
+                        plan = finalPlan,
+                        token = token,
+                        purchaseTime = purchaseTime
+                    )
+
+                    Log.i(BILLING_TAG, "Synced plan: $finalPlan")
+
+                }
+            }
+        }
+    }
+
     override suspend fun processPurchases(
-        activity: Activity
+        activity: Activity,
+        productId: String
     ) {
         val productList = listOf(
             QueryProductDetailsParams.Product.newBuilder()
-                .setProductId("test_subscription_1")
+                .setProductId(productId)
                 .setProductType(BillingClient.ProductType.SUBS)
                 .build()
         )

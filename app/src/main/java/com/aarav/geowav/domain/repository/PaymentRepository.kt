@@ -5,28 +5,9 @@ import android.content.Context
 import android.net.Uri
 import com.aarav.geowav.data.model.PaymentTransactions
 import com.aarav.geowav.data.model.UpiApp
+import com.android.billingclient.api.Purchase
 
 interface PaymentRepository {
-
-    fun createUpiUri(
-        upiId: String,
-        name: String,
-        amount: String,
-        note: String
-    ): Uri
-
-    fun getUpiApps(
-        context: Context,
-        uri: Uri
-    ): List<UpiApp>
-
-    fun parseUpiResponse(
-        response: String?
-    ): Map<String, String>
-
-    fun savePayment(
-        payment: PaymentTransactions
-    )
 
     suspend fun createBillingClient(
         context: Context
@@ -35,7 +16,15 @@ interface PaymentRepository {
     fun observePurchasesUpdate()
 
     suspend fun processPurchases(
-        activity: Activity
+        activity: Activity,
+        productId: String
     )
 
+    fun savePurchase(
+        plan: String,
+        token:  String,
+        purchaseTime: Long
+    )
+
+    fun syncPurchases()
 }

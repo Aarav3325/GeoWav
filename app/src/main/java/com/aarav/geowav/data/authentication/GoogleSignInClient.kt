@@ -166,6 +166,7 @@ class GoogleSignInClient @Inject constructor(
     fun storeUserData(email: String, username: String) {
         val userId = getUserId()
 
+
         userId.let {
             val user = User(
                 userId,
