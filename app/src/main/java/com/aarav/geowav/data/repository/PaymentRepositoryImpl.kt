@@ -109,6 +109,8 @@ class PaymentRepositoryImpl @Inject constructor(
             )
             .enableAutoServiceReconnection()
             .build()
+
+        connectToGooglePlay()
     }
 
     override fun observePurchasesUpdate() {

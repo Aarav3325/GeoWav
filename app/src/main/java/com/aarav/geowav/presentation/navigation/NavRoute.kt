@@ -6,17 +6,19 @@ sealed class NavRoute(val path: String) {
     object Circle : NavRoute("circle")
     object LocationSharing : NavRoute("locationSharing")
     object ObserveUsers : NavRoute("observeUsers")
-    object TimeLine: NavRoute("timeline") {
+    object TimeLine : NavRoute("timeline") {
         fun createRoute(userId: String, name: String): String {
             return "timeline/$userId/$name"
         }
     }
 
-    object TimelinePreview: NavRoute("timelinePreview") {
+    object TimelinePreview : NavRoute("timelinePreview") {
         fun createRoute(sessionId: String, userId: String): String {
             return "timelinePreview/$sessionId/$userId"
         }
     }
+
+    object Paywall : NavRoute("paywall")
 
     object MapScreen : NavRoute("mapScreen")
 

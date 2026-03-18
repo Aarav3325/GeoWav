@@ -124,6 +124,11 @@ fun NavGraph(
             this
         )
 
+        AddPaywallScreen(
+            navHostController,
+            this
+        )
+
 //        AddObserveScreen(
 //            navHostController,
 //            this
@@ -478,6 +483,17 @@ fun AddTimelinePreviewScreen(
             sessionId,
             userId
         )
+    }
+}
+
+fun AddPaywallScreen(
+    navController: NavController,
+    navGraphBuilder: NavGraphBuilder
+) {
+    navGraphBuilder.composable(
+        route = NavRoute.Paywall.path,
+    ) {
+
     }
 }
 

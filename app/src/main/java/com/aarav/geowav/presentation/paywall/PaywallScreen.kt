@@ -1,0 +1,739 @@
+package com.aarav.geowav.presentation.paywall
+
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.isSystemInDarkTheme
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
+import androidx.compose.material3.TopAppBar
+import androidx.compose.runtime.Composable
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import com.aarav.geowav.R
+import com.aarav.geowav.presentation.theme.GeoWavTheme
+import com.aarav.geowav.presentation.theme.manrope
+
+
+data class PlanColors(
+    val bg: Color,
+    val border: Color,
+    val text: Color,
+    val buttonBg: Color,
+    val buttonTextColor: Color,
+    val checkTint: Color,
+)
+
+
+@Composable
+private fun freePlanColors() = PlanColors(
+    bg = MaterialTheme.colorScheme.surfaceContainer,
+    border = MaterialTheme.colorScheme.outlineVariant,
+    text = MaterialTheme.colorScheme.onSurfaceVariant,
+    buttonBg = MaterialTheme.colorScheme.surfaceContainerHigh,
+    buttonTextColor = MaterialTheme.colorScheme.onSurfaceVariant,
+    checkTint = MaterialTheme.colorScheme.outline,
+)
+
+@Composable
+private fun premiumPlanColors() = PlanColors(
+    bg = MaterialTheme.colorScheme.onPrimary,
+    border = MaterialTheme.colorScheme.primaryContainer,
+    text = MaterialTheme.colorScheme.primary,
+    buttonBg = MaterialTheme.colorScheme.primary,
+    buttonTextColor = MaterialTheme.colorScheme.onPrimary,
+    checkTint = MaterialTheme.colorScheme.primary,
+)
+
+@Composable
+private fun proPlanColors() = PlanColors(
+    bg = MaterialTheme.colorScheme.onSecondary,
+    border = MaterialTheme.colorScheme.secondaryContainer,
+    text = MaterialTheme.colorScheme.secondary,
+    buttonBg = MaterialTheme.colorScheme.secondary,
+    buttonTextColor = MaterialTheme.colorScheme.onSecondary,
+    checkTint = MaterialTheme.colorScheme.secondary,
+)
+
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun PaywallScreen(
+    onClose: () -> Unit,
+    onPremiumClick: () -> Unit,
+    onProClick: () -> Unit
+) {
+
+    Scaffold(
+        topBar = {
+            TopAppBar(
+                title = {
+                    Text(
+                        text = "Unlock smarter\ntracking",
+                        fontSize = 20.sp,
+                        fontWeight = FontWeight.Bold,
+                        fontFamily = manrope,
+                        lineHeight = 20.sp
+                    )
+                },
+                actions = {
+                    Surface(
+                        shape = CircleShape,
+                        color = MaterialTheme.colorScheme.primary,
+                        modifier = Modifier
+                            .padding(end = 8.dp).size(48.dp)
+                    ) {
+                        Icon(
+                            painter = painterResource(R.drawable.credit_card),
+                            contentDescription = "card",
+                            tint = MaterialTheme.colorScheme.onPrimary,
+                            modifier = Modifier
+                                .size(24.dp).padding(8.dp)
+                        )
+                    }
+                }
+            )
+        },
+        contentWindowInsets = WindowInsets(0, 0, 0, 0),
+        containerColor = MaterialTheme.colorScheme.background,
+    ) {
+
+        Box(
+            modifier = Modifier
+                .padding(it)
+                .fillMaxSize()
+                .background(MaterialTheme.colorScheme.surface)
+        ) {
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .verticalScroll(rememberScrollState())
+                    .padding(horizontal = 12.dp)
+                    .padding(top = 12.dp, bottom = 96.dp)
+            ) {
+
+                PaywallHeader(onClose)
+
+                Spacer(Modifier.height(16.dp))
+
+                CurrentPlanCard()
+
+
+                Spacer(Modifier.height(16.dp))
+
+//
+//                PlanCard(
+//                    title = "GeoWav Free",
+//                    price = "₹0",
+//                    billingLabel = "/forever",
+//                    features = listOf(
+//                        "Basic live tracking",
+//                        "Today's history only",
+//                        "Up to 2 saved places",
+//                        "Connect with 1 person"
+//                    ),
+//                    isFeatured = false,
+//                    isCurrentPlan = true,
+//                    buttonText = "Current plan",
+//                    colors = freePlanColors(),
+//                    onClick = {}
+//                )
+//
+//                Spacer(Modifier.height(12.dp))
+
+
+                PlanCard(
+                    title = "GeoWav Premium",
+                    price = "₹99",
+                    billingLabel = "/month",
+                    features = listOf(
+                        "Unlimited live tracking",
+                        "Replay your journeys",
+                        "Access today & yesterday",
+                        "Up to 10 saved places",
+                        "Connect with 5 people"
+                    ),
+                    isFeatured = true,
+                    isCurrentPlan = false,
+                    buttonText = "Upgrade to Premium",
+                    colors = premiumPlanColors(),
+                    onClick = onPremiumClick
+                )
+
+                Spacer(Modifier.height(12.dp))
+
+
+                PlanCard(
+                    title = "GeoWav Pro",
+                    price = "₹199",
+                    billingLabel = "/month",
+                    features = listOf(
+                        "Everything in Premium",
+                        "Full location history",
+                        "Stay point detection",
+                        "Movement insights & analytics",
+                        "Export & share trips"
+                    ),
+                    isFeatured = false,
+                    isCurrentPlan = false,
+                    buttonText = "Go Pro",
+                    colors = proPlanColors(),
+                    onClick = onProClick
+                )
+
+                Spacer(Modifier.height(24.dp))
+
+                ComparisonTable()
+            }
+
+            StickyUpgradeCTA(
+                modifier = Modifier.align(Alignment.BottomCenter),
+                onClick = onPremiumClick
+            )
+        }
+    }
+}
+
+
+@Composable
+fun CurrentPlanCard() {
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .border(1.dp, MaterialTheme.colorScheme.outlineVariant, RoundedCornerShape(16.dp)),
+        shape = RoundedCornerShape(16.dp),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer),
+        elevation = CardDefaults.cardElevation(0.dp)
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 12.dp, vertical = 14.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.SpaceBetween
+        ) {
+            Column {
+                Text(
+                    text = "Current Plan",
+                    color = MaterialTheme.colorScheme.outline,
+                    fontSize = 12.sp,
+                    fontWeight = FontWeight.Medium,
+                    fontFamily = manrope,
+                    letterSpacing = 0.8.sp
+                )
+                Spacer(Modifier.height(4.dp))
+                Text(
+                    text = "GeoWav Free",
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    fontSize = 16.sp,
+                    fontWeight = FontWeight.SemiBold,
+                    fontFamily = manrope,
+                )
+                Spacer(Modifier.height(2.dp))
+                Text(
+                    text = "Basic tracking · Limited history",
+                    color = MaterialTheme.colorScheme.outline,
+                    fontSize = 12.sp,
+                    fontFamily = manrope,
+                )
+            }
+
+
+            Surface(
+                shape = RoundedCornerShape(25),
+                color = MaterialTheme.colorScheme.tertiaryContainer.copy(alpha = 0.5f)
+            ) {
+                Row(
+                    modifier = Modifier.padding(horizontal = 10.dp, vertical = 5.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(5.dp)
+                ) {
+                    Box(
+                        modifier = Modifier
+                            .size(6.dp)
+                            .clip(CircleShape)
+                            .background(MaterialTheme.colorScheme.onTertiaryContainer)
+                    )
+                    Text(
+                        text = "Active",
+                        color = MaterialTheme.colorScheme.onTertiaryContainer,
+                        fontSize = 12.sp,
+                        fontWeight = FontWeight.Medium,
+                        fontFamily = manrope,
+                    )
+                }
+            }
+        }
+    }
+}
+
+
+enum class BillingCycle { Monthly, Yearly }
+
+@Composable
+fun BillingToggle(
+    selected: BillingCycle,
+    onSelect: (BillingCycle) -> Unit
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(50))
+            .background(MaterialTheme.colorScheme.surfaceContainer)
+            .border(0.5.dp, MaterialTheme.colorScheme.outlineVariant, RoundedCornerShape(50))
+            .padding(4.dp),
+        horizontalArrangement = Arrangement.spacedBy(4.dp)
+    ) {
+        BillingCycle.entries.forEach { cycle ->
+            val isSelected = selected == cycle
+            TextButton(
+                onClick = { onSelect(cycle) },
+                modifier = Modifier
+                    .weight(1f)
+                    .clip(RoundedCornerShape(50))
+                    .background(
+                        if (isSelected) MaterialTheme.colorScheme.primary
+                        else Color.Transparent
+                    ),
+                contentPadding = PaddingValues(vertical = 8.dp)
+            ) {
+                Text(
+                    text = cycle.name,
+                    color = if (isSelected) MaterialTheme.colorScheme.onPrimary
+                    else MaterialTheme.colorScheme.onSurfaceVariant,
+                    fontSize = 13.sp,
+                    fontWeight = if (isSelected) FontWeight.Medium else FontWeight.Normal,
+                    fontFamily = manrope,
+                )
+                if (cycle == BillingCycle.Yearly) {
+                    Spacer(Modifier.width(6.dp))
+                    Surface(
+                        shape = RoundedCornerShape(4.dp),
+                        color = if (isSelected)
+                            MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.18f)
+                        else
+                            MaterialTheme.colorScheme.primaryContainer
+                    ) {
+                        Text(
+                            text = "Save 20%",
+                            color = if (isSelected) MaterialTheme.colorScheme.onPrimary
+                            else MaterialTheme.colorScheme.primary,
+                            fontSize = 10.sp,
+                            fontFamily = manrope,
+                            modifier = Modifier.padding(horizontal = 5.dp, vertical = 2.dp)
+                        )
+                    }
+                }
+            }
+        }
+    }
+}
+
+
+@Composable
+fun PaywallHeader(onClose: () -> Unit) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 0.dp),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.Top
+    ) {
+        Column() {
+//            Text(
+//                text = "Unlock smarter\ntracking",
+//                color = MaterialTheme.colorScheme.onSurface,
+//                fontSize = 24.sp,
+//                fontWeight = FontWeight.SemiBold,
+//                fontFamily = manrope,
+//                lineHeight = 32.sp
+//            )
+//            Spacer(Modifier.height(8.dp))
+            Text(
+                text = "Replay journeys, track longer, share with your people.",
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                fontSize = 14.sp,
+                fontFamily = manrope,
+                lineHeight = 20.sp
+            )
+        }
+
+//        Surface(
+//            shape = CircleShape,
+//            color = MaterialTheme.colorScheme.primary,
+//            modifier = Modifier.size(48.dp)
+//        ) {
+//            Icon(
+//                painter = painterResource(R.drawable.credit_card),
+//                contentDescription = "card",
+//                tint = MaterialTheme.colorScheme.onPrimary,
+//                modifier = Modifier.padding(8.dp)
+//            )
+//        }
+
+    }
+}
+
+
+@Composable
+fun PlanCard(
+    title: String,
+    price: String,
+    billingLabel: String,
+    features: List<String>,
+    isFeatured: Boolean,
+    isCurrentPlan: Boolean = false,
+    buttonText: String,
+    colors: PlanColors,
+    onClick: () -> Unit
+) {
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .border(
+                width = if (isFeatured) 2.dp else 1.dp,
+                color = colors.border,
+                shape = RoundedCornerShape(20.dp)
+            ),
+        shape = RoundedCornerShape(16.dp),
+        colors = CardDefaults.cardColors(containerColor = colors.bg),
+        elevation = CardDefaults.cardElevation(0.dp)
+    ) {
+        Column(modifier = Modifier.padding(18.dp)) {
+
+
+            if (isFeatured) {
+                Surface(
+                    shape = RoundedCornerShape(6.dp),
+                    color = MaterialTheme.colorScheme.primaryContainer
+                ) {
+                    Row(
+                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(4.dp)
+                    ) {
+                        Icon(
+                            painter = painterResource(R.drawable.heart_fill),
+                            contentDescription = null,
+                            tint = MaterialTheme.colorScheme.onPrimaryContainer,
+                            modifier = Modifier.size(11.dp)
+                        )
+                        Text(
+                            text = "Most popular",
+                            color = MaterialTheme.colorScheme.onPrimaryContainer,
+                            fontSize = 12.sp,
+                            fontWeight = FontWeight.SemiBold,
+                            fontFamily = manrope,
+                        )
+                    }
+                }
+                Spacer(Modifier.height(12.dp))
+            }
+
+
+            Text(
+                text = title,
+                color = colors.text,
+                fontSize = 17.sp,
+                fontWeight = FontWeight.SemiBold,
+                fontFamily = manrope,
+            )
+
+
+            Row(
+                verticalAlignment = Alignment.Bottom,
+                modifier = Modifier.padding(top = 6.dp, bottom = 16.dp)
+            ) {
+                Text(
+                    text = price,
+                    color = colors.text,
+                    fontSize = 30.sp,
+                    fontWeight = FontWeight.Bold,
+                    fontFamily = manrope,
+                )
+                Text(
+                    text = billingLabel,
+                    color = colors.text.copy(alpha = 0.6f),
+                    fontSize = 13.sp,
+                    fontFamily = manrope,
+                    modifier = Modifier.padding(bottom = 4.dp, start = 3.dp)
+                )
+            }
+
+
+            features.forEach { feature ->
+                FeatureRow(
+                    text = feature,
+                    checkTint = colors.checkTint,
+                    textColor = colors.text.copy(alpha = 0.8f)
+                )
+            }
+
+            Spacer(Modifier.height(16.dp))
+
+
+            Button(
+                onClick = onClick,
+                enabled = !isCurrentPlan,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(46.dp),
+                shape = RoundedCornerShape(50),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = colors.buttonBg,
+                    contentColor = colors.buttonTextColor,
+                    disabledContainerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
+                    disabledContentColor = MaterialTheme.colorScheme.outline
+                )
+            ) {
+                Text(
+                    text = buttonText,
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 14.sp,
+                    fontFamily = manrope,
+                )
+            }
+        }
+    }
+}
+
+
+@Composable
+fun FeatureRow(text: String, checkTint: Color, textColor: Color) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 4.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(10.dp)
+    ) {
+        Box(
+            modifier = Modifier
+                .size(18.dp)
+                .clip(RoundedCornerShape(50))
+                .background(checkTint.copy(alpha = 0.15f)),
+            contentAlignment = Alignment.Center
+        ) {
+            Icon(
+                painter = painterResource(R.drawable.check),
+                contentDescription = null,
+                tint = checkTint,
+                modifier = Modifier.size(11.dp)
+            )
+        }
+
+        Text(
+            text = text,
+            color = textColor,
+            fontSize = 14.sp,
+            fontFamily = manrope,
+            fontWeight = FontWeight.SemiBold,
+            lineHeight = 18.sp
+        )
+    }
+}
+
+
+private data class CompareRow(
+    val feature: String, val free: String, val premium: String, val pro: String
+)
+
+@Composable
+fun ComparisonTable() {
+    val rows = listOf(
+        CompareRow("Playback", "–", "✓", "✓"),
+        CompareRow("History", "Today", "2 days", "Full"),
+        CompareRow("Places", "2", "10", "Unlimited"),
+        CompareRow("Connections", "1", "5", "Unlimited"),
+        CompareRow("Insights", "–", "–", "✓"),
+        CompareRow("Export", "–", "–", "✓"),
+    )
+
+    Column {
+        Text(
+            text = "Compare Plans",
+            color = MaterialTheme.colorScheme.onBackground,
+            fontSize = 16.sp,
+            letterSpacing = 0.8.sp,
+            fontWeight = FontWeight.SemiBold,
+            fontFamily = manrope,
+            modifier = Modifier.padding(bottom = 12.dp)
+        )
+
+
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(bottom = 8.dp)
+        ) {
+            Text(
+                "Features",
+                modifier = Modifier.weight(1f),
+                fontFamily = manrope,
+                fontSize = 12.sp,
+                color = MaterialTheme.colorScheme.onBackground,
+                fontWeight = FontWeight.SemiBold
+            )
+            listOf(
+                "Free" to MaterialTheme.colorScheme.onSurfaceVariant,
+                "Premium" to MaterialTheme.colorScheme.primary,
+                "Pro" to MaterialTheme.colorScheme.secondary
+            ).forEach { (label, color) ->
+                Text(
+                    text = label,
+                    color = color,
+                    fontSize = 12.sp,
+                    fontWeight = FontWeight.Bold,
+                    fontFamily = manrope,
+                    textAlign = TextAlign.Center,
+                    letterSpacing = 0.3.sp,
+                    modifier = Modifier.weight(1f)
+                )
+            }
+        }
+
+        HorizontalDivider(
+            color = MaterialTheme.colorScheme.outlineVariant,
+            thickness = 0.5.dp
+        )
+
+        rows.forEach { row ->
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(vertical = 10.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = row.feature,
+                    color = MaterialTheme.colorScheme.onSurface,
+                    fontSize = 14.sp,
+                    fontWeight = FontWeight.SemiBold,
+                    fontFamily = manrope,
+                    modifier = Modifier.weight(1f)
+                )
+                listOf(
+                    row.free to MaterialTheme.colorScheme.onSurfaceVariant,
+                    row.premium to MaterialTheme.colorScheme.primary,
+                    row.pro to MaterialTheme.colorScheme.secondary
+                ).forEach { (value, color) ->
+                    if (value == "✓") {
+                        Box(
+                            modifier = Modifier
+                                .weight(1f)
+                                .size(24.dp)
+                                .clip(RoundedCornerShape(50))
+                                .background(MaterialTheme.colorScheme.surface.copy(alpha = 0.15f)),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Icon(
+                                painter = painterResource(R.drawable.check),
+                                contentDescription = null,
+                                tint = MaterialTheme.colorScheme.tertiary,
+                                modifier = Modifier.size(11.dp)
+                            )
+                        }
+                    } else {
+                        Text(
+                            text = value,
+                            color = color,
+                            fontSize = 14.sp,
+                            fontWeight = FontWeight.Normal,
+                            fontFamily = manrope,
+                            textAlign = TextAlign.Center,
+                            modifier = Modifier.weight(1f)
+                        )
+                    }
+                }
+            }
+            HorizontalDivider(
+                color = MaterialTheme.colorScheme.outlineVariant,
+                thickness = 0.5.dp
+            )
+        }
+    }
+}
+
+
+@Composable
+fun StickyUpgradeCTA(modifier: Modifier = Modifier, onClick: () -> Unit) {
+    Column(
+        modifier = modifier
+            .fillMaxWidth()
+            .background(MaterialTheme.colorScheme.surface)
+            .padding(horizontal = 12.dp, vertical = 12.dp),
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        Button(
+            onClick = onClick,
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(52.dp),
+            shape = RoundedCornerShape(50),
+            colors = ButtonDefaults.buttonColors(
+                containerColor = MaterialTheme.colorScheme.primary,
+                contentColor = MaterialTheme.colorScheme.onPrimary
+            )
+        ) {
+            Text(
+                text = "Upgrade to Premium",
+                fontWeight = FontWeight.SemiBold,
+                fontSize = 15.sp,
+                fontFamily = manrope,
+            )
+        }
+        Spacer(Modifier.height(6.dp))
+        Text(
+            text = "Cancel anytime · Secure payment",
+            color = MaterialTheme.colorScheme.outline,
+            fontSize = 11.sp,
+            fontFamily = manrope,
+            textAlign = TextAlign.Center
+        )
+    }
+}
+
+
+@Preview(name = "Light mode", showBackground = true)
+@Composable
+fun PaywallScreenPreview() {
+    GeoWavTheme(
+        darkTheme = isSystemInDarkTheme()
+    ) {
+        PaywallScreen(onClose = {}, onPremiumClick = {}, onProClick = {})
+    }
+}
