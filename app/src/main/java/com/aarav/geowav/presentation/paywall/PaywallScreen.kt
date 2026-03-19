@@ -2,7 +2,6 @@ package com.aarav.geowav.presentation.paywall
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
-import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -27,26 +26,31 @@ import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.aarav.geowav.R
-import com.aarav.geowav.presentation.theme.GeoWavTheme
+import com.aarav.geowav.data.model.UserPlan
+import com.aarav.geowav.presentation.subscription.SubscriptionViewModel
 import com.aarav.geowav.presentation.theme.manrope
 
 
@@ -94,36 +98,55 @@ private fun proPlanColors() = PlanColors(
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun PaywallScreen(
-    onClose: () -> Unit,
+    subscriptionViewModel: SubscriptionViewModel,
+    back: () -> Unit,
     onPremiumClick: () -> Unit,
     onProClick: () -> Unit
 ) {
 
+    val plan by subscriptionViewModel.userPlan.collectAsState()
+
     Scaffold(
         topBar = {
             TopAppBar(
+                modifier = Modifier,
                 title = {
                     Text(
-                        text = "Unlock smarter\ntracking",
+                        text = "Unlock smarter tracking",
                         fontSize = 20.sp,
                         fontWeight = FontWeight.Bold,
                         fontFamily = manrope,
                         lineHeight = 20.sp
                     )
                 },
+                scrollBehavior = TopAppBarDefaults.pinnedScrollBehavior(),
+                colors = TopAppBarDefaults.topAppBarColors(
+                    containerColor = Color(0xFF0F172A)
+                ),
+                navigationIcon = {
+                    IconButton(onClick = back) {
+                        Icon(
+                            painter = painterResource(R.drawable.back),
+                            contentDescription = "back",
+                            modifier = Modifier.size(24.dp)
+                        )
+                    }
+                },
                 actions = {
                     Surface(
                         shape = CircleShape,
                         color = MaterialTheme.colorScheme.primary,
                         modifier = Modifier
-                            .padding(end = 8.dp).size(48.dp)
+                            .padding(end = 8.dp)
+                            .size(42.dp)
                     ) {
                         Icon(
                             painter = painterResource(R.drawable.credit_card),
                             contentDescription = "card",
                             tint = MaterialTheme.colorScheme.onPrimary,
                             modifier = Modifier
-                                .size(24.dp).padding(8.dp)
+                                .size(24.dp)
+                                .padding(8.dp)
                         )
                     }
                 }
@@ -139,6 +162,20 @@ fun PaywallScreen(
                 .fillMaxSize()
                 .background(MaterialTheme.colorScheme.surface)
         ) {
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .align(Alignment.TopCenter)
+                    .height(18.dp)
+                    .background(
+                        brush = Brush.verticalGradient(
+                            colors = listOf(
+                                MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.25f),
+                                Color.Transparent
+                            )
+                        )
+                    )
+            )
             Column(
                 modifier = Modifier
                     .fillMaxSize()
@@ -147,11 +184,12 @@ fun PaywallScreen(
                     .padding(top = 12.dp, bottom = 96.dp)
             ) {
 
-                PaywallHeader(onClose)
+
+                PaywallHeader(onClose = {})
 
                 Spacer(Modifier.height(16.dp))
 
-                CurrentPlanCard()
+                CurrentPlanCard(plan)
 
 
                 Spacer(Modifier.height(16.dp))
@@ -189,7 +227,7 @@ fun PaywallScreen(
                         "Connect with 5 people"
                     ),
                     isFeatured = true,
-                    isCurrentPlan = false,
+                    isCurrentPlan = plan == UserPlan.PREMIUM,
                     buttonText = "Upgrade to Premium",
                     colors = premiumPlanColors(),
                     onClick = onPremiumClick
@@ -210,7 +248,7 @@ fun PaywallScreen(
                         "Export & share trips"
                     ),
                     isFeatured = false,
-                    isCurrentPlan = false,
+                    isCurrentPlan = plan == UserPlan.PRO,
                     buttonText = "Go Pro",
                     colors = proPlanColors(),
                     onClick = onProClick
@@ -231,7 +269,17 @@ fun PaywallScreen(
 
 
 @Composable
-fun CurrentPlanCard() {
+fun CurrentPlanCard(
+    plan: UserPlan
+) {
+
+    val planText = when (plan) {
+        UserPlan.FREE -> "GeoWav Free"
+        UserPlan.PREMIUM -> "GeoWav Premium"
+        UserPlan.PRO -> "GeoWav Pro"
+    }
+
+
     Card(
         modifier = Modifier
             .fillMaxWidth()
@@ -258,7 +306,7 @@ fun CurrentPlanCard() {
                 )
                 Spacer(Modifier.height(4.dp))
                 Text(
-                    text = "GeoWav Free",
+                    text = planText,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     fontSize = 16.sp,
                     fontWeight = FontWeight.SemiBold,
@@ -434,8 +482,10 @@ fun PlanCard(
         colors = CardDefaults.cardColors(containerColor = colors.bg),
         elevation = CardDefaults.cardElevation(0.dp)
     ) {
-        Column(modifier = Modifier
-            .padding(16.dp)) {
+        Column(
+            modifier = Modifier
+                .padding(16.dp)
+        ) {
 
 
             if (isFeatured) {
@@ -719,9 +769,10 @@ fun StickyUpgradeCTA(modifier: Modifier = Modifier, onClick: () -> Unit) {
                 fontFamily = manrope,
             )
         }
-        Spacer(Modifier.height(6.dp))
+
         Row(
-            modifier = Modifier.fillMaxWidth(),
+            modifier = Modifier.fillMaxWidth()
+                .padding(vertical = 6.dp),
             horizontalArrangement = Arrangement.Center,
             verticalAlignment = Alignment.CenterVertically
         ) {
@@ -745,20 +796,22 @@ fun StickyUpgradeCTA(modifier: Modifier = Modifier, onClick: () -> Unit) {
                 painter = painterResource(R.drawable.secure_payment),
                 contentDescription = null,
                 tint = MaterialTheme.colorScheme.outline,
-                modifier = Modifier.padding(start = 4.dp).size(14.dp)
+                modifier = Modifier
+                    .padding(start = 4.dp)
+                    .size(14.dp)
             )
 
         }
     }
 }
 
-
-@Preview(name = "Light mode", showBackground = true)
-@Composable
-fun PaywallScreenPreview() {
-    GeoWavTheme(
-        darkTheme = isSystemInDarkTheme()
-    ) {
-        PaywallScreen(onClose = {}, onPremiumClick = {}, onProClick = {})
-    }
-}
+//
+//@Preview(showBackground = true)
+//@Composable
+//fun PaywallScreenPreview() {
+//    GeoWavTheme(
+//        darkTheme = isSystemInDarkTheme()
+//    ) {
+//        PaywallScreen(back = {}, onPremiumClick = {}, onProClick = {})
+//    }
+//}

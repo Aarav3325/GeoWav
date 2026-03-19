@@ -65,6 +65,7 @@ import com.aarav.geowav.presentation.navigation.NavGraph
 import com.aarav.geowav.presentation.navigation.NavRoute
 import com.aarav.geowav.presentation.settings.ThemeMode
 import com.aarav.geowav.presentation.settings.openAppSettings
+import com.aarav.geowav.presentation.subscription.SubscriptionViewModel
 import com.aarav.geowav.presentation.theme.GeoWavTheme
 import com.google.accompanist.permissions.ExperimentalPermissionsApi
 import com.google.accompanist.permissions.isGranted
@@ -295,6 +296,16 @@ class MainActivity : ComponentActivity() {
                 ThemeMode.SYSTEM -> isSystemInDarkTheme()
             }
 
+                val subscriptionVM: SubscriptionViewModel = hiltViewModel()
+
+            LaunchedEffect(Unit) {
+                subscriptionVM.startListening()
+            }
+
+            val plan by subscriptionVM.userPlan.collectAsState()
+
+            Log.i("SUBSCRIPTION", "plan $plan")
+
 
             Crossfade(
                 targetState = isDarkTheme, animationSpec = tween(800), label = "ThemeFade"
@@ -440,10 +451,11 @@ class MainActivity : ComponentActivity() {
                             onThemeChange = { newMode ->
                                 mainVM.setThemeMode(newMode)
                             },
-                            navController,
-                            sharedPreferences,
-                            location1,
-                            googleSignInClient,
+                            navHostController = navController,
+                            subscriptionVM = subscriptionVM,
+                            sharedPreferences = sharedPreferences,
+                            location = location1,
+                            googleSignInClient =  googleSignInClient,
                             modifier = Modifier.padding(it)
                         )
                     }

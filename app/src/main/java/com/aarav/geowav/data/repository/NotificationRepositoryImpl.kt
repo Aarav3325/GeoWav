@@ -88,20 +88,23 @@ class NotificationRepositoryImpl @Inject constructor(
                 snapshot: DataSnapshot,
                 previousChildName: String?
             ) {
-                var username = ""
-                fetchUserName(memberId){
-                    username = it
-                }
                 val geofence = snapshot.getValue(FirebaseActivity::class.java)
-                val geoAlert = geofence?.toGeoAlert(id = snapshot.key ?: "", username)
-
                 val eventTime = geofence?.timestamp ?: 0L
                 if (eventTime < listenerStartTime) return
 
-                Log.i("NOTI", "onChildAdded: $geoAlert")
-                if (geoAlert != null) {
-                    CoroutineScope(Dispatchers.IO).launch {
-                        _events.emit(SocialEvent.Geofence(geoAlert))
+                fetchUserName(memberId) { username ->
+
+                    val geoAlert = geofence?.toGeoAlert(
+                        id = snapshot.key ?: "",
+                        username = username
+                    )
+
+                    Log.i("NOTI", "onChildAdded: $geoAlert")
+
+                    if (geoAlert != null) {
+                        CoroutineScope(Dispatchers.IO).launch {
+                            _events.emit(SocialEvent.Geofence(geoAlert))
+                        }
                     }
                 }
             }

@@ -9,6 +9,7 @@ import com.aarav.geowav.data.repository.NotificationRepositoryImpl
 import com.aarav.geowav.data.repository.PaymentRepositoryImpl
 import com.aarav.geowav.data.repository.PlaceRepositoryImpl
 import com.aarav.geowav.data.repository.SessionHistoryRepositoryImpl
+import com.aarav.geowav.data.repository.SubscriptionRepositoryImpl
 import com.aarav.geowav.data.repository.ViewerLocationRepositoryImpl
 import com.aarav.geowav.domain.repository.CircleRepository
 import com.aarav.geowav.domain.repository.EmergencySharingRepository
@@ -18,6 +19,7 @@ import com.aarav.geowav.domain.repository.LocationPermissionRepository
 import com.aarav.geowav.domain.repository.PaymentRepository
 import com.aarav.geowav.domain.repository.PlaceRepository
 import com.aarav.geowav.domain.repository.SessionHistoryRepository
+import com.aarav.geowav.domain.repository.SubscriptionRepository
 import com.aarav.geowav.domain.repository.ViewerLocationRepository
 import dagger.Binds
 import dagger.Module
@@ -73,4 +75,9 @@ abstract class RepositoryModule {
     abstract fun bindPaymentRepository(
         paymentRepositoryImpl: PaymentRepositoryImpl
     ): PaymentRepository
+
+    @Binds
+    abstract fun bindSubscriptionRepository(
+        subscriptionRepositoryImpl: SubscriptionRepositoryImpl
+    ): SubscriptionRepository
 }

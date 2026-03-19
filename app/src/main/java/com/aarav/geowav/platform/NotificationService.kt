@@ -137,7 +137,7 @@ class NotificationService : Service() {
                     this,
                     "geo_channel",
                     "Geofence Alert",
-                    "${event.geofence.userName} ${event.geofence.title} at ${event.geofence.time}",
+                    "${event.geofence.title} at ${event.geofence.time}",
                     NotificationType.Trigger
                 )
             }

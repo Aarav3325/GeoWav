@@ -29,6 +29,7 @@ import com.aarav.geowav.presentation.onboard.OnboardingScreen
 import com.aarav.geowav.presentation.paywall.PaywallScreen
 import com.aarav.geowav.presentation.settings.SettingsScreen
 import com.aarav.geowav.presentation.settings.ThemeMode
+import com.aarav.geowav.presentation.subscription.SubscriptionViewModel
 import com.aarav.geowav.presentation.timeline.TimelineMapPreview
 import com.aarav.geowav.presentation.timeline.TimelineScreen
 import com.aarav.geowav.presentation.yourplace.YourPlacesScreen
@@ -39,6 +40,7 @@ fun NavGraph(
     themeMode: ThemeMode,
     onThemeChange: (ThemeMode) -> Unit,
     navHostController: NavHostController,
+    subscriptionVM: SubscriptionViewModel,
     sharedPreferences: SharedPreferences,
     location: Pair<Double, Double>?,
     googleSignInClient: GoogleSignInClient,
@@ -127,7 +129,8 @@ fun NavGraph(
 
         AddPaywallScreen(
             navHostController,
-            this
+            this,
+            subscriptionVM
         )
 
 //        AddObserveScreen(
@@ -492,13 +495,17 @@ fun AddTimelinePreviewScreen(
 
 fun AddPaywallScreen(
     navController: NavController,
-    navGraphBuilder: NavGraphBuilder
+    navGraphBuilder: NavGraphBuilder,
+    subscriptionVM: SubscriptionViewModel
 ) {
     navGraphBuilder.composable(
         route = NavRoute.Paywall.path,
     ) {
         PaywallScreen(
-            onClose = {},
+            subscriptionVM,
+            back = {
+                navController.popBackStack()
+            },
             onProClick = {},
             onPremiumClick = {}
         )
