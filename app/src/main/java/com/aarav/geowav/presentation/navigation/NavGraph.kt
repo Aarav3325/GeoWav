@@ -124,7 +124,8 @@ fun NavGraph(
 
         AddTimelinePreviewScreen(
             navHostController,
-            this
+            this,
+            subscriptionVM
         )
 
         AddPaywallScreen(
@@ -462,7 +463,8 @@ fun AddTimelineScreen(
 
 fun AddTimelinePreviewScreen(
     navController: NavController,
-    navGraphBuilder: NavGraphBuilder
+    navGraphBuilder: NavGraphBuilder,
+    subscriptionViewModel: SubscriptionViewModel
 ) {
     navGraphBuilder.composable(
         route = NavRoute.TimelinePreview.path.plus("/{sessionId}/{userId}"),
@@ -483,6 +485,7 @@ fun AddTimelinePreviewScreen(
         val userId = it.arguments?.getString("userId") ?: ""
 
         TimelineMapPreview(
+            subscriptionViewModel = subscriptionViewModel,
             viewModel = hiltViewModel(),
             back = {
                 navController.popBackStack()

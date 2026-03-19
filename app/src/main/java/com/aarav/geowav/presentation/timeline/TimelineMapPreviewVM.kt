@@ -3,10 +3,15 @@ package com.aarav.geowav.presentation.timeline
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.aarav.geowav.core.utils.FeatureAccess
 import com.aarav.geowav.core.utils.Resource
 import com.aarav.geowav.data.model.SnappedPoint
 import com.aarav.geowav.data.model.StayPoint
 import com.aarav.geowav.data.model.TimelineItem
+import com.aarav.geowav.data.model.UpgradeContext
+import com.aarav.geowav.data.model.UpgradeEvents
+import com.aarav.geowav.data.model.UpgradeReason
+import com.aarav.geowav.data.model.UserPlan
 import com.aarav.geowav.data.repository.SnapToRoadRepository
 import com.aarav.geowav.domain.repository.SessionHistoryRepository
 import com.google.android.gms.maps.model.LatLng
@@ -15,8 +20,10 @@ import com.google.maps.android.compose.MapType
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
@@ -29,17 +36,18 @@ class TimelineMapPreviewVM @Inject constructor(
 ) : ViewModel() {
 
 
-    private val _animatedPath  = MutableStateFlow(emptyList<LatLng>())
-    val animatedPath : StateFlow<List<LatLng>> = _animatedPath.asStateFlow()
+    private val _animatedPath = MutableStateFlow(emptyList<LatLng>())
+    val animatedPath: StateFlow<List<LatLng>> = _animatedPath.asStateFlow()
     private val _lastPosition = MutableStateFlow<LatLng?>(null)
-    val lastPosition  : StateFlow<LatLng?> = _lastPosition.asStateFlow()
+    val lastPosition: StateFlow<LatLng?> = _lastPosition.asStateFlow()
 
     private val _uiState = MutableStateFlow(TimelinePreviewUiState())
     val uiState: StateFlow<TimelinePreviewUiState> = _uiState.asStateFlow()
 
     private var playbackJob: Job? = null
 
-
+    private val _uiEvent = MutableSharedFlow<UpgradeEvents>()
+    val uiEvent = _uiEvent.asSharedFlow()
 
 
     fun getSessionInfo(sessionId: String, userId: String) {
@@ -80,7 +88,19 @@ class TimelineMapPreviewVM @Inject constructor(
     }
 
 
-    fun startPlayback() {
+    fun startPlayback(
+        userPlan: UserPlan
+    ) {
+        if (!FeatureAccess.canUsePlayback(userPlan)) {
+            emitUpgradeEvent(
+                UpgradeContext(
+                    upgradeTo = UserPlan.PREMIUM,
+                    reason = UpgradeReason.SpeedControl
+                )
+            )
+            return
+        }
+
         _uiState.update { it.copy(isPlaying = true) }
     }
 
@@ -110,7 +130,17 @@ class TimelineMapPreviewVM @Inject constructor(
     }
 
 
-    fun runPlayback(path: List<LatLng>, stayPoints: List<StayPoint>) {
+    fun runPlayback(userPlan: UserPlan, path: List<LatLng>, stayPoints: List<StayPoint>) {
+        if (!FeatureAccess.canUsePlayback(userPlan)) {
+            emitUpgradeEvent(
+                UpgradeContext(
+                    upgradeTo = UserPlan.PREMIUM,
+                    reason = UpgradeReason.PlaybackLocked
+                )
+            )
+            return
+        }
+
         playbackJob?.cancel()
 
         playbackJob = viewModelScope.launch {
@@ -188,6 +218,12 @@ class TimelineMapPreviewVM @Inject constructor(
         _uiState.update { it.copy(mapType = next) }
     }
 
+    private fun emitUpgradeEvent(upgradeContext: UpgradeContext) {
+        viewModelScope.launch {
+            _uiEvent.emit(UpgradeEvents.ShowUpgrade(upgradeContext))
+        }
+    }
+
     override fun onCleared() {
         super.onCleared()
         Log.i("PLAYBACK", "onCleared called ${_uiState.value.session}")
@@ -205,3 +241,4 @@ data class TimelinePreviewUiState(
     val mapType: MapType = MapType.NORMAL,
     val loading: Boolean = false
 )
+

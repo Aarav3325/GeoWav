@@ -65,7 +65,7 @@ data class PlanColors(
 
 
 @Composable
-private fun freePlanColors() = PlanColors(
+fun freePlanColors() = PlanColors(
     bg = MaterialTheme.colorScheme.surfaceContainer,
     border = MaterialTheme.colorScheme.outlineVariant,
     text = MaterialTheme.colorScheme.onSurfaceVariant,
@@ -75,7 +75,7 @@ private fun freePlanColors() = PlanColors(
 )
 
 @Composable
-private fun premiumPlanColors() = PlanColors(
+fun premiumPlanColors() = PlanColors(
     bg = MaterialTheme.colorScheme.onPrimary,
     border = MaterialTheme.colorScheme.primaryContainer,
     text = MaterialTheme.colorScheme.primary,
@@ -85,7 +85,7 @@ private fun premiumPlanColors() = PlanColors(
 )
 
 @Composable
-private fun proPlanColors() = PlanColors(
+fun proPlanColors() = PlanColors(
     bg = MaterialTheme.colorScheme.onSecondary,
     border = MaterialTheme.colorScheme.secondaryContainer,
     text = MaterialTheme.colorScheme.secondary,
@@ -625,16 +625,16 @@ private data class CompareRow(
 )
 
 @Composable
-fun ComparisonTable() {
-    val rows = listOf(
-        CompareRow("Playback", "–", "✓", "✓"),
-        CompareRow("Live Location Sharing", "up to 30 mins", "Unlimited", "Unlimited"),
-        CompareRow("Session History", "Today", "2 days", "Full"),
-        CompareRow("Places", "2", "10", "Unlimited"),
-        CompareRow("Connections", "1", "5", "Unlimited"),
-        CompareRow("Insights", "–", "–", "✓"),
-        CompareRow("Stay point", "-", "–", "✓"),
-    )
+    fun ComparisonTable() {
+        val rows = listOf(
+            CompareRow("Playback", "–", "✓", "✓"),
+            CompareRow("Live Location Sharing", "up to 30 mins", "Unlimited", "Unlimited"),
+            CompareRow("Session History", "Today", "2 days", "Full"),
+            CompareRow("Places", "2", "10", "Unlimited"),
+            CompareRow("Connections", "1", "5", "Unlimited"),
+            CompareRow("Insights", "–", "–", "✓"),
+            CompareRow("Stay point", "-", "–", "✓"),
+        )
 
     Column {
         Text(

@@ -13,12 +13,14 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -32,6 +34,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.IconButtonDefaults
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Slider
 import androidx.compose.material3.SliderDefaults
@@ -39,6 +42,7 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.material3.rememberSliderState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -63,9 +67,17 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.zIndex
 import androidx.core.graphics.createBitmap
 import com.aarav.geowav.R
+import com.aarav.geowav.core.utils.FeatureAccess
 import com.aarav.geowav.data.model.StayPoint
 import com.aarav.geowav.data.model.TimelineItem
+import com.aarav.geowav.data.model.UpgradeContext
+import com.aarav.geowav.data.model.UpgradeEvents
+import com.aarav.geowav.data.model.UpgradeReason
+import com.aarav.geowav.data.model.UserPlan
 import com.aarav.geowav.data.model.toLatLng
+import com.aarav.geowav.presentation.components.UpgradeBottomSheetContent
+import com.aarav.geowav.presentation.paywall.premiumPlanColors
+import com.aarav.geowav.presentation.subscription.SubscriptionViewModel
 import com.aarav.geowav.presentation.theme.GeoWavTheme
 import com.aarav.geowav.presentation.theme.manrope
 import com.aarav.geowav.presentation.theme.onBackgroundDark
@@ -98,12 +110,14 @@ import kotlin.math.roundToInt
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 fun TimelineMapPreview(
+    subscriptionViewModel: SubscriptionViewModel,
     viewModel: TimelineMapPreviewVM,
     back: () -> Unit,
     sessionId: String,
     userId: String
 ) {
 
+    val plan by subscriptionViewModel.userPlan.collectAsState()
 
     val uiState by viewModel.uiState.collectAsState()
 
@@ -165,6 +179,35 @@ fun TimelineMapPreview(
         snappedPath.map { LatLng(it.location.latitude, it.location.longitude) }
     }
 
+    var upgradeContext by remember { mutableStateOf<UpgradeContext?>(null) }
+
+    LaunchedEffect(Unit) {
+        viewModel.uiEvent.collect { event ->
+            if (event is UpgradeEvents.ShowUpgrade) {
+                upgradeContext = event.upgradeContext
+            }
+        }
+    }
+
+    val sheetState = rememberModalBottomSheetState(
+        skipPartiallyExpanded = false
+    )
+
+    upgradeContext?.let {
+        ModalBottomSheet(
+            sheetState = sheetState,
+            onDismissRequest = { upgradeContext = null }
+        ) {
+            UpgradeBottomSheetContent(
+                context = it,
+                onUpgradeClick = {
+                    upgradeContext = null
+                },
+                onDismiss = { upgradeContext = null }
+            )
+        }
+    }
+
 
     LaunchedEffect(sessionId) {
         viewModel.getSessionInfo(sessionId, userId)
@@ -200,8 +243,10 @@ fun TimelineMapPreview(
     }
 
     LaunchedEffect(uiState.isPlaying) {
-        if (uiState.isPlaying && finalSnappedPath.isNotEmpty()) {
+        if (uiState.isPlaying && finalSnappedPath.isNotEmpty()
+        ) {
             viewModel.runPlayback(
+                userPlan = plan,
                 path = finalSnappedPath,
                 stayPoints = currentSession?.stayPoints ?: emptyList()
             )
@@ -506,27 +551,65 @@ fun TimelineMapPreview(
                         IconButton(
                             modifier = Modifier.size(40.dp),
                             colors = IconButtonDefaults.iconButtonColors(
-                                containerColor = if (uiState.isPlaying)
-                                    MaterialTheme.colorScheme.tertiaryContainer
-                                else MaterialTheme.colorScheme.surfaceContainer,
-                                contentColor = if (uiState.isPlaying)
-                                    MaterialTheme.colorScheme.onTertiaryContainer
-                                else MaterialTheme.colorScheme.onSurface
+                                containerColor = when {
+                                    uiState.isPlaying ->
+                                        MaterialTheme.colorScheme.tertiaryContainer
+
+                                    !FeatureAccess.canUsePlayback(plan) ->
+                                        MaterialTheme.colorScheme.surfaceVariant // cleaner disabled look
+
+                                    else ->
+                                        MaterialTheme.colorScheme.surfaceContainer
+                                },
+
+                                contentColor = when {
+                                    !FeatureAccess.canUsePlayback(plan) ->
+                                        MaterialTheme.colorScheme.onSurface.copy(alpha = 0.4f)
+
+                                    else ->
+                                        MaterialTheme.colorScheme.onSurface
+                                }
                             ),
                             onClick = {
-                                if (uiState.isPlaying)
+                                if (uiState.isPlaying) {
                                     viewModel.pausePlayback()
-                                else
-                                    viewModel.startPlayback()
+                                } else {
+                                    viewModel.startPlayback(plan)
+                                }
                             }
                         ) {
-                            Icon(
-                                painter = painterResource(
-                                    if (uiState.isPlaying) R.drawable.pause else R.drawable.play_v2
-                                ),
-                                contentDescription = "play/pause",
-                                modifier = Modifier.size(22.dp)
-                            )
+                            Box(
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Icon(
+                                    painter = painterResource(
+                                        if (uiState.isPlaying) R.drawable.pause else R.drawable.play_v2
+                                    ),
+                                    contentDescription = "play/pause",
+                                    modifier = Modifier.size(22.dp)
+                                )
+
+                                if (!FeatureAccess.canUsePlayback(plan)) {
+                                    Box(
+                                        modifier = Modifier
+                                            .align(Alignment.TopEnd)
+                                            .offset(x = 4.dp, y = (-4).dp)
+                                            .size(16.dp)
+                                            .background(
+                                                color = MaterialTheme.colorScheme.surface,
+                                                shape = CircleShape
+                                            ),
+                                        contentAlignment = Alignment.Center
+                                    ) {
+                                        Icon(
+                                            painter = painterResource(R.drawable.lock_fill),
+                                            contentDescription = null,
+                                            modifier = Modifier.size(10.dp),
+                                            tint = MaterialTheme.colorScheme.onSurface
+                                        )
+                                    }
+                                }
+                            }
                         }
 
                         IconButton(
@@ -548,19 +631,69 @@ fun TimelineMapPreview(
 
                         IconButton(
                             modifier = Modifier.size(40.dp),
-                            colors = IconButtonDefaults.iconButtonColors(
-                                containerColor = MaterialTheme.colorScheme.surfaceContainer,
-                                contentColor = MaterialTheme.colorScheme.onSurface
+                            colors = IconButtonDefaults.iconButtonColors( containerColor = when {
+                                !FeatureAccess.canControlSpeed(plan) ->
+                                    MaterialTheme.colorScheme.surfaceVariant
+
+                                else ->
+                                    MaterialTheme.colorScheme.surfaceContainer
+                            },
+                                contentColor = when {
+                                    !FeatureAccess.canControlSpeed(plan) ->
+                                        MaterialTheme.colorScheme.onSurface.copy(alpha = 0.4f)
+
+                                    else ->
+                                        MaterialTheme.colorScheme.onSurface
+                                }
                             ),
                             onClick = {
-                                showPlaybackSpeedControls = !showPlaybackSpeedControls
+                                if(!FeatureAccess.canUsePlayback(plan)) {
+                                    upgradeContext = UpgradeContext(
+                                        upgradeTo = UserPlan.PREMIUM,
+                                        reason = UpgradeReason.SpeedControl
+                                    )
+                                }
+                                else {
+                                    showPlaybackSpeedControls = !showPlaybackSpeedControls
+                                }
                             }
                         ) {
-                            Icon(
-                                painter = painterResource(R.drawable.playback_speed),
-                                contentDescription = "playback_speed",
-                                modifier = Modifier.size(22.dp)
-                            )
+                            Box(
+                                contentAlignment = Alignment.Center
+                            ) {
+                                val isLocked = !FeatureAccess.canControlSpeed(plan)
+
+                                Icon(
+                                    painter = painterResource(R.drawable.playback_speed),
+                                    contentDescription = "playback_speed",
+                                    modifier = Modifier.size(22.dp),
+                                    tint = if (isLocked)
+                                        MaterialTheme.colorScheme.onSurface.copy(alpha = 0.4f)
+                                    else
+                                        MaterialTheme.colorScheme.onSurface
+                                )
+
+                                if (isLocked) {
+                                    Box(
+                                        modifier = Modifier
+                                            .align(Alignment.TopEnd)
+                                            .offset(x = 4.dp, y = (-4).dp)
+                                            .size(16.dp)
+                                            .background(
+                                                color = MaterialTheme.colorScheme.surface,
+                                                shape = CircleShape
+                                            ),
+                                        contentAlignment = Alignment.Center
+                                    ) {
+                                        Icon(
+                                            painter = painterResource(R.drawable.lock_fill),
+                                            contentDescription = null,
+                                            modifier = Modifier.size(10.dp),
+                                            tint = MaterialTheme.colorScheme.onSurface
+                                        )
+                                    }
+                                }
+                            }
                         }
 
                         IconButton(

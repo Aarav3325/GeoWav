@@ -1,7 +1,9 @@
 package com.aarav.geowav.presentation.components
 
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -13,6 +15,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.Card
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.Icon
@@ -21,17 +24,24 @@ import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.SheetState
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.aarav.geowav.R
+import com.aarav.geowav.data.model.UpgradeContext
+import com.aarav.geowav.data.model.getPlanContent
+import com.aarav.geowav.data.model.getReasonContent
+import com.aarav.geowav.presentation.paywall.premiumPlanColors
 import com.aarav.geowav.presentation.theme.manrope
-import com.aarav.geowav.presentation.theme.sora
 import com.google.android.libraries.places.api.model.Place
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -51,7 +61,10 @@ fun PlaceModalSheet(
             dragHandle = {
                 Surface(
                     shape = CircleShape,
-                    modifier = Modifier.padding(top = 12.dp).width(60.dp).height(3.dp),
+                    modifier = Modifier
+                        .padding(top = 12.dp)
+                        .width(60.dp)
+                        .height(3.dp),
                     color = MaterialTheme.colorScheme.secondary,
                 ) {
 
@@ -168,3 +181,247 @@ fun SheetContent(
     }
 }
 
+@Composable
+fun UpgradeBottomSheetContent(
+    context: UpgradeContext,
+    onUpgradeClick: () -> Unit,
+    onDismiss: () -> Unit
+) {
+//    val (title, desc, icon) = when (reason) {
+//        UpgradeReason.PlaybackLocked -> Triple(
+//            "Playback is Premium",
+//            "Replay your trips with smooth animations and insights.",
+//            R.drawable.play
+//        )
+//
+//        UpgradeReason.HistoryLimit -> Triple(
+//            "Unlock Full History",
+//            "Access your complete travel timeline anytime.",
+//            R.drawable.timeline
+//        )
+//
+//        UpgradeReason.SpeedControl -> Triple(
+//            "Control Playback Speed",
+//            "Adjust speed for better route analysis.",
+//            R.drawable.playback_speed
+//        )
+//    }
+
+
+    val reasonContent = remember { getReasonContent(context.reason) }
+    val planContent = remember { getPlanContent(context.upgradeTo) }
+
+    val colors = premiumPlanColors()
+
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(bottom = 24.dp)
+    ) {
+
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 20.dp)
+                .clip(RoundedCornerShape(20.dp))
+                .background(
+                    Brush.horizontalGradient(
+                        listOf(
+                            colors.bg,
+                            colors.border
+                        )
+                    )
+                )
+                .padding(20.dp)
+        ) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+
+                Box(
+                    modifier = Modifier
+                        .size(48.dp)
+                        .background(
+                            colors.text.copy(alpha = 0.2f),
+                            CircleShape
+                        ),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Icon(
+                        painter = painterResource(reasonContent.icon),
+                        contentDescription = null,
+                        tint = MaterialTheme.colorScheme.onSurface
+                    )
+                }
+
+                Spacer(Modifier.width(16.dp))
+
+                Column {
+                    Text(
+                        text = planContent.title,
+                        fontFamily = manrope,
+                        color = MaterialTheme.colorScheme.onSurface,
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold
+                    )
+                    Text(
+                        text = reasonContent.title,
+                        fontFamily = manrope,
+                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.9f),
+                        style = MaterialTheme.typography.bodyMedium
+                    )
+                }
+            }
+        }
+
+        Spacer(Modifier.height(20.dp))
+
+        Text(
+            text = reasonContent.description,
+            fontFamily = manrope,
+            modifier = Modifier.padding(horizontal = 20.dp),
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
+        )
+
+        Spacer(Modifier.height(20.dp))
+
+        Card(
+            modifier = Modifier
+                .padding(horizontal = 20.dp)
+                .fillMaxWidth(),
+            shape = RoundedCornerShape(16.dp)
+        ) {
+            Column(
+                modifier = Modifier.padding(16.dp),
+                verticalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                planContent.features.forEach {
+                    FeatureItem(it)
+                }
+//                FeatureItem("Playback & route animation")
+//                FeatureItem("Unlimited history access")
+//                FeatureItem("Advanced insights & speed control")
+            }
+        }
+
+        Spacer(Modifier.height(24.dp))
+
+        FilledTonalButton(
+            onClick = onUpgradeClick,
+            colors = ButtonDefaults.buttonColors(
+                containerColor = colors.buttonBg
+            ),
+            modifier = Modifier
+                .padding(horizontal = 20.dp)
+                .fillMaxWidth()
+                .height(52.dp),
+            shape = RoundedCornerShape(16.dp)
+        ) {
+            Text(
+                text = planContent.ctaText,
+                fontFamily = manrope,
+                color = colors.buttonTextColor,
+                style = MaterialTheme.typography.titleMedium
+            )
+        }
+
+        Spacer(Modifier.height(8.dp))
+
+        TextButton(
+            onClick = onDismiss,
+            modifier = Modifier.align(Alignment.CenterHorizontally)
+        ) {
+            Text(
+                "Maybe later",
+                fontFamily = manrope
+            )
+        }
+    }
+}
+
+//@Composable
+//fun UpgradeBottomSheetContent(
+//    reason: UpgradeReason,
+//    onUpgradeClick: () -> Unit,
+//    onDismiss: () -> Unit
+//) {
+//    val (title, desc) = when (reason) {
+//        UpgradeReason.PlaybackLocked -> "Playback is Premium" to
+//                "Replay your trips with smooth animation and insights."
+//
+//        UpgradeReason.HistoryLimit -> "Unlock Full History" to
+//                "Access your complete travel timeline anytime."
+//
+//        UpgradeReason.SpeedControl -> "Control Playback Speed" to
+//                "Adjust speed for better analysis of your routes."
+//    }
+//
+//    Column(
+//        modifier = Modifier
+//            .fillMaxWidth()
+//            .padding(20.dp)
+//    ) {
+//
+//        Text(
+//            text = "Upgrade to Premium",
+//            fontFamily = manrope,
+//            style = MaterialTheme.typography.titleLarge,
+//            fontWeight = FontWeight.Bold
+//        )
+//
+//        Spacer(Modifier.height(8.dp))
+//
+//        Text(
+//            text = title,
+//            fontFamily = manrope,
+//            style = MaterialTheme.typography.titleMedium
+//        )
+//
+//        Spacer(Modifier.height(6.dp))
+//
+//        Text(
+//            text = desc,
+//            fontFamily = manrope,
+//            style = MaterialTheme.typography.bodyMedium,
+//            color = MaterialTheme.colorScheme.onSurfaceVariant
+//        )
+//
+//        Spacer(Modifier.height(20.dp))
+//
+//        Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+//            FeatureItem("Playback & route animation")
+//            FeatureItem("Unlimited history access")
+//            FeatureItem("Advanced insights & speed control")
+//        }
+//
+//        Spacer(Modifier.height(24.dp))
+//
+//        FilledTonalButton(
+//            onClick = onUpgradeClick,
+//            modifier = Modifier.fillMaxWidth(),
+//            shape = RoundedCornerShape(14.dp)
+//        ) {
+//            Text("Upgrade Now", fontFamily = manrope)
+//        }
+//
+//        TextButton(
+//            onClick = onDismiss,
+//            modifier = Modifier.align(Alignment.CenterHorizontally)
+//        ) {
+//            Text("Maybe later", fontFamily = manrope)
+//        }
+//    }
+//}
+
+@Composable
+fun FeatureItem(text: String) {
+    Row(verticalAlignment = Alignment.CenterVertically) {
+        Icon(
+            painter = painterResource(R.drawable.check),
+            contentDescription = null,
+            tint = MaterialTheme.colorScheme.primary,
+            modifier = Modifier.size(18.dp)
+        )
+        Spacer(Modifier.width(8.dp))
+        Text(text, fontFamily = manrope)
+    }
+}
