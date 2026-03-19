@@ -103,6 +103,7 @@ import com.google.accompanist.permissions.rememberPermissionState
 import kotlinx.coroutines.delay
 import androidx.core.net.toUri
 import com.aarav.geowav.presentation.navigation.NavItem
+import com.aarav.geowav.presentation.subscription.SubscriptionViewModel
 
 @OptIn(
     ExperimentalMaterial3Api::class, ExperimentalPermissionsApi::class,
@@ -117,6 +118,7 @@ fun GeoWavHomeScreen(
     onShareLocation: () -> Unit,
     onOpenAlerts: () -> Unit,
     homeScreenVM: HomeScreenVM,
+    subscriptionViewModel: SubscriptionViewModel,
     navigateToSettings: () -> Unit,
     navigateToPaywall: () -> Unit,
     navigateToCircle: () -> Unit,
@@ -127,6 +129,9 @@ fun GeoWavHomeScreen(
 
     val uiState by homeScreenVM.uiState.collectAsState()
     val locations by homeScreenVM.locations.collectAsState()
+
+    val plan by subscriptionViewModel.userPlan.collectAsState()
+
 
     val notificationPermission =
         rememberPermissionState(Manifest.permission.POST_NOTIFICATIONS)

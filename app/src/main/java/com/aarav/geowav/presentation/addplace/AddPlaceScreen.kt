@@ -35,6 +35,7 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -58,10 +59,15 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.aarav.geowav.R
 import com.aarav.geowav.data.model.Place
+import com.aarav.geowav.data.model.UpgradeContext
+import com.aarav.geowav.data.model.UpgradeEvents
 import com.aarav.geowav.presentation.components.CustomChip
 import com.aarav.geowav.presentation.components.MyAlertDialog
 import com.aarav.geowav.presentation.components.PlaceTextField
 import com.aarav.geowav.presentation.components.RadiusChipGroup
+import com.aarav.geowav.presentation.components.UpgradeBottomSheet
+import com.aarav.geowav.presentation.components.UpgradeBottomSheetContent
+import com.aarav.geowav.presentation.subscription.SubscriptionViewModel
 import com.aarav.geowav.presentation.theme.GeoWavTheme
 import com.aarav.geowav.presentation.theme.manrope
 import com.aarav.geowav.presentation.theme.sora
@@ -86,9 +92,14 @@ fun AddPlaceScreen(
     placeId: String,
     navigateToMaps: () -> Unit,
     navigateToYourPlaces: () -> Unit,
-    placeViewModel: PlaceViewModel
+    placeViewModel: PlaceViewModel,
+    subscriptionVM: SubscriptionViewModel
 ) {
 
+    var upgradeContext by remember { mutableStateOf<UpgradeContext?>(null) }
+
+
+    val plan by subscriptionVM.userPlan.collectAsState()
 
     val uiState by placeViewModel.uiState.collectAsState()
 
@@ -96,6 +107,35 @@ fun AddPlaceScreen(
 
     var placeName by remember {
         mutableStateOf(selectedPlace?.displayName ?: "")
+    }
+
+    LaunchedEffect(Unit) {
+        placeViewModel.events.collect { event ->
+            if (event is UpgradeEvents.ShowUpgrade) {
+                upgradeContext = event.upgradeContext
+            }
+        }
+    }
+
+    val sheetState = rememberModalBottomSheetState(
+        skipPartiallyExpanded = false
+    )
+
+    upgradeContext?.let {
+        UpgradeBottomSheet(
+            sheetState,
+            onDismissRequest = {
+                upgradeContext = null
+            }
+        ) {
+            UpgradeBottomSheetContent(
+                context = it,
+                onUpgradeClick = {
+                    upgradeContext = null
+                },
+                onDismiss = { upgradeContext = null }
+            )
+        }
     }
 
     LaunchedEffect(selectedPlace) {
@@ -199,7 +239,7 @@ fun AddPlaceScreen(
                                     addedOn = getFormattedDate()
                                 )
 
-                                placeViewModel.addPlace(finalPlace)
+                                placeViewModel.addPlace(finalPlace, plan)
                                 navigateToYourPlaces()
                                 Toast.makeText(
                                     context,

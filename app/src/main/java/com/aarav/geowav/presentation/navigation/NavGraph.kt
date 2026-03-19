@@ -70,12 +70,14 @@ fun NavGraph(
         AddNewPlaceScreen(
             isDarkThemeEnabled,
             navHostController,
-            this
+            this,
+            subscriptionVM
         )
 
         AddYourPlacesScreen(
             navHostController,
-            this
+            this,
+            subscriptionVM
         )
 
         AddSignUpScreen(
@@ -108,7 +110,8 @@ fun NavGraph(
 
         AddCircleScreen(
             navHostController,
-            this
+            this,
+            subscriptionVM
         )
 
         AddLocationSharingScreen(
@@ -147,7 +150,8 @@ fun NavGraph(
             AddHomeScreen(
                 isDarkThemeEnabled,
                 navHostController,
-                this
+                this,
+                subscriptionVM
             )
 
             AddObserveScreen(
@@ -194,6 +198,7 @@ fun AddNewPlaceScreen(
     isDarkThemeEnabled: Boolean,
     navController: NavController,
     navGraphBuilder: NavGraphBuilder,
+    subscriptionVM: SubscriptionViewModel
 ) {
     navGraphBuilder.composable(
         route = NavRoute.AddPlace.path.plus("/{placeId}"),
@@ -219,6 +224,7 @@ fun AddNewPlaceScreen(
                     launchSingleTop = true
                 }
             },
+            subscriptionVM = subscriptionVM,
             placeViewModel = hiltViewModel()
         )
 
@@ -226,13 +232,16 @@ fun AddNewPlaceScreen(
 }
 
 fun AddYourPlacesScreen(
-    navController: NavController, navGraphBuilder: NavGraphBuilder
+    navController: NavController,
+    navGraphBuilder: NavGraphBuilder,
+    subscriptionVM: SubscriptionViewModel
 ) {
     navGraphBuilder.composable(
         route = NavRoute.YourPlaces.path
     ) {
         YourPlacesScreen(
             yourPlacesVM = hiltViewModel(),
+            subscriptionVM = subscriptionVM,
             navigateToMap = {
                 navController.navigate(NavRoute.MapScreen.path)
             }
@@ -297,7 +306,9 @@ fun AddOnBoard(
 
 fun AddHomeScreen(
     isDarkThemeEnabled: Boolean,
-    navController: NavController, navGraphBuilder: NavGraphBuilder
+    navController: NavController,
+    navGraphBuilder: NavGraphBuilder,
+    subscriptionVM: SubscriptionViewModel
 ) {
     navGraphBuilder.composable(
         route = NavRoute.HomeScreen.path
@@ -329,6 +340,7 @@ fun AddHomeScreen(
             onShareLocation = {},
             onOpenAlerts = {},
             homeScreenVM = sharedVM,
+            subscriptionViewModel = subscriptionVM,
             navigateToSettings = {
                 navController.navigate(NavRoute.Settings.path)
             },
@@ -338,8 +350,7 @@ fun AddHomeScreen(
             navigateToCircle = {
                 navController.navigate(NavRoute.Circle.path)
             },
-            navigateToTimeline = {
-                userId, name ->
+            navigateToTimeline = { userId, name ->
                 navController.navigate(NavRoute.TimeLine.createRoute(userId, name))
             },
             navigateToActivity = {
@@ -371,13 +382,15 @@ fun AddActivityScreen(
 
 fun AddCircleScreen(
     navController: NavController,
-    navGraphBuilder: NavGraphBuilder
+    navGraphBuilder: NavGraphBuilder,
+    subscriptionViewModel: SubscriptionViewModel
 ) {
     navGraphBuilder.composable(
         route = NavRoute.Circle.path
     ) {
         CircleScreen(
             viewModel = hiltViewModel(),
+            subscriptionVM = subscriptionViewModel,
             back = {
                 navController.popBackStack()
             }
@@ -451,12 +464,11 @@ fun AddTimelineScreen(
             back = {
                 navController.popBackStack()
             },
-            navigateToPreview = {
-                sessionId, name, userId ->
+            navigateToPreview = { sessionId, name, userId ->
                 navController.navigate(NavRoute.TimelinePreview.createRoute(sessionId, userId))
             },
             userId = userId,
-            name= name
+            name = name
         )
     }
 }

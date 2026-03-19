@@ -13,7 +13,6 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
-import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -58,10 +57,12 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.zIndex
@@ -75,8 +76,8 @@ import com.aarav.geowav.data.model.UpgradeEvents
 import com.aarav.geowav.data.model.UpgradeReason
 import com.aarav.geowav.data.model.UserPlan
 import com.aarav.geowav.data.model.toLatLng
+import com.aarav.geowav.presentation.components.UpgradeBottomSheet
 import com.aarav.geowav.presentation.components.UpgradeBottomSheetContent
-import com.aarav.geowav.presentation.paywall.premiumPlanColors
 import com.aarav.geowav.presentation.subscription.SubscriptionViewModel
 import com.aarav.geowav.presentation.theme.GeoWavTheme
 import com.aarav.geowav.presentation.theme.manrope
@@ -194,9 +195,11 @@ fun TimelineMapPreview(
     )
 
     upgradeContext?.let {
-        ModalBottomSheet(
-            sheetState = sheetState,
-            onDismissRequest = { upgradeContext = null }
+        UpgradeBottomSheet(
+            sheetState,
+            onDismissRequest = {
+                upgradeContext = null
+            }
         ) {
             UpgradeBottomSheetContent(
                 context = it,
@@ -578,38 +581,13 @@ fun TimelineMapPreview(
                                 }
                             }
                         ) {
-                            Box(
-                                contentAlignment = Alignment.Center
-                            ) {
-                                Icon(
-                                    painter = painterResource(
-                                        if (uiState.isPlaying) R.drawable.pause else R.drawable.play_v2
-                                    ),
-                                    contentDescription = "play/pause",
-                                    modifier = Modifier.size(22.dp)
-                                )
-
-                                if (!FeatureAccess.canUsePlayback(plan)) {
-                                    Box(
-                                        modifier = Modifier
-                                            .align(Alignment.TopEnd)
-                                            .offset(x = 4.dp, y = (-4).dp)
-                                            .size(16.dp)
-                                            .background(
-                                                color = MaterialTheme.colorScheme.surface,
-                                                shape = CircleShape
-                                            ),
-                                        contentAlignment = Alignment.Center
-                                    ) {
-                                        Icon(
-                                            painter = painterResource(R.drawable.lock_fill),
-                                            contentDescription = null,
-                                            modifier = Modifier.size(10.dp),
-                                            tint = MaterialTheme.colorScheme.onSurface
-                                        )
-                                    }
-                                }
-                            }
+                            LockedIcon(
+                                isLocked = !FeatureAccess.canUsePlayback(plan),
+                                icon = painterResource(
+                                    if (uiState.isPlaying) R.drawable.pause else R.drawable.play_v2
+                                ),
+                                contentDescription = "play/pause"
+                            )
                         }
 
                         IconButton(
@@ -631,13 +609,14 @@ fun TimelineMapPreview(
 
                         IconButton(
                             modifier = Modifier.size(40.dp),
-                            colors = IconButtonDefaults.iconButtonColors( containerColor = when {
-                                !FeatureAccess.canControlSpeed(plan) ->
-                                    MaterialTheme.colorScheme.surfaceVariant
+                            colors = IconButtonDefaults.iconButtonColors(
+                                containerColor = when {
+                                    !FeatureAccess.canControlSpeed(plan) ->
+                                        MaterialTheme.colorScheme.surfaceVariant
 
-                                else ->
-                                    MaterialTheme.colorScheme.surfaceContainer
-                            },
+                                    else ->
+                                        MaterialTheme.colorScheme.surfaceContainer
+                                },
                                 contentColor = when {
                                     !FeatureAccess.canControlSpeed(plan) ->
                                         MaterialTheme.colorScheme.onSurface.copy(alpha = 0.4f)
@@ -647,53 +626,21 @@ fun TimelineMapPreview(
                                 }
                             ),
                             onClick = {
-                                if(!FeatureAccess.canUsePlayback(plan)) {
+                                if (!FeatureAccess.canUsePlayback(plan)) {
                                     upgradeContext = UpgradeContext(
                                         upgradeTo = UserPlan.PREMIUM,
                                         reason = UpgradeReason.SpeedControl
                                     )
-                                }
-                                else {
+                                } else {
                                     showPlaybackSpeedControls = !showPlaybackSpeedControls
                                 }
                             }
                         ) {
-                            Box(
-                                contentAlignment = Alignment.Center
-                            ) {
-                                val isLocked = !FeatureAccess.canControlSpeed(plan)
-
-                                Icon(
-                                    painter = painterResource(R.drawable.playback_speed),
-                                    contentDescription = "playback_speed",
-                                    modifier = Modifier.size(22.dp),
-                                    tint = if (isLocked)
-                                        MaterialTheme.colorScheme.onSurface.copy(alpha = 0.4f)
-                                    else
-                                        MaterialTheme.colorScheme.onSurface
-                                )
-
-                                if (isLocked) {
-                                    Box(
-                                        modifier = Modifier
-                                            .align(Alignment.TopEnd)
-                                            .offset(x = 4.dp, y = (-4).dp)
-                                            .size(16.dp)
-                                            .background(
-                                                color = MaterialTheme.colorScheme.surface,
-                                                shape = CircleShape
-                                            ),
-                                        contentAlignment = Alignment.Center
-                                    ) {
-                                        Icon(
-                                            painter = painterResource(R.drawable.lock_fill),
-                                            contentDescription = null,
-                                            modifier = Modifier.size(10.dp),
-                                            tint = MaterialTheme.colorScheme.onSurface
-                                        )
-                                    }
-                                }
-                            }
+                            LockedIcon(
+                                isLocked = !FeatureAccess.canControlSpeed(plan),
+                                icon = painterResource(R.drawable.playback_speed),
+                                contentDescription = "speed"
+                            )
                         }
 
                         IconButton(
@@ -963,6 +910,50 @@ fun SessionPreviewTray(
                         fontFamily = manrope,
                     )
                 }
+            }
+        }
+    }
+}
+
+@Composable
+fun LockedIcon(
+    isLocked: Boolean,
+    icon: Painter,
+    contentDescription: String?,
+    modifier: Modifier = Modifier,
+    iconSize: Dp = 22.dp,
+    badgeSize: Dp = 16.dp,
+    lockIconSize: Dp = 10.dp
+) {
+    Box(
+        modifier = modifier,
+        contentAlignment = Alignment.Center
+    ) {
+
+        Icon(
+            painter = icon,
+            contentDescription = contentDescription,
+            modifier = Modifier.size(iconSize)
+        )
+
+        if (isLocked) {
+            Box(
+                modifier = Modifier
+                    .align(Alignment.TopEnd)
+                    .offset(x = 4.dp, y = (-4).dp)
+                    .size(badgeSize)
+                    .background(
+                        color = MaterialTheme.colorScheme.surface,
+                        shape = CircleShape
+                    ),
+                contentAlignment = Alignment.Center
+            ) {
+                Icon(
+                    painter = painterResource(R.drawable.lock_fill),
+                    contentDescription = null,
+                    modifier = Modifier.size(lockIconSize),
+                    tint = MaterialTheme.colorScheme.onSurface
+                )
             }
         }
     }

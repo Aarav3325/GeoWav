@@ -8,6 +8,14 @@ object FeatureAccess {
 
     private val indiaZone: ZoneId = ZoneId.of("Asia/Kolkata")
 
+    fun nextPlan(plan: UserPlan): UserPlan? {
+        return when (plan) {
+            UserPlan.FREE -> UserPlan.PREMIUM
+            UserPlan.PREMIUM -> UserPlan.PRO
+            UserPlan.PRO -> null
+        }
+    }
+
     fun canUsePlayback(userPlan: UserPlan): Boolean {
         return userPlan != UserPlan.FREE
     }
@@ -42,7 +50,7 @@ object FeatureAccess {
         return when (userPlan) {
             UserPlan.FREE -> 2
             UserPlan.PREMIUM -> 5
-            UserPlan.PRO -> 10
+            UserPlan.PRO -> Int.MAX_VALUE
         }
     }
 
@@ -53,7 +61,7 @@ object FeatureAccess {
     fun maxConnections(userPlan: UserPlan): Int {
         return when (userPlan) {
             UserPlan.FREE -> 1
-            UserPlan.PREMIUM -> 5
+            UserPlan.PREMIUM -> 2
             UserPlan.PRO -> 10
         }
     }

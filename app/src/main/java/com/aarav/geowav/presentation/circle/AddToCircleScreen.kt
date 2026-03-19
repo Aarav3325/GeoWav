@@ -1,7 +1,9 @@
 package com.aarav.geowav.presentation.circle
 
+import android.util.Log
 import androidx.compose.animation.animateContentSize
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -9,6 +11,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -42,6 +45,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -64,10 +68,16 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.aarav.geowav.R
+import com.aarav.geowav.core.utils.FeatureAccess
 import com.aarav.geowav.data.model.CircleMember
 import com.aarav.geowav.data.model.PendingInvite
+import com.aarav.geowav.data.model.UpgradeContext
+import com.aarav.geowav.data.model.UserPlan
 import com.aarav.geowav.presentation.components.DeleteDialog
+import com.aarav.geowav.presentation.components.UpgradeBottomSheet
+import com.aarav.geowav.presentation.components.UpgradeBottomSheetContent
 import com.aarav.geowav.presentation.locationsharing.itemShape
+import com.aarav.geowav.presentation.subscription.SubscriptionViewModel
 import com.aarav.geowav.presentation.theme.manrope
 
 
@@ -75,6 +85,7 @@ import com.aarav.geowav.presentation.theme.manrope
 @Composable
 fun CircleScreen(
     viewModel: CircleVM,
+    subscriptionVM: SubscriptionViewModel,
     back: () -> Unit
 ) {
     val uiState by viewModel.uiState.collectAsState()
@@ -82,6 +93,32 @@ fun CircleScreen(
     var showDeleteDialog by remember { mutableStateOf(false) }
 
     val snackbarHostState = remember { SnackbarHostState() }
+
+    val plan by subscriptionVM.userPlan.collectAsState()
+
+
+    val sheetState = rememberModalBottomSheetState(
+        skipPartiallyExpanded = false
+    )
+
+    var upgradeContext by remember { mutableStateOf<UpgradeContext?>(null) }
+
+    upgradeContext?.let {
+        UpgradeBottomSheet(
+            sheetState,
+            onDismissRequest = {
+                upgradeContext = null
+            }
+        ) {
+            UpgradeBottomSheetContent(
+                context = it,
+                onUpgradeClick = {
+                    upgradeContext = null
+                },
+                onDismiss = { upgradeContext = null }
+            )
+        }
+    }
 
     LaunchedEffect(Unit) {
         viewModel.events.collect { event ->
@@ -97,6 +134,9 @@ fun CircleScreen(
 
                 is CircleUiEvent.MemberDeleted ->
                     snackbarHostState.showSnackbar("Member deleted")
+
+                is CircleUiEvent.ShowUpgrade ->
+                    upgradeContext = event.context
             }
         }
     }
@@ -146,6 +186,7 @@ fun CircleScreen(
                 CircleContent(
                     modifier = Modifier.padding(padding),
                     uiState = uiState,
+                    userPlan = plan,
                     updateName = viewModel::updateName,
                     updateEmail = viewModel::updateEmail,
                     onSendInvite = viewModel::sendInvite,
@@ -164,9 +205,10 @@ fun CircleScreen(
 fun CircleContent(
     modifier: Modifier = Modifier,
     uiState: CircleUiState,
+    userPlan: UserPlan,
     updateName: (String) -> Unit,
     updateEmail: (String) -> Unit,
-    onSendInvite: (String, String) -> Unit,
+    onSendInvite: (String, String, UserPlan) -> Unit,
     onAcceptInvite: (String) -> Unit,
     onRejectInvite: (String) -> Unit,
     onDeleteMember: () -> Unit,
@@ -212,8 +254,17 @@ fun CircleContent(
 //        }
 
         item {
+            ConnectionUsageCard(
+                current = uiState.lovedOnes.size,
+                plan = userPlan
+            )
+        }
+
+
+        item {
             AddLovedOneCard(
                 uiState,
+                userPlan,
                 nameUpdate = updateName,
                 emailUpdate = updateEmail,
                 isLoading = uiState.sendingRequest,
@@ -248,10 +299,11 @@ fun CircleContent(
 @Composable
 fun AddLovedOneCard(
     uiState: CircleUiState,
+    userPlan: UserPlan,
     nameUpdate: (String) -> Unit,
     emailUpdate: (String) -> Unit,
     isLoading: Boolean,
-    onSendInvite: (String, String) -> Unit
+    onSendInvite: (String, String, UserPlan) -> Unit
 ) {
     Card(
         shape = RoundedCornerShape(16.dp),
@@ -398,7 +450,7 @@ fun AddLovedOneCard(
 
             SendInviteButton(!isLoading) {
                 focusManager.clearFocus()
-                onSendInvite(uiState.email, uiState.name)
+                onSendInvite(uiState.email, uiState.name, userPlan)
             }
         }
     }
@@ -482,7 +534,7 @@ fun MyCircleSection(
     Card(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(16.dp),
+            .padding(horizontal = 16.dp, vertical = 8.dp),
         colors = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.surfaceContainerHigh
         ),
@@ -831,6 +883,138 @@ fun PendingInviteRow(
                 "Decline",
                 color = MaterialTheme.colorScheme.error
             )
+        }
+    }
+}
+
+
+@Composable
+fun ConnectionUsageCard(
+    current: Int,
+    plan: UserPlan
+) {
+    val max = FeatureAccess.maxConnections(plan)
+
+    val isUnlimited = max == Int.MAX_VALUE
+    val isLimitReached = !isUnlimited && current >= max
+
+    val planText = when (plan) {
+        UserPlan.FREE -> "GeoWav Free"
+        UserPlan.PREMIUM -> "GeoWav Premium"
+        UserPlan.PRO -> "GeoWav Pro"
+    }
+
+    val usageText = if (isUnlimited) {
+        "$current connection"
+    } else {
+        "$current / $max connections used"
+    }
+
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp)
+            .padding(top = 16.dp, bottom = 8.dp)
+            .border(
+                1.dp,
+                if (isLimitReached)
+                    MaterialTheme.colorScheme.error.copy(alpha = 0.4f)
+                else
+                    MaterialTheme.colorScheme.outlineVariant,
+                RoundedCornerShape(16.dp)
+            ),
+        shape = RoundedCornerShape(16.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = if (isLimitReached)
+                MaterialTheme.colorScheme.errorContainer.copy(alpha = 0.3f)
+            else
+                MaterialTheme.colorScheme.surfaceContainer
+        ),
+        elevation = CardDefaults.cardElevation(0.dp)
+    ) {
+
+        Column(
+            modifier = Modifier.padding(14.dp),
+            verticalArrangement = Arrangement.spacedBy(10.dp)
+        ) {
+
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+
+                Text(
+                    text = planText,
+                    fontSize = 13.sp,
+                    fontWeight = FontWeight.Medium,
+                    fontFamily = manrope,
+                    color = MaterialTheme.colorScheme.outline
+                )
+
+                Surface(
+                    shape = RoundedCornerShape(25),
+                    color = if (isLimitReached)
+                        MaterialTheme.colorScheme.errorContainer
+                    else
+                        MaterialTheme.colorScheme.surfaceVariant
+                ) {
+                    Text(
+                        text = if (isLimitReached) "Limit Reached" else "Active",
+                        modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp),
+                        fontSize = 12.sp,
+                        fontWeight = FontWeight.Medium,
+                        fontFamily = manrope,
+                        color = if (isLimitReached)
+                            MaterialTheme.colorScheme.onErrorContainer
+                        else
+                            MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+            }
+
+            Text(
+                text = usageText,
+                fontSize = 16.sp,
+                fontWeight = FontWeight.SemiBold,
+                fontFamily = manrope,
+                color = if (isLimitReached)
+                    MaterialTheme.colorScheme.error
+                else
+                    MaterialTheme.colorScheme.onBackground
+            )
+
+            if (!isUnlimited) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(6.dp)
+                        .clip(RoundedCornerShape(50))
+                        .background(MaterialTheme.colorScheme.surfaceVariant)
+                ) {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth(current.toFloat() / max)
+                            .fillMaxHeight()
+                            .background(
+                                if (isLimitReached)
+                                    MaterialTheme.colorScheme.error
+                                else
+                                    MaterialTheme.colorScheme.secondary
+                            )
+                    )
+                }
+            }
+
+            if (isLimitReached) {
+                Text(
+                    text = "Upgrade to add more connections",
+                    fontSize = 13.sp,
+                    fontWeight = FontWeight.Medium,
+                    fontFamily = manrope,
+                    color = MaterialTheme.colorScheme.primary
+                )
+            }
         }
     }
 }

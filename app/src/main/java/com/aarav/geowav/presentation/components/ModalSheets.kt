@@ -5,6 +5,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -31,6 +32,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
@@ -38,10 +40,15 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.aarav.geowav.R
 import com.aarav.geowav.data.model.UpgradeContext
+import com.aarav.geowav.data.model.UserPlan
 import com.aarav.geowav.data.model.getPlanContent
 import com.aarav.geowav.data.model.getReasonContent
+import com.aarav.geowav.presentation.paywall.freePlanColors
 import com.aarav.geowav.presentation.paywall.premiumPlanColors
+import com.aarav.geowav.presentation.paywall.proPlanColors
 import com.aarav.geowav.presentation.theme.manrope
+import com.aarav.geowav.presentation.theme.*
+import com.aarav.geowav.presentation.theme.onPrimaryLight
 import com.google.android.libraries.places.api.model.Place
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -84,6 +91,7 @@ fun PlaceModalSheet(
         }
     }
 }
+
 
 @Preview(showBackground = true)
 @Composable
@@ -181,66 +189,91 @@ fun SheetContent(
     }
 }
 
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun UpgradeBottomSheet(
+    sheetState: SheetState,
+    onDismissRequest: () -> Unit,
+    content: @Composable ColumnScope.() -> Unit
+) {
+    ModalBottomSheet(
+        sheetState = sheetState,
+        onDismissRequest = onDismissRequest
+    ) {
+        content()
+    }
+}
+
 @Composable
 fun UpgradeBottomSheetContent(
     context: UpgradeContext,
     onUpgradeClick: () -> Unit,
     onDismiss: () -> Unit
 ) {
-//    val (title, desc, icon) = when (reason) {
-//        UpgradeReason.PlaybackLocked -> Triple(
-//            "Playback is Premium",
-//            "Replay your trips with smooth animations and insights.",
-//            R.drawable.play
-//        )
-//
-//        UpgradeReason.HistoryLimit -> Triple(
-//            "Unlock Full History",
-//            "Access your complete travel timeline anytime.",
-//            R.drawable.timeline
-//        )
-//
-//        UpgradeReason.SpeedControl -> Triple(
-//            "Control Playback Speed",
-//            "Adjust speed for better route analysis.",
-//            R.drawable.playback_speed
-//        )
-//    }
 
 
     val reasonContent = remember { getReasonContent(context.reason) }
     val planContent = remember { getPlanContent(context.upgradeTo) }
 
-    val colors = premiumPlanColors()
+    val colors = when (context.upgradeTo) {
+        UserPlan.PREMIUM -> premiumPlanColors()
+        UserPlan.PRO -> proPlanColors()
+        UserPlan.FREE -> freePlanColors()
+    }
+
+    val gradientColors = when (context.upgradeTo) {
+        UserPlan.PREMIUM -> listOf(
+            onPrimaryDark,
+            primaryContainerDark
+        )
+
+        UserPlan.PRO -> listOf(
+            onSecondaryDark,
+            secondaryContainerDark
+        )
+        UserPlan.FREE -> listOf(
+            surfaceContainerDark,
+            outlineVariantDark
+        )
+    }
+
+    val textColor = when (context.upgradeTo) {
+        UserPlan.PREMIUM -> primaryDark
+        UserPlan.PRO -> secondaryDark
+        UserPlan.FREE -> surfaceContainerDark
+    }
+
+
 
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(bottom = 24.dp)
+            .padding(bottom = 16.dp)
     ) {
 
         Box(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = 20.dp)
-                .clip(RoundedCornerShape(20.dp))
+                .padding(horizontal = 16.dp)
+                .clip(RoundedCornerShape(16.dp))
                 .background(
                     Brush.horizontalGradient(
-                        listOf(
-                            colors.bg,
-                            colors.border
-                        )
+                        gradientColors
                     )
                 )
                 .padding(20.dp)
         ) {
-            Row(verticalAlignment = Alignment.CenterVertically) {
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier
+            ) {
 
                 Box(
                     modifier = Modifier
                         .size(48.dp)
                         .background(
-                            colors.text.copy(alpha = 0.2f),
+                            textColor.copy(alpha = 0.2f),
                             CircleShape
                         ),
                     contentAlignment = Alignment.Center
@@ -248,7 +281,7 @@ fun UpgradeBottomSheetContent(
                     Icon(
                         painter = painterResource(reasonContent.icon),
                         contentDescription = null,
-                        tint = MaterialTheme.colorScheme.onSurface
+                        tint = Color.White
                     )
                 }
 
@@ -258,15 +291,16 @@ fun UpgradeBottomSheetContent(
                     Text(
                         text = planContent.title,
                         fontFamily = manrope,
-                        color = MaterialTheme.colorScheme.onSurface,
-                        style = MaterialTheme.typography.titleMedium,
+                        fontSize = 16.sp,
+                        color = Color.White,
                         fontWeight = FontWeight.Bold
                     )
                     Text(
                         text = reasonContent.title,
                         fontFamily = manrope,
-                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.9f),
-                        style = MaterialTheme.typography.bodyMedium
+                        fontWeight = FontWeight.SemiBold,
+                        color = Color.White.copy(alpha = 0.9f),
+                        fontSize = 14.sp,
                     )
                 }
             }
@@ -277,8 +311,9 @@ fun UpgradeBottomSheetContent(
         Text(
             text = reasonContent.description,
             fontFamily = manrope,
+            fontWeight = FontWeight.Normal,
             modifier = Modifier.padding(horizontal = 20.dp),
-            style = MaterialTheme.typography.bodyMedium,
+            fontSize = 14.sp,
             color = MaterialTheme.colorScheme.onSurfaceVariant
         )
 
@@ -297,9 +332,6 @@ fun UpgradeBottomSheetContent(
                 planContent.features.forEach {
                     FeatureItem(it)
                 }
-//                FeatureItem("Playback & route animation")
-//                FeatureItem("Unlimited history access")
-//                FeatureItem("Advanced insights & speed control")
             }
         }
 
@@ -308,7 +340,8 @@ fun UpgradeBottomSheetContent(
         FilledTonalButton(
             onClick = onUpgradeClick,
             colors = ButtonDefaults.buttonColors(
-                containerColor = colors.buttonBg
+                containerColor = colors.buttonBg,
+                contentColor = colors.buttonTextColor
             ),
             modifier = Modifier
                 .padding(horizontal = 20.dp)
@@ -319,8 +352,9 @@ fun UpgradeBottomSheetContent(
             Text(
                 text = planContent.ctaText,
                 fontFamily = manrope,
+                fontWeight = FontWeight.SemiBold,
                 color = colors.buttonTextColor,
-                style = MaterialTheme.typography.titleMedium
+                fontSize = 14.sp,
             )
         }
 
@@ -332,7 +366,9 @@ fun UpgradeBottomSheetContent(
         ) {
             Text(
                 "Maybe later",
-                fontFamily = manrope
+                fontFamily = manrope,
+                fontSize = 14.sp,
+                fontWeight = FontWeight.SemiBold
             )
         }
     }
@@ -422,6 +458,9 @@ fun FeatureItem(text: String) {
             modifier = Modifier.size(18.dp)
         )
         Spacer(Modifier.width(8.dp))
-        Text(text, fontFamily = manrope)
+        Text(
+            text, fontFamily = manrope, fontSize = 14.sp,
+            fontWeight = FontWeight.Normal
+        )
     }
 }

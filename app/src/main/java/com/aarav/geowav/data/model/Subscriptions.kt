@@ -1,6 +1,8 @@
 package com.aarav.geowav.data.model
 
 import com.aarav.geowav.R
+import com.aarav.geowav.presentation.paywall.premiumPlanColors
+import com.aarav.geowav.presentation.paywall.proPlanColors
 
 enum class UserPlan {
     FREE,
@@ -23,6 +25,9 @@ sealed class UpgradeReason {
     object PlaybackLocked : UpgradeReason()
     object HistoryLimit : UpgradeReason()
     object SpeedControl : UpgradeReason()
+    object MaxPlaces : UpgradeReason()
+    object MaxConnections : UpgradeReason()
+//    object StayPoints : UpgradeReason()
 }
 
 data class UpgradeContext(
@@ -33,7 +38,6 @@ data class UpgradeContext(
 data class PlanContent(
     val title: String,
     val description: String,
-    val icon: Int,
     val features: List<String>,
     val ctaText: String
 )
@@ -63,6 +67,18 @@ fun getReasonContent(reason: UpgradeReason): ReasonContent {
             "Adjust speed for better route analysis.",
             R.drawable.playback_speed
         )
+
+        UpgradeReason.MaxPlaces -> ReasonContent(
+            "Add More Places",
+            "Upgrade to save more locations and get smart alerts for all your important places.",
+            R.drawable.map_pin_area
+        )
+
+        UpgradeReason.MaxConnections -> ReasonContent(
+            "Connect with More People",
+            "Upgrade to add more connections and stay connected with everyone who matters.",
+            R.drawable.heart_fill
+        )
     }
 }
 
@@ -72,7 +88,6 @@ fun getPlanContent(plan: UserPlan): PlanContent {
         UserPlan.PREMIUM -> PlanContent(
             title = "Go Premium",
             description = "Unlock powerful playback and full history access.",
-            icon = R.drawable.play,
             features = listOf(
                 "Playback & route animation",
                 "Unlimited history access",
@@ -84,7 +99,6 @@ fun getPlanContent(plan: UserPlan): PlanContent {
         UserPlan.PRO -> PlanContent(
             title = "Go Pro",
             description = "Get advanced controls and deeper insights.",
-            icon = R.drawable.playback_speed,
             features = listOf(
                 "Everything in Premium",
                 "Playback speed control",

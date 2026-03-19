@@ -3,11 +3,15 @@ package com.aarav.geowav.presentation.circle
 import android.util.Patterns
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.aarav.geowav.core.utils.FeatureAccess
 import com.aarav.geowav.core.utils.Resource
 import com.aarav.geowav.core.utils.encodeEmail
 import com.aarav.geowav.data.authentication.GoogleSignInClient
 import com.aarav.geowav.data.model.CircleMember
 import com.aarav.geowav.data.model.PendingInvite
+import com.aarav.geowav.data.model.UpgradeContext
+import com.aarav.geowav.data.model.UpgradeReason
+import com.aarav.geowav.data.model.UserPlan
 import com.aarav.geowav.domain.repository.CircleRepository
 import com.google.firebase.auth.FirebaseAuth
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -142,8 +146,21 @@ class CircleVM
     }
 
     // Send invite
-    fun sendInvite(email: String, receiverName: String) {
+    fun sendInvite(
+        email: String,
+        receiverName: String,
+        userPlan: UserPlan
+    ) {
         val trimmedEmail = encodeEmail(email)
+
+        val max = FeatureAccess.maxConnections(userPlan)
+
+        if (_uiState.value.lovedOnes.size >= max) {
+            emitUpgrade(
+                userPlan
+            )
+            return
+        }
 
         if (trimmedEmail.isEmpty()) {
             emitError("Email cannot be empty")
@@ -377,6 +394,22 @@ class CircleVM
         }
     }
 
+    fun emitUpgrade(plan: UserPlan) {
+        viewModelScope.launch {
+
+            val upgradeTo = FeatureAccess.nextPlan(plan) ?: return@launch
+
+            _events.emit(
+                CircleUiEvent.ShowUpgrade(
+                    UpgradeContext(
+                        upgradeTo = upgradeTo,
+                        reason = UpgradeReason.MaxConnections
+                    )
+                )
+            )
+        }
+    }
+
     // Emit error
     private fun emitError(message: String) {
         viewModelScope.launch {
@@ -405,6 +438,10 @@ sealed class CircleUiEvent {
     object InviteAccepted : CircleUiEvent()
 
     object MemberDeleted : CircleUiEvent()
+    data class ShowUpgrade(
+        val context: UpgradeContext
+    ) : CircleUiEvent()
+
     data class ShowError(val message: String) : CircleUiEvent()
 }
 
