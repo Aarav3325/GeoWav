@@ -71,16 +71,12 @@ fun YourPlacesScreen(
     val plan by subscriptionVM.userPlan.collectAsState()
 
 
-    val sheetState = rememberModalBottomSheetState(
-        skipPartiallyExpanded = false
-    )
 
     var upgradeContext by remember { mutableStateOf<UpgradeContext?>(null) }
 
 
     upgradeContext?.let {
         UpgradeBottomSheet(
-            sheetState,
             onDismissRequest = {
                 upgradeContext = null
             }

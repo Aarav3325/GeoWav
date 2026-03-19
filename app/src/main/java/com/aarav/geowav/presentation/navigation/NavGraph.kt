@@ -105,7 +105,8 @@ fun NavGraph(
         AddActivityScreen(
             isDarkThemeEnabled,
             navHostController,
-            this
+            this,
+            subscriptionVM
         )
 
         AddCircleScreen(
@@ -122,7 +123,8 @@ fun NavGraph(
 
         AddTimelineScreen(
             navHostController,
-            this
+            this,
+            subscriptionVM
         )
 
         AddTimelinePreviewScreen(
@@ -368,14 +370,17 @@ fun AddHomeScreen(
 
 fun AddActivityScreen(
     isDarkThemeEnabled: Boolean,
-    navController: NavController, navGraphBuilder: NavGraphBuilder
+    navController: NavController,
+    navGraphBuilder: NavGraphBuilder,
+    subscriptionVM: SubscriptionViewModel
 ) {
     navGraphBuilder.composable(
         route = NavRoute.ActivityScreen.path
     ) {
         ActivityScreen(
             isDarkThemeEnabled,
-            activityViewModel = hiltViewModel()
+            activityViewModel = hiltViewModel(),
+            subscriptionViewModel = subscriptionVM
         )
     }
 }
@@ -439,7 +444,8 @@ fun AddObserveScreen(
 
 fun AddTimelineScreen(
     navController: NavController,
-    navGraphBuilder: NavGraphBuilder
+    navGraphBuilder: NavGraphBuilder,
+    subscriptionVM: SubscriptionViewModel
 ) {
     navGraphBuilder.composable(
         route = NavRoute.TimeLine.path.plus("/{userId}/{name}"),
@@ -461,6 +467,7 @@ fun AddTimelineScreen(
 
         TimelineScreen(
             timelineViewModel = hiltViewModel(),
+            subscriptionViewModel = subscriptionVM,
             back = {
                 navController.popBackStack()
             },

@@ -2,10 +2,10 @@ package com.aarav.geowav.presentation.activity
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
-import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -22,7 +22,6 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ContainedLoadingIndicator
 import androidx.compose.material3.DatePickerDialog
 import androidx.compose.material3.DateRangePicker
@@ -36,6 +35,7 @@ import androidx.compose.material3.SelectableDates
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.rememberDateRangePickerState
+import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -44,6 +44,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
@@ -54,24 +55,62 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.aarav.geowav.R
 import com.aarav.geowav.core.utils.ActivityFilter
+import com.aarav.geowav.core.utils.FeatureAccess
 import com.aarav.geowav.core.utils.toLocalDateInIndia
-import com.aarav.geowav.presentation.home.buildRelativeSubtitle
+import com.aarav.geowav.data.model.UpgradeContext
+import com.aarav.geowav.data.model.UpgradeReason
+import com.aarav.geowav.data.model.UserPlan
 import com.aarav.geowav.presentation.components.MyAlertDialog
+import com.aarav.geowav.presentation.components.UpgradeBottomSheet
+import com.aarav.geowav.presentation.components.UpgradeBottomSheetContent
+import com.aarav.geowav.presentation.home.buildRelativeSubtitle
+import com.aarav.geowav.presentation.subscription.SubscriptionViewModel
 import com.aarav.geowav.presentation.theme.manrope
-import com.aarav.geowav.presentation.theme.sora
 import java.time.LocalDate
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ActivityScreen(
     isDarkThemeEnabled: Boolean,
-    activityViewModel: ActivityViewModel
+    activityViewModel: ActivityViewModel,
+    subscriptionViewModel: SubscriptionViewModel
 ) {
 
 
     val uiState by activityViewModel.uiState.collectAsState()
+    val plan by subscriptionViewModel.userPlan.collectAsState()
+
+    var upgradeContext by remember { mutableStateOf<UpgradeContext?>(null) }
+    var upgradeReason by remember { mutableStateOf<UpgradeReason?>(null) }
 
     var showFutureDateAlert by remember { mutableStateOf(false) }
+
+    upgradeContext = upgradeReason?.let { reason ->
+        val plan = FeatureAccess.getUpgradePlan(reason)
+        plan?.let { UpgradeContext(it, reason) }
+    }
+
+
+    upgradeContext?.let {
+        UpgradeBottomSheet(
+            onDismissRequest = {
+                upgradeContext = null
+                upgradeReason = null
+            }
+        ) {
+            UpgradeBottomSheetContent(
+                context = it,
+                onUpgradeClick = {
+                    upgradeContext = null
+                    upgradeReason = null
+                },
+                onDismiss = {
+                    upgradeContext = null
+                    upgradeReason = null
+                }
+            )
+        }
+    }
 
     MyAlertDialog(
         shouldShowDialog = showFutureDateAlert,
@@ -97,11 +136,19 @@ fun ActivityScreen(
             modifier = Modifier.padding(top = 54.dp, start = 16.dp, end = 16.dp)
         )
 
-        FilterRow(selectedFilter = uiState.currentFilter, onFilterSelected = { filter ->
-            activityViewModel.onFilterChanged(filter)
-        }, onSetRangeClick = {
-            activityViewModel.showDatePicker()
-        })
+        FilterRow(
+            isShowingTimeline = false,
+            plan,
+            selectedFilter = uiState.currentFilter,
+            onFilterSelected = { filter ->
+                activityViewModel.onFilterChanged(filter)
+            },
+            onUpgradeRequired = {
+                upgradeReason = it
+            },
+            onSetRangeClick = {
+                activityViewModel.showDatePicker()
+            })
 
         ActivityContent(isDarkThemeEnabled, uiState)
 
@@ -264,37 +311,80 @@ fun ActivityContent(
 
 @Composable
 fun FilterRow(
+    isShowingTimeline: Boolean,
+    userPlan: UserPlan,
     selectedFilter: ActivityFilter,
     onFilterSelected: (ActivityFilter) -> Unit,
-    onSetRangeClick: () -> Unit
+    onSetRangeClick: () -> Unit,
+    onUpgradeRequired: (UpgradeReason) -> Unit
 ) {
+    val isPremiumOrAbove =
+        userPlan == UserPlan.PREMIUM || userPlan == UserPlan.PRO
+
+    val isPro = userPlan == UserPlan.PRO
+
     LazyRow(
+        contentPadding = PaddingValues(horizontal = 12.dp),
         modifier = Modifier
             .fillMaxWidth()
-            .padding(start = 12.dp, top = 8.dp),
+            .padding(start = 0.dp, top = 8.dp),
         horizontalArrangement = Arrangement.spacedBy(2.dp),
     ) {
         item {
-            LogFilterChip("Today", selectedFilter == ActivityFilter.Today) {
+            LogFilterChip(
+                "Today",
+                selectedFilter == ActivityFilter.Today,
+                false
+            ) {
                 onFilterSelected(ActivityFilter.Today)
             }
         }
 
         item {
-            LogFilterChip("Yesterday", selectedFilter == ActivityFilter.Yesterday) {
-                onFilterSelected(ActivityFilter.Yesterday)
+            LogFilterChip(
+                "Yesterday",
+                selectedFilter == ActivityFilter.Yesterday,
+                !isPremiumOrAbove
+            ) {
+                if (isPremiumOrAbove) {
+                    onFilterSelected(ActivityFilter.Yesterday)
+                } else {
+                    onUpgradeRequired(
+                        if (isShowingTimeline) UpgradeReason.TimelineYesterday else UpgradeReason.ActivityYesterday
+                    )
+                }
             }
         }
 
         item {
-            LogFilterChip("7 days", selectedFilter == ActivityFilter.Last7Days) {
-                onFilterSelected(ActivityFilter.Last7Days)
+            LogFilterChip(
+                "7 days",
+                selectedFilter == ActivityFilter.Last7Days,
+                !isPro
+            ) {
+                if (isPro) {
+                    onFilterSelected(ActivityFilter.Last7Days)
+                } else {
+                    onUpgradeRequired(
+                        if (isShowingTimeline) UpgradeReason.FullTimelineAccess else UpgradeReason.FullActivityHistoryAccess
+                    )
+                }
             }
         }
 
         item {
-            LogFilterChip("Select Range", selectedFilter is ActivityFilter.Between) {
-                onSetRangeClick()
+            LogFilterChip(
+                "Select Range",
+                selectedFilter is ActivityFilter.Between,
+                !isPro
+            ) {
+                if (isPro) {
+                    onSetRangeClick()
+                } else {
+                    onUpgradeRequired(
+                        if (isShowingTimeline) UpgradeReason.FullTimelineAccess else UpgradeReason.FullActivityHistoryAccess
+                    )
+                }
             }
         }
     }
@@ -302,7 +392,10 @@ fun FilterRow(
 
 @Composable
 fun LogFilterChip(
-    label: String, selected: Boolean, onClick: () -> Unit
+    label: String,
+    selected: Boolean,
+    isLocked: Boolean = false,
+    onClick: () -> Unit
 ) {
     FilterChip(
         selected = selected,
@@ -315,8 +408,8 @@ fun LogFilterChip(
         modifier = Modifier
             .wrapContentWidth()
             .wrapContentHeight()
-            .padding(start = 4.dp),
-        enabled = true,
+            .padding(start = 4.dp)
+            .alpha(if (isLocked) 0.7f else 1f),
         leadingIcon = {
             if (selected) {
                 Icon(
@@ -325,6 +418,12 @@ fun LogFilterChip(
                     modifier = Modifier.size(FilterChipDefaults.IconSize),
                     tint = MaterialTheme.colorScheme.onPrimary
                 )
+            } else if (isLocked) {
+                Icon(
+                    painter = painterResource(R.drawable.lock),
+                    contentDescription = "",
+                    modifier = Modifier.size(FilterChipDefaults.IconSize)
+                )
             }
         },
         shape = RoundedCornerShape(10.dp),
@@ -332,7 +431,10 @@ fun LogFilterChip(
             selectedContainerColor = MaterialTheme.colorScheme.primary,
             selectedLabelColor = MaterialTheme.colorScheme.onPrimary,
             containerColor = MaterialTheme.colorScheme.primaryContainer,
-            labelColor = MaterialTheme.colorScheme.onPrimaryContainer
+            labelColor = MaterialTheme.colorScheme.onPrimaryContainer,
+            disabledContainerColor = MaterialTheme.colorScheme.surfaceVariant,
+            disabledLabelColor = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f),
+            disabledLeadingIconColor = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f)
         ),
         elevation = FilterChipDefaults.filterChipElevation(2.dp)
     )

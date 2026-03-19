@@ -35,6 +35,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.ToggleButton
 import androidx.compose.material3.ToggleButtonDefaults
 import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -53,11 +54,17 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.aarav.geowav.R
 import com.aarav.geowav.core.utils.ActivityFilter
+import com.aarav.geowav.core.utils.FeatureAccess
 import com.aarav.geowav.core.utils.toLocalDateInIndia
 import com.aarav.geowav.data.model.TimelineItem
+import com.aarav.geowav.data.model.UpgradeContext
+import com.aarav.geowav.data.model.UpgradeReason
 import com.aarav.geowav.presentation.activity.DateRangePickerModal
 import com.aarav.geowav.presentation.activity.FilterRow
 import com.aarav.geowav.presentation.components.MyAlertDialog
+import com.aarav.geowav.presentation.components.UpgradeBottomSheet
+import com.aarav.geowav.presentation.components.UpgradeBottomSheetContent
+import com.aarav.geowav.presentation.subscription.SubscriptionViewModel
 import com.aarav.geowav.presentation.theme.manrope
 import java.text.SimpleDateFormat
 import java.time.LocalDate
@@ -68,6 +75,7 @@ import java.util.Locale
 @Composable
 fun TimelineScreen(
     timelineViewModel: TimelineViewModel,
+    subscriptionViewModel: SubscriptionViewModel,
     back: () -> Unit,
     navigateToPreview: (String, String, String) -> Unit,
     userId: String,
@@ -75,6 +83,35 @@ fun TimelineScreen(
 ) {
 
     val uiState by timelineViewModel.uiState.collectAsState()
+    val plan by subscriptionViewModel.userPlan.collectAsState()
+
+    var upgradeContext by remember { mutableStateOf<UpgradeContext?>(null) }
+    var upgradeReason by remember { mutableStateOf<UpgradeReason?>(null) }
+
+    upgradeContext = upgradeReason?.let { reason ->
+        val plan = FeatureAccess.getUpgradePlan(reason)
+        plan?.let { UpgradeContext(it, reason) }
+    }
+    upgradeContext?.let {
+        UpgradeBottomSheet(
+            onDismissRequest = {
+                upgradeContext = null
+                upgradeReason = null
+            }
+        ) {
+            UpgradeBottomSheetContent(
+                context = it,
+                onUpgradeClick = {
+                    upgradeContext = null
+                    upgradeReason = null
+                },
+                onDismiss = {
+                    upgradeContext = null
+                    upgradeReason = null
+                }
+            )
+        }
+    }
 
     LaunchedEffect(userId) {
         timelineViewModel.observeForFilter(ActivityFilter.Today, userId)
@@ -140,7 +177,12 @@ fun TimelineScreen(
                         if (fromDate.isAfter(today) || toDate.isAfter(today)) {
                             showFutureDateAlert = true
                         } else {
-                            timelineViewModel.onFilterChanged(ActivityFilter.Between(fromDate, toDate), userId)
+                            timelineViewModel.onFilterChanged(
+                                ActivityFilter.Between(
+                                    fromDate,
+                                    toDate
+                                ), userId
+                            )
                         }
                     }
 
@@ -151,9 +193,14 @@ fun TimelineScreen(
 
 
             FilterRow(
+                isShowingTimeline = true,
+                plan,
                 selectedFilter = uiState.currentFilter,
                 onFilterSelected = {
                     timelineViewModel.onFilterChanged(it, userId)
+                },
+                onUpgradeRequired = {
+                    upgradeReason = it
                 },
                 onSetRangeClick = {
                     timelineViewModel.showDatePicker()

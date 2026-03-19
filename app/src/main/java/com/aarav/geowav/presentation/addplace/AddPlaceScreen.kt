@@ -117,13 +117,8 @@ fun AddPlaceScreen(
         }
     }
 
-    val sheetState = rememberModalBottomSheetState(
-        skipPartiallyExpanded = false
-    )
-
     upgradeContext?.let {
         UpgradeBottomSheet(
-            sheetState,
             onDismissRequest = {
                 upgradeContext = null
             }

@@ -35,6 +35,7 @@ import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.FilledIconButton
+import androidx.compose.material3.FloatingToolbarColors
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.HorizontalFloatingToolbar
 import androidx.compose.material3.Icon
@@ -426,8 +427,6 @@ fun ObserveLiveLocationCard(
     }
 
 
-
-
 //    Log.i("OBSERVE", "current viewer: " + viewerInfo.toString())
 
 
@@ -685,13 +684,18 @@ fun ObserveLiveLocationCard(
             }
 
             HorizontalFloatingToolbar(
+                colors = FloatingToolbarColors(
+                    toolbarContainerColor = MaterialTheme.colorScheme.surfaceBright.copy(alpha = 0.85f),
+                    toolbarContentColor = MaterialTheme.colorScheme.onSurface,
+                    fabContentColor = MaterialTheme.colorScheme.onSurface,
+                    fabContainerColor = MaterialTheme.colorScheme.surfaceContainer
+                ),
                 modifier = Modifier
                     .align(Alignment.BottomCenter)
                     .offset(y = (-32).dp)
                     .zIndex(1f),
                 expanded = true,
-                content = {
-
+                leadingContent = {
                     Row(
                         modifier = Modifier.padding(horizontal = 4.dp),
                         verticalAlignment = Alignment.CenterVertically,
@@ -717,118 +721,118 @@ fun ObserveLiveLocationCard(
                                 modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp)
                             )
                         }
+                    }
+                },
+                content = {
 
-                        Spacer(Modifier.width(4.dp))
-
-                        FilledIconButton(
-                            modifier = Modifier.size(44.dp),
-                            onClick = {
-                                if (emergencyLat != null && emergencyLng != null) {
-                                    isUserPanning = false
-                                    scope.launch {
-                                        cameraPositionState.animate(
-                                            CameraUpdateFactory.newLatLngZoom(
-                                                LatLng(emergencyLat, emergencyLng),
-                                                16f
-                                            )
+                    FilledIconButton(
+                        modifier = Modifier.size(40.dp),
+                        onClick = {
+                            if (emergencyLat != null && emergencyLng != null) {
+                                isUserPanning = false
+                                scope.launch {
+                                    cameraPositionState.animate(
+                                        CameraUpdateFactory.newLatLngZoom(
+                                            LatLng(emergencyLat, emergencyLng),
+                                            16f
                                         )
-                                    }
-                                } else if (visibleLatLngs.isNotEmpty()) {
-                                    isUserPanning = false
-                                    scope.launch {
-                                        val bounds = LatLngBounds.builder().apply {
-                                            visibleLatLngs.forEach { include(it) }
-                                        }.build()
-                                        cameraPositionState.animate(
-                                            CameraUpdateFactory.newLatLngBounds(bounds, 80)
-                                        )
-                                    }
+                                    )
                                 }
+                            } else if (visibleLatLngs.isNotEmpty()) {
+                                isUserPanning = false
+                                scope.launch {
+                                    val bounds = LatLngBounds.builder().apply {
+                                        visibleLatLngs.forEach { include(it) }
+                                    }.build()
+                                    cameraPositionState.animate(
+                                        CameraUpdateFactory.newLatLngBounds(bounds, 80)
+                                    )
+                                }
+                            }
+                        },
+                        colors = IconButtonDefaults.filledIconButtonColors(
+                            containerColor = if (isEmergencyActive)
+                                MaterialTheme.colorScheme.error
+                            else
+                                MaterialTheme.colorScheme.primary,
+                            contentColor = if (isEmergencyActive)
+                                MaterialTheme.colorScheme.onError
+                            else
+                                MaterialTheme.colorScheme.onPrimary
+                        )
+                    ) {
+                        Icon(
+                            painter = painterResource(
+                                if (isEmergencyActive) R.drawable.emergency
+                                else R.drawable.gps
+                            ),
+                            contentDescription = if (isEmergencyActive)
+                                "Center on Emergency"
+                            else
+                                "Fit All Users",
+                            modifier = Modifier.size(22.dp)
+                        )
+                    }
+
+                    IconButton(
+                        modifier = Modifier.size(40.dp),
+                        onClick = {
+                            if (showTray) onHideClick() else onShowTray()
+                        }
+                    ) {
+                        Icon(
+                            painter = painterResource(R.drawable.tray),
+                            contentDescription = "Toggle Tray",
+                            modifier = Modifier.size(22.dp)
+                        )
+                    }
+
+                    IconButton(
+                        modifier = Modifier.size(40.dp),
+                        onClick = {
+                            if (visibleLatLngs.isNotEmpty()) {
+                                isUserPanning = false
+                                scope.launch {
+                                    val bounds = LatLngBounds.builder().apply {
+                                        visibleLatLngs.forEach { include(it) }
+                                    }.build()
+                                    cameraPositionState.animate(
+                                        CameraUpdateFactory.newLatLngBounds(bounds, 80)
+                                    )
+                                }
+                            }
+                        }
+                    ) {
+                        Icon(
+                            painter = painterResource(R.drawable.full_screen),
+                            contentDescription = "Fit All",
+                            modifier = Modifier.size(22.dp)
+                        )
+                    }
+
+                    IconButton(
+                        modifier = Modifier.size(40.dp),
+                        onClick = {
+                            mapType = when (mapType) {
+                                MapType.NORMAL -> MapType.SATELLITE
+                                MapType.SATELLITE -> MapType.TERRAIN
+                                MapType.TERRAIN -> MapType.HYBRID
+                                else -> MapType.NORMAL
+                            }
+                            showMapModeToast = true
+                        }
+                    ) {
+                        Icon(
+                            painter = painterResource(R.drawable.map_trifold),
+                            contentDescription = when (mapType) {
+                                MapType.NORMAL -> "Normal"
+                                MapType.SATELLITE -> "Satellite"
+                                MapType.TERRAIN -> "Terrain"
+                                MapType.HYBRID -> "Hybrid"
+                                else -> "Map"
                             },
-                            colors = IconButtonDefaults.filledIconButtonColors(
-                                containerColor = if (isEmergencyActive)
-                                    MaterialTheme.colorScheme.error
-                                else
-                                    MaterialTheme.colorScheme.primary,
-                                contentColor = if (isEmergencyActive)
-                                    MaterialTheme.colorScheme.onError
-                                else
-                                    MaterialTheme.colorScheme.onPrimary
-                            )
-                        ) {
-                            Icon(
-                                painter = painterResource(
-                                    if (isEmergencyActive) R.drawable.emergency
-                                    else R.drawable.gps
-                                ),
-                                contentDescription = if (isEmergencyActive)
-                                    "Center on Emergency"
-                                else
-                                    "Fit All Users",
-                                modifier = Modifier.size(22.dp)
-                            )
-                        }
-
-                        IconButton(
-                            modifier = Modifier.size(40.dp),
-                            onClick = {
-                                if (showTray) onHideClick() else onShowTray()
-                            }
-                        ) {
-                            Icon(
-                                painter = painterResource(R.drawable.tray),
-                                contentDescription = "Toggle Tray",
-                                modifier = Modifier.size(22.dp)
-                            )
-                        }
-
-                        IconButton(
-                            modifier = Modifier.size(40.dp),
-                            onClick = {
-                                if (visibleLatLngs.isNotEmpty()) {
-                                    isUserPanning = false
-                                    scope.launch {
-                                        val bounds = LatLngBounds.builder().apply {
-                                            visibleLatLngs.forEach { include(it) }
-                                        }.build()
-                                        cameraPositionState.animate(
-                                            CameraUpdateFactory.newLatLngBounds(bounds, 80)
-                                        )
-                                    }
-                                }
-                            }
-                        ) {
-                            Icon(
-                                painter = painterResource(R.drawable.full_screen),
-                                contentDescription = "Fit All",
-                                modifier = Modifier.size(22.dp)
-                            )
-                        }
-
-                        IconButton(
-                            modifier = Modifier.size(40.dp),
-                            onClick = {
-                                mapType = when (mapType) {
-                                    MapType.NORMAL -> MapType.SATELLITE
-                                    MapType.SATELLITE -> MapType.TERRAIN
-                                    MapType.TERRAIN -> MapType.HYBRID
-                                    else -> MapType.NORMAL
-                                }
-                                showMapModeToast = true
-                            }
-                        ) {
-                            Icon(
-                                painter = painterResource(R.drawable.map_trifold),
-                                contentDescription = when (mapType) {
-                                    MapType.NORMAL -> "Normal"
-                                    MapType.SATELLITE -> "Satellite"
-                                    MapType.TERRAIN -> "Terrain"
-                                    MapType.HYBRID -> "Hybrid"
-                                    else -> "Map"
-                                },
-                                modifier = Modifier.size(22.dp)
-                            )
-                        }
+                            modifier = Modifier.size(22.dp)
+                        )
                     }
                 }
             )

@@ -8,11 +8,13 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.ButtonDefaults
@@ -26,6 +28,7 @@ import androidx.compose.material3.SheetState
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
+import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
@@ -43,6 +46,7 @@ import com.aarav.geowav.data.model.UpgradeContext
 import com.aarav.geowav.data.model.UserPlan
 import com.aarav.geowav.data.model.getPlanContent
 import com.aarav.geowav.data.model.getReasonContent
+import com.aarav.geowav.presentation.paywall.PlanColors
 import com.aarav.geowav.presentation.paywall.freePlanColors
 import com.aarav.geowav.presentation.paywall.premiumPlanColors
 import com.aarav.geowav.presentation.paywall.proPlanColors
@@ -193,12 +197,16 @@ fun SheetContent(
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun UpgradeBottomSheet(
-    sheetState: SheetState,
     onDismissRequest: () -> Unit,
     content: @Composable ColumnScope.() -> Unit
 ) {
+    val sheetState = rememberModalBottomSheetState(
+        skipPartiallyExpanded = true
+    )
+
     ModalBottomSheet(
         sheetState = sheetState,
+        modifier = Modifier.wrapContentHeight(),
         onDismissRequest = onDismissRequest
     ) {
         content()
@@ -249,7 +257,6 @@ fun UpgradeBottomSheetContent(
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(bottom = 16.dp)
     ) {
 
         Box(
@@ -330,7 +337,7 @@ fun UpgradeBottomSheetContent(
                 verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
                 planContent.features.forEach {
-                    FeatureItem(it)
+                    FeatureItem(it, colors)
                 }
             }
         }
@@ -367,6 +374,7 @@ fun UpgradeBottomSheetContent(
             Text(
                 "Maybe later",
                 fontFamily = manrope,
+                color = colors.checkTint,
                 fontSize = 14.sp,
                 fontWeight = FontWeight.SemiBold
             )
@@ -449,17 +457,18 @@ fun UpgradeBottomSheetContent(
 //}
 
 @Composable
-fun FeatureItem(text: String) {
+fun FeatureItem(text: String, colors: PlanColors) {
     Row(verticalAlignment = Alignment.CenterVertically) {
         Icon(
             painter = painterResource(R.drawable.check),
             contentDescription = null,
-            tint = MaterialTheme.colorScheme.primary,
+            tint = colors.checkTint,
             modifier = Modifier.size(18.dp)
         )
         Spacer(Modifier.width(8.dp))
         Text(
-            text, fontFamily = manrope, fontSize = 14.sp,
+            text, fontFamily = manrope,
+            fontSize = 14.sp,
             fontWeight = FontWeight.Normal
         )
     }

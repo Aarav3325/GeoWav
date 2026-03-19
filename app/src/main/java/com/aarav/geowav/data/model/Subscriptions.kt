@@ -28,6 +28,11 @@ sealed class UpgradeReason {
     object MaxPlaces : UpgradeReason()
     object MaxConnections : UpgradeReason()
 //    object StayPoints : UpgradeReason()
+
+    object ActivityYesterday : UpgradeReason()
+    object FullActivityHistoryAccess : UpgradeReason()
+    object TimelineYesterday : UpgradeReason()
+    object FullTimelineAccess : UpgradeReason()
 }
 
 data class UpgradeContext(
@@ -78,6 +83,30 @@ fun getReasonContent(reason: UpgradeReason): ReasonContent {
             "Connect with More People",
             "Upgrade to add more connections and stay connected with everyone who matters.",
             R.drawable.heart_fill
+        )
+
+        UpgradeReason.ActivityYesterday -> ReasonContent(
+            "Unlock Yesterday",
+            "Upgrade to Premium to view your activity from yesterday.",
+            R.drawable.activity
+        )
+
+        UpgradeReason.FullActivityHistoryAccess -> ReasonContent(
+            "Unlock Full Activity History",
+            "Upgrade to Pro to access 7 days and custom date ranges.",
+            R.drawable.activity
+        )
+
+        UpgradeReason.TimelineYesterday -> ReasonContent(
+            "Revisit Yesterday's Timeline",
+            "Upgrade to Premium to explore routes, locations and movement of you and your connections from yesterday.",
+            R.drawable.timeline
+        )
+
+        UpgradeReason.FullTimelineAccess -> ReasonContent(
+            "Unlock Complete Timeline",
+            "Upgrade to Pro to explore full movement history for you and your connections with advanced filters and ranges.",
+            R.drawable.timeline
         )
     }
 }

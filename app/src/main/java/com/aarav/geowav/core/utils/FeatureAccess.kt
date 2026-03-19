@@ -1,5 +1,6 @@
 package com.aarav.geowav.core.utils
 
+import com.aarav.geowav.data.model.UpgradeReason
 import com.aarav.geowav.data.model.UserPlan
 import java.time.LocalDate
 import java.time.ZoneId
@@ -33,16 +34,13 @@ object FeatureAccess {
         }
     }
 
-    fun timelineHistoryLimit(userPlan: UserPlan): TimeRange? {
-        val today = LocalDate.now(indiaZone)
-        return when (userPlan) {
-            UserPlan.FREE -> TimeRange(today.startOfDayMillis(), today.endOfDayMillis())
-            UserPlan.PREMIUM -> TimeRange(
-                today.minusDays(1).startOfDayMillis(),
-                today.endOfDayMillis()
-            )
-            UserPlan.PRO -> null
-
+    fun getUpgradePlan(reason: UpgradeReason): UserPlan? {
+        return when (reason) {
+            UpgradeReason.ActivityYesterday -> UserPlan.PREMIUM
+            UpgradeReason.FullActivityHistoryAccess -> UserPlan.PRO
+            UpgradeReason.FullTimelineAccess -> UserPlan.PRO
+            UpgradeReason.TimelineYesterday -> UserPlan.PREMIUM
+            else -> null
         }
     }
 

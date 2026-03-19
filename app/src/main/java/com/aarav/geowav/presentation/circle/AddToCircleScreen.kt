@@ -97,15 +97,10 @@ fun CircleScreen(
     val plan by subscriptionVM.userPlan.collectAsState()
 
 
-    val sheetState = rememberModalBottomSheetState(
-        skipPartiallyExpanded = false
-    )
-
     var upgradeContext by remember { mutableStateOf<UpgradeContext?>(null) }
 
     upgradeContext?.let {
         UpgradeBottomSheet(
-            sheetState,
             onDismissRequest = {
                 upgradeContext = null
             }
@@ -913,8 +908,7 @@ fun ConnectionUsageCard(
     Card(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(horizontal = 16.dp)
-            .padding(top = 16.dp, bottom = 8.dp)
+            .padding(horizontal = 16.dp, vertical = 8.dp)
             .border(
                 1.dp,
                 if (isLimitReached)
