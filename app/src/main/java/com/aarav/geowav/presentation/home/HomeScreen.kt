@@ -228,7 +228,7 @@ fun GeoWavHomeScreen(
                         onClick = {
                             navigateToPaywall()
 //                            activity?.let {
-//                                homeScreenVM.launchBillingFlow(it)
+//                                homeScreenVM.launchBillingFlow(it, "")
 //                            }
                         }
                     ) {

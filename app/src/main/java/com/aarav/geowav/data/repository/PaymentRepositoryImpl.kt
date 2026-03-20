@@ -125,6 +125,7 @@ class PaymentRepositoryImpl @Inject constructor(
             "plan" to plan,
             "isActive" to true,
             "purchaseToken" to token,
+            "purchaseTime" to purchaseTime,
             "updatedAt" to System.currentTimeMillis()
         )
 
@@ -150,6 +151,7 @@ class PaymentRepositoryImpl @Inject constructor(
 
                     Log.i(BILLING_TAG, "No active subscription")
                 } else {
+                    Log.i(BILLING_TAG, purchases.toString())
                     var finalPlan = "FREE"
                     var token = ""
                     var purchaseTime = 0L
@@ -193,6 +195,13 @@ class PaymentRepositoryImpl @Inject constructor(
                 .setProductType(BillingClient.ProductType.SUBS)
                 .build()
         )
+
+//        val productList = listOf(
+//            QueryProductDetailsParams.Product.newBuilder()
+//                .setProductId("android.test.purchased")
+//                .setProductType(BillingClient.ProductType.INAPP)
+//                .build()
+//        )
 
         val params = QueryProductDetailsParams.newBuilder()
         params.setProductList(productList)

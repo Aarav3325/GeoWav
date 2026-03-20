@@ -7,8 +7,6 @@ import java.time.ZoneId
 
 object FeatureAccess {
 
-    private val indiaZone: ZoneId = ZoneId.of("Asia/Kolkata")
-
     fun nextPlan(plan: UserPlan): UserPlan? {
         return when (plan) {
             UserPlan.FREE -> UserPlan.PREMIUM

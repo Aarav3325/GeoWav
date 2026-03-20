@@ -24,9 +24,11 @@ import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.IconButtonDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
@@ -40,7 +42,6 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
@@ -95,7 +96,7 @@ fun proPlanColors() = PlanColors(
 )
 
 
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 fun PaywallScreen(
     subscriptionViewModel: SubscriptionViewModel,
@@ -112,8 +113,8 @@ fun PaywallScreen(
                 modifier = Modifier,
                 title = {
                     Text(
-                        text = "Unlock smarter tracking",
-                        fontSize = 20.sp,
+                        text = "Upgrade your plan",
+                        style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.Bold,
                         fontFamily = manrope,
                         lineHeight = 20.sp
@@ -121,34 +122,35 @@ fun PaywallScreen(
                 },
                 scrollBehavior = TopAppBarDefaults.pinnedScrollBehavior(),
                 colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = Color(0xFF0F172A)
+                    // containerColor = Color(0xFF0F172A)
+                    containerColor = MaterialTheme.colorScheme.surface
                 ),
                 navigationIcon = {
                     IconButton(onClick = back) {
                         Icon(
                             painter = painterResource(R.drawable.back),
                             contentDescription = "back",
-                            modifier = Modifier.size(24.dp)
+                            modifier = Modifier.size(IconButtonDefaults.smallIconSize)
                         )
                     }
                 },
                 actions = {
-                    Surface(
-                        shape = CircleShape,
-                        color = MaterialTheme.colorScheme.primary,
-                        modifier = Modifier
-                            .padding(end = 8.dp)
-                            .size(42.dp)
-                    ) {
-                        Icon(
-                            painter = painterResource(R.drawable.credit_card),
-                            contentDescription = "card",
-                            tint = MaterialTheme.colorScheme.onPrimary,
-                            modifier = Modifier
-                                .size(24.dp)
-                                .padding(8.dp)
-                        )
-                    }
+//                    Surface(
+//                        shape = CircleShape,
+//                        color = MaterialTheme.colorScheme.primary,
+//                        modifier = Modifier
+//                            .padding(end = 8.dp)
+//                            .size(42.dp)
+//                    ) {
+//                        Icon(
+//                            painter = painterResource(R.drawable.credit_card),
+//                            contentDescription = "card",
+//                            tint = MaterialTheme.colorScheme.onPrimary,
+//                            modifier = Modifier
+//                                .size(24.dp)
+//                                .padding(8.dp)
+//                        )
+//                    }
                 }
             )
         },
@@ -166,11 +168,11 @@ fun PaywallScreen(
                 modifier = Modifier
                     .fillMaxWidth()
                     .align(Alignment.TopCenter)
-                    .height(18.dp)
+                    .height(8.dp)
                     .background(
                         brush = Brush.verticalGradient(
                             colors = listOf(
-                                MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.25f),
+                                MaterialTheme.colorScheme.primary.copy(alpha = 0.12f),
                                 Color.Transparent
                             )
                         )
@@ -181,11 +183,10 @@ fun PaywallScreen(
                     .fillMaxSize()
                     .verticalScroll(rememberScrollState())
                     .padding(horizontal = 12.dp)
-                    .padding(top = 12.dp, bottom = 96.dp)
+                    .padding(top = 12.dp, bottom = 104.dp)
             ) {
 
-
-                PaywallHeader(onClose = {})
+                PaywallHeader()
 
                 Spacer(Modifier.height(16.dp))
 
@@ -414,45 +415,50 @@ fun BillingToggle(
 
 
 @Composable
-fun PaywallHeader(onClose: () -> Unit) {
+fun PaywallHeader() {
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(horizontal = 0.dp),
+            .padding(top = 8.dp),
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.Top
     ) {
         Column() {
-//            Text(
-//                text = "Unlock smarter\ntracking",
-//                color = MaterialTheme.colorScheme.onSurface,
-//                fontSize = 24.sp,
-//                fontWeight = FontWeight.SemiBold,
-//                fontFamily = manrope,
-//                lineHeight = 32.sp
-//            )
-//            Spacer(Modifier.height(8.dp))
+            Text(
+                text = "Unlock smarter\ntracking",
+                color = MaterialTheme.colorScheme.onSurface,
+                fontSize = 24.sp,
+                fontWeight = FontWeight.SemiBold,
+                fontFamily = manrope,
+                lineHeight = 32.sp
+            )
+
+            Spacer(Modifier.height(8.dp))
+
             Text(
                 text = "Replay journeys, track longer, share with your people.",
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
-                fontSize = 14.sp,
+                style = MaterialTheme.typography.bodySmall,
                 fontFamily = manrope,
                 lineHeight = 20.sp
             )
         }
 
-//        Surface(
-//            shape = CircleShape,
-//            color = MaterialTheme.colorScheme.primary,
-//            modifier = Modifier.size(48.dp)
-//        ) {
-//            Icon(
-//                painter = painterResource(R.drawable.credit_card),
-//                contentDescription = "card",
-//                tint = MaterialTheme.colorScheme.onPrimary,
-//                modifier = Modifier.padding(8.dp)
-//            )
-//        }
+        Surface(
+            shape = CircleShape,
+            color = MaterialTheme.colorScheme.primary,
+            modifier = Modifier
+                .size(42.dp)
+        ) {
+            Icon(
+                painter = painterResource(R.drawable.credit_card),
+                contentDescription = "card",
+                tint = MaterialTheme.colorScheme.onPrimary,
+                modifier = Modifier
+                    .size(24.dp)
+                    .padding(8.dp)
+            )
+        }
 
     }
 }
@@ -625,18 +631,22 @@ private data class CompareRow(
 )
 
 @Composable
-    fun ComparisonTable() {
-        val rows = listOf(
-            CompareRow("Playback", "–", "✓", "✓"),
-            CompareRow("Live Location Sharing", "up to 30 mins", "Unlimited", "Unlimited"),
-            CompareRow("Session History", "Today", "2 days", "Full"),
-            CompareRow("Places", "2", "10", "Unlimited"),
-            CompareRow("Connections", "1", "5", "Unlimited"),
-            CompareRow("Insights", "–", "–", "✓"),
-            CompareRow("Stay point", "-", "–", "✓"),
-        )
+fun ComparisonTable() {
+    val rows = listOf(
+        CompareRow("Playback", "–", "✓", "✓"),
+        CompareRow("Live Location Sharing", "up to 30 mins", "Unlimited", "Unlimited"),
+        CompareRow("Session History", "Today", "2 days", "Full"),
+        CompareRow("Places", "2", "10", "Unlimited"),
+        CompareRow("Connections", "1", "5", "Unlimited"),
+        CompareRow("Insights", "–", "–", "✓"),
+        CompareRow("Stay point", "-", "–", "✓"),
+    )
 
-    Column {
+    Column(
+        modifier = Modifier.padding(
+            bottom = 16.dp
+        )
+    ) {
         Text(
             text = "Compare Plans",
             color = MaterialTheme.colorScheme.onBackground,
@@ -684,7 +694,7 @@ private data class CompareRow(
             thickness = 0.5.dp
         )
 
-        rows.forEach { row ->
+        rows.forEachIndexed { index, row ->
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -733,10 +743,13 @@ private data class CompareRow(
                     }
                 }
             }
-            HorizontalDivider(
-                color = MaterialTheme.colorScheme.outlineVariant,
-                thickness = 0.5.dp
-            )
+
+            if (index != rows.size - 1) {
+                HorizontalDivider(
+                    color = MaterialTheme.colorScheme.outlineVariant,
+                    thickness = 0.5.dp
+                )
+            }
         }
     }
 }
@@ -771,7 +784,8 @@ fun StickyUpgradeCTA(modifier: Modifier = Modifier, onClick: () -> Unit) {
         }
 
         Row(
-            modifier = Modifier.fillMaxWidth()
+            modifier = Modifier
+                .fillMaxWidth()
                 .padding(vertical = 6.dp),
             horizontalArrangement = Arrangement.Center,
             verticalAlignment = Alignment.CenterVertically
