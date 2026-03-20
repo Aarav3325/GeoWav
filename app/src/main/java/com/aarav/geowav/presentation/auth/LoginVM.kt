@@ -1,10 +1,13 @@
 package com.aarav.geowav.presentation.auth
 
+import android.content.Context
 import android.util.Patterns
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.aarav.geowav.data.authentication.GoogleSignInClient
+import com.aarav.geowav.domain.repository.PaymentRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
+import dagger.hilt.android.qualifiers.ApplicationContext
 import jakarta.inject.Inject
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -16,7 +19,9 @@ import kotlinx.coroutines.withContext
 
 @HiltViewModel
 class LoginVM @Inject constructor(
-    val googleSignInClient: GoogleSignInClient
+    @ApplicationContext val context: Context,
+    val googleSignInClient: GoogleSignInClient,
+    val paymentRepository: PaymentRepository
 ) : ViewModel() {
 
     private val _uiState: MutableStateFlow<LoginUIState> = MutableStateFlow(LoginUIState())
@@ -59,6 +64,11 @@ class LoginVM @Inject constructor(
                 googleSignInClient.signInWithEmailAndPassword(email, password)
             }
 
+
+            if(result) {
+                paymentRepository.syncAfterLogin(context)
+            }
+
             _uiState.update {
                 it.copy(
                     isLoading = false,
@@ -85,6 +95,11 @@ class LoginVM @Inject constructor(
 
             val result = withContext(Dispatchers.IO) {
                 googleSignInClient.signIn()
+            }
+
+            if(result) {
+                paymentRepository.syncAfterLogin(context)
+
             }
 
             _uiState.update {

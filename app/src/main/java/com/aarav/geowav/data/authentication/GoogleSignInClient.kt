@@ -19,6 +19,9 @@ import com.google.firebase.auth.GoogleAuthProvider
 import com.google.firebase.database.FirebaseDatabase
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.channels.awaitClose
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.tasks.await
 import javax.inject.Inject
 
@@ -40,6 +43,24 @@ class GoogleSignInClient @Inject constructor(
     // Check if user is logged in
     fun isLoggedIn(): Boolean {
         return firebaseAuth.currentUser != null
+    }
+
+    fun getUserIdFlow(): Flow<String> = callbackFlow {
+        val auth = FirebaseAuth.getInstance()
+
+        val listener = FirebaseAuth.AuthStateListener {
+            val uid = it.currentUser?.uid ?: ""
+            trySend(uid)
+        }
+
+        auth.addAuthStateListener(listener)
+
+
+        trySend(auth.currentUser?.uid ?: "")
+
+        awaitClose {
+            auth.removeAuthStateListener(listener)
+        }
     }
 
     // google sign in

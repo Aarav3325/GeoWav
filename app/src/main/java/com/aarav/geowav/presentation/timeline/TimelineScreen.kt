@@ -35,7 +35,6 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.ToggleButton
 import androidx.compose.material3.ToggleButtonDefaults
 import androidx.compose.material3.TopAppBar
-import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -62,7 +61,7 @@ import com.aarav.geowav.data.model.UpgradeReason
 import com.aarav.geowav.presentation.activity.DateRangePickerModal
 import com.aarav.geowav.presentation.activity.FilterRow
 import com.aarav.geowav.presentation.components.MyAlertDialog
-import com.aarav.geowav.presentation.components.UpgradeBottomSheet
+import com.aarav.geowav.presentation.components.CustomBottomSheet
 import com.aarav.geowav.presentation.components.UpgradeBottomSheetContent
 import com.aarav.geowav.presentation.subscription.SubscriptionViewModel
 import com.aarav.geowav.presentation.theme.manrope
@@ -77,6 +76,7 @@ fun TimelineScreen(
     timelineViewModel: TimelineViewModel,
     subscriptionViewModel: SubscriptionViewModel,
     back: () -> Unit,
+    navigateToPaywall: () -> Unit,
     navigateToPreview: (String, String, String) -> Unit,
     userId: String,
     name: String
@@ -93,7 +93,7 @@ fun TimelineScreen(
         plan?.let { UpgradeContext(it, reason) }
     }
     upgradeContext?.let {
-        UpgradeBottomSheet(
+        CustomBottomSheet(
             onDismissRequest = {
                 upgradeContext = null
                 upgradeReason = null
@@ -104,6 +104,7 @@ fun TimelineScreen(
                 onUpgradeClick = {
                     upgradeContext = null
                     upgradeReason = null
+                    navigateToPaywall()
                 },
                 onDismiss = {
                     upgradeContext = null

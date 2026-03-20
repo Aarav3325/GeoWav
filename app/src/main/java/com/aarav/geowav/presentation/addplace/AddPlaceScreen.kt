@@ -4,7 +4,6 @@ import android.util.Log
 import android.widget.Toast
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.border
-import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -23,7 +22,6 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ContainedLoadingIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
@@ -35,7 +33,6 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
-import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -65,14 +62,10 @@ import com.aarav.geowav.presentation.components.CustomChip
 import com.aarav.geowav.presentation.components.MyAlertDialog
 import com.aarav.geowav.presentation.components.PlaceTextField
 import com.aarav.geowav.presentation.components.RadiusChipGroup
-import com.aarav.geowav.presentation.components.UpgradeBottomSheet
+import com.aarav.geowav.presentation.components.CustomBottomSheet
 import com.aarav.geowav.presentation.components.UpgradeBottomSheetContent
 import com.aarav.geowav.presentation.subscription.SubscriptionViewModel
-import com.aarav.geowav.presentation.theme.GeoWavTheme
 import com.aarav.geowav.presentation.theme.manrope
-import com.aarav.geowav.presentation.theme.sora
-import com.aarav.geowav.presentation.theme.surfaceContainerHighDark
-import com.aarav.geowav.presentation.theme.surfaceContainerLight
 import com.google.android.gms.maps.model.CameraPosition
 import com.google.android.gms.maps.model.LatLng
 import com.google.maps.android.compose.GoogleMap
@@ -91,6 +84,7 @@ fun AddPlaceScreen(
     isDarkThemeEnabled: Boolean,
     placeId: String,
     navigateToMaps: () -> Unit,
+    navigateToPaywall: () -> Unit,
     navigateToYourPlaces: () -> Unit,
     placeViewModel: PlaceViewModel,
     subscriptionVM: SubscriptionViewModel
@@ -118,7 +112,7 @@ fun AddPlaceScreen(
     }
 
     upgradeContext?.let {
-        UpgradeBottomSheet(
+        CustomBottomSheet(
             onDismissRequest = {
                 upgradeContext = null
             }
@@ -127,6 +121,7 @@ fun AddPlaceScreen(
                 context = it,
                 onUpgradeClick = {
                     upgradeContext = null
+                    navigateToPaywall()
                 },
                 onDismiss = { upgradeContext = null }
             )

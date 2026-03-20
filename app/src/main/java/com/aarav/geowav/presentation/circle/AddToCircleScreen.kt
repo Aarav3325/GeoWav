@@ -1,6 +1,5 @@
 package com.aarav.geowav.presentation.circle
 
-import android.util.Log
 import androidx.compose.animation.animateContentSize
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -33,8 +32,6 @@ import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.LoadingIndicator
-import androidx.compose.material3.LoadingIndicatorDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
@@ -45,7 +42,6 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.material3.TopAppBar
-import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -74,7 +70,7 @@ import com.aarav.geowav.data.model.PendingInvite
 import com.aarav.geowav.data.model.UpgradeContext
 import com.aarav.geowav.data.model.UserPlan
 import com.aarav.geowav.presentation.components.DeleteDialog
-import com.aarav.geowav.presentation.components.UpgradeBottomSheet
+import com.aarav.geowav.presentation.components.CustomBottomSheet
 import com.aarav.geowav.presentation.components.UpgradeBottomSheetContent
 import com.aarav.geowav.presentation.locationsharing.itemShape
 import com.aarav.geowav.presentation.subscription.SubscriptionViewModel
@@ -86,7 +82,8 @@ import com.aarav.geowav.presentation.theme.manrope
 fun CircleScreen(
     viewModel: CircleVM,
     subscriptionVM: SubscriptionViewModel,
-    back: () -> Unit
+    back: () -> Unit,
+    navigateToPaywall: () -> Unit,
 ) {
     val uiState by viewModel.uiState.collectAsState()
 
@@ -100,7 +97,7 @@ fun CircleScreen(
     var upgradeContext by remember { mutableStateOf<UpgradeContext?>(null) }
 
     upgradeContext?.let {
-        UpgradeBottomSheet(
+        CustomBottomSheet(
             onDismissRequest = {
                 upgradeContext = null
             }
@@ -109,6 +106,7 @@ fun CircleScreen(
                 context = it,
                 onUpgradeClick = {
                     upgradeContext = null
+                    navigateToPaywall()
                 },
                 onDismiss = { upgradeContext = null }
             )

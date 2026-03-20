@@ -33,7 +33,6 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.IconButtonDefaults
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Slider
 import androidx.compose.material3.SliderDefaults
@@ -41,7 +40,6 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
-import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.material3.rememberSliderState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -76,7 +74,7 @@ import com.aarav.geowav.data.model.UpgradeEvents
 import com.aarav.geowav.data.model.UpgradeReason
 import com.aarav.geowav.data.model.UserPlan
 import com.aarav.geowav.data.model.toLatLng
-import com.aarav.geowav.presentation.components.UpgradeBottomSheet
+import com.aarav.geowav.presentation.components.CustomBottomSheet
 import com.aarav.geowav.presentation.components.UpgradeBottomSheetContent
 import com.aarav.geowav.presentation.subscription.SubscriptionViewModel
 import com.aarav.geowav.presentation.theme.GeoWavTheme
@@ -114,6 +112,7 @@ fun TimelineMapPreview(
     subscriptionViewModel: SubscriptionViewModel,
     viewModel: TimelineMapPreviewVM,
     back: () -> Unit,
+    navigateToPaywall: () -> Unit,
     sessionId: String,
     userId: String
 ) {
@@ -124,6 +123,11 @@ fun TimelineMapPreview(
 
     val animatedPath by viewModel.animatedPath.collectAsState()
     val lastPosition by viewModel.lastPosition.collectAsState()
+
+//    var showUpgradeForStayPoints by rememberSaveable {
+//        mutableStateOf(true)
+//    }
+
 
     var showPlaybackSpeedControls by remember {
         mutableStateOf(false)
@@ -191,7 +195,7 @@ fun TimelineMapPreview(
     }
 
     upgradeContext?.let {
-        UpgradeBottomSheet(
+        CustomBottomSheet(
             onDismissRequest = {
                 upgradeContext = null
             }
@@ -200,6 +204,7 @@ fun TimelineMapPreview(
                 context = it,
                 onUpgradeClick = {
                     upgradeContext = null
+                    navigateToPaywall()
                 },
                 onDismiss = { upgradeContext = null }
             )
@@ -394,14 +399,16 @@ fun TimelineMapPreview(
                     }
 
 
-                    if (uiState.revealedStayPoints.isNotEmpty()) {
-                        uiState.revealedStayPoints.forEach { stay ->
-                            StayPointMarker(stay, stayIcon)
-                        }
-                    } else {
-                        if (!uiState.isPlaying && lastPosition == null) {
-                            session.stayPoints.forEach { stay ->
+                    if (plan == UserPlan.PRO) {
+                        if (uiState.revealedStayPoints.isNotEmpty()) {
+                            uiState.revealedStayPoints.forEach { stay ->
                                 StayPointMarker(stay, stayIcon)
+                            }
+                        } else {
+                            if (!uiState.isPlaying && lastPosition == null) {
+                                session.stayPoints.forEach { stay ->
+                                    StayPointMarker(stay, stayIcon)
+                                }
                             }
                         }
                     }

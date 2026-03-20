@@ -23,7 +23,6 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ContainedLoadingIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
@@ -66,12 +65,11 @@ import com.aarav.geowav.data.model.UpgradeContext
 import com.aarav.geowav.data.model.UpgradeReason
 import com.aarav.geowav.data.model.UserPlan
 import com.aarav.geowav.presentation.components.EmergencyShareDialog
-import com.aarav.geowav.presentation.components.UpgradeBottomSheet
+import com.aarav.geowav.presentation.components.CustomBottomSheet
 import com.aarav.geowav.presentation.components.UpgradeBottomSheetContent
 import com.aarav.geowav.presentation.subscription.SubscriptionViewModel
 import com.aarav.geowav.presentation.theme.manrope
 import com.aarav.geowav.presentation.theme.primaryLight
-import com.aarav.geowav.presentation.theme.sora
 import com.google.android.gms.maps.model.CameraPosition
 import com.google.android.gms.maps.model.LatLng
 import com.google.maps.android.compose.CameraPositionState
@@ -85,8 +83,9 @@ import kotlinx.coroutines.delay
 @Composable
 fun LocationSharingScreen(
     viewModel: LocationSharingVM,
+    navigateToPaywall: () -> Unit,
     subscriptionVM: SubscriptionViewModel,
-    location: Pair<Double, Double>?,
+    location: Pair<Double, Double>?
 ) {
 
     val uiState by viewModel.uiState.collectAsState()
@@ -113,7 +112,7 @@ fun LocationSharingScreen(
 
 
     upgradeContext?.let {
-        UpgradeBottomSheet(
+        CustomBottomSheet(
             onDismissRequest = {
                 upgradeContext = null
             }
@@ -122,6 +121,7 @@ fun LocationSharingScreen(
                 context = it,
                 onUpgradeClick = {
                     upgradeContext = null
+                    navigateToPaywall()
                 },
                 onDismiss = { upgradeContext = null }
             )

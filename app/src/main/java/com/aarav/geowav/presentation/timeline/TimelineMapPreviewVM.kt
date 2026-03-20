@@ -1,6 +1,7 @@
 package com.aarav.geowav.presentation.timeline
 
 import android.util.Log
+import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.aarav.geowav.core.utils.FeatureAccess
@@ -32,10 +33,15 @@ import javax.inject.Inject
 @HiltViewModel
 class TimelineMapPreviewVM @Inject constructor(
     private val sessionHistoryRepository: SessionHistoryRepository,
-    private val snapToRoadRepository: SnapToRoadRepository
+    private val snapToRoadRepository: SnapToRoadRepository,
+    private val savedStateHandle: SavedStateHandle
 ) : ViewModel() {
 
-
+    var hasShownStayPointsUpgrade: Boolean
+        get() = savedStateHandle["stay_points_shown"] ?: false
+        set(value) {
+            savedStateHandle["stay_points_shown"] = value
+        }
     private val _animatedPath = MutableStateFlow(emptyList<LatLng>())
     val animatedPath: StateFlow<List<LatLng>> = _animatedPath.asStateFlow()
     private val _lastPosition = MutableStateFlow<LatLng?>(null)
@@ -49,6 +55,9 @@ class TimelineMapPreviewVM @Inject constructor(
     private val _uiEvent = MutableSharedFlow<UpgradeEvents>()
     val uiEvent = _uiEvent.asSharedFlow()
 
+    init {
+        Log.i("TIMELINE", "vm created")
+    }
 
     fun getSessionInfo(sessionId: String, userId: String) {
 
@@ -218,6 +227,24 @@ class TimelineMapPreviewVM @Inject constructor(
         _uiState.update { it.copy(mapType = next) }
     }
 
+//    fun updateShowUpgrade() {
+//        viewModelScope.launch {
+//            if (!hasShownStayPointsUpgrade) {
+//
+//                hasShownStayPointsUpgrade = true
+//
+//                _uiEvent.emit(
+//                    UpgradeEvents.ShowUpgrade(
+//                        UpgradeContext(
+//                            upgradeTo = UserPlan.PRO,
+//                            reason = UpgradeReason.StayPoints
+//                        )
+//                    )
+//                )
+//            }
+//        }
+//    }
+
     private fun emitUpgradeEvent(upgradeContext: UpgradeContext) {
         viewModelScope.launch {
             _uiEvent.emit(UpgradeEvents.ShowUpgrade(upgradeContext))
@@ -226,6 +253,8 @@ class TimelineMapPreviewVM @Inject constructor(
 
     override fun onCleared() {
         super.onCleared()
+
+        Log.i("TIMELINE", "onCleared called")
         Log.i("PLAYBACK", "onCleared called ${_uiState.value.session}")
         playbackJob?.cancel()
     }
@@ -239,6 +268,7 @@ data class TimelinePreviewUiState(
     val speed: Float = 1f,
     val revealedStayPoints: List<StayPoint> = emptyList(),
     val mapType: MapType = MapType.NORMAL,
-    val loading: Boolean = false
+    val loading: Boolean = false,
+    val showUpgradeForStayPoints: Boolean = true
 )
 

@@ -4,8 +4,10 @@ import android.app.Activity
 import android.content.Context
 import android.net.Uri
 import com.aarav.geowav.data.model.PaymentTransactions
+import com.aarav.geowav.data.model.PurchaseResult
 import com.aarav.geowav.data.model.UpiApp
 import com.android.billingclient.api.Purchase
+import kotlinx.coroutines.flow.Flow
 
 interface PaymentRepository {
 
@@ -13,7 +15,7 @@ interface PaymentRepository {
         context: Context
     )
 
-    fun observePurchasesUpdate()
+    fun observePurchasesUpdate(): Flow<PurchaseResult>
 
     suspend fun processPurchases(
         activity: Activity,
@@ -23,8 +25,12 @@ interface PaymentRepository {
     fun savePurchase(
         plan: String,
         token:  String,
-        purchaseTime: Long
+        purchaseTime: Long,
+        expiryTime: Long,
+        isAutoRenewing: Boolean
     )
+
+    suspend fun syncAfterLogin(context: Context)
 
     fun syncPurchases()
 }

@@ -2,13 +2,14 @@ package com.aarav.geowav.presentation.components
 
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
@@ -19,6 +20,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.Icon
@@ -42,6 +44,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.aarav.geowav.R
+import com.aarav.geowav.data.model.PurchaseResult
 import com.aarav.geowav.data.model.UpgradeContext
 import com.aarav.geowav.data.model.UserPlan
 import com.aarav.geowav.data.model.getPlanContent
@@ -51,9 +54,18 @@ import com.aarav.geowav.presentation.paywall.freePlanColors
 import com.aarav.geowav.presentation.paywall.premiumPlanColors
 import com.aarav.geowav.presentation.paywall.proPlanColors
 import com.aarav.geowav.presentation.theme.manrope
-import com.aarav.geowav.presentation.theme.*
-import com.aarav.geowav.presentation.theme.onPrimaryLight
+import com.aarav.geowav.presentation.theme.onPrimaryDark
+import com.aarav.geowav.presentation.theme.onSecondaryDark
+import com.aarav.geowav.presentation.theme.outlineVariantDark
+import com.aarav.geowav.presentation.theme.primaryContainerDark
+import com.aarav.geowav.presentation.theme.primaryDark
+import com.aarav.geowav.presentation.theme.secondaryContainerDark
+import com.aarav.geowav.presentation.theme.secondaryDark
+import com.aarav.geowav.presentation.theme.surfaceContainerDark
 import com.google.android.libraries.places.api.model.Place
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Preview(showBackground = true)
@@ -196,7 +208,7 @@ fun SheetContent(
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun UpgradeBottomSheet(
+fun CustomBottomSheet(
     onDismissRequest: () -> Unit,
     content: @Composable ColumnScope.() -> Unit
 ) {
@@ -220,7 +232,6 @@ fun UpgradeBottomSheetContent(
     onDismiss: () -> Unit
 ) {
 
-
     val reasonContent = remember { getReasonContent(context.reason) }
     val planContent = remember { getPlanContent(context.upgradeTo) }
 
@@ -240,6 +251,7 @@ fun UpgradeBottomSheetContent(
             onSecondaryDark,
             secondaryContainerDark
         )
+
         UserPlan.FREE -> listOf(
             surfaceContainerDark,
             outlineVariantDark
@@ -471,5 +483,210 @@ fun FeatureItem(text: String, colors: PlanColors) {
             fontSize = 14.sp,
             fontWeight = FontWeight.Normal
         )
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun PurchaseSuccessBottomSheet(
+    result: PurchaseResult.Success,
+    onExplore: () -> Unit
+) {
+
+    val planInfo = getPlanContent(result.plan)
+
+    val colors = when (result.plan) {
+        UserPlan.PREMIUM -> premiumPlanColors()
+        UserPlan.PRO -> proPlanColors()
+        UserPlan.FREE -> freePlanColors()
+    }
+
+    val gradientColors = when (result.plan) {
+        UserPlan.PREMIUM -> listOf(onPrimaryDark, primaryContainerDark)
+        UserPlan.PRO -> listOf(onSecondaryDark, secondaryContainerDark)
+        UserPlan.FREE -> listOf(surfaceContainerDark, outlineVariantDark)
+    }
+
+    val formattedTime = remember(result.purchaseTime) {
+        SimpleDateFormat("dd MMM, hh:mm a", Locale.getDefault())
+            .format(Date(result.purchaseTime))
+    }
+
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            //.padding(bottom = 12.dp)
+    ) {
+        Card(
+            modifier = Modifier
+                .padding(horizontal = 16.dp)
+                .fillMaxWidth(),
+            shape = RoundedCornerShape(16.dp),
+            elevation = CardDefaults.cardElevation(6.dp)
+        ) {
+            Box(
+                contentAlignment = Alignment.Center,
+                modifier = Modifier.fillMaxWidth()
+                    .clip(RoundedCornerShape(16.dp))
+                    .background(
+                        Brush.horizontalGradient(
+                            gradientColors
+                        )
+                    )
+                    .padding(20.dp)
+            ) {
+
+                Column(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+
+                    Box(
+                        modifier = Modifier
+                            .size(64.dp)
+                            .background(
+                                Color.White.copy(alpha = 0.15f),
+                                CircleShape
+                            ),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Icon(
+                            painter = painterResource(R.drawable.check),
+                            contentDescription = null,
+                            tint = Color.White,
+                            modifier = Modifier.size(32.dp)
+                        )
+                    }
+
+                    Spacer(Modifier.height(16.dp))
+
+                    Text(
+                        text = if (result.plan == UserPlan.PRO)
+                            "Welcome to GeoWav Pro 🚀"
+                        else
+                            "You're now GeoWav Premium 🎉",
+                        fontSize = 18.sp,
+                        fontFamily = manrope,
+                        fontWeight = FontWeight.Bold,
+                        color = Color.White
+                    )
+
+                    Spacer(Modifier.height(6.dp))
+
+                    Text(
+                        text = "Your upgrade was successful",
+                        fontSize = 14.sp,
+                        fontFamily = manrope,
+                        color = Color.White.copy(alpha = 0.9f)
+                    )
+                }
+            }
+        }
+
+        Spacer(Modifier.height(20.dp))
+
+        Card(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 20.dp)
+                .border(1.dp, colors.border, RoundedCornerShape(18.dp)),
+            shape = RoundedCornerShape(18.dp),
+            colors = CardDefaults.cardColors(containerColor = colors.bg),
+            elevation = CardDefaults.cardElevation(0.dp)
+        ) {
+
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp, vertical = 18.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+
+                Column(
+                    verticalArrangement = Arrangement.spacedBy(6.dp)
+                ) {
+
+                    Text(
+                        text = "PLAN ACTIVATED",
+                        color = MaterialTheme.colorScheme.outline,
+                        fontSize = 10.sp,
+                        letterSpacing = 1.sp,
+                        fontWeight = FontWeight.Medium,
+                        fontFamily = manrope
+                    )
+
+                    val planName = if (result.plan == UserPlan.PRO)
+                        "GeoWav Pro"
+                    else
+                        "GeoWav Premium"
+
+
+                    Text(
+                        text = "GeoWav $planName",
+                        color = MaterialTheme.colorScheme.onSurface,
+                        fontSize = 18.sp,
+                        fontWeight = FontWeight.SemiBold,
+                        fontFamily = manrope
+                    )
+
+
+                    Text(
+                        text = "Activated on ${formattedTime}",
+                        color = MaterialTheme.colorScheme.outline,
+                        fontSize = 12.sp,
+                        fontFamily = manrope
+                    )
+                }
+
+                Icon(
+                    painter = painterResource(R.drawable.check),
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.primary,
+                    modifier = Modifier.size(28.dp)
+                )
+            }
+        }
+
+        Spacer(Modifier.height(20.dp))
+
+        Card(
+            modifier = Modifier
+                .padding(horizontal = 20.dp)
+                .fillMaxWidth(),
+            shape = RoundedCornerShape(16.dp)
+        ) {
+            Column(
+                modifier = Modifier.padding(16.dp),
+                verticalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                planInfo.features.forEach {
+                    FeatureItem(it, colors)
+                }
+            }
+        }
+
+        Spacer(Modifier.height(28.dp))
+
+        FilledTonalButton(
+            onClick = onExplore,
+            modifier = Modifier
+                .padding(horizontal = 20.dp)
+                .fillMaxWidth()
+                .height(56.dp),
+            shape = RoundedCornerShape(18.dp),
+            colors = ButtonDefaults.buttonColors(
+                containerColor = colors.buttonBg,
+                contentColor = colors.buttonTextColor
+            )
+        ) {
+            Text(
+                "Start Exploring",
+                fontWeight = FontWeight.Bold,
+                fontSize = 15.sp
+            )
+        }
+
+        Spacer(Modifier.height(12.dp))
     }
 }

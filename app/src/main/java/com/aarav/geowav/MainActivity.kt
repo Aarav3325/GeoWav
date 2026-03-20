@@ -2,6 +2,7 @@ package com.aarav.geowav
 
 import android.Manifest
 import android.app.PendingIntent
+import android.content.Context
 import android.content.Intent
 import android.content.SharedPreferences
 import android.location.Location
@@ -76,6 +77,7 @@ import com.google.android.gms.location.LocationServices
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.map
 import javax.inject.Inject
 
 @AndroidEntryPoint
@@ -206,7 +208,12 @@ class MainActivity : ComponentActivity() {
 //                rememberPermissionState(Manifest.permission.POST_NOTIFICATIONS)
 //
 
+            val isLoggedIn by googleSignInClient.getUserIdFlow()
+                .map { it.isNotBlank() }
+                .collectAsState(initial = false)
+
             NotificationServiceInitializer(
+                isLoggedIn = isLoggedIn,
                 showSettingsDialog = {
                     showDialog = true
                 }
@@ -296,13 +303,14 @@ class MainActivity : ComponentActivity() {
                 ThemeMode.SYSTEM -> isSystemInDarkTheme()
             }
 
-                val subscriptionVM: SubscriptionViewModel = hiltViewModel()
+            val subscriptionVM: SubscriptionViewModel = hiltViewModel()
 
-            LaunchedEffect(Unit) {
-                subscriptionVM.startListening()
-            }
+//            LaunchedEffect(Unit) {
+//                subscriptionVM.startListening()
+//            }
 
             val plan by subscriptionVM.userPlan.collectAsState()
+
 
             Log.i("SUBSCRIPTION", "plan $plan")
 
@@ -469,6 +477,7 @@ class MainActivity : ComponentActivity() {
     @OptIn(ExperimentalPermissionsApi::class)
     @Composable
     fun NotificationServiceInitializer(
+        isLoggedIn: Boolean,
         showSettingsDialog: () -> Unit,
         dismissDialog: () -> Unit
     ) {
@@ -482,12 +491,7 @@ class MainActivity : ComponentActivity() {
             Manifest.permission.POST_NOTIFICATIONS
         )
 
-        // Prevent duplicate service start
-        var serviceStarted by remember { mutableStateOf(false) }
-
         fun startServiceIfNeeded() {
-            if (serviceStarted) return
-
             val intent = Intent(context, NotificationService::class.java)
 
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
@@ -496,12 +500,13 @@ class MainActivity : ComponentActivity() {
                 context.startService(intent)
             }
 
-            serviceStarted = true
+            Log.i("SERVICE", "NOTIFICATION SERVICE STARTED")
         }
 
         // Initial check
-        LaunchedEffect(Unit) {
+        LaunchedEffect(isLoggedIn) {
 
+            if (!isLoggedIn) return@LaunchedEffect
 
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
                 val runtimeGranted = notificationPermission.status.isGranted
@@ -547,6 +552,9 @@ class MainActivity : ComponentActivity() {
             val observer = LifecycleEventObserver { _, event ->
 
                 if (event == Lifecycle.Event.ON_RESUME) {
+
+
+                    if (!isLoggedIn) return@LifecycleEventObserver
 
                     if (Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU) {
 
@@ -596,3 +604,12 @@ class MainActivity : ComponentActivity() {
 }
 
 
+fun startNotificationService(context: Context) {
+    val intent = Intent(context, NotificationService::class.java)
+
+    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+        context.startForegroundService(intent)
+    } else {
+        context.startService(intent)
+    }
+}

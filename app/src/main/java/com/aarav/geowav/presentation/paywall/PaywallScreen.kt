@@ -1,5 +1,6 @@
 package com.aarav.geowav.presentation.paywall
 
+import android.app.Activity
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
@@ -31,26 +32,37 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.IconButtonDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.aarav.geowav.R
+import com.aarav.geowav.data.model.PurchaseResult
 import com.aarav.geowav.data.model.UserPlan
+import com.aarav.geowav.presentation.components.CustomBottomSheet
+import com.aarav.geowav.presentation.components.PurchaseSuccessBottomSheet
+import com.aarav.geowav.presentation.subscription.SubscriptionEvents
 import com.aarav.geowav.presentation.subscription.SubscriptionViewModel
 import com.aarav.geowav.presentation.theme.manrope
 
@@ -106,8 +118,61 @@ fun PaywallScreen(
 ) {
 
     val plan by subscriptionViewModel.userPlan.collectAsState()
+    val purchaseResult by subscriptionViewModel.purchaseResult.collectAsState()
+
+    val snackbarHostState = remember { SnackbarHostState() }
+
+
+    val context = LocalContext.current
+    val activity = context as? Activity
+
+//    LaunchedEffect(Unit) {
+//        activity?.let {
+//            subscriptionViewModel.launchBillingFlow(
+//                activity = it,
+//                productId = ""
+//            )
+//        }
+//    }
+
+    LaunchedEffect(Unit) {
+        subscriptionViewModel.uiEvents.collect {
+            event ->
+            when (event) {
+
+                is SubscriptionEvents.PurchaseCancelled -> {
+                    snackbarHostState.showSnackbar("Purchase cancelled")
+                }
+
+                is SubscriptionEvents.ShowError -> {
+                    snackbarHostState.showSnackbar(event.message)
+                }
+
+                else -> Unit
+            }
+        }
+    }
+
+    val successResult = purchaseResult as? PurchaseResult.Success
+
+    if (successResult != null) {
+        CustomBottomSheet(
+            onDismissRequest = {
+                subscriptionViewModel.clearPurchaseResult()
+            }
+        ) {
+            PurchaseSuccessBottomSheet(
+                result = successResult,
+                onExplore = {
+                    subscriptionViewModel.clearPurchaseResult()
+                }
+            )
+        }
+    }
+
 
     Scaffold(
+        snackbarHost = { SnackbarHost(snackbarHostState, Modifier.padding(bottom = 36.dp)) },
         topBar = {
             TopAppBar(
                 modifier = Modifier,
@@ -331,7 +396,7 @@ fun CurrentPlanCard(
             }
 
 
-            if(plan != UserPlan.FREE) {
+            if (plan != UserPlan.FREE) {
                 Surface(
                     shape = RoundedCornerShape(25),
                     color = colors.text
@@ -347,6 +412,7 @@ fun CurrentPlanCard(
                                 .clip(CircleShape)
                                 .background(colors.buttonTextColor)
                         )
+
                         Text(
                             text = "Active",
                             color = colors.buttonTextColor,

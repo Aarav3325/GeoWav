@@ -11,11 +11,26 @@ enum class UserPlan {
 }
 
 data class UserSubscription(
-    val plan: UserPlan = UserPlan.FREE,
+    val plan: String = "",
     val isActive: Boolean = false,
     val purchaseToken: String = "",
-    val updatedAt: Long = 0L
+    val updatedAt: Long = 0L,
+    val expiryTime: Long,
+    val isAutoRenewing: Boolean
 )
+
+sealed class PurchaseResult {
+    data class Success(
+        val plan: UserPlan,
+        val purchaseToken: String,
+        val orderId: String?,
+        val purchaseTime: Long
+    ) : PurchaseResult()
+
+    data class Error(val message: String) : PurchaseResult()
+
+    object Cancelled : PurchaseResult()
+}
 
 sealed class UpgradeEvents {
     data class ShowUpgrade(val upgradeContext: UpgradeContext) : UpgradeEvents()
@@ -27,8 +42,8 @@ sealed class UpgradeReason {
     object SpeedControl : UpgradeReason()
     object MaxPlaces : UpgradeReason()
     object MaxConnections : UpgradeReason()
-//    object StayPoints : UpgradeReason()
 
+    object StayPoints : UpgradeReason()
     object ActivityYesterday : UpgradeReason()
     object FullActivityHistoryAccess : UpgradeReason()
     object TimelineYesterday : UpgradeReason()
@@ -115,6 +130,12 @@ fun getReasonContent(reason: UpgradeReason): ReasonContent {
             "Upgrade to continue sharing your live location without time limits.",
             R.drawable.new_logo
         )
+
+        UpgradeReason.StayPoints -> ReasonContent(
+            title = "Know their journey better",
+            description = "See where your loved ones stopped and how long they stayed.",
+            icon = R.drawable.timeline
+        )
     }
 }
 
@@ -125,9 +146,11 @@ fun getPlanContent(plan: UserPlan): PlanContent {
             title = "Go Premium",
             description = "Unlock powerful playback and full history access.",
             features = listOf(
-                "Playback & route animation",
-                "Unlimited history access",
-                "Smooth trip insights"
+                "Unlimited live location sharing",
+                "Yesterday timeline access",
+                "Up to 10 places",
+                "Up to 5 connections",
+                "Improved location accuracy"
             ),
             ctaText = "Upgrade to Premium"
         )
@@ -136,13 +159,23 @@ fun getPlanContent(plan: UserPlan): PlanContent {
             title = "Go Pro",
             description = "Get advanced controls and deeper insights.",
             features = listOf(
-                "Everything in Premium",
-                "Playback speed control",
-                "Advanced analytics"
+                "Full timeline (7 days + custom range)",
+                "Unlimited places & connections",
+                "Advanced insights & stay points",
+                "Complete playback controls",
+                "All Premium features included"
             ),
             ctaText = "Upgrade to Pro"
         )
 
         else -> error("No upgrade config for FREE")
+    }
+}
+
+fun getPlanDuration(plan: UserPlan): Long {
+    return when (plan) {
+        UserPlan.PREMIUM -> 30L * 24 * 60 * 60 * 1000 // 30 days
+        UserPlan.PRO -> 30L * 24 * 60 * 60 * 1000
+        else -> 0L
     }
 }

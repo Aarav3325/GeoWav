@@ -219,6 +219,9 @@ fun AddNewPlaceScreen(
             navigateToMaps = {
                 navController.navigateUp()
             },
+            navigateToPaywall = {
+                navController.navigate(NavRoute.Paywall.path)
+            },
             navigateToYourPlaces = {
                 navController.navigate(NavRoute.YourPlaces.path) {
                     popUpTo(NavRoute.HomeScreen.path) {
@@ -245,6 +248,9 @@ fun AddYourPlacesScreen(
         YourPlacesScreen(
             yourPlacesVM = hiltViewModel(),
             subscriptionVM = subscriptionVM,
+            navigateToPaywall = {
+                navController.navigate(NavRoute.Paywall.path)
+            },
             navigateToMap = {
                 navController.navigate(NavRoute.MapScreen.path)
             }
@@ -381,7 +387,10 @@ fun AddActivityScreen(
         ActivityScreen(
             isDarkThemeEnabled,
             activityViewModel = hiltViewModel(),
-            subscriptionViewModel = subscriptionVM
+            subscriptionViewModel = subscriptionVM,
+            navigateToPaywall = {
+                navController.navigate(NavRoute.Paywall.path)
+            }
         )
     }
 }
@@ -397,6 +406,9 @@ fun AddCircleScreen(
         CircleScreen(
             viewModel = hiltViewModel(),
             subscriptionVM = subscriptionViewModel,
+            navigateToPaywall = {
+                navController.navigate(NavRoute.Paywall.path)
+            },
             back = {
                 navController.popBackStack()
             }
@@ -415,6 +427,9 @@ fun AddLocationSharingScreen(
     ) {
         LocationSharingScreen(
             viewModel = hiltViewModel(),
+            navigateToPaywall = {
+                navController.navigate(NavRoute.Paywall.path)
+            },
             subscriptionVM = subscriptionVM,
             location
         )
@@ -474,6 +489,9 @@ fun AddTimelineScreen(
             back = {
                 navController.popBackStack()
             },
+            navigateToPaywall = {
+                navController.navigate(NavRoute.Paywall.path)
+            },
             navigateToPreview = { sessionId, name, userId ->
                 navController.navigate(NavRoute.TimelinePreview.createRoute(sessionId, userId))
             },
@@ -511,6 +529,9 @@ fun AddTimelinePreviewScreen(
             viewModel = hiltViewModel(),
             back = {
                 navController.popBackStack()
+            },
+            navigateToPaywall = {
+                navController.navigate(NavRoute.Paywall.path)
             },
             sessionId,
             userId

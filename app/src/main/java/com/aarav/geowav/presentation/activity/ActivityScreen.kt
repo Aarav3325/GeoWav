@@ -35,7 +35,6 @@ import androidx.compose.material3.SelectableDates
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.rememberDateRangePickerState
-import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -61,7 +60,7 @@ import com.aarav.geowav.data.model.UpgradeContext
 import com.aarav.geowav.data.model.UpgradeReason
 import com.aarav.geowav.data.model.UserPlan
 import com.aarav.geowav.presentation.components.MyAlertDialog
-import com.aarav.geowav.presentation.components.UpgradeBottomSheet
+import com.aarav.geowav.presentation.components.CustomBottomSheet
 import com.aarav.geowav.presentation.components.UpgradeBottomSheetContent
 import com.aarav.geowav.presentation.home.buildRelativeSubtitle
 import com.aarav.geowav.presentation.subscription.SubscriptionViewModel
@@ -73,7 +72,8 @@ import java.time.LocalDate
 fun ActivityScreen(
     isDarkThemeEnabled: Boolean,
     activityViewModel: ActivityViewModel,
-    subscriptionViewModel: SubscriptionViewModel
+    subscriptionViewModel: SubscriptionViewModel,
+    navigateToPaywall: () -> Unit
 ) {
 
 
@@ -92,7 +92,7 @@ fun ActivityScreen(
 
 
     upgradeContext?.let {
-        UpgradeBottomSheet(
+        CustomBottomSheet(
             onDismissRequest = {
                 upgradeContext = null
                 upgradeReason = null
@@ -103,6 +103,7 @@ fun ActivityScreen(
                 onUpgradeClick = {
                     upgradeContext = null
                     upgradeReason = null
+                    navigateToPaywall()
                 },
                 onDismiss = {
                     upgradeContext = null

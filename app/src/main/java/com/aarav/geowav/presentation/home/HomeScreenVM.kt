@@ -93,33 +93,17 @@ class HomeScreenVM @Inject constructor(
 
 //    private var countdownJob: Job? = null
 
-    init {
-        observePurchases()
-        setupBillingClient()
-    }
-
     private val observerJobs = mutableMapOf<String, Job>()
 
-    fun setupBillingClient() {
-        viewModelScope.launch {
-            paymentRepository.createBillingClient(context)
-        }
-    }
 
-    fun observePurchases() {
-        viewModelScope.launch {
-            paymentRepository.observePurchasesUpdate()
-        }
-    }
-
-    fun launchBillingFlow(
-        activity: Activity,
-        productId: String
-    ) {
-        viewModelScope.launch {
-            paymentRepository.processPurchases(activity, productId)
-        }
-    }
+//    fun launchBillingFlow(
+//        activity: Activity,
+//        productId: String
+//    ) {
+//        viewModelScope.launch {
+//            paymentRepository.processPurchases(activity, productId)
+//        }
+//    }
 
     fun observeUsers() {
 
@@ -448,4 +432,8 @@ data class HomeScreenUiState(
     val username: String? = null,
     val viewerState: ViewerLocationState? = ViewerLocationState.Blocked,
     val remainingTime: String? = null
+)
+
+sealed class PurchaseUiEvent(
+
 )

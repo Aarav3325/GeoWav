@@ -50,9 +50,16 @@ class NotificationService : Service() {
 
         serviceScope.launch {
 
+            val uid = firebaseAuth.currentUser?.uid
+
+            if (uid == null) {
+                stopSelf()
+                return@launch
+            }
+
             // Read circle members and start listening to events
             when (val members = circleRepository.getAcceptedLovedOnes(
-                firebaseAuth.currentUser?.uid ?: return@launch
+                uid
             )) {
                 is Resource.Success -> {
                     notificationRepository.startListening(members.data?.map { it.id } ?: emptyList())
