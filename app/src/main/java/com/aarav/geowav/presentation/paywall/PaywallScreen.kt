@@ -158,6 +158,8 @@ fun PaywallScreen(
         containerColor = MaterialTheme.colorScheme.background,
     ) {
 
+        val isPremiumOrAbove = plan >= UserPlan.PREMIUM
+
         Box(
             modifier = Modifier
                 .padding(it)
@@ -228,7 +230,7 @@ fun PaywallScreen(
                         "Connect with 5 people"
                     ),
                     isFeatured = true,
-                    isCurrentPlan = plan == UserPlan.PREMIUM,
+                    isCurrentPlan = isPremiumOrAbove,
                     buttonText = "Upgrade to Premium",
                     colors = premiumPlanColors(),
                     onClick = onPremiumClick
@@ -262,7 +264,8 @@ fun PaywallScreen(
 
             StickyUpgradeCTA(
                 modifier = Modifier.align(Alignment.BottomCenter),
-                onClick = onPremiumClick
+                onClick = onPremiumClick,
+                isEnabled = !isPremiumOrAbove
             )
         }
     }
@@ -280,13 +283,18 @@ fun CurrentPlanCard(
         UserPlan.PRO -> "GeoWav Pro"
     }
 
+    val colors = when (plan) {
+        UserPlan.FREE -> freePlanColors()
+        UserPlan.PREMIUM -> premiumPlanColors()
+        UserPlan.PRO -> proPlanColors()
+    }
 
     Card(
         modifier = Modifier
             .fillMaxWidth()
-            .border(1.dp, MaterialTheme.colorScheme.outlineVariant, RoundedCornerShape(16.dp)),
+            .border(1.dp, colors.border, RoundedCornerShape(16.dp)),
         shape = RoundedCornerShape(16.dp),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer),
+        colors = CardDefaults.cardColors(containerColor = colors.bg),
         elevation = CardDefaults.cardElevation(0.dp)
     ) {
         Row(
@@ -323,28 +331,30 @@ fun CurrentPlanCard(
             }
 
 
-            Surface(
-                shape = RoundedCornerShape(25),
-                color = MaterialTheme.colorScheme.tertiaryContainer.copy(alpha = 0.5f)
-            ) {
-                Row(
-                    modifier = Modifier.padding(horizontal = 10.dp, vertical = 5.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(5.dp)
+            if(plan != UserPlan.FREE) {
+                Surface(
+                    shape = RoundedCornerShape(25),
+                    color = colors.text
                 ) {
-                    Box(
-                        modifier = Modifier
-                            .size(6.dp)
-                            .clip(CircleShape)
-                            .background(MaterialTheme.colorScheme.onTertiaryContainer)
-                    )
-                    Text(
-                        text = "Active",
-                        color = MaterialTheme.colorScheme.onTertiaryContainer,
-                        fontSize = 12.sp,
-                        fontWeight = FontWeight.Medium,
-                        fontFamily = manrope,
-                    )
+                    Row(
+                        modifier = Modifier.padding(horizontal = 10.dp, vertical = 5.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(5.dp)
+                    ) {
+                        Box(
+                            modifier = Modifier
+                                .size(6.dp)
+                                .clip(CircleShape)
+                                .background(colors.buttonTextColor)
+                        )
+                        Text(
+                            text = "Active",
+                            color = colors.buttonTextColor,
+                            fontSize = 12.sp,
+                            fontWeight = FontWeight.Medium,
+                            fontFamily = manrope,
+                        )
+                    }
                 }
             }
         }
@@ -756,7 +766,11 @@ fun ComparisonTable() {
 
 
 @Composable
-fun StickyUpgradeCTA(modifier: Modifier = Modifier, onClick: () -> Unit) {
+fun StickyUpgradeCTA(
+    modifier: Modifier = Modifier,
+    onClick: () -> Unit,
+    isEnabled: Boolean
+) {
     Column(
         modifier = modifier
             .fillMaxWidth()
@@ -766,6 +780,7 @@ fun StickyUpgradeCTA(modifier: Modifier = Modifier, onClick: () -> Unit) {
     ) {
         Button(
             onClick = onClick,
+            enabled = isEnabled,
             modifier = Modifier
                 .fillMaxWidth()
                 .height(52.dp),

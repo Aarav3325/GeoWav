@@ -16,8 +16,11 @@ import androidx.core.content.edit
 import com.aarav.geowav.R
 import com.aarav.geowav.core.managers.KillSwitchManager
 import com.aarav.geowav.core.tracking.StayPointTracker
+import com.aarav.geowav.core.utils.FeatureAccess
 import com.aarav.geowav.core.utils.ServiceState
+import com.aarav.geowav.core.utils.formatTime
 import com.aarav.geowav.data.authentication.GoogleSignInClient
+import com.aarav.geowav.data.model.UserPlan
 import com.aarav.geowav.domain.repository.LiveLocationSharingRepository
 import com.google.android.gms.location.FusedLocationProviderClient
 import com.google.android.gms.location.LocationCallback
@@ -32,6 +35,7 @@ import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.tasks.await
+import java.text.DateFormat
 import javax.inject.Inject
 
 
@@ -66,6 +70,9 @@ class LiveLocationService : Service() {
     private val pushedStays = mutableSetOf<String>()
 
     private val stayPointTracker = StayPointTracker()
+
+    private var userPlan: UserPlan = UserPlan.FREE
+    private var sessionStartTime: Long = 0L
 
     private fun setSharingState(state: ServiceState) {
         sharedPreferences.edit(commit = true) {
@@ -102,7 +109,13 @@ class LiveLocationService : Service() {
             }
         }
 
-        return START_NOT_STICKY
+        intent?.getStringExtra("USER_PLAN")?.let {
+            userPlan = UserPlan.valueOf(it)
+        }
+
+        sessionStartTime = System.currentTimeMillis()
+
+        return START_STICKY
     }
 
 
@@ -138,6 +151,8 @@ class LiveLocationService : Service() {
                 return@launch
             }
 
+
+
             setSharingState(ServiceState.STARTING)
 
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
@@ -149,6 +164,7 @@ class LiveLocationService : Service() {
             } else {
                 startForeground(3, createNotification())
             }
+
 
             sendLastKnownLocation()
             startLocationUpdates()
@@ -268,6 +284,31 @@ class LiveLocationService : Service() {
 
                 serviceScope.launch {
                     try {
+                        val elapsedTime = System.currentTimeMillis() - sessionStartTime
+
+                        val maxDuration = FeatureAccess.locationSharingLimit(userPlan)
+
+
+                        maxDuration?.let {
+
+                            if(elapsedTime >= maxDuration) {
+                                Log.i("SERVICE", "Session limit reached")
+
+                                setSharingState(ServiceState.NOT_SHARING)
+
+                                val intent = Intent("SESSION_LIMIT_REACHED").apply {
+                                    `package` = packageName
+                                }
+                                sendBroadcast(intent)
+
+                                stopLocationUpdates()
+                                stopForeground(STOP_FOREGROUND_REMOVE)
+                                stopSelf()
+
+                                return@launch
+                            }
+                        }
+
                         sendLocation(location)
                     } catch (e: Exception) {
                         setSharingState(ServiceState.NOT_SHARING)

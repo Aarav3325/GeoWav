@@ -1,15 +1,19 @@
 package com.aarav.geowav.presentation.locationsharing
 
+import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
+import android.content.IntentFilter
 import android.content.SharedPreferences
 import android.util.Log
+import androidx.core.content.ContextCompat
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.aarav.geowav.core.utils.LiveLocationState
 import com.aarav.geowav.core.utils.Resource
 import com.aarav.geowav.core.utils.ServiceState
 import com.aarav.geowav.data.model.CircleMember
+import com.aarav.geowav.data.model.UserPlan
 import com.aarav.geowav.domain.repository.CircleRepository
 import com.aarav.geowav.domain.repository.EmergencySharingRepository
 import com.aarav.geowav.domain.repository.LiveLocationSharingRepository
@@ -59,7 +63,7 @@ class LocationSharingVM
     val events = _events.asSharedFlow()
 
     private var timestampJob: Job? = null
-
+    private var sessionReceiver: BroadcastReceiver? = null
 
     private val currentUserId: String
         get() = firebaseAuth.currentUser?.uid.orEmpty()
@@ -320,7 +324,7 @@ class LocationSharingVM
 
 
     // start location sharing - normal mode
-    fun startLiveLocationSharing() {
+    fun startLiveLocationSharing(userPlan: UserPlan) {
         val viewers = _uiState.value.selectedViewerIds
 
         if (viewers.isEmpty()) {
@@ -376,7 +380,9 @@ class LocationSharingVM
                 )
 
                 // Start foreground service
-                val intent = Intent(context, LiveLocationService::class.java)
+                val intent = Intent(context, LiveLocationService::class.java).apply {
+                    putExtra("USER_PLAN", userPlan.name)
+                }
                 context.startForegroundService(intent)
 
                 _uiState.update {
@@ -396,6 +402,32 @@ class LocationSharingVM
                 _uiState.update { it.copy(isServiceActionLoading = false) }
             }
         }
+    }
+
+    fun observeSessionLimit() {
+        if (sessionReceiver != null) return
+
+        val filter = IntentFilter("SESSION_LIMIT_REACHED")
+
+        sessionReceiver = object : BroadcastReceiver() {
+            override fun onReceive(context: Context?, intent: Intent?) {
+                viewModelScope.launch {
+                    _uiState.update {
+                        it.copy(
+                            sharingState = LiveLocationState.NotSharing,
+                        )
+                    }
+                    _events.emit(LiveLocationUiEvent.SessionLimitReached)
+                }
+            }
+        }
+
+        ContextCompat.registerReceiver(
+            context,
+            sessionReceiver,
+            filter,
+            ContextCompat.RECEIVER_NOT_EXPORTED
+        )
     }
 
 
@@ -571,6 +603,12 @@ class LocationSharingVM
         return "%02d:%02d".format(minutes, seconds)
     }
 
+    override fun onCleared() {
+        super.onCleared()
+        sessionReceiver?.let {
+            context.unregisterReceiver(it)
+        }
+    }
 
 }
 
@@ -591,4 +629,6 @@ data class LiveLocationUiState(
 
 sealed class LiveLocationUiEvent {
     data class ShowError(val message: String) : LiveLocationUiEvent()
+
+    object SessionLimitReached : LiveLocationUiEvent()
 }

@@ -118,7 +118,8 @@ fun NavGraph(
         AddLocationSharingScreen(
             navHostController,
             this,
-            location
+            location,
+            subscriptionVM
         )
 
         AddTimelineScreen(
@@ -406,13 +407,15 @@ fun AddCircleScreen(
 fun AddLocationSharingScreen(
     navController: NavController,
     navGraphBuilder: NavGraphBuilder,
-    location: Pair<Double, Double>?
+    location: Pair<Double, Double>?,
+    subscriptionVM: SubscriptionViewModel
 ) {
     navGraphBuilder.composable(
         route = NavRoute.LocationSharing.path
     ) {
         LocationSharingScreen(
             viewModel = hiltViewModel(),
+            subscriptionVM = subscriptionVM,
             location
         )
     }

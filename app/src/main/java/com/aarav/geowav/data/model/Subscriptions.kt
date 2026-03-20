@@ -33,6 +33,7 @@ sealed class UpgradeReason {
     object FullActivityHistoryAccess : UpgradeReason()
     object TimelineYesterday : UpgradeReason()
     object FullTimelineAccess : UpgradeReason()
+    object SessionLimitReached : UpgradeReason()
 }
 
 data class UpgradeContext(
@@ -107,6 +108,12 @@ fun getReasonContent(reason: UpgradeReason): ReasonContent {
             "Unlock Complete Timeline",
             "Upgrade to Pro to explore full movement history for you and your connections with advanced filters and ranges.",
             R.drawable.timeline
+        )
+
+        UpgradeReason.SessionLimitReached -> ReasonContent(
+            "Session Limit Reached",
+            "Upgrade to continue sharing your live location without time limits.",
+            R.drawable.new_logo
         )
     }
 }

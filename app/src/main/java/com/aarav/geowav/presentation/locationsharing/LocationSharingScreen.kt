@@ -62,7 +62,13 @@ import androidx.compose.ui.unit.sp
 import com.aarav.geowav.R
 import com.aarav.geowav.core.utils.LiveLocationState
 import com.aarav.geowav.data.model.CircleMember
+import com.aarav.geowav.data.model.UpgradeContext
+import com.aarav.geowav.data.model.UpgradeReason
+import com.aarav.geowav.data.model.UserPlan
 import com.aarav.geowav.presentation.components.EmergencyShareDialog
+import com.aarav.geowav.presentation.components.UpgradeBottomSheet
+import com.aarav.geowav.presentation.components.UpgradeBottomSheetContent
+import com.aarav.geowav.presentation.subscription.SubscriptionViewModel
 import com.aarav.geowav.presentation.theme.manrope
 import com.aarav.geowav.presentation.theme.primaryLight
 import com.aarav.geowav.presentation.theme.sora
@@ -79,11 +85,13 @@ import kotlinx.coroutines.delay
 @Composable
 fun LocationSharingScreen(
     viewModel: LocationSharingVM,
+    subscriptionVM: SubscriptionViewModel,
     location: Pair<Double, Double>?,
 ) {
 
     val uiState by viewModel.uiState.collectAsState()
 
+    val plan by subscriptionVM.userPlan.collectAsState()
 
     val cameraPositionState = rememberCameraPositionState()
 
@@ -101,16 +109,48 @@ fun LocationSharingScreen(
 
     }
 
+    var upgradeContext by remember { mutableStateOf<UpgradeContext?>(null) }
+
+
+    upgradeContext?.let {
+        UpgradeBottomSheet(
+            onDismissRequest = {
+                upgradeContext = null
+            }
+        ) {
+            UpgradeBottomSheetContent(
+                context = it,
+                onUpgradeClick = {
+                    upgradeContext = null
+                },
+                onDismiss = { upgradeContext = null }
+            )
+        }
+    }
+
 
 //    LaunchedEffect(uiState.sharingState) {
 //        viewModel.refreshState()
 //    }
+
+
+    LaunchedEffect(Unit) {
+        viewModel.observeSessionLimit()
+    }
 
     LaunchedEffect(Unit) {
         viewModel.events.collect { event ->
             when (event) {
                 is LiveLocationUiEvent.ShowError -> {
                     snackbarHostState.showSnackbar(event.message)
+                }
+
+                is LiveLocationUiEvent.SessionLimitReached -> {
+                    upgradeContext =
+                        UpgradeContext(
+                            upgradeTo = UserPlan.PREMIUM,
+                            reason = UpgradeReason.SessionLimitReached
+                        )
                 }
             }
         }
@@ -136,6 +176,7 @@ fun LocationSharingScreen(
         LocationSharingContent(
             modifier = Modifier.padding(padding),
             locationUiState = uiState,
+            plan,
             cameraPositionState,
             onToggleChange = viewModel::onViewerToggle,
             onStartSharing = viewModel::startLiveLocationSharing,
@@ -151,9 +192,10 @@ fun LocationSharingScreen(
 fun LocationSharingContent(
     modifier: Modifier = Modifier,
     locationUiState: LiveLocationUiState,
+    userPlan: UserPlan,
     cameraPosition: CameraPositionState,
     onToggleChange: (String, Boolean) -> Unit,
-    onStartSharing: () -> Unit,
+    onStartSharing: (UserPlan) -> Unit,
     onStopSharing: () -> Unit,
     onStartEmergency: (Int) -> Unit,
     onStopEmergency: () -> Unit
@@ -210,6 +252,7 @@ fun LocationSharingContent(
 
             item {
                 StatusCard(
+                    userPlan,
                     locationUiState.remaining,
                     locationUiState.sharingState,
                     isEmergencyActive,
@@ -276,10 +319,11 @@ fun LocationSharingContent(
 
 @Composable
 fun StatusCard(
+    userPlan: UserPlan,
     remainingTime: String? = null,
     liveLocationState: LiveLocationState,
     isEmergencyActive: Boolean,
-    onStart: () -> Unit,
+    onStart: (UserPlan) -> Unit,
     onStop: () -> Unit,
     onEmergencyStop: () -> Unit,
 ) {
@@ -493,7 +537,7 @@ fun StatusCard(
                 }
 
                 LiveLocationState.NotSharing -> {
-                    StartSharingButton(onStart)
+                    StartSharingButton(userPlan, onStart)
                 }
 
                 is LiveLocationState.EmergencySharing -> {
@@ -1078,10 +1122,13 @@ fun StopSharingButton(
 
 @Composable
 fun StartSharingButton(
-    onClick: () -> Unit
+    userPlan: UserPlan,
+    onClick: (UserPlan) -> Unit
 ) {
     FilledTonalButton(
-        onClick = onClick,
+        onClick = {
+            onClick(userPlan)
+        },
         modifier = Modifier
             .fillMaxWidth()
             .padding(vertical = 8.dp, horizontal = 16.dp)

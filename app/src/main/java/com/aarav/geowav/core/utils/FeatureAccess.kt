@@ -26,8 +26,8 @@ object FeatureAccess {
 
     fun locationSharingLimit(userPlan: UserPlan): Long? {
         return when (userPlan) {
-            UserPlan.FREE -> 30 * 60 * 1000L
-            UserPlan.PREMIUM -> null
+            UserPlan.FREE -> 30 * 60 * 1000L // 30 min
+            UserPlan.PREMIUM,
             UserPlan.PRO -> null
         }
     }
