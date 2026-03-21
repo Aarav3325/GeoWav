@@ -1,7 +1,9 @@
 package com.aarav.geowav.data.repository
 
+import android.util.Log
 import com.aarav.geowav.data.authentication.GoogleSignInClient
 import com.aarav.geowav.data.model.UserPlan
+import com.aarav.geowav.data.model.UserSubscription
 import com.aarav.geowav.domain.repository.SubscriptionRepository
 import com.google.firebase.database.DataSnapshot
 import com.google.firebase.database.DatabaseError
@@ -62,5 +64,41 @@ class SubscriptionRepositoryImpl
                     }
                 }
             }
+    }
+
+    override fun fetchSubscriptionStatus(): Flow<UserSubscription> = callbackFlow {
+
+        val uid = googleSignInClient.getUserId()
+
+        if(uid.isBlank()) {
+            close()
+            awaitClose {  }
+            return@callbackFlow
+        }
+
+        val ref = firebaseDatabase.getReference("subscriptions")
+            .child(uid)
+
+        val listener = object : ValueEventListener {
+            override fun onDataChange(p0: DataSnapshot) {
+                val status = p0.getValue(UserSubscription::class.java)
+
+                status?.let {
+                    Log.i("PLAN", status.toString())
+                    trySend(it)
+                }
+            }
+
+            override fun onCancelled(p0: DatabaseError) {
+                close(p0.toException())
+            }
+
+        }
+
+        ref.addValueEventListener(listener)
+
+        awaitClose {
+            ref.removeEventListener(listener)
+        }
     }
 }

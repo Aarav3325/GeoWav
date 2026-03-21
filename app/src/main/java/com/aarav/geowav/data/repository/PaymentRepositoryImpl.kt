@@ -62,7 +62,7 @@ class PaymentRepositoryImpl @Inject constructor(
                     val plan = when (productId) {
                         "geowav_premium" -> "PREMIUM"
                         "geowav_pro" -> "PRO"
-                        else -> "PREMIUM"
+                        else -> "FREE"
                     }
 
                     val finalPurchaseTime = if (
@@ -232,11 +232,12 @@ class PaymentRepositoryImpl @Inject constructor(
 
         val subscriptionData = UserSubscription(
             plan = plan,
-            isActive = true,
+            active = true,
             purchaseToken = token,
+            purchaseTime = purchaseTime,
             updatedAt = System.currentTimeMillis(),
             expiryTime = expiryTime,
-            isAutoRenewing = isAutoRenewing
+            autoRenewing = isAutoRenewing
         )
 
 //        val data = mapOf(
@@ -298,14 +299,16 @@ class PaymentRepositoryImpl @Inject constructor(
                             finalPlan = "PRO"
                             token = purchase.purchaseToken
                             purchaseTime = purchase.purchaseTime
-                            expiryTime = purchase.purchaseTime + getPlanDuration(UserPlan.valueOf(finalPlan))
+                            expiryTime =
+                                purchase.purchaseTime + getPlanDuration(UserPlan.valueOf(finalPlan))
                             isAutoRenewing = purchase.isAutoRenewing
                             break
                         } else if (productId == "geowav_premium") {
                             finalPlan = "PREMIUM"
                             token = purchase.purchaseToken
                             purchaseTime = purchase.purchaseTime
-                            expiryTime = purchase.purchaseTime + getPlanDuration(UserPlan.valueOf(finalPlan))
+                            expiryTime =
+                                purchase.purchaseTime + getPlanDuration(UserPlan.valueOf(finalPlan))
                             isAutoRenewing = purchase.isAutoRenewing
                         }
                     }
@@ -329,19 +332,19 @@ class PaymentRepositoryImpl @Inject constructor(
         activity: Activity,
         productId: String
     ) {
-//        val productList = listOf(
-//            QueryProductDetailsParams.Product.newBuilder()
-//                .setProductId(productId)
-//                .setProductType(BillingClient.ProductType.SUBS)
-//                .build()
-//        )
-
         val productList = listOf(
             QueryProductDetailsParams.Product.newBuilder()
-                .setProductId("android.test.purchased")
-                .setProductType(BillingClient.ProductType.INAPP)
+                .setProductId(productId)
+                .setProductType(BillingClient.ProductType.SUBS)
                 .build()
         )
+
+//        val productList = listOf(
+//            QueryProductDetailsParams.Product.newBuilder()
+//                .setProductId("android.test.purchased")
+//                .setProductType(BillingClient.ProductType.INAPP)
+//                .build()
+//        )
 
         val params = QueryProductDetailsParams.newBuilder()
         params.setProductList(productList)
@@ -362,19 +365,19 @@ class PaymentRepositoryImpl @Inject constructor(
 
         Log.d("BILLING", "Offer details: ${productDetails.subscriptionOfferDetails}")
 
-//        val offerToken = productDetails.subscriptionOfferDetails
-//            ?.firstOrNull()
-//            ?.offerToken
-//
-//        if (offerToken == null) {
-//            Log.e(BILLING_TAG, "Offer token not found")
-//            return
-//        }
+        val offerToken = productDetails.subscriptionOfferDetails
+            ?.firstOrNull()
+            ?.offerToken
+
+        if (offerToken == null) {
+            Log.e(BILLING_TAG, "Offer token not found")
+            return
+        }
 
         val productDetailsParamsList = listOf(
             BillingFlowParams.ProductDetailsParams.newBuilder()
                 .setProductDetails(productDetails)
-                //.setOfferToken(offerToken)
+                .setOfferToken(offerToken)
                 .build()
         )
 

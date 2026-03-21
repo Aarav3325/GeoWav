@@ -11,12 +11,13 @@ enum class UserPlan {
 }
 
 data class UserSubscription(
-    val plan: String = "",
-    val isActive: Boolean = false,
+    val plan: String = "FREE",
+    val active: Boolean = false,
     val purchaseToken: String = "",
+    val purchaseTime: Long = 0L,
     val updatedAt: Long = 0L,
-    val expiryTime: Long,
-    val isAutoRenewing: Boolean
+    val expiryTime: Long = 0L,
+    val autoRenewing: Boolean = false
 )
 
 sealed class PurchaseResult {

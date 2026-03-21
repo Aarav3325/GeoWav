@@ -8,6 +8,7 @@ import androidx.lifecycle.viewModelScope
 import com.aarav.geowav.data.authentication.GoogleSignInClient
 import com.aarav.geowav.data.model.PurchaseResult
 import com.aarav.geowav.data.model.UserPlan
+import com.aarav.geowav.data.model.UserSubscription
 import com.aarav.geowav.domain.repository.PaymentRepository
 import com.aarav.geowav.domain.repository.SubscriptionRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -45,6 +46,11 @@ class SubscriptionViewModel
 
     private val _purchaseResult = MutableStateFlow<PurchaseResult?>(null)
     val purchaseResult: StateFlow<PurchaseResult?> = _purchaseResult.asStateFlow()
+
+
+    private val _subscriptionState = MutableStateFlow<UserSubscription?>(null)
+    val subscriptionState: StateFlow<UserSubscription?> = _subscriptionState.asStateFlow()
+
 
     private var purchaseJob: Job? = null
     private var listeningJob: Job? = null
@@ -112,6 +118,15 @@ class SubscriptionViewModel
                             )
                         }
                     }
+                }
+        }
+    }
+
+    fun fetchSubscriptionStatus() {
+        viewModelScope.launch {
+            subscriptionRepository.fetchSubscriptionStatus()
+                .collect {
+                    _subscriptionState.value = it
                 }
         }
     }

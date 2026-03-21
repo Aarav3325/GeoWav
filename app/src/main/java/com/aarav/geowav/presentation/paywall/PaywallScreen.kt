@@ -1,6 +1,7 @@
 package com.aarav.geowav.presentation.paywall
 
 import android.app.Activity
+import android.util.Log
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
@@ -24,6 +25,7 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.Divider
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.HorizontalDivider
@@ -58,13 +60,18 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.aarav.geowav.R
+import com.aarav.geowav.core.utils.SubscriptionHelper.getSubscriptionStatus
 import com.aarav.geowav.data.model.PurchaseResult
 import com.aarav.geowav.data.model.UserPlan
+import com.aarav.geowav.data.model.UserSubscription
 import com.aarav.geowav.presentation.components.CustomBottomSheet
 import com.aarav.geowav.presentation.components.PurchaseSuccessBottomSheet
 import com.aarav.geowav.presentation.subscription.SubscriptionEvents
 import com.aarav.geowav.presentation.subscription.SubscriptionViewModel
 import com.aarav.geowav.presentation.theme.manrope
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
 
 
 data class PlanColors(
@@ -119,6 +126,7 @@ fun PaywallScreen(
 
     val plan by subscriptionViewModel.userPlan.collectAsState()
     val purchaseResult by subscriptionViewModel.purchaseResult.collectAsState()
+    val subscriptionState by subscriptionViewModel.subscriptionState.collectAsState()
 
     val snackbarHostState = remember { SnackbarHostState() }
 
@@ -136,6 +144,7 @@ fun PaywallScreen(
 //    }
 
     LaunchedEffect(Unit) {
+        subscriptionViewModel.fetchSubscriptionStatus()
         subscriptionViewModel.uiEvents.collect {
             event ->
             when (event) {
@@ -257,7 +266,7 @@ fun PaywallScreen(
 
                 Spacer(Modifier.height(16.dp))
 
-                CurrentPlanCard(plan)
+                CurrentPlanCard(subscriptionState)
 
 
                 Spacer(Modifier.height(16.dp))
@@ -283,44 +292,58 @@ fun PaywallScreen(
 //                Spacer(Modifier.height(12.dp))
 
 
-                PlanCard(
-                    title = "GeoWav Premium",
-                    price = "₹99",
-                    billingLabel = "/month",
-                    features = listOf(
-                        "Unlimited live tracking",
-                        "Replay your journeys",
-                        "Access today & yesterday",
-                        "Up to 10 saved places",
-                        "Connect with 5 people"
-                    ),
-                    isFeatured = true,
-                    isCurrentPlan = isPremiumOrAbove,
-                    buttonText = "Upgrade to Premium",
-                    colors = premiumPlanColors(),
-                    onClick = onPremiumClick
-                )
+                if(plan != UserPlan.PREMIUM) {
+                    PlanCard(
+                        title = "GeoWav Premium",
+                        price = "₹99",
+                        billingLabel = "/month",
+                        features = listOf(
+                            "Unlimited live tracking",
+                            "Replay your journeys",
+                            "Access today & yesterday",
+                            "Up to 10 saved places",
+                            "Connect with 5 people"
+                        ),
+                        isFeatured = true,
+                        isCurrentPlan = isPremiumOrAbove,
+                        buttonText = "Upgrade to Premium",
+                        colors = premiumPlanColors(),
+                        onClick = onPremiumClick
+                    )
 
-                Spacer(Modifier.height(12.dp))
+                    Spacer(Modifier.height(12.dp))
+                }
 
 
-                PlanCard(
-                    title = "GeoWav Pro",
-                    price = "₹199",
-                    billingLabel = "/month",
-                    features = listOf(
-                        "Everything in Premium",
-                        "Full location history",
-                        "Stay point detection",
-                        "Movement insights & analytics",
-                        "Export & share trips"
-                    ),
-                    isFeatured = false,
-                    isCurrentPlan = plan == UserPlan.PRO,
-                    buttonText = "Go Pro",
-                    colors = proPlanColors(),
-                    onClick = onProClick
-                )
+                if(plan != UserPlan.PRO) {
+                    PlanCard(
+                        title = "GeoWav Pro",
+                        price = "₹199",
+                        billingLabel = "/month",
+                        features = listOf(
+                            "Everything in Premium",
+                            "Full location history",
+                            "Stay point detection",
+                            "Movement insights & analytics",
+                            "Export & share trips"
+                        ),
+                        isFeatured = false,
+                        isCurrentPlan = plan == UserPlan.PRO,
+                        buttonText = "Go Pro",
+                        colors = proPlanColors(),
+                        onClick = onProClick
+                    )
+                }
+
+//                if(plan != UserPlan.FREE) {
+//                    subscriptionState?.let {
+//                        SubscriptionStatusCard(
+//                            data = it
+//                        ) {
+//
+//                        }
+//                    }
+//                }
 
                 Spacer(Modifier.height(24.dp))
 
@@ -336,11 +359,123 @@ fun PaywallScreen(
     }
 }
 
+@Composable
+fun SubscriptionStatusCard(
+    data: UserSubscription,
+    modifier: Modifier = Modifier,
+    onManageClick: () -> Unit
+) {
+
+    val status = getSubscriptionStatus(data)
+    val plan = UserPlan.valueOf(data.plan)
+
+    val accentColor = when (plan) {
+        UserPlan.PREMIUM -> MaterialTheme.colorScheme.primary
+        UserPlan.PRO -> MaterialTheme.colorScheme.tertiary
+        else -> MaterialTheme.colorScheme.outline
+    }
+
+    Card(
+        modifier = modifier
+            .fillMaxWidth()
+            .border(
+                1.dp,
+                MaterialTheme.colorScheme.outlineVariant,
+                RoundedCornerShape(18.dp)
+            ),
+        shape = RoundedCornerShape(18.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surfaceContainer
+        )
+    ) {
+
+        val formattedPurchaseDate = remember(data.purchaseTime) {
+            SimpleDateFormat("dd MMM, hh:mm a", Locale.getDefault())
+                .format(Date(data.purchaseTime))
+        }
+
+        val formattedExpiryDate = remember(data.expiryTime) {
+            SimpleDateFormat("dd MMM, hh:mm a", Locale.getDefault())
+                .format(Date(data.expiryTime))
+        }
+
+        Column(
+            modifier = Modifier.padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+
+            // 🔹 Top Row
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceBetween,
+                modifier = Modifier.fillMaxWidth()
+            ) {
+
+                Column {
+                    Text(
+                        text = "GeoWav ${plan.name}",
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.SemiBold
+                    )
+
+                    Text(
+                        text = when {
+                            status.isExpired -> "Subscription expired"
+                            status.isCancelled -> "Expires on $formattedExpiryDate"
+                            else -> "Active since $formattedPurchaseDate"
+                        },
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+
+                Icon(
+                    painter = painterResource(R.drawable.check),
+                    contentDescription = null,
+                    tint = accentColor,
+                    modifier = Modifier.size(24.dp)
+                )
+            }
+
+            // 🔹 Divider
+            HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
+
+            // 🔹 Status Row
+            Text(
+                text = when {
+                    status.isExpired -> "Your subscription has ended"
+                    status.isCancelled -> "Expires in ${status.daysRemaining} days"
+                    else -> "Renews on $formattedExpiryDate"
+                },
+                style = MaterialTheme.typography.bodyMedium,
+                fontWeight = FontWeight.Medium,
+                color = if (status.isExpired)
+                    MaterialTheme.colorScheme.error
+                else
+                    MaterialTheme.colorScheme.onSurface
+            )
+
+            // 🔹 Action Button
+            TextButton(
+                onClick = onManageClick,
+                modifier = Modifier.align(Alignment.End)
+            ) {
+                Text("Manage Subscription")
+            }
+        }
+    }
+}
 
 @Composable
 fun CurrentPlanCard(
-    plan: UserPlan
+    data: UserSubscription?,
 ) {
+
+    val plan = UserPlan.valueOf(data?.plan ?: "FREE")
+
+    Log.i("PLAN", "auto renew : " + data?.autoRenewing.toString())
+    Log.i("PLAN", "token : " + data?.purchaseToken.toString())
+    Log.i("PLAN", "active : " + data?.active.toString())
 
     val planText = when (plan) {
         UserPlan.FREE -> "GeoWav Free"
@@ -352,6 +487,36 @@ fun CurrentPlanCard(
         UserPlan.FREE -> freePlanColors()
         UserPlan.PREMIUM -> premiumPlanColors()
         UserPlan.PRO -> proPlanColors()
+    }
+
+    val status = data?.let { getSubscriptionStatus(it) }
+
+    val formattedPurchaseDate = remember(data?.purchaseTime) {
+        data?.purchaseTime?.let {
+            SimpleDateFormat("dd MMM, hh:mm a", Locale.getDefault())
+                .format(Date(it))
+        } ?: ""
+    }
+
+    val formattedExpiryDate = remember(data?.expiryTime) {
+        data?.expiryTime?.let {
+            SimpleDateFormat("dd MMM, hh:mm a", Locale.getDefault())
+                .format(Date(it))
+        } ?: ""
+    }
+
+    val subtitle = when {
+        plan == UserPlan.FREE -> "Basic tracking · Limited history"
+
+        status?.isExpired == true -> "Your subscription has ended"
+
+        status?.isCancelled == true ->
+            "Expires in ${status.daysRemaining} days"
+
+        status != null ->
+            "Renews on $formattedExpiryDate"
+
+        else -> ""
     }
 
     Card(
@@ -369,6 +534,8 @@ fun CurrentPlanCard(
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
+
+            // 🔹 LEFT CONTENT
             Column {
                 Text(
                     text = "Current Plan",
@@ -378,7 +545,9 @@ fun CurrentPlanCard(
                     fontFamily = manrope,
                     letterSpacing = 0.8.sp
                 )
+
                 Spacer(Modifier.height(4.dp))
+
                 Text(
                     text = planText,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
@@ -386,17 +555,30 @@ fun CurrentPlanCard(
                     fontWeight = FontWeight.SemiBold,
                     fontFamily = manrope,
                 )
+
                 Spacer(Modifier.height(2.dp))
+
                 Text(
-                    text = "Basic tracking · Limited history",
-                    color = MaterialTheme.colorScheme.outline,
+                    text = subtitle,
+                    color = if (status?.isExpired == true)
+                        MaterialTheme.colorScheme.error
+                    else
+                        MaterialTheme.colorScheme.outline,
                     fontSize = 12.sp,
                     fontFamily = manrope,
                 )
             }
 
-
+            // 🔥 RIGHT SIDE (better than "Active")
             if (plan != UserPlan.FREE) {
+
+                val label = when {
+                    status?.isExpired == true -> "Expired"
+                    status?.isCancelled == true -> "Ending"
+                    status?.isActive == true -> "Active"
+                    else -> "Free"
+                }
+
                 Surface(
                     shape = RoundedCornerShape(25),
                     color = colors.text
@@ -404,8 +586,10 @@ fun CurrentPlanCard(
                     Row(
                         modifier = Modifier.padding(horizontal = 10.dp, vertical = 5.dp),
                         verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(5.dp)
+                        horizontalArrangement = Arrangement.spacedBy(6.dp)
                     ) {
+
+                        // Dot indicator
                         Box(
                             modifier = Modifier
                                 .size(6.dp)
@@ -414,7 +598,7 @@ fun CurrentPlanCard(
                         )
 
                         Text(
-                            text = "Active",
+                            text = label,
                             color = colors.buttonTextColor,
                             fontSize = 12.sp,
                             fontWeight = FontWeight.Medium,
@@ -426,6 +610,97 @@ fun CurrentPlanCard(
         }
     }
 }
+
+//
+//@Composable
+//fun CurrentPlanCard(
+//    plan: UserPlan
+//) {
+//
+//    val planText = when (plan) {
+//        UserPlan.FREE -> "GeoWav Free"
+//        UserPlan.PREMIUM -> "GeoWav Premium"
+//        UserPlan.PRO -> "GeoWav Pro"
+//    }
+//
+//    val colors = when (plan) {
+//        UserPlan.FREE -> freePlanColors()
+//        UserPlan.PREMIUM -> premiumPlanColors()
+//        UserPlan.PRO -> proPlanColors()
+//    }
+//
+//    Card(
+//        modifier = Modifier
+//            .fillMaxWidth()
+//            .border(1.dp, colors.border, RoundedCornerShape(16.dp)),
+//        shape = RoundedCornerShape(16.dp),
+//        colors = CardDefaults.cardColors(containerColor = colors.bg),
+//        elevation = CardDefaults.cardElevation(0.dp)
+//    ) {
+//        Row(
+//            modifier = Modifier
+//                .fillMaxWidth()
+//                .padding(horizontal = 12.dp, vertical = 14.dp),
+//            verticalAlignment = Alignment.CenterVertically,
+//            horizontalArrangement = Arrangement.SpaceBetween
+//        ) {
+//            Column {
+//                Text(
+//                    text = "Current Plan",
+//                    color = MaterialTheme.colorScheme.outline,
+//                    fontSize = 12.sp,
+//                    fontWeight = FontWeight.Medium,
+//                    fontFamily = manrope,
+//                    letterSpacing = 0.8.sp
+//                )
+//                Spacer(Modifier.height(4.dp))
+//                Text(
+//                    text = planText,
+//                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+//                    fontSize = 16.sp,
+//                    fontWeight = FontWeight.SemiBold,
+//                    fontFamily = manrope,
+//                )
+//                Spacer(Modifier.height(2.dp))
+//                Text(
+//                    text = "Basic tracking · Limited history",
+//                    color = MaterialTheme.colorScheme.outline,
+//                    fontSize = 12.sp,
+//                    fontFamily = manrope,
+//                )
+//            }
+//
+//
+//            if (plan != UserPlan.FREE) {
+//                Surface(
+//                    shape = RoundedCornerShape(25),
+//                    color = colors.text
+//                ) {
+//                    Row(
+//                        modifier = Modifier.padding(horizontal = 10.dp, vertical = 5.dp),
+//                        verticalAlignment = Alignment.CenterVertically,
+//                        horizontalArrangement = Arrangement.spacedBy(5.dp)
+//                    ) {
+//                        Box(
+//                            modifier = Modifier
+//                                .size(6.dp)
+//                                .clip(CircleShape)
+//                                .background(colors.buttonTextColor)
+//                        )
+//
+//                        Text(
+//                            text = "Active",
+//                            color = colors.buttonTextColor,
+//                            fontSize = 12.sp,
+//                            fontWeight = FontWeight.Medium,
+//                            fontFamily = manrope,
+//                        )
+//                    }
+//                }
+//            }
+//        }
+//    }
+//}
 
 
 enum class BillingCycle { Monthly, Yearly }
