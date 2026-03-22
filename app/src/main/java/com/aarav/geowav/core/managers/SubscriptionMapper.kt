@@ -7,7 +7,7 @@ object SubscriptionMapper {
     const val PRO_ID = "geowav_pro"
 
     fun fromProductId(productId: String): UserPlan {
-        when(productId) {
+        when (productId) {
             PREMIUM_ID -> return UserPlan.PREMIUM
             PRO_ID -> return UserPlan.PRO
             else -> return UserPlan.FREE

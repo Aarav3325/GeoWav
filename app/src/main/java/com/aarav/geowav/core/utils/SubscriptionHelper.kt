@@ -1,5 +1,6 @@
 package com.aarav.geowav.core.utils
 
+import com.aarav.geowav.data.model.UserPlan
 import com.aarav.geowav.data.model.UserSubscription
 
 data class SubscriptionStatus(
@@ -27,5 +28,13 @@ object SubscriptionHelper {
             isExpired = isExpired,
             daysRemaining = daysRemaining
         )
+    }
+
+    fun getAvailablePlans(plan: UserPlan): List<UserPlan> {
+        return when (plan) {
+            UserPlan.FREE -> listOf(UserPlan.PREMIUM, UserPlan.PRO)
+            UserPlan.PREMIUM -> listOf(UserPlan.PRO)
+            UserPlan.PRO -> emptyList()
+        }
     }
 }

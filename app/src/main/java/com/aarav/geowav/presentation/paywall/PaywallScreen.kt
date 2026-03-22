@@ -25,7 +25,6 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.Divider
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.HorizontalDivider
@@ -45,14 +44,13 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
@@ -60,15 +58,20 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.aarav.geowav.R
+import com.aarav.geowav.core.utils.SubscriptionHelper
 import com.aarav.geowav.core.utils.SubscriptionHelper.getSubscriptionStatus
 import com.aarav.geowav.data.model.PurchaseResult
 import com.aarav.geowav.data.model.UserPlan
 import com.aarav.geowav.data.model.UserSubscription
+import com.aarav.geowav.data.model.getPlanContent
 import com.aarav.geowav.presentation.components.CustomBottomSheet
 import com.aarav.geowav.presentation.components.PurchaseSuccessBottomSheet
 import com.aarav.geowav.presentation.subscription.SubscriptionEvents
 import com.aarav.geowav.presentation.subscription.SubscriptionViewModel
 import com.aarav.geowav.presentation.theme.manrope
+import com.aarav.geowav.presentation.theme.onSecondaryContainerDark
+import com.aarav.geowav.presentation.theme.onSecondaryDark
+import com.aarav.geowav.presentation.theme.secondaryContainerDark
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -128,6 +131,8 @@ fun PaywallScreen(
     val purchaseResult by subscriptionViewModel.purchaseResult.collectAsState()
     val subscriptionState by subscriptionViewModel.subscriptionState.collectAsState()
 
+    val availablePlans = SubscriptionHelper.getAvailablePlans(plan)
+
     val snackbarHostState = remember { SnackbarHostState() }
 
 
@@ -145,8 +150,7 @@ fun PaywallScreen(
 
     LaunchedEffect(Unit) {
         subscriptionViewModel.fetchSubscriptionStatus()
-        subscriptionViewModel.uiEvents.collect {
-            event ->
+        subscriptionViewModel.uiEvents.collect { event ->
             when (event) {
 
                 is SubscriptionEvents.PurchaseCancelled -> {
@@ -292,7 +296,7 @@ fun PaywallScreen(
 //                Spacer(Modifier.height(12.dp))
 
 
-                if(plan != UserPlan.PREMIUM) {
+                if (availablePlans.contains(UserPlan.PREMIUM)) {
                     PlanCard(
                         title = "GeoWav Premium",
                         price = "₹99",
@@ -305,7 +309,7 @@ fun PaywallScreen(
                             "Connect with 5 people"
                         ),
                         isFeatured = true,
-                        isCurrentPlan = isPremiumOrAbove,
+                        isCurrentPlan = false,
                         buttonText = "Upgrade to Premium",
                         colors = premiumPlanColors(),
                         onClick = onPremiumClick
@@ -314,8 +318,7 @@ fun PaywallScreen(
                     Spacer(Modifier.height(12.dp))
                 }
 
-
-                if(plan != UserPlan.PRO) {
+                if (availablePlans.contains(UserPlan.PRO)) {
                     PlanCard(
                         title = "GeoWav Pro",
                         price = "₹199",
@@ -328,11 +331,17 @@ fun PaywallScreen(
                             "Export & share trips"
                         ),
                         isFeatured = false,
-                        isCurrentPlan = plan == UserPlan.PRO,
+                        isCurrentPlan = false,
                         buttonText = "Go Pro",
                         colors = proPlanColors(),
                         onClick = onProClick
                     )
+                }
+
+                if (availablePlans.isEmpty()) {
+                    Spacer(Modifier.height(12.dp))
+
+                    ProFeaturesCard()
                 }
 
 //                if(plan != UserPlan.FREE) {
@@ -350,119 +359,149 @@ fun PaywallScreen(
                 ComparisonTable()
             }
 
-            StickyUpgradeCTA(
-                modifier = Modifier.align(Alignment.BottomCenter),
-                onClick = onPremiumClick,
-                isEnabled = !isPremiumOrAbove
-            )
+            val nextPlan = when (plan) {
+                UserPlan.FREE -> UserPlan.PREMIUM
+                UserPlan.PREMIUM -> UserPlan.PRO
+                UserPlan.PRO -> null
+            }
+
+
+
+            nextPlan?.let { target ->
+
+                val label = when (target) {
+                    UserPlan.PREMIUM -> "Upgrade to Premium"
+                    UserPlan.PRO -> "Go Pro"
+                    else -> ""
+                }
+
+                val onClickAction = if (target == UserPlan.PREMIUM) {
+                    onPremiumClick
+                } else {
+                    onProClick
+                }
+
+                StickyUpgradeCTA(
+                    modifier = Modifier.align(Alignment.BottomCenter),
+                    onClick = onClickAction,
+                    label = label,
+                    isEnabled = true,
+                    targetPlan = target
+                )
+            }
+
         }
     }
 }
 
 @Composable
-fun SubscriptionStatusCard(
-    data: UserSubscription,
-    modifier: Modifier = Modifier,
-    onManageClick: () -> Unit
-) {
+fun ProFeaturesCard() {
 
-    val status = getSubscriptionStatus(data)
-    val plan = UserPlan.valueOf(data.plan)
+    val colors = proPlanColors()
 
-    val accentColor = when (plan) {
-        UserPlan.PREMIUM -> MaterialTheme.colorScheme.primary
-        UserPlan.PRO -> MaterialTheme.colorScheme.tertiary
-        else -> MaterialTheme.colorScheme.outline
-    }
+    val plan = getPlanContent(UserPlan.PRO)
 
     Card(
-        modifier = modifier
+        modifier = Modifier
             .fillMaxWidth()
-            .border(
-                1.dp,
-                MaterialTheme.colorScheme.outlineVariant,
-                RoundedCornerShape(18.dp)
-            ),
+            .border(1.dp, colors.border, RoundedCornerShape(18.dp)),
         shape = RoundedCornerShape(18.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceContainer
-        )
+        colors = CardDefaults.cardColors(containerColor = colors.bg),
+        elevation = CardDefaults.cardElevation(0.dp)
     ) {
-
-        val formattedPurchaseDate = remember(data.purchaseTime) {
-            SimpleDateFormat("dd MMM, hh:mm a", Locale.getDefault())
-                .format(Date(data.purchaseTime))
-        }
-
-        val formattedExpiryDate = remember(data.expiryTime) {
-            SimpleDateFormat("dd MMM, hh:mm a", Locale.getDefault())
-                .format(Date(data.expiryTime))
-        }
 
         Column(
             modifier = Modifier.padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp)
+            verticalArrangement = Arrangement.spacedBy(14.dp)
         ) {
 
-            // 🔹 Top Row
             Row(
                 verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.SpaceBetween,
-                modifier = Modifier.fillMaxWidth()
+                horizontalArrangement = Arrangement.spacedBy(10.dp)
             ) {
 
-                Column {
-                    Text(
-                        text = "GeoWav ${plan.name}",
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.SemiBold
-                    )
-
-                    Text(
-                        text = when {
-                            status.isExpired -> "Subscription expired"
-                            status.isCancelled -> "Expires on $formattedExpiryDate"
-                            else -> "Active since $formattedPurchaseDate"
-                        },
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                Box(
+                    modifier = Modifier
+                        .size(36.dp)
+                        .clip(CircleShape)
+                        .background(colors.text.copy(alpha = 0.12f)),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Icon(
+                        painter = painterResource(R.drawable.check),
+                        contentDescription = null,
+                        tint = colors.text,
+                        modifier = Modifier.size(18.dp)
                     )
                 }
 
-                Icon(
-                    painter = painterResource(R.drawable.check),
-                    contentDescription = null,
-                    tint = accentColor,
-                    modifier = Modifier.size(24.dp)
-                )
+                Column {
+                    Text(
+                        text = "Pro unlocked",
+                        fontWeight = FontWeight.SemiBold,
+                        fontSize = 15.sp,
+                        fontFamily = manrope,
+                        color = colors.text
+                    )
+
+                    Text(
+                        text = "You now have full access",
+                        fontSize = 12.sp,
+                        fontFamily = manrope,
+                        color = colors.text.copy(alpha = 0.7f)
+                    )
+                }
             }
 
-            // 🔹 Divider
-            HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
-
-            // 🔹 Status Row
-            Text(
-                text = when {
-                    status.isExpired -> "Your subscription has ended"
-                    status.isCancelled -> "Expires in ${status.daysRemaining} days"
-                    else -> "Renews on $formattedExpiryDate"
-                },
-                style = MaterialTheme.typography.bodyMedium,
-                fontWeight = FontWeight.Medium,
-                color = if (status.isExpired)
-                    MaterialTheme.colorScheme.error
-                else
-                    MaterialTheme.colorScheme.onSurface
+            HorizontalDivider(
+                color = colors.border.copy(alpha = 0.8f),
+                thickness = 0.8.dp
             )
 
-            // 🔹 Action Button
-            TextButton(
-                onClick = onManageClick,
-                modifier = Modifier.align(Alignment.End)
+            Column(
+                verticalArrangement = Arrangement.spacedBy(10.dp)
             ) {
-                Text("Manage Subscription")
+
+                plan.features.forEach {
+                    ProFeatureItem(it, colors)
+                }
             }
         }
+    }
+}
+
+@Composable
+fun ProFeatureItem(
+    text: String,
+    colors: PlanColors
+) {
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(10.dp)
+    ) {
+
+        Box(
+            modifier = Modifier
+                .size(20.dp)
+                .clip(RoundedCornerShape(50))
+                .background(colors.checkTint.copy(alpha = 0.15f)),
+            contentAlignment = Alignment.Center
+        ) {
+            Icon(
+                painter = painterResource(R.drawable.check),
+                contentDescription = null,
+                tint = colors.checkTint,
+                modifier = Modifier.size(12.dp)
+            )
+        }
+
+        Text(
+            text = text,
+            fontSize = 14.sp,
+            fontWeight = FontWeight.Medium,
+            fontFamily = manrope,
+            color = colors.text.copy(alpha = 0.9f)
+        )
     }
 }
 
@@ -535,7 +574,6 @@ fun CurrentPlanCard(
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
 
-            // 🔹 LEFT CONTENT
             Column {
                 Text(
                     text = "Current Plan",
@@ -569,7 +607,6 @@ fun CurrentPlanCard(
                 )
             }
 
-            // 🔥 RIGHT SIDE (better than "Active")
             if (plan != UserPlan.FREE) {
 
                 val label = when {
@@ -1110,8 +1147,11 @@ fun ComparisonTable() {
 fun StickyUpgradeCTA(
     modifier: Modifier = Modifier,
     onClick: () -> Unit,
-    isEnabled: Boolean
+    label: String = "Upgrade",
+    isEnabled: Boolean,
+    targetPlan: UserPlan
 ) {
+
     Column(
         modifier = modifier
             .fillMaxWidth()
@@ -1119,24 +1159,66 @@ fun StickyUpgradeCTA(
             .padding(horizontal = 12.dp, vertical = 12.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        Button(
-            onClick = onClick,
-            enabled = isEnabled,
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(52.dp),
-            shape = RoundedCornerShape(50),
-            colors = ButtonDefaults.buttonColors(
-                containerColor = MaterialTheme.colorScheme.primary,
-                contentColor = MaterialTheme.colorScheme.onPrimary
-            )
-        ) {
-            Text(
-                text = "Upgrade to Premium",
-                fontWeight = FontWeight.SemiBold,
-                fontSize = 15.sp,
-                fontFamily = manrope,
-            )
+        if (targetPlan == UserPlan.PRO) {
+
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(52.dp)
+                    .clip(RoundedCornerShape(50))
+                    .background(
+                        Brush.horizontalGradient(
+                            listOf(
+                                onSecondaryDark,
+                                secondaryContainerDark
+                            )
+                        )
+                    )
+            ) {
+                Button(
+                    onClick = onClick,
+                    enabled = isEnabled,
+                    modifier = Modifier.fillMaxSize(),
+                    shape = RoundedCornerShape(50),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = Color.Transparent,
+                        contentColor = Color.White
+                    ),
+                    elevation = ButtonDefaults.buttonElevation(0.dp)
+                ) {
+                    Text(
+                        text = label,
+                        fontWeight = FontWeight.SemiBold,
+                        fontSize = 15.sp,
+                        fontFamily = manrope,
+                        color = Color.White
+                    )
+                }
+            }
+
+        } else {
+
+            val colors = premiumPlanColors()
+
+            Button(
+                onClick = onClick,
+                enabled = isEnabled,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(52.dp),
+                shape = RoundedCornerShape(50),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = colors.buttonBg,
+                    contentColor = colors.buttonTextColor
+                )
+            ) {
+                Text(
+                    text = label,
+                    fontWeight = FontWeight.SemiBold,
+                    fontSize = 15.sp,
+                    fontFamily = manrope,
+                )
+            }
         }
 
         Row(
@@ -1175,13 +1257,3 @@ fun StickyUpgradeCTA(
     }
 }
 
-//
-//@Preview(showBackground = true)
-//@Composable
-//fun PaywallScreenPreview() {
-//    GeoWavTheme(
-//        darkTheme = isSystemInDarkTheme()
-//    ) {
-//        PaywallScreen(back = {}, onPremiumClick = {}, onProClick = {})
-//    }
-//}
