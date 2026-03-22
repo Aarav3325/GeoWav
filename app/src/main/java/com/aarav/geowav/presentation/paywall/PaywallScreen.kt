@@ -294,7 +294,7 @@ fun PaywallScreen(
                     .fillMaxSize()
                     .verticalScroll(rememberScrollState())
                     .padding(horizontal = 12.dp)
-                    .padding(top = 12.dp, bottom = if(availablePlans.isEmpty()) 36.dp else 104.dp)
+                    .padding(top = 12.dp, bottom = if (availablePlans.isEmpty()) 36.dp else 104.dp)
             ) {
 
                 PaywallHeader()
@@ -343,6 +343,7 @@ fun PaywallScreen(
                         isCurrentPlan = false,
                         buttonText = "Upgrade to Premium",
                         colors = premiumPlanColors(),
+                        badge = R.drawable.geowav_premium_badge,
                         onClick = onPremiumClick
                     )
 
@@ -365,6 +366,7 @@ fun PaywallScreen(
                         isCurrentPlan = false,
                         buttonText = "Go Pro",
                         colors = proPlanColors(),
+                        badge = R.drawable.geowav_pro_badge,
                         onClick = onProClick
                     )
                 }
@@ -759,6 +761,7 @@ fun PlanCard(
     isCurrentPlan: Boolean = false,
     buttonText: String,
     colors: PlanColors,
+    badge: Int,
     onClick: () -> Unit
 ) {
     Card(
@@ -779,63 +782,81 @@ fun PlanCard(
         ) {
 
 
-            if (isFeatured) {
-                Surface(
-                    shape = RoundedCornerShape(6.dp),
-                    color = MaterialTheme.colorScheme.primaryContainer
+//            if (isFeatured) {
+//                Surface(
+//                    shape = RoundedCornerShape(6.dp),
+//                    color = MaterialTheme.colorScheme.primaryContainer
+//                ) {
+//                    Row(
+//                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
+//                        verticalAlignment = Alignment.CenterVertically,
+//                        horizontalArrangement = Arrangement.spacedBy(4.dp)
+//                    ) {
+//                        Icon(
+//                            painter = painterResource(R.drawable.heart_fill),
+//                            contentDescription = null,
+//                            tint = MaterialTheme.colorScheme.onPrimaryContainer,
+//                            modifier = Modifier.size(11.dp)
+//                        )
+//                        Text(
+//                            text = "Most popular",
+//                            color = MaterialTheme.colorScheme.onPrimaryContainer,
+//                            fontSize = 12.sp,
+//                            fontWeight = FontWeight.SemiBold,
+//                            fontFamily = manrope,
+//                        )
+//                    }
+//                }
+//                Spacer(Modifier.height(12.dp))
+//            }
+
+            Row(
+                verticalAlignment = Alignment.Top,
+                modifier = Modifier
+                    .padding(top = 6.dp, bottom = 0.dp)
+            ) {
+
+                Column(
+                    modifier = Modifier.weight(1f)
                 ) {
+                    Text(
+                        text = title,
+                        color = colors.text,
+                        fontSize = 17.sp,
+                        fontWeight = FontWeight.SemiBold,
+                        fontFamily = manrope,
+                    )
+
                     Row(
-                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(4.dp)
+                        verticalAlignment = Alignment.Bottom
                     ) {
-                        Icon(
-                            painter = painterResource(R.drawable.heart_fill),
-                            contentDescription = null,
-                            tint = MaterialTheme.colorScheme.onPrimaryContainer,
-                            modifier = Modifier.size(11.dp)
+                        Text(
+                            text = price,
+                            color = colors.text,
+                            fontSize = 30.sp,
+                            fontWeight = FontWeight.Bold,
+                            fontFamily = manrope,
                         )
                         Text(
-                            text = "Most popular",
-                            color = MaterialTheme.colorScheme.onPrimaryContainer,
-                            fontSize = 12.sp,
-                            fontWeight = FontWeight.SemiBold,
+                            text = billingLabel,
+                            color = colors.text.copy(alpha = 0.6f),
+                            fontSize = 13.sp,
                             fontFamily = manrope,
+                            modifier = Modifier
+                                .padding(bottom = 4.dp, start = 3.dp)
                         )
                     }
                 }
-                Spacer(Modifier.height(12.dp))
-            }
 
 
-            Text(
-                text = title,
-                color = colors.text,
-                fontSize = 17.sp,
-                fontWeight = FontWeight.SemiBold,
-                fontFamily = manrope,
-            )
-
-
-            Row(
-                verticalAlignment = Alignment.Bottom,
-                modifier = Modifier.padding(top = 6.dp, bottom = 16.dp)
-            ) {
-                Text(
-                    text = price,
-                    color = colors.text,
-                    fontSize = 30.sp,
-                    fontWeight = FontWeight.Bold,
-                    fontFamily = manrope,
-                )
-                Text(
-                    text = billingLabel,
-                    color = colors.text.copy(alpha = 0.6f),
-                    fontSize = 13.sp,
-                    fontFamily = manrope,
-                    modifier = Modifier.padding(bottom = 4.dp, start = 3.dp)
+                Icon(
+                    painter = painterResource(badge),
+                    contentDescription = "badge",
+                    tint = Color.Unspecified,
+                    modifier = Modifier.size(48.dp)
                 )
             }
+
 
 
             features.forEach { feature ->

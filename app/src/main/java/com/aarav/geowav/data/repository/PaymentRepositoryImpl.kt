@@ -3,6 +3,7 @@ package com.aarav.geowav.data.repository
 import android.app.Activity
 import android.content.Context
 import android.util.Log
+import com.aarav.geowav.core.managers.SubscriptionMapper
 import com.aarav.geowav.data.authentication.GoogleSignInClient
 import com.aarav.geowav.data.model.PurchaseResult
 import com.aarav.geowav.data.model.UserPlan
@@ -64,6 +65,8 @@ class PaymentRepositoryImpl @Inject constructor(
                         "geowav_pro" -> "PRO"
                         else -> "FREE"
                     }
+
+                    //val plan = SubscriptionMapper.fromProductId(productId).name
 
                     val finalPurchaseTime = if (
                         purchase.purchaseTime == 0L

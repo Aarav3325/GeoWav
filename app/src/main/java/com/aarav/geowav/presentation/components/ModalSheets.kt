@@ -510,6 +510,12 @@ fun PurchaseSuccessBottomSheet(
         UserPlan.FREE -> listOf(surfaceContainerDark, outlineVariantDark)
     }
 
+    val badge = when(result.plan) {
+        UserPlan.PREMIUM -> R.drawable.geowav_premium_badge
+        UserPlan.PRO -> R.drawable.geowav_pro_badge
+        UserPlan.FREE -> R.drawable.check
+    }
+
     val formattedTime = remember(result.purchaseTime) {
         SimpleDateFormat("dd MMM, hh:mm a", Locale.getDefault())
             .format(Date(result.purchaseTime))
@@ -555,7 +561,7 @@ fun PurchaseSuccessBottomSheet(
                         contentAlignment = Alignment.Center
                     ) {
                         Icon(
-                            painter = painterResource(R.drawable.check),
+                            painter = painterResource(badge),
                             contentDescription = null,
                             tint = Color.White,
                             modifier = Modifier.size(32.dp)
@@ -712,6 +718,14 @@ fun UpgradeConfirmBottomSheet(
         UserPlan.FREE -> freePlanColors()
     }
 
+    val badge = when (plan) {
+        UserPlan.PREMIUM -> R.drawable.geowav_premium_badge
+        UserPlan.PRO -> R.drawable.geowav_pro_badge
+        UserPlan.FREE -> R.drawable.check
+    }
+
+
+
     val planName = SubscriptionHelper.getPlanName(plan)
 
 
@@ -747,30 +761,43 @@ fun UpgradeConfirmBottomSheet(
                 containerColor = MaterialTheme.colorScheme.surfaceContainer
             )
         ) {
-            Column(
-                modifier = Modifier.fillMaxWidth().padding(16.dp),
-                verticalArrangement = Arrangement.spacedBy(6.dp)
+            Box(
+                modifier = Modifier.fillMaxWidth().padding(16.dp)
             ) {
+                Column(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalArrangement = Arrangement.spacedBy(6.dp)
+                ) {
 
-                Text(
-                    text = "GeoWav $planName",
-                    fontSize = 16.sp,
-                    fontWeight = FontWeight.Medium,
-                    fontFamily = manrope
-                )
+                    Text(
+                        text = "GeoWav $planName",
+                        fontSize = 16.sp,
+                        color = colors.text,
+                        fontWeight = FontWeight.Medium,
+                        fontFamily = manrope
+                    )
 
-                Text(
-                    text = price,
-                    fontSize = 18.sp,
-                    fontWeight = FontWeight.SemiBold,
-                    fontFamily = manrope
-                )
+                    Text(
+                        text = price,
+                        fontSize = 18.sp,
+                        fontWeight = FontWeight.SemiBold,
+                        fontFamily = manrope
+                    )
 
-                Text(
-                    text = "Cancel anytime",
-                    fontSize = 12.sp,
-                    color = MaterialTheme.colorScheme.outline,
-                    fontFamily = manrope
+                    Text(
+                        text = "Cancel anytime",
+                        fontSize = 12.sp,
+                        color = MaterialTheme.colorScheme.outline,
+                        fontFamily = manrope
+                    )
+                }
+
+                Icon(
+                    painter = painterResource(badge),
+                    contentDescription = "badge",
+                    tint = Color.Unspecified,
+                    modifier = Modifier.size(48.dp)
+                        .align(Alignment.CenterEnd)
                 )
             }
         }
