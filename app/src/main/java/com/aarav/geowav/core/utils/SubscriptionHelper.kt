@@ -37,4 +37,12 @@ object SubscriptionHelper {
             UserPlan.PRO -> emptyList()
         }
     }
+
+    fun getPlanName(plan: UserPlan): String {
+        return when (plan) {
+            UserPlan.FREE -> "Free"
+            UserPlan.PREMIUM -> "Premium"
+            UserPlan.PRO -> "Pro"
+        }
+    }
 }

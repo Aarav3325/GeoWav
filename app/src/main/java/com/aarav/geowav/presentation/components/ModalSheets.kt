@@ -1,6 +1,7 @@
 package com.aarav.geowav.presentation.components
 
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
@@ -9,7 +10,6 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
@@ -18,6 +18,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -40,10 +41,12 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.aarav.geowav.R
+import com.aarav.geowav.core.utils.SubscriptionHelper
 import com.aarav.geowav.data.model.PurchaseResult
 import com.aarav.geowav.data.model.UpgradeContext
 import com.aarav.geowav.data.model.UserPlan
@@ -515,7 +518,7 @@ fun PurchaseSuccessBottomSheet(
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            //.padding(bottom = 12.dp)
+        //.padding(bottom = 12.dp)
     ) {
         Card(
             modifier = Modifier
@@ -526,7 +529,8 @@ fun PurchaseSuccessBottomSheet(
         ) {
             Box(
                 contentAlignment = Alignment.Center,
-                modifier = Modifier.fillMaxWidth()
+                modifier = Modifier
+                    .fillMaxWidth()
                     .clip(RoundedCornerShape(16.dp))
                     .background(
                         Brush.horizontalGradient(
@@ -616,11 +620,7 @@ fun PurchaseSuccessBottomSheet(
                         fontFamily = manrope
                     )
 
-                    val planName = if (result.plan == UserPlan.PRO)
-                        "GeoWav Pro"
-                    else
-                        "GeoWav Premium"
-
+                    val planName = SubscriptionHelper.getPlanName(result.plan)
 
                     Text(
                         text = "GeoWav $planName",
@@ -688,5 +688,149 @@ fun PurchaseSuccessBottomSheet(
         }
 
         Spacer(Modifier.height(12.dp))
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun UpgradeConfirmBottomSheet(
+    plan: UserPlan,
+    onConfirm: () -> Unit
+) {
+
+    val planInfo = getPlanContent(plan)
+
+    val price = when (plan) {
+        UserPlan.PREMIUM -> "₹99/month"
+        UserPlan.PRO -> "₹199/month"
+        else -> ""
+    }
+
+    val colors = when (plan) {
+        UserPlan.PREMIUM -> premiumPlanColors()
+        UserPlan.PRO -> proPlanColors()
+        UserPlan.FREE -> freePlanColors()
+    }
+
+    val planName = SubscriptionHelper.getPlanName(plan)
+
+
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp),
+    ) {
+
+        Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+
+            Text(
+                text = if (plan == UserPlan.PRO) "Go Pro" else "Upgrade to Premium",
+                fontSize = 22.sp,
+                fontWeight = FontWeight.SemiBold,
+                fontFamily = manrope
+            )
+
+            Text(
+                text = "Unlock more powerful features",
+                fontSize = 14.sp,
+                color = MaterialTheme.colorScheme.outline,
+                fontFamily = manrope
+            )
+        }
+
+        Spacer(Modifier.height(20.dp))
+
+        Card(
+            shape = RoundedCornerShape(16.dp),
+            border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
+            colors = CardDefaults.cardColors(
+                containerColor = MaterialTheme.colorScheme.surfaceContainer
+            )
+        ) {
+            Column(
+                modifier = Modifier.fillMaxWidth().padding(16.dp),
+                verticalArrangement = Arrangement.spacedBy(6.dp)
+            ) {
+
+                Text(
+                    text = "GeoWav $planName",
+                    fontSize = 16.sp,
+                    fontWeight = FontWeight.Medium,
+                    fontFamily = manrope
+                )
+
+                Text(
+                    text = price,
+                    fontSize = 18.sp,
+                    fontWeight = FontWeight.SemiBold,
+                    fontFamily = manrope
+                )
+
+                Text(
+                    text = "Cancel anytime",
+                    fontSize = 12.sp,
+                    color = MaterialTheme.colorScheme.outline,
+                    fontFamily = manrope
+                )
+            }
+        }
+
+
+        Spacer(Modifier.height(20.dp))
+
+        Column {
+            planInfo.features.take(4).forEach { feature ->
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(10.dp)
+                ) {
+
+                    Icon(
+                        painter = painterResource(R.drawable.check),
+                        contentDescription = null,
+                        tint = MaterialTheme.colorScheme.primary,
+                        modifier = Modifier.size(18.dp)
+                    )
+
+                    Text(
+                        text = feature,
+                        fontSize = 14.sp,
+                        fontFamily = manrope
+                    )
+                }
+            }
+        }
+
+        Spacer(Modifier.height(20.dp))
+
+        Button(
+            onClick = onConfirm,
+            colors = ButtonDefaults.buttonColors(
+                containerColor = colors.buttonBg,
+                contentColor = colors.buttonTextColor
+            ),
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(52.dp),
+            shape = RoundedCornerShape(14.dp)
+        ) {
+            Text(
+                text = "Continue to Payment",
+                fontWeight = FontWeight.SemiBold,
+                fontSize = 14.sp,
+                fontFamily = manrope
+            )
+        }
+
+
+        Spacer(Modifier.height(6.dp))
+
+        Text(
+            text = "Billed monthly · Cancel anytime",
+            fontSize = 12.sp,
+            color = MaterialTheme.colorScheme.outline,
+            textAlign = TextAlign.Center,
+            modifier = Modifier.fillMaxWidth()
+        )
     }
 }

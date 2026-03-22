@@ -551,9 +551,7 @@ fun AddPaywallScreen(
             subscriptionVM,
             back = {
                 navController.popBackStack()
-            },
-            onProClick = {},
-            onPremiumClick = {}
+            }
         )
     }
 }
