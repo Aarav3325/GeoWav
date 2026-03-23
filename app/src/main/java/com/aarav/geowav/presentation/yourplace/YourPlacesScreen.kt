@@ -151,7 +151,7 @@ fun YourPlacesScreen(
                         }
 
                         Text(
-                            text = "Add a location to start tracking your zones",
+                            text = "Add a location to start tracking your places",
                             fontSize = 14.sp,
                             textAlign = TextAlign.Center,
                             fontFamily = manrope,

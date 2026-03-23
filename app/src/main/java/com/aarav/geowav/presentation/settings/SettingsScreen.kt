@@ -8,6 +8,7 @@ import android.os.Build
 import android.provider.Settings
 import android.util.Log
 import androidx.annotation.RequiresApi
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -61,8 +62,10 @@ import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import com.aarav.geowav.R
 import com.aarav.geowav.presentation.components.AboutDialog
+import com.aarav.geowav.presentation.components.ProfileCard
 import com.aarav.geowav.presentation.components.TermsAndConditionsDialog
 import com.aarav.geowav.presentation.locationsharing.itemShape
+import com.aarav.geowav.presentation.subscription.SubscriptionViewModel
 import com.aarav.geowav.presentation.theme.manrope
 import com.aarav.geowav.presentation.theme.manrope
 import com.google.accompanist.permissions.ExperimentalPermissionsApi
@@ -76,7 +79,9 @@ enum class ThemeMode { SYSTEM, LIGHT, DARK }
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalPermissionsApi::class)
 @Composable
 fun SettingsScreen(
+    isDarkThemeEnabled: Boolean,
     settingsVM: SettingsVM,
+    subscriptionViewModel: SubscriptionViewModel,
     themeMode: ThemeMode,
     onThemeChange: (ThemeMode) -> Unit,
     hasLocationPermission: Boolean,
@@ -89,6 +94,7 @@ fun SettingsScreen(
     val context = LocalContext.current
 
     val uiState by settingsVM.uiState.collectAsState()
+    val plan by subscriptionViewModel.userPlan.collectAsState()
 
     var showAboutDialog by remember {
         mutableStateOf(false)
@@ -201,6 +207,12 @@ fun SettingsScreen(
             contentPadding = PaddingValues(16.dp),
             verticalArrangement = Arrangement.spacedBy(24.dp)
         ) {
+
+            item {
+                AnimatedVisibility(uiState.currentUser != null) {
+                    ProfileCard(isDarkThemeEnabled, plan, uiState.currentUser, uiState.userAvatar)
+                }
+            }
 
             item {
                 Section(title = "Location") {

@@ -4,12 +4,14 @@ import android.app.Application
 import android.content.Intent
 import android.content.SharedPreferences
 import android.health.connect.datatypes.AppInfo
+import android.net.Uri
 import android.util.Log
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.application
 import androidx.lifecycle.viewModelScope
 import com.aarav.geowav.data.authentication.GoogleSignInClient
+import com.aarav.geowav.data.model.User
 import com.aarav.geowav.platform.AppVersionInfo
 import com.aarav.geowav.platform.GeofenceForegroundService
 import com.aarav.geowav.platform.LiveLocationService
@@ -41,7 +43,9 @@ class SettingsVM @Inject constructor(
 
 
 
+
     init {
+        fetchUser()
         updateAppVersion()
     }
 
@@ -58,6 +62,19 @@ class SettingsVM @Inject constructor(
             it.copy(
                 notificationsEnabled = notificationsEnabled
             )
+        }
+    }
+
+    fun fetchUser() {
+        viewModelScope.launch {
+            val user = googleSignInClient.fetchCurrentUser()
+            val uri = googleSignInClient.getUserProfile()
+            _uiState.update {
+                it.copy(
+                    currentUser = user,
+                    userAvatar = uri
+                )
+            }
         }
     }
 
@@ -123,6 +140,8 @@ class SettingsVM @Inject constructor(
 }
 
 data class SettingsUiState(
+    val currentUser: User? = null,
+    val userAvatar: Uri = Uri.EMPTY,
     val hasLocationPermission: Boolean = false,
     val notificationsEnabled: Boolean = false,
     val appVersion: String = "",

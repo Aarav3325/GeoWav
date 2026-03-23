@@ -1,5 +1,6 @@
 package com.aarav.geowav.presentation.auth
 
+import android.app.Activity
 import android.widget.Toast
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -62,6 +63,8 @@ fun SignupScreen(
 ) {
 
 
+    val context = LocalContext.current
+    val activity = context as? Activity
     val uiState by signUpVM.uiState.collectAsState()
 
     LaunchedEffect(uiState.isSignUpSuccessful) {
@@ -139,7 +142,9 @@ fun SignupScreen(
                     .fillMaxWidth()
                     .height(56.dp)
                     .clickable {
-                        signUpVM.signInWithGoogle()
+                        activity?.let {
+                            signUpVM.signInWithGoogle(it)
+                        }
                     },
                 shape = RoundedCornerShape(12.dp),
                 colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.inverseSurface),

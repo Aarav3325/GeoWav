@@ -1,5 +1,6 @@
 package com.aarav.geowav.presentation.auth
 
+import android.app.Activity
 import android.content.Context
 import android.util.Patterns
 import androidx.lifecycle.ViewModel
@@ -62,7 +63,7 @@ class SignUpVM @Inject constructor(
         validateInput()
     }
 
-    fun signInWithGoogle() {
+    fun signInWithGoogle(activity: Activity) {
 
         if (_uiState.value.isLoading) return
 
@@ -74,9 +75,7 @@ class SignUpVM @Inject constructor(
 
         viewModelScope.launch {
 
-            val result = withContext(Dispatchers.IO) {
-                googleSignInClient.signIn()
-            }
+            val result = googleSignInClient.signIn(activity)
 
 
             if(result) {

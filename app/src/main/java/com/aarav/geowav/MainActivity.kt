@@ -510,18 +510,18 @@ class MainActivity : ComponentActivity() {
 
             Log.i("SERVICE", "NOTIFICATION SERVICE STARTED")
         }
+        val runtimeGranted = notificationPermission.status.isGranted
+        val enabled = NotificationManagerCompat
+            .from(context)
+            .areNotificationsEnabled()
+
 
         // Initial check
-        LaunchedEffect(isLoggedIn) {
+        LaunchedEffect(isLoggedIn, runtimeGranted, enabled) {
 
             if (!isLoggedIn) return@LaunchedEffect
 
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-                val runtimeGranted = notificationPermission.status.isGranted
-                val enabled = NotificationManagerCompat
-                    .from(context)
-                    .areNotificationsEnabled()
-
 
                 when {
 

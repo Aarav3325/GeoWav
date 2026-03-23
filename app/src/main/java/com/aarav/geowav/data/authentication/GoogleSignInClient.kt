@@ -1,5 +1,6 @@
 package com.aarav.geowav.data.authentication
 
+import android.app.Activity
 import android.content.Context
 import android.net.Uri
 import android.util.Log
@@ -64,9 +65,9 @@ class GoogleSignInClient @Inject constructor(
     }
 
     // google sign in
-    suspend fun signIn(): Boolean {
+    suspend fun signIn(activity: Activity): Boolean {
         try {
-            val result = buildCredentialRequest()
+            val result = buildCredentialRequest(activity)
             return handleSignIn(result)
         } catch (e: Exception) {
             if (e is CancellationException)
@@ -106,7 +107,7 @@ class GoogleSignInClient @Inject constructor(
     }
 
     // request user credentials
-    private suspend fun buildCredentialRequest(): GetCredentialResponse {
+    private suspend fun buildCredentialRequest(activity: Activity): GetCredentialResponse {
         val request = GetCredentialRequest.Builder()
             .addCredentialOption(
                 GetGoogleIdOption.Builder()
@@ -117,7 +118,7 @@ class GoogleSignInClient @Inject constructor(
             )
             .build()
 
-        return credentialManager.getCredential(request = request, context = context)
+        return credentialManager.getCredential(request = request, context = activity)
     }
 
     // log out current user
@@ -221,6 +222,19 @@ class GoogleSignInClient @Inject constructor(
 
         return snapshot.getValue(User::class.java)
     }
+
+    suspend fun fetchCurrentUser(): User? {
+        val userId = getUserId()
+
+        if (userId.isEmpty()) return null
+
+        val snapshot = userReference.child(userId)
+            .get()
+            .await()
+
+        return snapshot.getValue(User::class.java)
+    }
+
 
 
     // get username of current user

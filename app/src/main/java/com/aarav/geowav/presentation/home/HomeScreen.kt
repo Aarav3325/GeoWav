@@ -980,7 +980,7 @@ fun ActiveZonesSection(
             verticalAlignment = Alignment.CenterVertically
         ) {
             Text(
-                "Active Zones",
+                "Active Places",
                 fontSize = 16.sp,
                 color = MaterialTheme.colorScheme.onBackground,
                 style = MaterialTheme.typography.titleMedium.copy(
@@ -1024,7 +1024,7 @@ fun ActiveZonesSection(
                     )
 
                     Text(
-                        "No zones are added yet",
+                        "No places are added yet",
                         style = MaterialTheme.typography.bodyMedium.copy(
                             color = MaterialTheme.colorScheme.onBackground,
                             fontFamily = manrope
@@ -1122,7 +1122,7 @@ fun QuickActionsRow(onAddZone: () -> Unit, onShare: () -> Unit, onAlerts: () -> 
         modifier = Modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.spacedBy(12.dp)
     ) {
-        QuickActionButton(R.drawable.plus_circle__1_, "Add Zone", onAddZone)
+        QuickActionButton(R.drawable.plus_circle__1_, "Add Place", onAddZone)
     }
 }
 

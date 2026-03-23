@@ -165,6 +165,8 @@ fun NavGraph(
 
 
         AddSettingsScreen(
+            isDarkThemeEnabled,
+            subscriptionVM,
             themeMode,
             onThemeChange,
             navHostController,
@@ -557,15 +559,20 @@ fun AddPaywallScreen(
 }
 
 fun AddSettingsScreen(
+    isDarkThemeEnabled: Boolean,
+    subscriptionViewModel: SubscriptionViewModel,
     themeMode: ThemeMode,
     onThemeChange: (ThemeMode) -> Unit,
-    navController: NavController, navGraphBuilder: NavGraphBuilder
+    navController: NavController,
+    navGraphBuilder: NavGraphBuilder
 ) {
     navGraphBuilder.composable(
         route = NavRoute.Settings.path
     ) {
         SettingsScreen(
+            isDarkThemeEnabled = isDarkThemeEnabled,
             settingsVM = hiltViewModel(),
+            subscriptionViewModel = subscriptionViewModel,
             themeMode = themeMode,
             onThemeChange = onThemeChange,
             hasLocationPermission = true,

@@ -1,5 +1,6 @@
 package com.aarav.geowav.presentation.auth
 
+import android.app.Activity
 import android.widget.Toast
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -61,6 +62,8 @@ fun LoginScreen(
     loginVM: LoginVM, navigateToMap: () -> Unit, navigateToSignUp: () -> Unit
 ) {
 
+    val context = LocalContext.current
+    val activity = context as? Activity
     val uiState by loginVM.uiState.collectAsState()
 
     Box(
@@ -138,14 +141,9 @@ fun LoginScreen(
                     .fillMaxWidth()
                     .height(56.dp)
                     .clickable {
-                        loginVM.signInWithGoogle()
-//                        coroutine.launch {
-//                            val b = googleSignInClient.signIn()
-//                            if (b) {
-//                                show = true
-//                                navigateToMap()
-//                            }
-//                        }
+                        activity?.let {
+                            loginVM.signInWithGoogle(it)
+                        }
                     }, shape = RoundedCornerShape(12.dp), colors = CardDefaults.cardColors(
                     containerColor = MaterialTheme.colorScheme.inverseSurface
                     ), elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)

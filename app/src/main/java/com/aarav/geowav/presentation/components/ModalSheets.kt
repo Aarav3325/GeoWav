@@ -563,7 +563,7 @@ fun PurchaseSuccessBottomSheet(
                         Icon(
                             painter = painterResource(badge),
                             contentDescription = null,
-                            tint = Color.White,
+                            tint = Color.Unspecified,
                             modifier = Modifier.size(32.dp)
                         )
                     }
