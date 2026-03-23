@@ -80,9 +80,11 @@ class GeofenceForegroundService : Service() {
             // Start only once
             startForegroundService()
 
-            if (googleSignInClient.isLoggedIn()) {
-                observePlaces()
-            }
+//            if (googleSignInClient.isLoggedIn()) {
+//                observePlaces()
+//            }
+
+            observePlaces()
 
             // Now only observe for shutdown, not restart
             killSwitchManager.observeAppEnabled()
@@ -204,12 +206,14 @@ class GeofenceForegroundService : Service() {
 
         if (permission == PackageManager.PERMISSION_GRANTED) {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                Log.i("SERVICE", "geofence: started")
                 startForeground(
                     1,
                     notification,
                     android.content.pm.ServiceInfo.FOREGROUND_SERVICE_TYPE_LOCATION
                 )
             } else {
+                Log.i("SERVICE", "geofence: started")
                 startForeground(1, notification)
             }
         }

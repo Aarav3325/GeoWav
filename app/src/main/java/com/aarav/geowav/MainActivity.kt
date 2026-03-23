@@ -212,6 +212,14 @@ class MainActivity : ComponentActivity() {
                 .map { it.isNotBlank() }
                 .collectAsState(initial = false)
 
+            LaunchedEffect(isLoggedIn) {
+                Log.i("SERVICE", "logged in : $isLoggedIn")
+            }
+
+            LaunchedEffect(isLoggedIn) {
+                if(!isLoggedIn) return@LaunchedEffect
+            }
+
             NotificationServiceInitializer(
                 isLoggedIn = isLoggedIn,
                 showSettingsDialog = {
@@ -373,11 +381,11 @@ class MainActivity : ComponentActivity() {
 //                        )
 //                    }
 
-                    LaunchedEffect(permissionsGranted) {
+                    LaunchedEffect(permissionsGranted && isLoggedIn) {
 
                         val enabled = killSwitchManager.isAppEnabled()
 
-                        if (permissionsGranted && enabled) {
+                        if (permissionsGranted && enabled && isLoggedIn) {
 
                             val intent = Intent(context, GeofenceForegroundService::class.java)
 
