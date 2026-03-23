@@ -60,6 +60,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.net.toUri
 import com.aarav.geowav.R
+import com.aarav.geowav.core.managers.SubscriptionMapper
 import com.aarav.geowav.core.utils.SubscriptionHelper
 import com.aarav.geowav.core.utils.SubscriptionHelper.getSubscriptionStatus
 import com.aarav.geowav.data.model.PurchaseResult
@@ -161,6 +162,12 @@ fun PaywallScreen(
         showUpgradeConfirm = true
     }
 
+    val productId = when (selectedPlan) {
+        UserPlan.PREMIUM -> SubscriptionMapper.PREMIUM_ID
+        UserPlan.PRO -> SubscriptionMapper.PRO_ID
+        else -> null
+    }
+
     if (showUpgradeConfirm && selectedPlan != null) {
         CustomBottomSheet(
             onDismissRequest = {
@@ -171,9 +178,14 @@ fun PaywallScreen(
                 plan = selectedPlan!!,
                 onConfirm = {
                     showUpgradeConfirm = false
-//                    selectedPlan?.let {
-//
-//                    }
+                    if(selectedPlan != null && productId != null) {
+                        activity?.let {
+                            subscriptionViewModel.launchBillingFlow(
+                                activity = it,
+                                productId = productId
+                            )
+                        }
+                    }
                 }
             )
         }
