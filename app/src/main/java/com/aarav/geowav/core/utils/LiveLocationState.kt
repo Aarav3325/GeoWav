@@ -24,5 +24,4 @@ enum class ServiceState {
     NOT_SHARING,
     STARTING,
     SHARING,
-    ERROR
 }
