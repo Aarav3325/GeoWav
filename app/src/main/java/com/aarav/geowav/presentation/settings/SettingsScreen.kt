@@ -61,13 +61,16 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import com.aarav.geowav.R
+import com.aarav.geowav.presentation.circle.ConnectionUsageCard
 import com.aarav.geowav.presentation.components.AboutDialog
 import com.aarav.geowav.presentation.components.ProfileCard
 import com.aarav.geowav.presentation.components.TermsAndConditionsDialog
 import com.aarav.geowav.presentation.locationsharing.itemShape
+import com.aarav.geowav.presentation.paywall.CurrentPlanCard
 import com.aarav.geowav.presentation.subscription.SubscriptionViewModel
 import com.aarav.geowav.presentation.theme.manrope
 import com.aarav.geowav.presentation.theme.manrope
+import com.aarav.geowav.presentation.yourplace.PlacesUsageCard
 import com.google.accompanist.permissions.ExperimentalPermissionsApi
 import com.google.accompanist.permissions.isGranted
 import com.google.accompanist.permissions.rememberPermissionState
@@ -95,6 +98,11 @@ fun SettingsScreen(
 
     val uiState by settingsVM.uiState.collectAsState()
     val plan by subscriptionViewModel.userPlan.collectAsState()
+    val subscriptionState by subscriptionViewModel.subscriptionState.collectAsState()
+
+    LaunchedEffect(Unit) {
+        subscriptionViewModel.fetchSubscriptionStatus()
+    }
 
     var showAboutDialog by remember {
         mutableStateOf(false)
@@ -211,6 +219,30 @@ fun SettingsScreen(
             item {
                 AnimatedVisibility(uiState.currentUser != null) {
                     ProfileCard(isDarkThemeEnabled, plan, uiState.currentUser, uiState.userAvatar)
+                }
+            }
+
+            item {
+                Section("Subscription") {
+                    CurrentPlanCard(subscriptionState)
+                }
+            }
+
+            item {
+                Section(title = "Usage Overview") {
+                    ConnectionUsageCard(
+                        uiState.lovedOnes.size,
+                        plan,
+                        false,
+                        Modifier.padding(bottom = 8.dp)
+                    )
+
+                    PlacesUsageCard(
+                        uiState.placesList.size,
+                        plan,
+                        false,
+                        Modifier.padding(top = 8.dp)
+                    )
                 }
             }
 

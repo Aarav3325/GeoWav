@@ -115,8 +115,8 @@ fun TimelineScreen(
     }
 
     LaunchedEffect(userId) {
-        timelineViewModel.observeForFilter(ActivityFilter.Today, userId)
-        timelineViewModel.getMySessions(ActivityFilter.Today)
+        timelineViewModel.observeForFilter(ActivityFilter.Today, userId, plan)
+        timelineViewModel.getMySessions(ActivityFilter.Today, plan)
     }
 
     Scaffold(
@@ -182,7 +182,7 @@ fun TimelineScreen(
                                 ActivityFilter.Between(
                                     fromDate,
                                     toDate
-                                ), userId
+                                ), userId, plan
                             )
                         }
                     }
@@ -198,7 +198,7 @@ fun TimelineScreen(
                 plan,
                 selectedFilter = uiState.currentFilter,
                 onFilterSelected = {
-                    timelineViewModel.onFilterChanged(it, userId)
+                    timelineViewModel.onFilterChanged(it, userId, plan)
                 },
                 onUpgradeRequired = {
                     upgradeReason = it

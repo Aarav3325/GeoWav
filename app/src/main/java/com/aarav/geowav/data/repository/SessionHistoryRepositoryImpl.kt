@@ -8,6 +8,7 @@ import com.aarav.geowav.data.mapper.toGeoAlert
 import com.aarav.geowav.data.model.GeoAlert
 import com.aarav.geowav.data.model.SessionHistory
 import com.aarav.geowav.data.model.TimelineItem
+import com.aarav.geowav.data.model.UserPlan
 import com.aarav.geowav.data.model.toTimelineItem
 import com.aarav.geowav.domain.repository.SessionHistoryRepository
 import com.google.firebase.database.DataSnapshot
@@ -63,7 +64,8 @@ class SessionHistoryRepositoryImpl
     override fun getSessionsVisibleTo(
         ownerId: String,
         viewerId: String,
-        filter: ActivityFilter
+        filter: ActivityFilter,
+        plan: UserPlan
     ): Flow<List<TimelineItem>> = callbackFlow {
 
 
@@ -96,7 +98,13 @@ class SessionHistoryRepositoryImpl
                 }
                     .sortedByDescending { it.startTime }
 
-                trySend(sessions)
+                val finalSessions = if(filter is ActivityFilter.Today && plan == UserPlan.FREE) {
+                    sessions.take(1)
+                }
+                else{
+                    sessions
+                }
+                trySend(finalSessions)
             }
 
             override fun onCancelled(error: DatabaseError) {
@@ -113,7 +121,8 @@ class SessionHistoryRepositoryImpl
 
     override fun getSessionsForCurrentUser(
         userId: String,
-        filter: ActivityFilter
+        filter: ActivityFilter,
+        plan: UserPlan
     ): Flow<List<TimelineItem>> = callbackFlow {
 
         val timeRange = rangeForFilter(filter)
@@ -137,13 +146,17 @@ class SessionHistoryRepositoryImpl
                 }
                     .sortedByDescending { session ->
                         session.startTime
-
-
                     }
                 //Log.i("SESSION", "data: $sessions")
 
 
-                trySend(sessions)
+                val finalSessions = if(filter is ActivityFilter.Today && plan == UserPlan.FREE) {
+                    sessions.take(1)
+                }
+                else{
+                    sessions
+                }
+                trySend(finalSessions)
             }
 
             override fun onCancelled(error: DatabaseError) {

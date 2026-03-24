@@ -249,7 +249,9 @@ fun CircleContent(
         item {
             ConnectionUsageCard(
                 current = uiState.lovedOnes.size,
-                plan = userPlan
+                plan = userPlan,
+                modifier = Modifier
+                    .padding(horizontal = 16.dp, vertical = 8.dp)
             )
         }
 
@@ -884,7 +886,9 @@ fun PendingInviteRow(
 @Composable
 fun ConnectionUsageCard(
     current: Int,
-    plan: UserPlan
+    plan: UserPlan,
+    showPlanInfo: Boolean = true,
+    modifier: Modifier = Modifier
 ) {
     val max = FeatureAccess.maxConnections(plan)
 
@@ -904,9 +908,8 @@ fun ConnectionUsageCard(
     }
 
     Card(
-        modifier = Modifier
+        modifier = modifier
             .fillMaxWidth()
-            .padding(horizontal = 16.dp, vertical = 8.dp)
             .border(
                 1.dp,
                 if (isLimitReached)
@@ -930,38 +933,40 @@ fun ConnectionUsageCard(
             verticalArrangement = Arrangement.spacedBy(10.dp)
         ) {
 
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-
-                Text(
-                    text = planText,
-                    fontSize = 13.sp,
-                    fontWeight = FontWeight.Medium,
-                    fontFamily = manrope,
-                    color = MaterialTheme.colorScheme.outline
-                )
-
-                Surface(
-                    shape = RoundedCornerShape(25),
-                    color = if (isLimitReached)
-                        MaterialTheme.colorScheme.errorContainer
-                    else
-                        MaterialTheme.colorScheme.surfaceVariant
+            if(showPlanInfo) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
                 ) {
+
                     Text(
-                        text = if (isLimitReached) "Limit Reached" else "Active",
-                        modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp),
-                        fontSize = 12.sp,
+                        text = planText,
+                        fontSize = 13.sp,
                         fontWeight = FontWeight.Medium,
                         fontFamily = manrope,
-                        color = if (isLimitReached)
-                            MaterialTheme.colorScheme.onErrorContainer
-                        else
-                            MaterialTheme.colorScheme.onSurfaceVariant
+                        color = MaterialTheme.colorScheme.outline
                     )
+
+                    Surface(
+                        shape = RoundedCornerShape(25),
+                        color = if (isLimitReached)
+                            MaterialTheme.colorScheme.errorContainer
+                        else
+                            MaterialTheme.colorScheme.surfaceVariant
+                    ) {
+                        Text(
+                            text = if (isLimitReached) "Limit Reached" else "Active",
+                            modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp),
+                            fontSize = 12.sp,
+                            fontWeight = FontWeight.Medium,
+                            fontFamily = manrope,
+                            color = if (isLimitReached)
+                                MaterialTheme.colorScheme.onErrorContainer
+                            else
+                                MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
                 }
             }
 

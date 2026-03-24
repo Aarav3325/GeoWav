@@ -3,16 +3,20 @@ package com.aarav.geowav.presentation.settings
 import android.app.Application
 import android.content.Intent
 import android.content.SharedPreferences
-import android.health.connect.datatypes.AppInfo
 import android.net.Uri
 import android.util.Log
 import androidx.lifecycle.AndroidViewModel
-import androidx.lifecycle.ViewModel
 import androidx.lifecycle.application
 import androidx.lifecycle.viewModelScope
+import com.aarav.geowav.core.utils.Resource
 import com.aarav.geowav.data.authentication.GoogleSignInClient
+import com.aarav.geowav.data.model.CircleMember
+import com.aarav.geowav.data.model.Place
 import com.aarav.geowav.data.model.User
-import com.aarav.geowav.platform.AppVersionInfo
+import com.aarav.geowav.data.model.UserSubscription
+import com.aarav.geowav.domain.repository.CircleRepository
+import com.aarav.geowav.domain.repository.PlaceRepository
+import com.aarav.geowav.domain.repository.SubscriptionRepository
 import com.aarav.geowav.platform.GeofenceForegroundService
 import com.aarav.geowav.platform.LiveLocationService
 import com.aarav.geowav.platform.NotificationService
@@ -23,15 +27,18 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import okhttp3.Dispatcher
 
 @HiltViewModel
 class SettingsVM @Inject constructor(
     private val prefs: SharedPreferences,
     application: Application,
+    private val subscriptionRepository: SubscriptionRepository,
+    private val circleRepository: CircleRepository,
+    private val placeRepository: PlaceRepository,
     private val googleSignInClient: GoogleSignInClient
 ) : AndroidViewModel(application) {
 
@@ -41,12 +48,68 @@ class SettingsVM @Inject constructor(
     private val _themeMode: MutableStateFlow<ThemeMode> = MutableStateFlow(loadTheme())
     val themeMode: StateFlow<ThemeMode> = _themeMode.asStateFlow()
 
+    private val _subscriptionState = MutableStateFlow<UserSubscription?>(null)
+    val subscriptionState: StateFlow<UserSubscription?> = _subscriptionState.asStateFlow()
 
-
+    private val currentUserId: String
+        get() = googleSignInClient.getUserId()
 
     init {
         fetchUser()
+        loadLovedOnes()
+        getPlaces()
         updateAppVersion()
+    }
+
+    fun loadLovedOnes() {
+
+        if (currentUserId.isEmpty()) return
+
+        viewModelScope.launch {
+            when (val result =
+                circleRepository.getAcceptedLovedOnes(currentUserId)
+            ) {
+                is Resource.Success -> {
+                    _uiState.update {
+                        it.copy(
+                            lovedOnes = result.data ?: emptyList()
+                        )
+                    }
+                }
+
+                is Resource.Error -> {
+                    _uiState.update {
+                        it.copy(
+                            lovedOnesError = result.message
+                        )
+                    }
+                }
+
+                else -> {}
+            }
+        }
+    }
+
+    fun getPlaces() {
+        viewModelScope.launch {
+            placeRepository.getPlaces()
+                .collectLatest { list ->
+                    _uiState.update {
+                        it.copy(
+                            placesList = list
+                        )
+                    }
+                }
+        }
+    }
+
+    fun fetchSubscriptionStatus() {
+        viewModelScope.launch {
+            subscriptionRepository.fetchSubscriptionStatus()
+                .collect {
+                    _subscriptionState.value = it
+                }
+        }
     }
 
     fun updateLocationPermission(hasLocationPermission: Boolean) {
@@ -78,7 +141,7 @@ class SettingsVM @Inject constructor(
         }
     }
 
-    fun updateAppVersion(){
+    fun updateAppVersion() {
         _uiState.update {
             it.copy(
                 appVersion = application.getAppVersionInfo().versionName
@@ -120,8 +183,9 @@ class SettingsVM @Inject constructor(
     }
 
     fun loadTheme(): ThemeMode {
-        val theme =  prefs.getString("theme_mode", ThemeMode.SYSTEM.name)?.let {
-            ThemeMode.valueOf(it) } ?: ThemeMode.SYSTEM
+        val theme = prefs.getString("theme_mode", ThemeMode.SYSTEM.name)?.let {
+            ThemeMode.valueOf(it)
+        } ?: ThemeMode.SYSTEM
 
         return theme
     }
@@ -145,6 +209,10 @@ data class SettingsUiState(
     val hasLocationPermission: Boolean = false,
     val notificationsEnabled: Boolean = false,
     val appVersion: String = "",
+    val lovedOnesError: String? = null,
+    val placesError: String? = null,
+    val lovedOnes: List<CircleMember> = emptyList(),
+    val placesList: List<Place> = emptyList(),
     val showDeleteDialog: Boolean = false
 )
 

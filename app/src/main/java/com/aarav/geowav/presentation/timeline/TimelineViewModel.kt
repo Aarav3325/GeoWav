@@ -1,11 +1,11 @@
 package com.aarav.geowav.presentation.timeline
 
-import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.aarav.geowav.core.utils.ActivityFilter
 import com.aarav.geowav.data.authentication.GoogleSignInClient
 import com.aarav.geowav.data.model.TimelineItem
+import com.aarav.geowav.data.model.UserPlan
 import com.aarav.geowav.domain.repository.SessionHistoryRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Job
@@ -57,7 +57,8 @@ class TimelineViewModel
 //    }
 
     fun getMySessions(
-        filter: ActivityFilter
+        filter: ActivityFilter,
+        plan: UserPlan
     ) {
         if (currentUserId.isNotEmpty()) {
             _uiState.update {
@@ -68,27 +69,34 @@ class TimelineViewModel
 
 
             viewModelScope.launch {
-                sessionHistoryRepository.getSessionsForCurrentUser(currentUserId, filter).collect { list ->
+                sessionHistoryRepository.getSessionsForCurrentUser(currentUserId, filter, plan)
+                    .collect { list ->
 
-                  //  Log.i("SESSIONS", "currentUserId: ${list.toString()}")
-                    _uiState.update {
-                        it.copy(
-                            mySessions = list,
-                            isLoading = false
-                        )
+                        //  Log.i("SESSIONS", "currentUserId: ${list.toString()}")
+                        _uiState.update {
+                            it.copy(
+                                mySessions = list,
+                                isLoading = false
+                            )
+                        }
                     }
-                }
             }
         }
     }
 
-    fun onFilterChanged(newFilter: ActivityFilter, userId: String) {
+    fun onFilterChanged(
+        newFilter: ActivityFilter, userId: String,
+        plan: UserPlan
+    ) {
         if (_uiState.value.currentFilter == newFilter) return
-        observeForFilter(newFilter, userId)
-        getMySessions(newFilter)
+        observeForFilter(newFilter, userId, plan)
+        getMySessions(newFilter, plan)
     }
 
-    fun observeForFilter(filter: ActivityFilter, userId: String) {
+    fun observeForFilter(
+        filter: ActivityFilter, userId: String,
+        plan: UserPlan
+    ) {
         observeJob?.cancel()
 
         _uiState.update {
@@ -99,7 +107,7 @@ class TimelineViewModel
         }
 
         observeJob = viewModelScope.launch {
-            sessionHistoryRepository.getSessionsVisibleTo(userId, currentUserId, filter)
+            sessionHistoryRepository.getSessionsVisibleTo(userId, currentUserId, filter, plan)
                 .catch { e ->
                     _uiState.update {
                         it.copy(

@@ -553,6 +553,7 @@ fun ProFeatureItem(
 @Composable
 fun CurrentPlanCard(
     subscription: UserSubscription?,
+    modifier: Modifier = Modifier
 ) {
 
     val plan = UserPlan.valueOf(subscription?.plan ?: "FREE")
@@ -604,7 +605,7 @@ fun CurrentPlanCard(
     }
 
     Card(
-        modifier = Modifier
+        modifier = modifier
             .fillMaxWidth()
             .border(1.dp, colors.border, RoundedCornerShape(16.dp)),
         shape = RoundedCornerShape(16.dp),
@@ -614,7 +615,7 @@ fun CurrentPlanCard(
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = 12.dp, vertical = 14.dp),
+                .padding(12.dp),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
@@ -651,26 +652,31 @@ fun CurrentPlanCard(
                     fontFamily = manrope,
                 )
 
-                Spacer(Modifier.height(12.dp))
+                Spacer(Modifier.height(20.dp))
 
                 val context = LocalContext.current
 
-                Text(
-                    text = "Manage Subscription",
-                    fontFamily = manrope,
-                    color = colors.text,
-                    fontSize = 14.sp,
-                    fontWeight = FontWeight.SemiBold,
-                    modifier = Modifier.clickable(
-                        interactionSource = remember { MutableInteractionSource() },
-                        indication = null
-                    ) {
-                        val intent = Intent(Intent.ACTION_VIEW).apply {
-                            data = "https://play.google.com/store/account/subscriptions".toUri()
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.End
+                ) {
+                    Text(
+                        text = "Manage Subscription",
+                        fontFamily = manrope,
+                        color = colors.text,
+                        fontSize = 14.sp,
+                        fontWeight = FontWeight.SemiBold,
+                        modifier = Modifier.clickable(
+                            interactionSource = remember { MutableInteractionSource() },
+                            indication = null
+                        ) {
+                            val intent = Intent(Intent.ACTION_VIEW).apply {
+                                data = "https://play.google.com/store/account/subscriptions".toUri()
+                            }
+                            context.startActivity(intent)
                         }
-                        context.startActivity(intent)
-                    }
-                )
+                    )
+                }
             }
 
             if (plan != UserPlan.FREE) {
