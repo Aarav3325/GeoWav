@@ -44,10 +44,14 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -58,6 +62,7 @@ import com.aarav.geowav.core.utils.toLocalDateInIndia
 import com.aarav.geowav.data.model.TimelineItem
 import com.aarav.geowav.data.model.UpgradeContext
 import com.aarav.geowav.data.model.UpgradeReason
+import com.aarav.geowav.data.model.UserPlan
 import com.aarav.geowav.presentation.activity.DateRangePickerModal
 import com.aarav.geowav.presentation.activity.FilterRow
 import com.aarav.geowav.presentation.components.MyAlertDialog
@@ -213,6 +218,12 @@ fun TimelineScreen(
                 name
             ) {
                 selected = it
+            }
+
+            if (plan == UserPlan.FREE) {
+                FreePlanTimelineBanner(
+                    onUpgradeClick = navigateToPaywall
+                )
             }
 
             when {
@@ -472,6 +483,51 @@ fun TimelineItem(
                 }
             }
         }
+    }
+}
+
+
+@Composable
+fun FreePlanTimelineBanner(
+    onUpgradeClick: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    Row(
+        modifier = modifier
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp, vertical = 6.dp)
+            .clip(RoundedCornerShape(12.dp))
+            .background(MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.45f))
+            .clickable { onUpgradeClick() }
+            .padding(horizontal = 14.dp, vertical = 12.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(10.dp)
+    ) {
+        Icon(
+            painter = painterResource(R.drawable.info),
+            contentDescription = null,
+            tint = MaterialTheme.colorScheme.primary,
+            modifier = Modifier.size(18.dp)
+        )
+
+        Text(
+            text = buildAnnotatedString {
+                append("You're on the Free plan — only the latest timeline is available. ")
+                withStyle(
+                    SpanStyle(
+                        color = MaterialTheme.colorScheme.primary,
+                        fontWeight = FontWeight.Bold
+                    )
+                ) {
+                    append("Upgrade")
+                }
+            },
+            style = MaterialTheme.typography.bodySmall,
+            fontFamily = manrope,
+            color = MaterialTheme.colorScheme.onPrimaryContainer,
+            modifier = Modifier
+                .weight(1f)
+        )
     }
 }
 
