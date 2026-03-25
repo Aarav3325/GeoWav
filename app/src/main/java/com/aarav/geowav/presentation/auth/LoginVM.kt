@@ -11,9 +11,11 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
 import jakarta.inject.Inject
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -27,6 +29,9 @@ class LoginVM @Inject constructor(
 
     private val _uiState: MutableStateFlow<LoginUIState> = MutableStateFlow(LoginUIState())
     val uiState: StateFlow<LoginUIState> = _uiState.asStateFlow()
+
+    private val _events = Channel<LoginEvent>(Channel.BUFFERED)
+    val events = _events.receiveAsFlow()
 
     private var hasInteractedWithEmail = false
     private var hasInteractedWithPassword = false
@@ -65,18 +70,16 @@ class LoginVM @Inject constructor(
                 googleSignInClient.signInWithEmailAndPassword(email, password)
             }
 
-
-            if(result) {
+            if (result) {
                 paymentRepository.syncAfterLogin(context)
             }
 
-            _uiState.update {
-                it.copy(
-                    isLoading = false,
-                    isSignInSuccessful = result,
-                    error = if (!result) "Invalid email or password" else null,
-                    showErrorDialog = !result
-                )
+            _uiState.update { it.copy(isLoading = false) }
+
+            if (result) {
+                _events.send(LoginEvent.NavigateToHome)
+            } else {
+                _events.send(LoginEvent.ShowError("Invalid email or password"))
             }
         }
 
@@ -93,21 +96,18 @@ class LoginVM @Inject constructor(
         }
 
         viewModelScope.launch {
-
             val result = googleSignInClient.signIn(activity)
 
-            if(result) {
+            if (result) {
                 paymentRepository.syncAfterLogin(context)
-
             }
 
-            _uiState.update {
-                it.copy(
-                    isLoading = false,
-                    isSignInSuccessful = result,
-                    error = if (!result) "Login failed due to an internal server error." else null,
-                    showErrorDialog = !result
-                )
+            _uiState.update { it.copy(isLoading = false) }
+
+            if (result) {
+                _events.send(LoginEvent.NavigateToHome)
+            } else {
+                _events.send(LoginEvent.ShowError("Login failed due to an internal server error."))
             }
         }
     }
@@ -117,6 +117,15 @@ class LoginVM @Inject constructor(
             it.copy(
                 error = null,
                 showErrorDialog = false
+            )
+        }
+    }
+
+    fun showError(message: String) {
+        _uiState.update {
+            it.copy(
+                error = message,
+                showErrorDialog = true
             )
         }
     }
@@ -161,10 +170,14 @@ data class LoginUIState(
     val password: String = "",
     val isLoading: Boolean = false,
     val isInputValid: Boolean = false,
-    val isSignInSuccessful: Boolean = false,
     val isPasswordVisible: Boolean = false,
     val error: String? = null,
     val emailError: String? = null,
     val passwordError: String? = null,
     val showErrorDialog: Boolean = false
 )
+
+sealed interface LoginEvent {
+    data object NavigateToHome : LoginEvent
+    data class ShowError(val message: String) : LoginEvent
+}

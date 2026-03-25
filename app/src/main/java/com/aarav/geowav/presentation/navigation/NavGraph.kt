@@ -27,7 +27,7 @@ import com.aarav.geowav.presentation.map.MapScreen
 import com.aarav.geowav.presentation.observe.ObserveScreen
 import com.aarav.geowav.presentation.onboard.OnboardingScreen
 import com.aarav.geowav.presentation.paywall.PaywallScreen
-import com.aarav.geowav.presentation.settings.SettingsScreen
+import com.aarav.geowav.presentation.settings.ProfileScreen
 import com.aarav.geowav.presentation.settings.ThemeMode
 import com.aarav.geowav.presentation.subscription.SubscriptionViewModel
 import com.aarav.geowav.presentation.timeline.TimelineMapPreview
@@ -164,7 +164,7 @@ fun NavGraph(
         }
 
 
-        AddSettingsScreen(
+        AddProfileScreen(
             isDarkThemeEnabled,
             subscriptionVM,
             themeMode,
@@ -288,7 +288,7 @@ fun AddLoginScreen(
     ) {
         LoginScreen(
             loginVM = hiltViewModel(),
-            navigateToMap = {
+            navigateToHome = {
                 navController.navigate(NavRoute.HomeScreen.path)
             },
             navigateToSignUp = {
@@ -558,7 +558,7 @@ fun AddPaywallScreen(
     }
 }
 
-fun AddSettingsScreen(
+fun AddProfileScreen(
     isDarkThemeEnabled: Boolean,
     subscriptionViewModel: SubscriptionViewModel,
     themeMode: ThemeMode,
@@ -569,9 +569,9 @@ fun AddSettingsScreen(
     navGraphBuilder.composable(
         route = NavRoute.Settings.path
     ) {
-        SettingsScreen(
+        ProfileScreen(
             isDarkThemeEnabled = isDarkThemeEnabled,
-            settingsVM = hiltViewModel(),
+            profileVM = hiltViewModel(),
             subscriptionViewModel = subscriptionViewModel,
             themeMode = themeMode,
             onThemeChange = onThemeChange,

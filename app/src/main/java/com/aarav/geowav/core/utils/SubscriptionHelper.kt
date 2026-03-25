@@ -1,5 +1,6 @@
 package com.aarav.geowav.core.utils
 
+import com.aarav.geowav.R
 import com.aarav.geowav.data.model.UserPlan
 import com.aarav.geowav.data.model.UserSubscription
 
@@ -43,6 +44,14 @@ object SubscriptionHelper {
             UserPlan.FREE -> "Free"
             UserPlan.PREMIUM -> "Premium"
             UserPlan.PRO -> "Pro"
+        }
+    }
+
+    fun getPlanBadge(plan: UserPlan): Int? {
+        return when (plan) {
+            UserPlan.FREE -> null
+            UserPlan.PREMIUM -> R.drawable.geowav_premium_badge
+            UserPlan.PRO -> R.drawable.geowav_pro_badge
         }
     }
 }

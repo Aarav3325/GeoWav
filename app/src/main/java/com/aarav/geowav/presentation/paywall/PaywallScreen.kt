@@ -34,8 +34,6 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.IconButtonDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.SnackbarHost
-import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
@@ -70,6 +68,7 @@ import com.aarav.geowav.data.model.getPlanContent
 import com.aarav.geowav.presentation.components.CustomBottomSheet
 import com.aarav.geowav.presentation.components.PurchaseSuccessBottomSheet
 import com.aarav.geowav.presentation.components.UpgradeConfirmBottomSheet
+import com.aarav.geowav.presentation.components.SnackbarManager
 import com.aarav.geowav.presentation.subscription.SubscriptionEvents
 import com.aarav.geowav.presentation.subscription.SubscriptionViewModel
 import com.aarav.geowav.presentation.theme.manrope
@@ -137,7 +136,7 @@ fun PaywallScreen(
     var showUpgradeConfirm by remember { mutableStateOf(false) }
     var selectedPlan by remember { mutableStateOf<UserPlan?>(null) }
 
-    val snackbarHostState = remember { SnackbarHostState() }
+
 
 
     val context = LocalContext.current
@@ -197,11 +196,11 @@ fun PaywallScreen(
             when (event) {
 
                 is SubscriptionEvents.PurchaseCancelled -> {
-                    snackbarHostState.showSnackbar("Purchase cancelled")
+                    SnackbarManager.showMessage("Purchase cancelled")
                 }
 
                 is SubscriptionEvents.ShowError -> {
-                    snackbarHostState.showSnackbar(event.message)
+                    SnackbarManager.showMessage(event.message)
                 }
 
                 else -> Unit
@@ -228,7 +227,6 @@ fun PaywallScreen(
 
 
     Scaffold(
-        snackbarHost = { SnackbarHost(snackbarHostState, Modifier.padding(bottom = 36.dp)) },
         topBar = {
             TopAppBar(
                 modifier = Modifier,

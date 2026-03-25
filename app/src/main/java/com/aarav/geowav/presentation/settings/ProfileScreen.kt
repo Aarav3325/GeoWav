@@ -4,17 +4,17 @@ import android.Manifest
 import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
-import android.os.Build
 import android.provider.Settings
 import android.util.Log
-import androidx.annotation.RequiresApi
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
-import androidx.compose.foundation.layout.PaddingValues
+
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -22,12 +22,12 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.FilterChipDefaults
-import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -53,7 +53,6 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.content.ContextCompat
@@ -69,21 +68,19 @@ import com.aarav.geowav.presentation.locationsharing.itemShape
 import com.aarav.geowav.presentation.paywall.CurrentPlanCard
 import com.aarav.geowav.presentation.subscription.SubscriptionViewModel
 import com.aarav.geowav.presentation.theme.manrope
-import com.aarav.geowav.presentation.theme.manrope
 import com.aarav.geowav.presentation.yourplace.PlacesUsageCard
 import com.google.accompanist.permissions.ExperimentalPermissionsApi
 import com.google.accompanist.permissions.isGranted
 import com.google.accompanist.permissions.rememberPermissionState
 
 
-enum class TriggerType { ENTER, EXIT }
 enum class ThemeMode { SYSTEM, LIGHT, DARK }
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalPermissionsApi::class)
 @Composable
-fun SettingsScreen(
+fun ProfileScreen(
     isDarkThemeEnabled: Boolean,
-    settingsVM: SettingsVM,
+    profileVM: ProfileVM,
     subscriptionViewModel: SubscriptionViewModel,
     themeMode: ThemeMode,
     onThemeChange: (ThemeMode) -> Unit,
@@ -96,7 +93,7 @@ fun SettingsScreen(
 
     val context = LocalContext.current
 
-    val uiState by settingsVM.uiState.collectAsState()
+    val uiState by profileVM.uiState.collectAsState()
     val plan by subscriptionViewModel.userPlan.collectAsState()
     val subscriptionState by subscriptionViewModel.subscriptionState.collectAsState()
 
@@ -129,7 +126,7 @@ fun SettingsScreen(
                     ) == PackageManager.PERMISSION_GRANTED
 
                 Log.i("NOTI", "granted: " + isGranted)
-                settingsVM.updateNotificationsEnabled(isGranted)
+                profileVM.updateNotificationsEnabled(isGranted)
             }
         }
 
@@ -142,9 +139,9 @@ fun SettingsScreen(
 
     LaunchedEffect(fineLocation.status, background.status) {
         if (fineLocation.status.isGranted && background.status.isGranted) {
-            settingsVM.updateLocationPermission(true)
+            profileVM.updateLocationPermission(true)
         } else {
-            settingsVM.updateLocationPermission(false)
+            profileVM.updateLocationPermission(false)
         }
     }
 
@@ -152,7 +149,16 @@ fun SettingsScreen(
         CheckBackgroundPermission() && CheckFineLocationPermission()
 
     LaunchedEffect(Unit) {
-        settingsVM.updateLocationPermission(isPermissionGranted)
+        profileVM.updateLocationPermission(isPermissionGranted)
+    }
+
+    val launcher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.GetContent()
+    ) { uri ->
+        uri?.let {
+            Log.i("PROFILE", "user avatar : $it")
+            profileVM.uploadAvatar(it)
+        }
     }
 
     TermsAndConditionsDialog(
@@ -184,7 +190,7 @@ fun SettingsScreen(
                 ),
                 title = {
                     Text(
-                        text = "Settings",
+                        text = "Profile",
                         fontSize = 20.sp,
                         fontFamily = manrope,
                         fontWeight = FontWeight.SemiBold,
@@ -207,140 +213,126 @@ fun SettingsScreen(
             )
         }
     ) {
-        LazyColumn(
+        Column(
             modifier = Modifier
                 .padding(it)
                 .fillMaxSize()
-                .background(MaterialTheme.colorScheme.background),
-            contentPadding = PaddingValues(16.dp),
+                .verticalScroll(rememberScrollState())
+                .background(MaterialTheme.colorScheme.background)
+                .padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(24.dp)
         ) {
 
-            item {
-                AnimatedVisibility(uiState.currentUser != null) {
-                    ProfileCard(isDarkThemeEnabled, plan, uiState.currentUser, uiState.userAvatar)
+            ProfileCard(
+                uiState.isUploading,
+                uiState.uploadProgress,
+                isDarkThemeEnabled,
+                plan,
+                uiState.currentUser,
+                uiState.userAvatar,
+                onAvatarClick = {
+                    launcher.launch("image/**")
                 }
+            )
+
+            Section("Subscription") {
+                CurrentPlanCard(subscriptionState)
             }
 
-            item {
-                Section("Subscription") {
-                    CurrentPlanCard(subscriptionState)
-                }
+            Section(title = "Usage Overview") {
+                ConnectionUsageCard(
+                    uiState.lovedOnes.size,
+                    plan,
+                    false,
+                    Modifier.padding(bottom = 8.dp)
+                )
+
+                PlacesUsageCard(
+                    uiState.placesList.size,
+                    plan,
+                    false,
+                    Modifier.padding(top = 8.dp)
+                )
             }
 
-            item {
-                Section(title = "Usage Overview") {
-                    ConnectionUsageCard(
-                        uiState.lovedOnes.size,
-                        plan,
-                        false,
-                        Modifier.padding(bottom = 8.dp)
-                    )
+            Section(title = "Location") {
+                SettingItemNew(
+                    title = "Location Access",
+                    subtitle = "Manage location permission",
+                    onClick = {
+                        openAppSettings(context, Settings.ACTION_LOCATION_SOURCE_SETTINGS)
+                    },
+                    index = 0,
+                    count = 2,
+                )
 
-                    PlacesUsageCard(
-                        uiState.placesList.size,
-                        plan,
-                        false,
-                        Modifier.padding(top = 8.dp)
-                    )
-                }
+                TriggerTypeSelector(
+                    enabled = hasLocationPermission && notificationsEnabled,
+                    index = 1,
+                    count = 2
+                )
             }
 
-            item {
-                Section(title = "Location") {
-                    SettingItemNew(
-                        title = "Location Access",
-                        subtitle = "Manage location permission",
-                        onClick = {
-                            openAppSettings(context, Settings.ACTION_LOCATION_SOURCE_SETTINGS)
-                        },
-                        index = 0,
-                        count = 2,
-                    )
-
-                    TriggerTypeSelector(
-                        enabled = hasLocationPermission && notificationsEnabled,
-                        index = 1,
-                        count = 2
-                    )
-                }
+            Section(title = "Appearance") {
+                ThemeSelector(
+                    index = 0,
+                    count = 1,
+                    selected = themeMode,
+                    onSelected = onThemeChange
+                )
             }
 
-            item {
-                Section(title = "Appearance") {
-                    ThemeSelector(
-                        index = 0,
-                        count = 1,
-                        selected = themeMode,
-                        onSelected = onThemeChange
-                    )
-                }
+            Section(title = "Notifications") {
+                SwitchItem(
+                    title = "Enable Notifications",
+                    index = 0,
+                    count = 1,
+                    checked = uiState.notificationsEnabled,
+                    onCheckedChange = {
+                        openAppSettings(context, Settings.ACTION_APP_NOTIFICATION_SETTINGS)
+                    }
+                )
             }
 
+            Section(title = "About") {
+                SettingItemNew(
+                    title = "App Version",
+                    index = 0,
+                    count = 3,
+                    subtitle = uiState.appVersion,
+                    enabled = true
+                )
 
-            item {
-                Section(title = "Notifications") {
-                    SwitchItem(
-                        title = "Enable Notifications",
-                        index = 0,
-                        count = 1,
-                        checked = uiState.notificationsEnabled,
-                        onCheckedChange = {
-                            openAppSettings(context, Settings.ACTION_APP_NOTIFICATION_SETTINGS)
-                            Log.i(
-                                "MYTAG",
-                                "Notification : ${notificationPermission.status.isGranted}"
-                            )
-                        }
-                    )
-                }
+                SettingItemNew(
+                    title = "About GeoWav",
+                    index = 1,
+                    count = 3,
+                    onClick = {
+                        showAboutDialog = true
+                    }
+                )
+
+                SettingItemNew(
+                    title = "Terms & Privacy Policy",
+                    index = 2,
+                    count = 3,
+                    onClick = {
+                        tc = true
+                    }
+                )
             }
 
-            item {
-                Section(title = "About") {
-                    SettingItemNew(
-                        title = "App Version",
-                        index = 0,
-                        count = 3,
-                        subtitle = uiState.appVersion,
-                        enabled = true
-                    )
+            Section(title = "Account") {
+                SettingItemNew(
+                    title = "Logout",
+                    index = 0,
+                    count = 1,
+                    onClick = {
+                        profileVM.logout(onComplete = onLogout)
+                    }
+                )
 
-                    SettingItemNew(
-                        title = "About GeoWav",
-                        index = 1,
-                        count = 3,
-                        onClick = {
-                            showAboutDialog = true
-                        }
-                    )
-
-                    SettingItemNew(
-                        title = "Terms & Privacy Policy",
-                        index = 2,
-                        count = 3,
-                        onClick = {
-                            tc = true
-                        }
-                    )
-                }
-            }
-
-
-            item {
-                Section(title = "Account") {
-                    SettingItemNew(
-                        title = "Logout",
-                        index = 0,
-                        count = 1,
-                        onClick = {
-                            settingsVM.logout(onComplete = onLogout)
-                        }
-                    )
-
-                    Spacer(modifier = Modifier.height(32.dp))
-
-                }
+                Spacer(modifier = Modifier.height(32.dp))
             }
         }
     }
@@ -350,7 +342,7 @@ fun SettingsScreen(
     if (uiState.showDeleteDialog) {
         AlertDialog(
             onDismissRequest = {
-                settingsVM.dismissDeleteDialog()
+                profileVM.dismissDeleteDialog()
             },
             title = { Text("Delete account?", fontFamily = manrope, fontWeight = FontWeight.Bold) },
             text = {
@@ -359,7 +351,7 @@ fun SettingsScreen(
             confirmButton = {
                 TextButton(
                     onClick = {
-                        settingsVM.dismissDeleteDialog()
+                        profileVM.dismissDeleteDialog()
                         onDeleteAccount()
                     }
                 ) {
@@ -373,7 +365,7 @@ fun SettingsScreen(
             },
             dismissButton = {
                 TextButton(onClick = {
-                    settingsVM.dismissDeleteDialog()
+                    profileVM.dismissDeleteDialog()
                 }) {
                     Text("Cancel", fontFamily = manrope, fontWeight = FontWeight.SemiBold)
                 }
@@ -413,42 +405,6 @@ fun openAppSettings(
         putExtra(Settings.EXTRA_CHANNEL_ID, context.applicationInfo.uid)
     }
     context.startActivity(intent)
-}
-
-
-@Composable
-fun SettingItem(
-    title: String,
-    subtitle: String? = null,
-    enabled: Boolean = true,
-    titleColor: Color = MaterialTheme.colorScheme.onSurface,
-    onClick: (() -> Unit)? = null
-) {
-    Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .then(
-                if (onClick != null && enabled) Modifier.clickable { onClick() } else Modifier
-            )
-            .padding(vertical = 8.dp, horizontal = 12.dp)
-    ) {
-        Text(
-            text = title,
-            color = if (enabled) titleColor else titleColor.copy(alpha = 0.5f),
-            fontFamily = manrope,
-            fontWeight = FontWeight.SemiBold,
-            style = MaterialTheme.typography.bodyLarge
-        )
-        subtitle?.let {
-            Text(
-                it,
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                fontFamily = manrope,
-                modifier = Modifier.padding(top = 4.dp)
-            )
-        }
-    }
 }
 
 @Composable

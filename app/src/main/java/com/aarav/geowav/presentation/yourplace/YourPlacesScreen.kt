@@ -216,7 +216,7 @@ fun AddLocationFAB(
         }
     ) {
         Icon(
-            painter = painterResource(R.drawable.plus_circle__1_),
+            painter = painterResource(R.drawable.add),
             contentDescription = "add location",
         )
     }
@@ -320,7 +320,7 @@ fun PlacesUsageCard(
                     MaterialTheme.colorScheme.onBackground
             )
 
-            if (plan != UserPlan.FREE) {
+//            if (plan != UserPlan.FREE) {
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -340,7 +340,7 @@ fun PlacesUsageCard(
                             )
                     )
                 }
-            }
+//            }
 
             if (isLimitReached) {
                 Text(

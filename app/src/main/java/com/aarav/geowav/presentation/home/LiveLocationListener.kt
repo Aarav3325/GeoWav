@@ -82,6 +82,7 @@ import com.aarav.geowav.core.utils.ViewerLocationState
 import com.aarav.geowav.core.utils.formatTime
 import com.aarav.geowav.data.model.CircleMember
 import com.aarav.geowav.presentation.theme.manrope
+import com.aarav.geowav.presentation.theme.primaryLight
 import com.aarav.geowav.presentation.timeline.movingPlaybackMarkerIcon
 import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.model.BitmapDescriptor
@@ -632,8 +633,8 @@ fun ObserveLiveLocationCard(
         AnimatedVisibility(
             showMapModeToast,
             modifier = Modifier
-                .align(Alignment.TopCenter)
-                .padding(top = 16.dp)
+                .align(Alignment.BottomCenter)
+                .padding(bottom = 116.dp)
         ) {
 
             Surface(
@@ -1155,7 +1156,7 @@ fun ViewerCardHome(
                 Icon(
                     painter = painterResource(R.drawable.new_logo),
                     contentDescription = null,
-                    tint = MaterialTheme.colorScheme.primary,
+                    tint = primaryLight,
                     modifier = Modifier.size(32.dp)
                 )
             }

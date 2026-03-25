@@ -438,7 +438,7 @@ class NotificationRepositoryImpl @Inject constructor(
             }
 
             override fun onCancelled(error: DatabaseError) {
-                TODO("Not yet implemented")
+                Log.e("NotificationRepo", "Emergency listener cancelled: ${error.message}")
             }
 
         }

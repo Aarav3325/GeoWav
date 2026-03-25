@@ -9,6 +9,7 @@ import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.application
 import androidx.lifecycle.viewModelScope
 import com.aarav.geowav.core.utils.Resource
+import com.aarav.geowav.core.utils.UploadResult
 import com.aarav.geowav.data.authentication.GoogleSignInClient
 import com.aarav.geowav.data.model.CircleMember
 import com.aarav.geowav.data.model.Place
@@ -31,9 +32,11 @@ import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import androidx.core.net.toUri
+import kotlinx.coroutines.flow.distinctUntilChanged
 
 @HiltViewModel
-class SettingsVM @Inject constructor(
+class ProfileVM @Inject constructor(
     private val prefs: SharedPreferences,
     application: Application,
     private val subscriptionRepository: SubscriptionRepository,
@@ -93,6 +96,7 @@ class SettingsVM @Inject constructor(
     fun getPlaces() {
         viewModelScope.launch {
             placeRepository.getPlaces()
+                .distinctUntilChanged()
                 .collectLatest { list ->
                     _uiState.update {
                         it.copy(
@@ -131,7 +135,7 @@ class SettingsVM @Inject constructor(
     fun fetchUser() {
         viewModelScope.launch {
             val user = googleSignInClient.fetchCurrentUser()
-            val uri = googleSignInClient.getUserProfile()
+            val uri = googleSignInClient.getUserProfile()?.toString()
             _uiState.update {
                 it.copy(
                     currentUser = user,
@@ -162,6 +166,42 @@ class SettingsVM @Inject constructor(
             it.copy(
                 showDeleteDialog = false
             )
+        }
+    }
+
+    fun uploadAvatar(uri: Uri) {
+        viewModelScope.launch {
+            googleSignInClient.uploadUserAvatar(uri)
+                .collect {
+                    result ->
+                    when(result) {
+                        is UploadResult.Progress -> {
+                            _uiState.update {
+                                it.copy(
+                                    isUploading = true,
+                                    uploadProgress = result.progress
+                                )
+                            }
+                        }
+
+                        is UploadResult.Success -> {
+                            _uiState.update {
+                                it.copy(
+                                    isUploading = false,
+                                    userAvatar = result.downloadUrl.toUri().toString(),
+                                )
+                            }
+                        }
+
+                        is UploadResult.Error -> {
+                            _uiState.update {
+                                it.copy(
+                                    isUploading = false
+                                )
+                            }
+                        }
+                    }
+                }
         }
     }
 
@@ -205,7 +245,9 @@ class SettingsVM @Inject constructor(
 
 data class SettingsUiState(
     val currentUser: User? = null,
-    val userAvatar: Uri = Uri.EMPTY,
+    val userAvatar: String? = null,
+    val isUploading: Boolean = false,
+    val uploadProgress: Float = 0f,
     val hasLocationPermission: Boolean = false,
     val notificationsEnabled: Boolean = false,
     val appVersion: String = "",

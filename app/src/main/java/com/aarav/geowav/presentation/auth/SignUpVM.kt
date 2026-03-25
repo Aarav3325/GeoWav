@@ -11,9 +11,11 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
 import jakarta.inject.Inject
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -28,6 +30,9 @@ class SignUpVM @Inject constructor(
 
     private val _uiState: MutableStateFlow<SignUpUIState> = MutableStateFlow(SignUpUIState())
     val uiState: StateFlow<SignUpUIState> = _uiState.asStateFlow()
+
+    private val _events = Channel<SignUpEvent>(Channel.BUFFERED)
+    val events = _events.receiveAsFlow()
 
     private var hasInteractedWithEmail: Boolean = false
     private var hasInteractedWithPassword: Boolean = false
@@ -74,21 +79,18 @@ class SignUpVM @Inject constructor(
         }
 
         viewModelScope.launch {
-
             val result = googleSignInClient.signIn(activity)
 
-
-            if(result) {
+            if (result) {
                 paymentRepository.syncAfterLogin(context)
             }
 
-            _uiState.update {
-                it.copy(
-                    isLoading = false,
-                    isSignUpSuccessful = result,
-                    error = if (!result) "Login failed due to an internal server error." else null,
-                    showErrorDialog = !result
-                )
+            _uiState.update { it.copy(isLoading = false) }
+
+            if (result) {
+                _events.send(SignUpEvent.NavigateToHome)
+            } else {
+                _events.send(SignUpEvent.ShowError("Login failed due to an internal server error."))
             }
         }
     }
@@ -105,18 +107,16 @@ class SignUpVM @Inject constructor(
                 googleSignInClient.signUpUsingEmailAndPassword(name, email, password)
             }
 
-
-            if(result) {
+            if (result) {
                 paymentRepository.syncAfterLogin(context)
             }
 
-            _uiState.update {
-                it.copy(
-                    isLoading = false,
-                    isSignUpSuccessful = result,
-                    error = if (!result) "Invalid email or password" else null,
-                    showErrorDialog = !result
-                )
+            _uiState.update { it.copy(isLoading = false) }
+
+            if (result) {
+                _events.send(SignUpEvent.NavigateToHome)
+            } else {
+                _events.send(SignUpEvent.ShowError("Invalid email or password"))
             }
         }
     }
@@ -126,6 +126,15 @@ class SignUpVM @Inject constructor(
             it.copy(
                 error = null,
                 showErrorDialog = false
+            )
+        }
+    }
+
+    fun showError(message: String) {
+        _uiState.update {
+            it.copy(
+                error = message,
+                showErrorDialog = true
             )
         }
     }
@@ -172,7 +181,6 @@ data class SignUpUIState(
     val password: String = "",
     val isLoading: Boolean = false,
     val isInputValid: Boolean = false,
-    val isSignUpSuccessful: Boolean = false,
     val error: String? = null,
     val isPasswordVisible: Boolean = false,
     val emailError: String? = null,
@@ -180,3 +188,8 @@ data class SignUpUIState(
     val passwordError: String? = null,
     val showErrorDialog: Boolean = false
 )
+
+sealed interface SignUpEvent {
+    data object NavigateToHome : SignUpEvent
+    data class ShowError(val message: String) : SignUpEvent
+}

@@ -1,7 +1,6 @@
 package com.aarav.geowav.presentation.auth
 
 import android.app.Activity
-import android.widget.Toast
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -25,7 +24,6 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ContainedLoadingIndicator
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.Icon
@@ -62,7 +60,6 @@ import androidx.compose.ui.window.Dialog
 import com.aarav.geowav.R
 import com.aarav.geowav.presentation.components.MyAlertDialog
 import com.aarav.geowav.presentation.theme.manrope
-import com.aarav.geowav.presentation.theme.sora
 
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Preview(showBackground = true)
@@ -80,9 +77,12 @@ fun SignupScreen(
     val passwordFocusRequester = remember { FocusRequester() }
     val keyboardController = LocalSoftwareKeyboardController.current
 
-    LaunchedEffect(uiState.isSignUpSuccessful) {
-        if (uiState.isSignUpSuccessful) {
-            navigateToHome()
+    LaunchedEffect(Unit) {
+        signUpVM.events.collect { event ->
+            when (event) {
+                is SignUpEvent.NavigateToHome -> navigateToHome()
+                is SignUpEvent.ShowError -> signUpVM.showError(event.message)
+            }
         }
     }
 
@@ -204,7 +204,9 @@ fun SignupScreen(
                 onValueChange = { signUpVM.updateUsername(it) },
                 label = {
                     Text(
-                        "Name", fontFamily = manrope, color = MaterialTheme.colorScheme.inverseSurface
+                        "Name",
+                        fontFamily = manrope,
+                        color = MaterialTheme.colorScheme.inverseSurface
                     )
                 },
                 leadingIcon = {
@@ -256,7 +258,9 @@ fun SignupScreen(
                 onValueChange = { signUpVM.updateEmail(it) },
                 label = {
                     Text(
-                        "Email", fontFamily = manrope, color = MaterialTheme.colorScheme.inverseSurface
+                        "Email",
+                        fontFamily = manrope,
+                        color = MaterialTheme.colorScheme.inverseSurface
                     )
                 },
                 leadingIcon = {
@@ -448,7 +452,6 @@ fun SignupScreen(
                 TextButton(
                     onClick = {
                         navigateToLogin()
-                        Toast.makeText(context, "Clicked", Toast.LENGTH_LONG).show()
                     }) {
                     Text(
                         text = "Login",

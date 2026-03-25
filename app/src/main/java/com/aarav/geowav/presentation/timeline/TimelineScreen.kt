@@ -497,7 +497,7 @@ fun FreePlanTimelineBanner(
             .fillMaxWidth()
             .padding(horizontal = 16.dp, vertical = 6.dp)
             .clip(RoundedCornerShape(12.dp))
-            .background(MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.45f))
+            .background(MaterialTheme.colorScheme.tertiaryContainer.copy(alpha = 0.45f))
             .clickable { onUpgradeClick() }
             .padding(horizontal = 14.dp, vertical = 12.dp),
         verticalAlignment = Alignment.CenterVertically,
@@ -506,7 +506,7 @@ fun FreePlanTimelineBanner(
         Icon(
             painter = painterResource(R.drawable.info),
             contentDescription = null,
-            tint = MaterialTheme.colorScheme.primary,
+            tint = MaterialTheme.colorScheme.tertiary,
             modifier = Modifier.size(18.dp)
         )
 
@@ -515,7 +515,7 @@ fun FreePlanTimelineBanner(
                 append("You're on the Free plan — only the latest timeline is available. ")
                 withStyle(
                     SpanStyle(
-                        color = MaterialTheme.colorScheme.primary,
+                        color = MaterialTheme.colorScheme.tertiary,
                         fontWeight = FontWeight.Bold
                     )
                 ) {
@@ -524,7 +524,7 @@ fun FreePlanTimelineBanner(
             },
             style = MaterialTheme.typography.bodySmall,
             fontFamily = manrope,
-            color = MaterialTheme.colorScheme.onPrimaryContainer,
+            color = MaterialTheme.colorScheme.onTertiaryContainer,
             modifier = Modifier
                 .weight(1f)
         )
@@ -553,7 +553,7 @@ fun TimelineEmptyState(
         Spacer(Modifier.height(20.dp))
 
         Text(
-            text = "No location history yet",
+            text = "No timeline history yet",
             style = MaterialTheme.typography.titleMedium,
             fontFamily = manrope,
             fontWeight = FontWeight.SemiBold

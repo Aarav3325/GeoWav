@@ -82,7 +82,7 @@ class HomeScreenVM @Inject constructor(
 
     private var pathJob: Job? = null
 
-
+    var hasShownWelcome = false
     private val _liveStayPoints = MutableStateFlow<Map<String, List<StayPoint>>>(emptyMap())
     val liveStayPoints: StateFlow<Map<String, List<StayPoint>>> = _liveStayPoints.asStateFlow()
 
@@ -104,6 +104,23 @@ class HomeScreenVM @Inject constructor(
 //            paymentRepository.processPurchases(activity, productId)
 //        }
 //    }
+
+    init {
+        fetchUser()
+    }
+
+    fun fetchUser() {
+        viewModelScope.launch {
+            val user = googleSignInClient.fetchCurrentUser()
+            val uri = googleSignInClient.getUserProfile()
+            _uiState.update {
+                it.copy(
+                    currentUser = user,
+                    userAvatar = uri
+                )
+            }
+        }
+    }
 
     fun observeUsers() {
 
@@ -391,7 +408,6 @@ class HomeScreenVM @Inject constructor(
             _uiState.update {
                 it.copy(
                     username = googleSignInClient.getUserName(),
-                    userAvatar = googleSignInClient.getUserProfile().toString()
                 )
             }
         }
@@ -428,7 +444,8 @@ data class HomeScreenUiState(
     val playbackIndex: Int = 0,
     val speed: Float = 1f,
     val alertsList: List<GeoAlert> = emptyList(),
-    val userAvatar: String? = null,
+    val currentUser: User? = null,
+    val userAvatar: Uri = Uri.EMPTY,
     val username: String? = null,
     val viewerState: ViewerLocationState? = ViewerLocationState.Blocked,
     val remainingTime: String? = null

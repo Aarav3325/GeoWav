@@ -3,12 +3,8 @@ package com.aarav.geowav.presentation.home
 
 import android.Manifest
 import android.app.Activity
-import android.app.Activity.RESULT_OK
-import android.content.Intent
 import android.net.Uri
 import android.util.Log
-import androidx.activity.compose.rememberLauncherForActivityResult
-import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.EaseInOut
@@ -34,14 +30,10 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.wrapContentHeight
-import androidx.compose.foundation.lazy.grid.GridCells
-import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
-import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
@@ -63,6 +55,7 @@ import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
@@ -71,15 +64,12 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.scale
-import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
-import androidx.compose.ui.graphics.TileMode
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -95,14 +85,14 @@ import com.aarav.geowav.data.model.CircleMember
 import com.aarav.geowav.data.model.Place
 import com.aarav.geowav.presentation.theme.GeoWavTheme
 import com.aarav.geowav.presentation.theme.manrope
-import com.aarav.geowav.presentation.theme.sora
-import com.google.accompanist.drawablepainter.rememberDrawablePainter
 import com.google.accompanist.permissions.ExperimentalPermissionsApi
 import com.google.accompanist.permissions.isGranted
 import com.google.accompanist.permissions.rememberPermissionState
 import kotlinx.coroutines.delay
-import androidx.core.net.toUri
-import com.aarav.geowav.presentation.navigation.NavItem
+import com.aarav.geowav.core.utils.SubscriptionHelper
+import com.aarav.geowav.data.model.User
+import com.aarav.geowav.data.model.UserPlan
+import com.aarav.geowav.presentation.components.SnackbarManager
 import com.aarav.geowav.presentation.subscription.SubscriptionViewModel
 
 @OptIn(
@@ -143,6 +133,13 @@ fun GeoWavHomeScreen(
         }
     }
 
+    LaunchedEffect(uiState.username) {
+        if (!homeScreenVM.hasShownWelcome && uiState.username != null) {
+            SnackbarManager.showMessage("Welcome ${uiState.username}")
+            homeScreenVM.hasShownWelcome = true
+        }
+    }
+
 
     val context = LocalContext.current
     val activity = context as? Activity
@@ -176,10 +173,11 @@ fun GeoWavHomeScreen(
     val scope = rememberCoroutineScope()
 
     val scroll = rememberScrollState()
-    val scrollOffset = scroll.value
 
     // Switch colors after scrolling 240px
-    val useDarkIcons = scrollOffset > 150
+    val useDarkIcons by remember {
+        derivedStateOf { scroll.value > 150 }
+    }
 
     // Animate colors smoothly
     val textColor by animateColorAsState(
@@ -340,7 +338,9 @@ fun GeoWavHomeScreen(
 
 
                         ProfileCard(
+                            plan,
                             avatar = uiState.userAvatar,
+                            currentUser = uiState.currentUser,
                             userName = uiState.username,
                             modifier = Modifier
                                 .align(Alignment.Center)
@@ -722,7 +722,7 @@ fun ConnectionsList(
                 }
 
                 if(connections.isEmpty()) {
-                    QuickActionButton(R.drawable.plus_circle__1_, "Add", onManage)
+                    QuickActionButton(R.drawable.add, "Add", onManage)
                 }
             }
         }
@@ -1122,7 +1122,7 @@ fun QuickActionsRow(onAddZone: () -> Unit, onShare: () -> Unit, onAlerts: () -> 
         modifier = Modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.spacedBy(12.dp)
     ) {
-        QuickActionButton(R.drawable.plus_circle__1_, "Add Place", onAddZone)
+        QuickActionButton(R.drawable.add, "Add Place", onAddZone)
     }
 }
 
@@ -1224,7 +1224,9 @@ fun AlertItem(alert: com.aarav.geowav.data.model.GeoAlert, isDarkThemeEnabled: B
 
     Card(
         shape = RoundedCornerShape(16.dp),
-        modifier = Modifier.fillMaxWidth().padding(vertical = 0.dp),
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 0.dp),
         colors = CardDefaults.cardColors(
             containerColor = if (isDarkThemeEnabled) {
                 if (isEnter) Color(0xFF00513f) else Color(0xFF723339)
@@ -1292,7 +1294,9 @@ fun AlertItem(alert: com.aarav.geowav.data.model.GeoAlert, isDarkThemeEnabled: B
 
 @Composable
 fun ProfileCard(
-    avatar: String?,
+    plan: UserPlan,
+    avatar: Uri,
+    currentUser: User?,
     userName: String?,
     modifier: Modifier = Modifier,
     isDarkThemeEnabled: Boolean
@@ -1336,16 +1340,34 @@ fun ProfileCard(
             }
 
 
-            val imageUrl = remember(avatar, isDarkThemeEnabled) {
-                if (avatar.isNullOrBlank()) {
+//            val imageUrl = remember(avatar, isDarkThemeEnabled) {
+//                if (avatar.isNullOrBlank()) {
+//                    if (isDarkThemeEnabled) {
+//                        "https://storage.googleapis.com/geowav-bucket-1/user_dark_theme.svg"
+//                    } else {
+//                        "https://storage.googleapis.com/geowav-bucket-1/user_light_theme.svg"
+//                    }
+//                } else {
+//                    avatar
+//                }
+//            }
+
+
+            val imageUrl = when {
+                !avatar.toString().isBlank() && !currentUser?.avatar.isNullOrBlank() ->
+                    currentUser.avatar
+
+                avatar.toString().isBlank() && !currentUser?.avatar.isNullOrBlank() ->
+                    currentUser.avatar
+
+                avatar.toString().isBlank() && currentUser?.avatar.isNullOrBlank() ->
                     if (isDarkThemeEnabled) {
                         "https://storage.googleapis.com/geowav-bucket-1/user_dark_theme.svg"
                     } else {
                         "https://storage.googleapis.com/geowav-bucket-1/user_light_theme.svg"
                     }
-                } else {
-                    avatar
-                }
+
+                else -> avatar
             }
 
             val context = LocalContext.current
@@ -1355,20 +1377,36 @@ fun ProfileCard(
                 }
                 .build()
 
-            Surface(
-                shape = CircleShape,
-                modifier = Modifier.size(84.dp),
-                color = Color.White
-            ) {
-                AsyncImage(
-                    model = imageUrl,
-                    contentDescription = "User avatar",
-                    imageLoader = imageLoader,
-                    placeholder = painterResource(R.drawable.user),
-                    contentScale = ContentScale.Crop,
-                    modifier = Modifier.size(84.dp)
-                )
+            val badge = SubscriptionHelper.getPlanBadge(plan)
+
+            Box() {
+                Surface(
+                    shape = CircleShape,
+                    modifier = Modifier.size(84.dp),
+                    color = Color.White
+                ) {
+                    AsyncImage(
+                        model = imageUrl,
+                        contentDescription = "User avatar",
+                        imageLoader = imageLoader,
+                        placeholder = painterResource(R.drawable.user),
+                        contentScale = ContentScale.Crop,
+                        modifier = Modifier.size(84.dp)
+                    )
+                }
+
+                badge?.let {
+                    Icon(
+                        painter = painterResource(badge),
+                        contentDescription = "badge",
+                        tint = Color.Unspecified,
+                        modifier = Modifier
+                            .size(24.dp)
+                            .align(Alignment.BottomEnd)
+                    )
+                }
             }
+
 
         }
     }

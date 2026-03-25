@@ -81,7 +81,7 @@ dependencies {
 
     // Firebase
     implementation("com.google.firebase:firebase-auth")
-
+    implementation("com.google.firebase:firebase-storage")
     implementation("com.google.firebase:firebase-config-ktx")
 
 //    implementation("com.google.firebase:firebase-analytics")

@@ -1,7 +1,6 @@
 package com.aarav.geowav.presentation.auth
 
 import android.app.Activity
-import android.widget.Toast
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -25,7 +24,6 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ContainedLoadingIndicator
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.Icon
@@ -62,13 +60,12 @@ import androidx.compose.ui.window.Dialog
 import com.aarav.geowav.R
 import com.aarav.geowav.presentation.components.MyAlertDialog
 import com.aarav.geowav.presentation.theme.manrope
-import com.aarav.geowav.presentation.theme.sora
 
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Preview(showBackground = true)
 @Composable
 fun LoginScreen(
-    loginVM: LoginVM, navigateToMap: () -> Unit, navigateToSignUp: () -> Unit
+    loginVM: LoginVM, navigateToHome: () -> Unit, navigateToSignUp: () -> Unit
 ) {
 
     val context = LocalContext.current
@@ -104,8 +101,13 @@ fun LoginScreen(
             })
         }
 
-        LaunchedEffect(uiState.isSignInSuccessful) {
-            if (uiState.isSignInSuccessful) navigateToMap()
+        LaunchedEffect(Unit) {
+            loginVM.events.collect { event ->
+                when (event) {
+                    is LoginEvent.NavigateToHome -> navigateToHome()
+                    is LoginEvent.ShowError -> loginVM.showError(event.message)
+                }
+            }
         }
 
         MyAlertDialog(
@@ -159,7 +161,7 @@ fun LoginScreen(
                         }
                     }, shape = RoundedCornerShape(12.dp), colors = CardDefaults.cardColors(
                     containerColor = MaterialTheme.colorScheme.inverseSurface
-                    ), elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
+                ), elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
             ) {
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
@@ -201,12 +203,14 @@ fun LoginScreen(
             TextField(
                 value = uiState.email, onValueChange = { loginVM.updateEmail(it) }, label = {
                     Text(
-                        "Email", fontFamily = manrope, color = MaterialTheme.colorScheme.inverseSurface
+                        "Email",
+                        fontFamily = manrope,
+                        color = MaterialTheme.colorScheme.inverseSurface
                     )
                 },
                 isError = uiState.emailError != null,
                 supportingText = {
-                    if(uiState.emailError != null){
+                    if (uiState.emailError != null) {
                         Text(
                             text = uiState.emailError.toString(),
                             style = TextStyle(
@@ -248,7 +252,8 @@ fun LoginScreen(
 
             TextField(
                 value = uiState.password,
-                onValueChange = { loginVM.updatePassword(it) },  visualTransformation = if (uiState.isPasswordVisible)
+                onValueChange = { loginVM.updatePassword(it) },
+                visualTransformation = if (uiState.isPasswordVisible)
                     VisualTransformation.None
                 else
                     PasswordVisualTransformation(),
@@ -286,7 +291,7 @@ fun LoginScreen(
                 },
                 isError = uiState.passwordError != null,
                 supportingText = {
-                    if(uiState.passwordError != null){
+                    if (uiState.passwordError != null) {
                         Text(
                             text = uiState.passwordError.toString(),
                             style = TextStyle(
@@ -313,13 +318,16 @@ fun LoginScreen(
                 modifier = Modifier
                     .fillMaxWidth()
                     .focusRequester(passwordFocusRequester)
-                    .padding(), leadingIcon = {
+                    .padding(),
+                leadingIcon = {
                     Icon(
                         painter = painterResource(R.drawable.password),
                         contentDescription = "password icon",
                         modifier = Modifier.size(24.dp)
                     )
-                }, singleLine = true, colors = TextFieldDefaults.colors(
+                },
+                singleLine = true,
+                colors = TextFieldDefaults.colors(
                     focusedContainerColor = MaterialTheme.colorScheme.surfaceContainer,
                     unfocusedContainerColor = MaterialTheme.colorScheme.surfaceContainer,
                     focusedIndicatorColor = MaterialTheme.colorScheme.primary,
@@ -327,7 +335,8 @@ fun LoginScreen(
                     focusedLabelColor = MaterialTheme.colorScheme.primary,
                     unfocusedLabelColor = Color.DarkGray,
                     cursorColor = MaterialTheme.colorScheme.primary
-                ), shape = RoundedCornerShape(12.dp)
+                ),
+                shape = RoundedCornerShape(12.dp)
             )
 
             Spacer(modifier = Modifier.height(16.dp))
@@ -381,7 +390,6 @@ fun LoginScreen(
                 TextButton(
                     onClick = {
                         navigateToSignUp()
-                        Toast.makeText(context, "Clicked", Toast.LENGTH_LONG).show()
                     }
                 ) {
                     Text(

@@ -35,8 +35,6 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.SnackbarHost
-import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -71,6 +69,7 @@ import com.aarav.geowav.data.model.UpgradeContext
 import com.aarav.geowav.data.model.UserPlan
 import com.aarav.geowav.presentation.components.DeleteDialog
 import com.aarav.geowav.presentation.components.CustomBottomSheet
+import com.aarav.geowav.presentation.components.SnackbarManager
 import com.aarav.geowav.presentation.components.UpgradeBottomSheetContent
 import com.aarav.geowav.presentation.locationsharing.itemShape
 import com.aarav.geowav.presentation.subscription.SubscriptionViewModel
@@ -88,8 +87,6 @@ fun CircleScreen(
     val uiState by viewModel.uiState.collectAsState()
 
     var showDeleteDialog by remember { mutableStateOf(false) }
-
-    val snackbarHostState = remember { SnackbarHostState() }
 
     val plan by subscriptionVM.userPlan.collectAsState()
 
@@ -117,16 +114,16 @@ fun CircleScreen(
         viewModel.events.collect { event ->
             when (event) {
                 CircleUiEvent.InviteSent ->
-                    snackbarHostState.showSnackbar("Invite sent")
+                    SnackbarManager.showMessage("Invite sent")
 
                 is CircleUiEvent.ShowError ->
-                    snackbarHostState.showSnackbar(event.message)
+                    SnackbarManager.showMessage(event.message)
 
                 is CircleUiEvent.InviteAccepted ->
-                    snackbarHostState.showSnackbar("Invite Accepted")
+                    SnackbarManager.showMessage("Invite Accepted")
 
                 is CircleUiEvent.MemberDeleted ->
-                    snackbarHostState.showSnackbar("Member deleted")
+                    SnackbarManager.showMessage("Member deleted")
 
                 is CircleUiEvent.ShowUpgrade ->
                     upgradeContext = event.context
@@ -168,7 +165,6 @@ fun CircleScreen(
         },
         contentWindowInsets = WindowInsets(0, 0, 0, 0),
         containerColor = MaterialTheme.colorScheme.background,
-        snackbarHost = { SnackbarHost(snackbarHostState, Modifier.padding(bottom = 36.dp)) }
     ) { padding ->
         when {
             uiState.isLoading -> {

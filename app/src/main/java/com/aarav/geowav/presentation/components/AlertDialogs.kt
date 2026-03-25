@@ -38,7 +38,6 @@ import androidx.compose.ui.window.DialogProperties
 import com.aarav.geowav.R
 import com.aarav.geowav.data.model.CircleMember
 import com.aarav.geowav.presentation.theme.manrope
-import com.aarav.geowav.presentation.theme.sora
 import com.google.accompanist.permissions.ExperimentalPermissionsApi
 import com.google.accompanist.permissions.isGranted
 import com.google.accompanist.permissions.rememberPermissionState
@@ -307,7 +306,7 @@ fun AboutDialog(
 ) {
     if (showAboutDialog) {
         AlertDialog(
-            containerColor = MaterialTheme.colorScheme.primaryFixed,
+            containerColor = MaterialTheme.colorScheme.primaryContainer,
             modifier = modifier,
             onDismissRequest = onConfirmClick,
             confirmButton = {
@@ -315,8 +314,8 @@ fun AboutDialog(
                     onClick = onConfirmClick,
                     modifier = Modifier.fillMaxWidth(),
                     colors = ButtonDefaults.buttonColors(
-                        containerColor = MaterialTheme.colorScheme.onPrimaryFixed,
-                        contentColor = MaterialTheme.colorScheme.primaryFixed
+                        containerColor = MaterialTheme.colorScheme.primary,
+                        contentColor = MaterialTheme.colorScheme.onPrimary
                     )
                 ) {
                     Text(confirmButtonText, fontFamily = manrope)
@@ -328,7 +327,7 @@ fun AboutDialog(
                     fontFamily = manrope,
                     textAlign = TextAlign.Center,
                     fontSize = 12.sp,
-                    color = MaterialTheme.colorScheme.onPrimaryFixed,
+                    color = MaterialTheme.colorScheme.onPrimaryContainer,
                     modifier = Modifier.fillMaxWidth()
                 )
             },
@@ -336,7 +335,7 @@ fun AboutDialog(
                 Text(
                     text = title,
                     fontFamily = manrope,
-                    color = MaterialTheme.colorScheme.onPrimaryFixed,
+                    color = MaterialTheme.colorScheme.onPrimaryContainer,
                     fontSize = 16.sp,
                     fontWeight = FontWeight.SemiBold
                 )
@@ -366,7 +365,7 @@ fun LocationPermissionDialog(
 ) {
     if (showDialog) {
         AlertDialog(
-            containerColor = MaterialTheme.colorScheme.primaryFixed,
+            containerColor = MaterialTheme.colorScheme.secondaryContainer,
             modifier = modifier,
             onDismissRequest = onConfirmClick,
             confirmButton = {
@@ -374,8 +373,8 @@ fun LocationPermissionDialog(
                     onClick = onConfirmClick,
                     modifier = Modifier.fillMaxWidth(),
                     colors = ButtonDefaults.buttonColors(
-                        containerColor = MaterialTheme.colorScheme.onPrimaryFixed,
-                        contentColor = MaterialTheme.colorScheme.primaryFixed
+                        containerColor = MaterialTheme.colorScheme.secondary,
+                        contentColor = MaterialTheme.colorScheme.onSecondary
                     )
                 ) {
                     Text(
@@ -388,7 +387,7 @@ fun LocationPermissionDialog(
                 Text(
                     text = "Location access required",
                     fontFamily = manrope,
-                    color = MaterialTheme.colorScheme.onPrimaryFixed,
+                    color = MaterialTheme.colorScheme.onSecondaryContainer,
                     fontSize = 16.sp,
                     fontWeight = FontWeight.SemiBold
                 )
@@ -399,20 +398,22 @@ fun LocationPermissionDialog(
                     fontFamily = manrope,
                     textAlign = TextAlign.Center,
                     fontSize = 12.sp,
-                    color = MaterialTheme.colorScheme.onPrimaryFixed,
+                    color = MaterialTheme.colorScheme.onSecondaryContainer,
                     modifier = Modifier.fillMaxWidth()
                 )
             },
             icon = {
                 Surface(
-                    color = MaterialTheme.colorScheme.onPrimaryFixed,
+                    color = MaterialTheme.colorScheme.secondary,
                     shape = CircleShape
                 ) {
                     Icon(
                         painter = painterResource(R.drawable.map_pin),
                         contentDescription = "location icon",
-                        tint = MaterialTheme.colorScheme.primaryFixed,
-                        modifier = Modifier.size(56.dp).padding(8.dp)
+                        tint = MaterialTheme.colorScheme.onSecondary,
+                        modifier = Modifier
+                            .size(56.dp)
+                            .padding(8.dp)
                     )
                 }
             }
@@ -428,7 +429,7 @@ fun TermsAndConditionsDialog(
 ) {
     if (showDialog) {
         AlertDialog(
-            containerColor = MaterialTheme.colorScheme.primaryFixed,
+            containerColor = MaterialTheme.colorScheme.tertiaryContainer,
             modifier = modifier,
             onDismissRequest = onAcceptClick,
             confirmButton = {
@@ -436,8 +437,8 @@ fun TermsAndConditionsDialog(
                     onClick = onAcceptClick,
                     modifier = Modifier.fillMaxWidth(),
                     colors = ButtonDefaults.buttonColors(
-                        containerColor = MaterialTheme.colorScheme.onPrimaryFixed,
-                        contentColor = MaterialTheme.colorScheme.primaryFixed
+                        containerColor = MaterialTheme.colorScheme.tertiary,
+                        contentColor = MaterialTheme.colorScheme.onTertiary
                     )
                 ) {
                     Text(
@@ -450,31 +451,33 @@ fun TermsAndConditionsDialog(
                 Text(
                     text = "Terms & Conditions",
                     fontFamily = manrope,
-                    color = MaterialTheme.colorScheme.onPrimaryFixed,
+                    color = MaterialTheme.colorScheme.onTertiaryContainer,
                     fontSize = 16.sp,
                     fontWeight = FontWeight.SemiBold
                 )
             },
             text = {
                 Text(
-                    text = "By continuing, you agree to GeoWav’s Terms & Conditions and Privacy Policy. GeoWav uses location data to provide safety alerts and location-based features.",
+                    text = "By continuing, you agree to GeoWav's Terms & Conditions and Privacy Policy. GeoWav uses location data to provide safety alerts and location-based features.",
                     fontFamily = manrope,
                     textAlign = TextAlign.Center,
                     fontSize = 12.sp,
-                    color = MaterialTheme.colorScheme.onPrimaryFixed,
+                    color = MaterialTheme.colorScheme.onTertiaryContainer,
                     modifier = Modifier.fillMaxWidth()
                 )
             },
             icon = {
                 Surface(
-                    color = MaterialTheme.colorScheme.onPrimaryFixed,
+                    color = MaterialTheme.colorScheme.tertiary,
                     shape = CircleShape
                 ) {
                     Image(
                         painter = painterResource(R.drawable.files),
                         contentDescription = "terms icon",
-                        colorFilter = ColorFilter.tint(MaterialTheme.colorScheme.primaryFixed),
-                        modifier = Modifier.size(56.dp).padding(8.dp)
+                        colorFilter = ColorFilter.tint(MaterialTheme.colorScheme.onTertiary),
+                        modifier = Modifier
+                            .size(56.dp)
+                            .padding(8.dp)
                     )
                 }
             }
@@ -552,83 +555,6 @@ fun EmergencyShareDialog(
                         painter = painterResource(R.drawable.emergency),
                         contentDescription = "emergency icon",
                         colorFilter = ColorFilter.tint(MaterialTheme.colorScheme.onError),
-                        modifier = Modifier
-                            .size(34.dp)
-                            .padding(4.dp)
-                    )
-                }
-            }
-        )
-    }
-}
-
-@Preview(showBackground = true)
-@Composable
-fun MemberAlertPreview() {
-    val member = CircleMember(
-        id = "1",
-        alias = "Test",
-        selected = false,
-        receiverEmail = "test@gmail.com",
-        addedAt = System.currentTimeMillis(),
-        profileName = "Test"
-    )
-
-    MemberAlertDialog(
-        true,
-        onDismiss = {},
-        member
-    )
-}
-
-@Composable
-fun MemberAlertDialog(
-    showDialog: Boolean,
-    onDismiss: () -> Unit,
-    member: CircleMember
-) {
-    if (showDialog) {
-        AlertDialog(
-            modifier = Modifier.fillMaxWidth(),
-            containerColor = MaterialTheme.colorScheme.errorContainer,
-            onDismissRequest = onDismiss,
-            title = {
-                Text(
-                    text = "Emergency Live Location Sharing",
-                    fontFamily = manrope,
-                    color = MaterialTheme.colorScheme.onErrorContainer,
-                    fontSize = 16.sp,
-                    fontWeight = FontWeight.SemiBold
-                )
-            },
-            text = {
-                MemberInfoCard(member)
-            },
-            confirmButton = {
-                TextButton(
-                    onClick = onDismiss,
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = MaterialTheme.colorScheme.secondary,
-                        contentColor = MaterialTheme.colorScheme.onSecondary
-                    )
-                ) {
-                    Text(
-                        text = "Close",
-                        fontFamily = manrope,
-                        fontSize = 12.sp,
-                        fontWeight = FontWeight.SemiBold
-                    )
-                }
-            },
-            icon = {
-                Surface(
-                    color = MaterialTheme.colorScheme.surface,
-                    shape = CircleShape
-                ) {
-                    Image(
-                        painter = painterResource(R.drawable.info),
-                        contentDescription = "emergency icon",
-                        colorFilter = ColorFilter.tint(MaterialTheme.colorScheme.onSurface),
                         modifier = Modifier
                             .size(34.dp)
                             .padding(4.dp)

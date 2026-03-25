@@ -149,7 +149,7 @@ fun getPlanContent(plan: UserPlan): PlanContent {
             features = listOf(
                 "Unlimited live location sharing",
                 "Yesterday timeline access",
-                "Up to 10 places",
+                "Up to 5 places",
                 "Up to 5 connections",
                 "Improved location accuracy"
             ),
@@ -161,7 +161,7 @@ fun getPlanContent(plan: UserPlan): PlanContent {
             description = "Get advanced controls and deeper insights.",
             features = listOf(
                 "Full timeline (7 days + custom range)",
-                "Unlimited places & connections",
+                "Unlimited places & up to 10 connections",
                 "Advanced insights & stay points",
                 "Complete playback controls",
                 "All Premium features included"

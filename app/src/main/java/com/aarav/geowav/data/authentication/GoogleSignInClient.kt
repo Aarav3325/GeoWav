@@ -10,6 +10,7 @@ import androidx.credentials.CustomCredential
 import androidx.credentials.GetCredentialRequest
 import androidx.credentials.GetCredentialResponse
 import com.aarav.geowav.R
+import com.aarav.geowav.core.utils.UploadResult
 import com.aarav.geowav.core.utils.encodeEmail
 import com.aarav.geowav.data.model.User
 import com.google.android.libraries.identity.googleid.GetGoogleIdOption
@@ -18,6 +19,7 @@ import com.google.android.libraries.identity.googleid.GoogleIdTokenParsingExcept
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.GoogleAuthProvider
 import com.google.firebase.database.FirebaseDatabase
+import com.google.firebase.storage.FirebaseStorage
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.channels.awaitClose
@@ -27,8 +29,10 @@ import kotlinx.coroutines.tasks.await
 import javax.inject.Inject
 
 class GoogleSignInClient @Inject constructor(
-    @ApplicationContext val context: Context, val firebaseAuth: FirebaseAuth,
-    val firebaseDatabase: FirebaseDatabase
+    @ApplicationContext val context: Context,
+    val firebaseAuth: FirebaseAuth,
+    val firebaseDatabase: FirebaseDatabase,
+    val firebaseStorage: FirebaseStorage
 ) {
     private val tag = "GoogleSignInClient"
 
@@ -265,6 +269,49 @@ class GoogleSignInClient @Inject constructor(
             Log.e("Provider", "Error fetching username", e)
             ""
         }
+    }
+
+    fun uploadUserAvatar(uri: Uri): Flow<UploadResult> = callbackFlow {
+        val uid = getUserId()
+        if (uid.isEmpty()) {
+            trySend(UploadResult.Error("User not logged in"))
+            close()
+            return@callbackFlow
+        }
+
+        val storageRef = firebaseStorage.reference
+            .child("avatars/$uid")
+
+        val uploadTask = storageRef.putFile(uri)
+
+        uploadTask.addOnProgressListener { snapshot ->
+            val progress = snapshot.bytesTransferred.toFloat() / snapshot.totalByteCount
+            trySend(UploadResult.Progress(progress))
+        }
+
+        uploadTask.addOnSuccessListener {
+            storageRef.downloadUrl.addOnSuccessListener { uri ->
+                trySend(UploadResult.Success(uri.toString()))
+                close()
+                storeAvatar(uri.toString())
+            }
+        }
+
+        uploadTask.addOnFailureListener {
+            trySend(UploadResult.Error(it.message ?: "Upload failed"))
+            close()
+        }
+
+        awaitClose { uploadTask.cancel() }
+    }
+    fun storeAvatar(url: String) {
+        val uid = getUserId()
+
+        if(uid.isEmpty()) return
+
+        userReference.child(uid)
+            .child("avatar")
+            .setValue(url)
     }
 
 

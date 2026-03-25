@@ -57,7 +57,7 @@ object FeatureAccess {
     fun maxConnections(userPlan: UserPlan): Int {
         return when (userPlan) {
             UserPlan.FREE -> 1
-            UserPlan.PREMIUM -> 2
+            UserPlan.PREMIUM -> 5
             UserPlan.PRO -> 10
         }
     }

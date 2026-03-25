@@ -31,8 +31,6 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.SnackbarHost
-import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Switch
 import androidx.compose.material3.SwitchDefaults
@@ -66,6 +64,7 @@ import com.aarav.geowav.data.model.UpgradeReason
 import com.aarav.geowav.data.model.UserPlan
 import com.aarav.geowav.presentation.components.EmergencyShareDialog
 import com.aarav.geowav.presentation.components.CustomBottomSheet
+import com.aarav.geowav.presentation.components.SnackbarManager
 import com.aarav.geowav.presentation.components.UpgradeBottomSheetContent
 import com.aarav.geowav.presentation.subscription.SubscriptionViewModel
 import com.aarav.geowav.presentation.theme.manrope
@@ -100,7 +99,7 @@ fun LocationSharingScreen(
         }
     }
 
-    val snackbarHostState = remember { SnackbarHostState() }
+
 
     LaunchedEffect(Unit) {
         viewModel.loadLovedOnes()
@@ -142,7 +141,7 @@ fun LocationSharingScreen(
         viewModel.events.collect { event ->
             when (event) {
                 is LiveLocationUiEvent.ShowError -> {
-                    snackbarHostState.showSnackbar(event.message)
+                    SnackbarManager.showMessage(event.message)
                 }
 
                 is LiveLocationUiEvent.SessionLimitReached -> {
@@ -171,7 +170,6 @@ fun LocationSharingScreen(
         },
         contentWindowInsets = WindowInsets(0, 0, 0, 0),
         containerColor = MaterialTheme.colorScheme.background,
-        snackbarHost = { SnackbarHost(snackbarHostState) }
     ) { padding ->
         LocationSharingContent(
             modifier = Modifier.padding(padding),
