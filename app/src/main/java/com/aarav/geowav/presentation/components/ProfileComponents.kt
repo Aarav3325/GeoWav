@@ -1,9 +1,8 @@
 package com.aarav.geowav.presentation.components
 
-import android.net.Uri
-import android.util.Log
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -32,7 +31,6 @@ import androidx.compose.ui.unit.dp
 import coil.ImageLoader
 import coil.compose.AsyncImage
 import coil.decode.SvgDecoder
-import coil.request.ImageRequest
 import com.aarav.geowav.R
 import com.aarav.geowav.data.model.User
 import com.aarav.geowav.data.model.UserPlan
@@ -69,7 +67,6 @@ fun ProfileCard(
     val stableAvatar = remember(currentUser?.avatar) {
         currentUser?.avatar
     }
-
 
 
 //    val finalAvatar = if (userAvatar.toString().isEmpty()) {
@@ -116,30 +113,55 @@ fun ProfileCard(
                 .padding(16.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Surface(
-                shape = CircleShape,
-                color = Color.White,
+            Box(
                 modifier = Modifier
-                    .size(84.dp)
-                    .clip(CircleShape)
-                    .clickable {
-                        onAvatarClick()
-                    }
             ) {
-//                AvatarImage(
-//                    avatarUrl = imageUrl,
-//                    isUploading = isUploading
-//                )
-                AsyncImage(
-                    model = imageUrl,
-                    contentDescription = "User avatar",
-                    imageLoader = imageLoader,
-                    placeholder = painterResource(R.drawable.user),
-                    error = painterResource(R.drawable.user),
-                    fallback = painterResource(R.drawable.user),
-                    contentScale = ContentScale.Crop,
-                    modifier = Modifier,
-                )
+
+                Surface(
+                    shape = CircleShape,
+                    color = Color.White,
+                    modifier = Modifier
+                        .size(84.dp)
+                        .clip(CircleShape)
+                        .clickable(
+                            enabled = !isUploading
+                        ) {
+                            onAvatarClick()
+                        }
+                ) {
+                    AsyncImage(
+                        model = imageUrl,
+                        contentDescription = "User avatar",
+                        imageLoader = imageLoader,
+                        placeholder = painterResource(R.drawable.user),
+                        error = painterResource(R.drawable.user),
+                        fallback = painterResource(R.drawable.user),
+                        contentScale = ContentScale.Crop,
+                        modifier = Modifier,
+                    )
+
+                }
+
+                if(!isUploading) {
+                    Surface(
+                        shape = CircleShape,
+                        color = MaterialTheme.colorScheme.tertiaryContainer,
+                        modifier = Modifier
+                            .size(24.dp)
+                            .align(Alignment.BottomEnd)
+                            .clip(CircleShape)
+                            .clickable {
+                                onAvatarClick()
+                            }
+                    ) {
+                        Icon(
+                            painter = painterResource(R.drawable.camera),
+                            contentDescription = "camera",
+                            tint = MaterialTheme.colorScheme.onTertiaryContainer,
+                            modifier = Modifier.padding(4.dp)
+                        )
+                    }
+                }
 
                 if (isUploading) {
                     CircularProgressIndicator(

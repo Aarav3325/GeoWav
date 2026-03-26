@@ -18,6 +18,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -721,12 +722,12 @@ fun CurrentPlanCard(
 fun PaywallHeader() {
     Row(
         modifier = Modifier
-            .fillMaxWidth()
-            .padding(top = 8.dp),
-        horizontalArrangement = Arrangement.SpaceBetween,
+            .fillMaxWidth(),
         verticalAlignment = Alignment.Top
     ) {
-        Column() {
+        Column(
+            modifier = Modifier.weight(1f)
+        ) {
             Text(
                 text = "Unlock smarter\ntracking",
                 color = MaterialTheme.colorScheme.onSurface,
@@ -746,6 +747,8 @@ fun PaywallHeader() {
                 lineHeight = 20.sp
             )
         }
+
+        Spacer(Modifier.width(12.dp))
 
         Surface(
             shape = CircleShape,

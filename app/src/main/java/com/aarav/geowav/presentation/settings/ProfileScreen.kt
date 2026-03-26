@@ -12,6 +12,7 @@ import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
 
@@ -25,7 +26,9 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.ContainedLoadingIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.FilterChipDefaults
 import androidx.compose.material3.Icon
@@ -76,7 +79,9 @@ import com.google.accompanist.permissions.rememberPermissionState
 
 enum class ThemeMode { SYSTEM, LIGHT, DARK }
 
-@OptIn(ExperimentalMaterial3Api::class, ExperimentalPermissionsApi::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalPermissionsApi::class,
+    ExperimentalMaterial3ExpressiveApi::class
+)
 @Composable
 fun ProfileScreen(
     isDarkThemeEnabled: Boolean,
@@ -213,128 +218,144 @@ fun ProfileScreen(
             )
         }
     ) {
-        Column(
-            modifier = Modifier
-                .padding(it)
-                .fillMaxSize()
-                .verticalScroll(rememberScrollState())
-                .background(MaterialTheme.colorScheme.background)
-                .padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(24.dp)
-        ) {
 
-            ProfileCard(
-                uiState.isUploading,
-                uiState.uploadProgress,
-                isDarkThemeEnabled,
-                plan,
-                uiState.currentUser,
-                uiState.userAvatar,
-                onAvatarClick = {
-                    launcher.launch("image/**")
+        when {
+            uiState.currentUser == null -> {
+                Box(
+                    Modifier.fillMaxSize(),
+                    contentAlignment = Alignment.Center
+                ) {
+                    ContainedLoadingIndicator()
                 }
-            )
-
-            Section("Subscription") {
-                CurrentPlanCard(subscriptionState)
             }
 
-            Section(title = "Usage Overview") {
-                ConnectionUsageCard(
-                    uiState.lovedOnes.size,
-                    plan,
-                    false,
-                    Modifier.padding(bottom = 8.dp)
-                )
+            else -> {
+                Column(
+                    modifier = Modifier
+                        .padding(it)
+                        .fillMaxSize()
+                        .verticalScroll(rememberScrollState())
+                        .background(MaterialTheme.colorScheme.background)
+                        .padding(16.dp),
+                    verticalArrangement = Arrangement.spacedBy(24.dp)
+                ) {
 
-                PlacesUsageCard(
-                    uiState.placesList.size,
-                    plan,
-                    false,
-                    Modifier.padding(top = 8.dp)
-                )
-            }
+                    ProfileCard(
+                        uiState.isUploading,
+                        uiState.uploadProgress,
+                        isDarkThemeEnabled,
+                        plan,
+                        uiState.currentUser,
+                        uiState.userAvatar,
+                        onAvatarClick = {
+                            launcher.launch("image/**")
+                        }
+                    )
 
-            Section(title = "Location") {
-                SettingItemNew(
-                    title = "Location Access",
-                    subtitle = "Manage location permission",
-                    onClick = {
-                        openAppSettings(context, Settings.ACTION_LOCATION_SOURCE_SETTINGS)
-                    },
-                    index = 0,
-                    count = 2,
-                )
-
-                TriggerTypeSelector(
-                    enabled = hasLocationPermission && notificationsEnabled,
-                    index = 1,
-                    count = 2
-                )
-            }
-
-            Section(title = "Appearance") {
-                ThemeSelector(
-                    index = 0,
-                    count = 1,
-                    selected = themeMode,
-                    onSelected = onThemeChange
-                )
-            }
-
-            Section(title = "Notifications") {
-                SwitchItem(
-                    title = "Enable Notifications",
-                    index = 0,
-                    count = 1,
-                    checked = uiState.notificationsEnabled,
-                    onCheckedChange = {
-                        openAppSettings(context, Settings.ACTION_APP_NOTIFICATION_SETTINGS)
+                    Section("Subscription") {
+                        CurrentPlanCard(subscriptionState)
                     }
-                )
-            }
 
-            Section(title = "About") {
-                SettingItemNew(
-                    title = "App Version",
-                    index = 0,
-                    count = 3,
-                    subtitle = uiState.appVersion,
-                    enabled = true
-                )
+                    Section(title = "Usage Overview") {
+                        ConnectionUsageCard(
+                            uiState.lovedOnes.size,
+                            plan,
+                            false,
+                            Modifier.padding(bottom = 8.dp)
+                        )
 
-                SettingItemNew(
-                    title = "About GeoWav",
-                    index = 1,
-                    count = 3,
-                    onClick = {
-                        showAboutDialog = true
+                        PlacesUsageCard(
+                            uiState.placesList.size,
+                            plan,
+                            false,
+                            Modifier.padding(top = 8.dp)
+                        )
                     }
-                )
 
-                SettingItemNew(
-                    title = "Terms & Privacy Policy",
-                    index = 2,
-                    count = 3,
-                    onClick = {
-                        tc = true
+                    Section(title = "Location") {
+                        SettingItemNew(
+                            title = "Location Access",
+                            subtitle = "Manage location permission",
+                            onClick = {
+                                openAppSettings(context, Settings.ACTION_LOCATION_SOURCE_SETTINGS)
+                            },
+                            index = 0,
+                            count = 2,
+                        )
+
+                        TriggerTypeSelector(
+                            enabled = hasLocationPermission && notificationsEnabled,
+                            index = 1,
+                            count = 2
+                        )
                     }
-                )
-            }
 
-            Section(title = "Account") {
-                SettingItemNew(
-                    title = "Logout",
-                    index = 0,
-                    count = 1,
-                    onClick = {
-                        profileVM.logout(onComplete = onLogout)
+                    Section(title = "Appearance") {
+                        ThemeSelector(
+                            index = 0,
+                            count = 1,
+                            selected = themeMode,
+                            onSelected = onThemeChange
+                        )
                     }
-                )
 
-                Spacer(modifier = Modifier.height(32.dp))
+                    Section(title = "Notifications") {
+                        SwitchItem(
+                            title = "Enable Notifications",
+                            index = 0,
+                            count = 1,
+                            checked = uiState.notificationsEnabled,
+                            onCheckedChange = {
+                                openAppSettings(context, Settings.ACTION_APP_NOTIFICATION_SETTINGS)
+                            }
+                        )
+                    }
+
+                    Section(title = "About") {
+                        SettingItemNew(
+                            title = "App Version",
+                            index = 0,
+                            count = 3,
+                            subtitle = uiState.appVersion,
+                            enabled = true
+                        )
+
+                        SettingItemNew(
+                            title = "About GeoWav",
+                            index = 1,
+                            count = 3,
+                            onClick = {
+                                showAboutDialog = true
+                            }
+                        )
+
+                        SettingItemNew(
+                            title = "Terms & Privacy Policy",
+                            index = 2,
+                            count = 3,
+                            onClick = {
+                                tc = true
+                            }
+                        )
+                    }
+
+                    Section(title = "Account") {
+                        SettingItemNew(
+                            title = "Logout",
+                            index = 0,
+                            count = 1,
+                            onClick = {
+                                profileVM.logout(onComplete = onLogout)
+                            }
+                        )
+
+                        Spacer(modifier = Modifier.height(32.dp))
+                    }
+                }
             }
         }
+
+
     }
 
 
