@@ -92,6 +92,7 @@ import kotlinx.coroutines.delay
 import com.aarav.geowav.core.utils.SubscriptionHelper
 import com.aarav.geowav.data.model.User
 import com.aarav.geowav.data.model.UserPlan
+import com.aarav.geowav.presentation.components.AvatarImage
 import com.aarav.geowav.presentation.components.SnackbarManager
 import com.aarav.geowav.presentation.subscription.SubscriptionViewModel
 
@@ -1295,12 +1296,13 @@ fun AlertItem(alert: com.aarav.geowav.data.model.GeoAlert, isDarkThemeEnabled: B
 @Composable
 fun ProfileCard(
     plan: UserPlan,
-    avatar: Uri,
+    avatar: String?,
     currentUser: User?,
     userName: String?,
     modifier: Modifier = Modifier,
     isDarkThemeEnabled: Boolean
 ) {
+    Log.i("HOME", "recompose")
     Card(
         modifier = modifier
             .fillMaxWidth()
@@ -1353,22 +1355,14 @@ fun ProfileCard(
 //            }
 
 
-            val imageUrl = when {
-                !avatar.toString().isBlank() && !currentUser?.avatar.isNullOrBlank() ->
-                    currentUser.avatar
-
-                avatar.toString().isBlank() && !currentUser?.avatar.isNullOrBlank() ->
-                    currentUser.avatar
-
-                avatar.toString().isBlank() && currentUser?.avatar.isNullOrBlank() ->
-                    if (isDarkThemeEnabled) {
+            val imageUrl =
+                currentUser?.avatar?.takeIf { it.isNotBlank() }
+                    ?: avatar.takeIf { !it.isNullOrBlank() }
+                    ?: if (isDarkThemeEnabled) {
                         "https://storage.googleapis.com/geowav-bucket-1/user_dark_theme.svg"
                     } else {
                         "https://storage.googleapis.com/geowav-bucket-1/user_light_theme.svg"
                     }
-
-                else -> avatar
-            }
 
             val context = LocalContext.current
             val imageLoader = ImageLoader.Builder(context)
@@ -1380,20 +1374,28 @@ fun ProfileCard(
             val badge = SubscriptionHelper.getPlanBadge(plan)
 
             Box() {
-                Surface(
-                    shape = CircleShape,
-                    modifier = Modifier.size(84.dp),
-                    color = Color.White
-                ) {
-                    AsyncImage(
-                        model = imageUrl,
-                        contentDescription = "User avatar",
-                        imageLoader = imageLoader,
-                        placeholder = painterResource(R.drawable.user),
-                        contentScale = ContentScale.Crop,
-                        modifier = Modifier.size(84.dp)
-                    )
-                }
+                AvatarImage(
+                    avatarUrl = imageUrl,
+                    isUploading = false,
+                    modifier = Modifier
+                        .size(84.dp)
+                        .clip(CircleShape)
+                        .background(Color.White)
+                )
+//                Surface(
+//                    shape = CircleShape,
+//                    modifier = Modifier.size(84.dp),
+//                    color = Color.White
+//                ) {
+//                    AsyncImage(
+//                        model = imageUrl,
+//                        contentDescription = "User avatar",
+//                        imageLoader = imageLoader,
+//                        placeholder = painterResource(R.drawable.user),
+//                        contentScale = ContentScale.Crop,
+//                        modifier = Modifier.size(84.dp)
+//                    )
+//                }
 
                 badge?.let {
                     Icon(

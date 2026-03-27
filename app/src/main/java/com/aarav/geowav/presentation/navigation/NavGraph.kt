@@ -27,8 +27,8 @@ import com.aarav.geowav.presentation.map.MapScreen
 import com.aarav.geowav.presentation.observe.ObserveScreen
 import com.aarav.geowav.presentation.onboard.OnboardingScreen
 import com.aarav.geowav.presentation.paywall.PaywallScreen
-import com.aarav.geowav.presentation.settings.ProfileScreen
-import com.aarav.geowav.presentation.settings.ThemeMode
+import com.aarav.geowav.presentation.profile.ProfileScreen
+import com.aarav.geowav.presentation.profile.ThemeMode
 import com.aarav.geowav.presentation.subscription.SubscriptionViewModel
 import com.aarav.geowav.presentation.timeline.TimelineMapPreview
 import com.aarav.geowav.presentation.timeline.TimelineScreen
@@ -227,7 +227,7 @@ fun AddNewPlaceScreen(
             navigateToYourPlaces = {
                 navController.navigate(NavRoute.YourPlaces.path) {
                     popUpTo(NavRoute.HomeScreen.path) {
-                        inclusive = true
+                        inclusive = false
                     }
                     launchSingleTop = true
                 }

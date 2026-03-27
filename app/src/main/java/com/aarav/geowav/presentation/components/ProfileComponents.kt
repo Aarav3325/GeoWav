@@ -1,5 +1,6 @@
 package com.aarav.geowav.presentation.components
 
+import android.util.Log
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -30,6 +31,9 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import coil.ImageLoader
 import coil.compose.AsyncImage
+import coil.compose.AsyncImagePainter
+import coil.compose.SubcomposeAsyncImage
+import coil.compose.SubcomposeAsyncImageContent
 import coil.decode.SvgDecoder
 import com.aarav.geowav.R
 import com.aarav.geowav.data.model.User
@@ -129,16 +133,21 @@ fun ProfileCard(
                             onAvatarClick()
                         }
                 ) {
-                    AsyncImage(
-                        model = imageUrl,
-                        contentDescription = "User avatar",
-                        imageLoader = imageLoader,
-                        placeholder = painterResource(R.drawable.user),
-                        error = painterResource(R.drawable.user),
-                        fallback = painterResource(R.drawable.user),
-                        contentScale = ContentScale.Crop,
-                        modifier = Modifier,
+                    AvatarImage(
+                        avatarUrl = imageUrl,
+                        isUploading = isUploading,
+                        modifier = Modifier.size(84.dp)
                     )
+//                    SubcomposeAsyncImage(
+//                        model = imageUrl,
+//                        contentDescription = null,
+//                        contentScale = ContentScale.Crop,
+//                        modifier = Modifier.size(84.dp),
+//                    ) {
+//                        val state = painter.state
+//
+//
+//                    }
 
                 }
 
@@ -215,17 +224,23 @@ fun ProfileCard(
 @Composable
 fun AvatarImage(
     avatarUrl: String?,
-    isUploading: Boolean
+    isUploading: Boolean,
+    modifier: Modifier = Modifier
 ) {
     AsyncImage(
         model = avatarUrl,
         contentDescription = null,
         placeholder = painterResource(R.drawable.user),
         error = painterResource(R.drawable.user),
-        contentScale = ContentScale.Crop
+        fallback = painterResource(R.drawable.user),
+        contentScale = ContentScale.Crop,
+        modifier = modifier
     )
+
 
     if (isUploading) {
         CircularProgressIndicator()
     }
+
+
 }

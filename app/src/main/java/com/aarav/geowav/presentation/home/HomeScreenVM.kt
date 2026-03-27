@@ -107,6 +107,7 @@ class HomeScreenVM @Inject constructor(
 
     init {
         fetchUser()
+        Log.i("HOME", "init called")
     }
 
     fun fetchUser() {
@@ -116,7 +117,7 @@ class HomeScreenVM @Inject constructor(
             _uiState.update {
                 it.copy(
                     currentUser = user,
-                    userAvatar = uri
+                    userAvatar = uri.toString()
                 )
             }
         }
@@ -416,6 +417,8 @@ class HomeScreenVM @Inject constructor(
     override fun onCleared() {
         super.onCleared()
         pathJob?.cancel()
+
+        Log.i("HOME", "cleared")
     }
 
     fun signOut() {
@@ -445,7 +448,7 @@ data class HomeScreenUiState(
     val speed: Float = 1f,
     val alertsList: List<GeoAlert> = emptyList(),
     val currentUser: User? = null,
-    val userAvatar: Uri = Uri.EMPTY,
+    val userAvatar: String? = null,
     val username: String? = null,
     val viewerState: ViewerLocationState? = ViewerLocationState.Blocked,
     val remainingTime: String? = null

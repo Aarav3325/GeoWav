@@ -14,7 +14,6 @@ import android.view.View
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
-import androidx.activity.result.contract.ActivityResultContracts
 import androidx.annotation.RequiresPermission
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.Crossfade
@@ -64,8 +63,8 @@ import com.aarav.geowav.presentation.components.SnackbarManager
 import com.aarav.geowav.presentation.navigation.BottomNavigationBar
 import com.aarav.geowav.presentation.navigation.NavGraph
 import com.aarav.geowav.presentation.navigation.NavRoute
-import com.aarav.geowav.presentation.settings.ThemeMode
-import com.aarav.geowav.presentation.settings.openAppSettings
+import com.aarav.geowav.presentation.profile.ThemeMode
+import com.aarav.geowav.presentation.profile.openAppSettings
 import com.aarav.geowav.presentation.subscription.SubscriptionViewModel
 import com.aarav.geowav.presentation.theme.GeoWavTheme
 import com.google.accompanist.permissions.ExperimentalPermissionsApi

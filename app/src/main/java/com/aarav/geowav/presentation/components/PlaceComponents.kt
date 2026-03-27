@@ -15,6 +15,8 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.AssistChip
+import androidx.compose.material3.AssistChipDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.FilterChip
@@ -58,7 +60,8 @@ fun GeofencePlaceCard(
         )
     ) {
         Column(
-            modifier = Modifier.fillMaxWidth()
+            modifier = Modifier
+                .fillMaxWidth()
                 .padding(16.dp)
         ) {
             Row(
@@ -124,11 +127,9 @@ fun GeofencePlaceCard(
 
 
             Column(
-                modifier = Modifier
-                    .fillMaxWidth(),
-                horizontalAlignment = Alignment.Start,
-                verticalArrangement = Arrangement.spacedBy(4.dp)
+                modifier = Modifier.fillMaxWidth(),
             ) {
+
                 Text(
                     text = place.address.toString(),
                     color = MaterialTheme.colorScheme.onSurface,
@@ -139,22 +140,73 @@ fun GeofencePlaceCard(
                     fontFamily = manrope,
                 )
 
-                Text(
-                    text = "${place.radius} m • Lat: ${
-                        place.latitude.toString().take(7)
-                    }, Lng: ${place.latitude.toString().take(7)}",
-                    color = MaterialTheme.colorScheme.onSurface,
-                    fontSize = 12.sp,
-                    fontWeight = FontWeight.Normal,
-                    fontFamily = manrope,
-                )
+                Row(
+                    horizontalArrangement = Arrangement.spacedBy(6.dp)
+                ) {
 
-                Text(
-                    text = place.addedOn,
-                    color = MaterialTheme.colorScheme.tertiary,
-                    fontSize = 12.sp,
-                    fontWeight = FontWeight.W600,
-                    fontFamily = manrope,
+                    AssistChip(
+                        onClick = {},
+                        colors = AssistChipDefaults.assistChipColors(
+                            containerColor = MaterialTheme.colorScheme.surfaceVariant
+                        ),
+                        label = {
+                            Text(
+                                text = "${place.radius} m",
+                                fontSize = 12.sp,
+                                fontWeight = FontWeight.Normal,
+                                fontFamily = manrope,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
+                    )
+
+                    AssistChip(
+                        onClick = {},
+                        colors = AssistChipDefaults.assistChipColors(
+                            containerColor = MaterialTheme.colorScheme.surfaceVariant
+                        ),
+                        label = {
+                            Text(
+                                text = "Lat: ${place.latitude.toString().take(7)}",
+                                fontSize = 12.sp,
+                                fontWeight = FontWeight.Normal,
+                                fontFamily = manrope,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
+                    )
+
+                    AssistChip(
+                        onClick = {},
+                        colors = AssistChipDefaults.assistChipColors(
+                            containerColor = MaterialTheme.colorScheme.surfaceVariant
+                        ),
+                        label = {
+                            Text(
+                                text = "Lng: ${place.longitude.toString().take(7)}",
+                                fontSize = 12.sp,
+                                fontWeight = FontWeight.Normal,
+                                fontFamily = manrope,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
+                    )
+                }
+
+                AssistChip(
+                    onClick = {},
+                    colors = AssistChipDefaults.assistChipColors(
+                        containerColor = MaterialTheme.colorScheme.tertiaryContainer
+                    ),
+                    label = {
+                        Text(
+                            text = "Added on: " + place.addedOn,
+                            fontSize = 12.sp,
+                            fontWeight = FontWeight.W600,
+                            fontFamily = manrope,
+                            color = MaterialTheme.colorScheme.onTertiaryContainer
+                        )
+                    }
                 )
             }
         }

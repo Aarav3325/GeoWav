@@ -2,6 +2,7 @@ package com.aarav.geowav.presentation.paywall
 
 import android.app.Activity
 import android.content.Intent
+import android.icu.util.LocaleData
 import android.util.Log
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -53,8 +54,12 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextDecoration
+import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.net.toUri
@@ -68,8 +73,8 @@ import com.aarav.geowav.data.model.UserSubscription
 import com.aarav.geowav.data.model.getPlanContent
 import com.aarav.geowav.presentation.components.CustomBottomSheet
 import com.aarav.geowav.presentation.components.PurchaseSuccessBottomSheet
-import com.aarav.geowav.presentation.components.UpgradeConfirmBottomSheet
 import com.aarav.geowav.presentation.components.SnackbarManager
+import com.aarav.geowav.presentation.components.UpgradeConfirmBottomSheet
 import com.aarav.geowav.presentation.subscription.SubscriptionEvents
 import com.aarav.geowav.presentation.subscription.SubscriptionViewModel
 import com.aarav.geowav.presentation.theme.manrope
@@ -88,7 +93,6 @@ data class PlanColors(
     val buttonTextColor: Color,
     val checkTint: Color,
 )
-
 
 @Composable
 fun freePlanColors() = PlanColors(
@@ -128,6 +132,7 @@ fun PaywallScreen(
     back: () -> Unit
 ) {
 
+
     val plan by subscriptionViewModel.userPlan.collectAsState()
     val purchaseResult by subscriptionViewModel.purchaseResult.collectAsState()
     val subscriptionState by subscriptionViewModel.subscriptionState.collectAsState()
@@ -136,8 +141,6 @@ fun PaywallScreen(
 
     var showUpgradeConfirm by remember { mutableStateOf(false) }
     var selectedPlan by remember { mutableStateOf<UserPlan?>(null) }
-
-
 
 
     val context = LocalContext.current
@@ -178,7 +181,7 @@ fun PaywallScreen(
                 plan = selectedPlan!!,
                 onConfirm = {
                     showUpgradeConfirm = false
-                    if(selectedPlan != null && productId != null) {
+                    if (selectedPlan != null && productId != null) {
                         activity?.let {
                             subscriptionViewModel.launchBillingFlow(
                                 activity = it,
@@ -314,29 +317,7 @@ fun PaywallScreen(
 
                 CurrentPlanCard(subscriptionState)
 
-
                 Spacer(Modifier.height(16.dp))
-
-//
-//                PlanCard(
-//                    title = "GeoWav Free",
-//                    price = "₹0",
-//                    billingLabel = "/forever",
-//                    features = listOf(
-//                        "Basic live tracking",
-//                        "Today's history only",
-//                        "Up to 2 saved places",
-//                        "Connect with 1 person"
-//                    ),
-//                    isFeatured = false,
-//                    isCurrentPlan = true,
-//                    buttonText = "Current plan",
-//                    colors = freePlanColors(),
-//                    onClick = {}
-//                )
-//
-//                Spacer(Modifier.height(12.dp))
-
 
                 if (availablePlans.contains(UserPlan.PREMIUM)) {
                     PlanCard(
@@ -366,6 +347,7 @@ fun PaywallScreen(
                         title = "GeoWav Pro",
                         price = "₹199",
                         billingLabel = "/month",
+                        offerPrice = if (plan == UserPlan.PREMIUM) "₹149" else null,
                         features = listOf(
                             "Everything in Premium",
                             "Full location history",
@@ -775,6 +757,7 @@ fun PlanCard(
     title: String,
     price: String,
     billingLabel: String,
+    offerPrice: String? = null,
     features: List<String>,
     isFeatured: Boolean,
     isCurrentPlan: Boolean = false,
@@ -850,7 +833,23 @@ fun PlanCard(
                         verticalAlignment = Alignment.Bottom
                     ) {
                         Text(
-                            text = price,
+                            text = if (offerPrice != null) {
+                                buildAnnotatedString {
+                                    withStyle(
+                                        SpanStyle(
+                                            textDecoration = TextDecoration.LineThrough
+                                        )
+                                    ) {
+                                        append(price)
+                                    }
+                                    append(" ")
+                                    append(offerPrice)
+                                }
+                            } else {
+                                buildAnnotatedString {
+                                    append(price)
+                                }
+                            },
                             color = colors.text,
                             fontSize = 30.sp,
                             fontWeight = FontWeight.Bold,
