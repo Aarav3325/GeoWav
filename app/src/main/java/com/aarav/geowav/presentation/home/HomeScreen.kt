@@ -106,8 +106,6 @@ fun GeoWavHomeScreen(
     navigateToYourPlaces: () -> Unit,
     onAddZone: () -> Unit,
     navigateToObserve: () -> Unit,
-    onShareLocation: () -> Unit,
-    onOpenAlerts: () -> Unit,
     homeScreenVM: HomeScreenVM,
     subscriptionViewModel: SubscriptionViewModel,
     navigateToSettings: () -> Unit,
@@ -204,8 +202,6 @@ fun GeoWavHomeScreen(
         label = "BackgroundColorAnimation"
     )
 
-
-
     Scaffold(
         modifier = Modifier.fillMaxSize(),
         contentWindowInsets = WindowInsets(0),
@@ -288,7 +284,7 @@ fun GeoWavHomeScreen(
 //                }
 //            }
 
-            if (uiState.username.isNullOrEmpty()) {
+            if (uiState.currentUser == null) {
                 ContainedLoadingIndicator(
                     Modifier.align(Alignment.Center)
                 )
@@ -434,9 +430,7 @@ fun GeoWavHomeScreen(
 
                         if (uiState.placesList.isEmpty()) {
                             QuickActionsRow(
-                                onAddZone = onAddZone,
-                                onShare = onShareLocation,
-                                onAlerts = onOpenAlerts
+                                onAddZone = onAddZone
                             )
                         }
 
@@ -567,79 +561,6 @@ fun UserMarkerUi(
     }
 }
 
-
-@Preview(showBackground = true)
-@Composable
-fun PreviewLocationCard() {
-
-}
-
-@Composable
-fun CurrentLocationCard(city: String, lastUpdated: String, onViewMap: () -> Unit) {
-
-    val Primary = MaterialTheme.colorScheme.primary
-    val Accent = MaterialTheme.colorScheme.tertiary
-    Card(
-        shape = RoundedCornerShape(14.dp),
-        elevation = CardDefaults.cardElevation(6.dp),
-        modifier = Modifier.fillMaxWidth()
-    ) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(14.dp),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(12.dp)
-        ) {
-            Box(
-                modifier = Modifier
-                    .size(72.dp)
-                    .clip(RoundedCornerShape(12.dp))
-                    .background(
-                        Brush.linearGradient(
-                            colors = listOf(Color(0xFFE9F2FF), Color(0xFFF6FBFF))
-                        )
-                    ),
-                contentAlignment = Alignment.Center
-            ) {
-                Icon(
-                    painter = painterResource(R.drawable.map_pin),
-                    contentDescription = "map",
-                    tint = Accent,
-                    modifier = Modifier.size(36.dp)
-                )
-            }
-
-            Column(modifier = Modifier.weight(1f)) {
-                Text(
-                    city,
-                    style = MaterialTheme.typography.titleMedium.copy(
-                        fontWeight = FontWeight.SemiBold,
-                        fontFamily = manrope,
-                        color = MaterialTheme.colorScheme.onBackground
-                    )
-                )
-                Spacer(modifier = Modifier.height(4.dp))
-                Text(
-                    "Last updated • $lastUpdated",
-                    style = MaterialTheme.typography.bodySmall.copy(
-                        color = Accent,
-                        fontFamily = manrope
-                    )
-                )
-            }
-
-            Button(
-                onClick = onViewMap,
-                shape = RoundedCornerShape(10.dp),
-                colors = ButtonDefaults.buttonColors(containerColor = Primary)
-            ) {
-                Text("View", color = Color.White, fontFamily = manrope)
-            }
-        }
-    }
-}
-
 @Composable
 fun ConnectionsList(
     title: String,
@@ -649,6 +570,7 @@ fun ConnectionsList(
     navigateToTimeline: (String, String) -> Unit
 ) {
 
+    Log.i("HOME", "connection list section recompose")
     Column(
         modifier = Modifier
             .fillMaxWidth()
@@ -736,6 +658,7 @@ fun ConnectionStatusCard(
     locationState: ViewerLocationState?,
     navigateToTimeline: (String, String) -> Unit
 ) {
+    Log.i("HOME", "connection card section recompose")
 
     val name = member.alias ?: member.profileName
 
@@ -941,30 +864,6 @@ fun ConnectionStatusCard(
     }
 }
 
-
-@Composable
-private fun InfoColumn(label: String, value: String) {
-    Column {
-        Text(
-            text = label,
-            fontFamily = manrope,
-            fontSize = 11.sp,
-            fontWeight = FontWeight.Medium,
-            color = MaterialTheme.colorScheme.outline
-        )
-
-        Spacer(Modifier.height(2.dp))
-
-        Text(
-            text = value,
-            fontFamily = manrope,
-            fontSize = 14.sp,
-            fontWeight = FontWeight.SemiBold,
-            color = MaterialTheme.colorScheme.onSurface
-        )
-    }
-}
-
 @Composable
 fun ActiveZonesSection(
     zones: List<Place>,
@@ -1118,7 +1017,7 @@ fun ZoneCard(zone: Place, onClick: () -> Unit) {
 }
 
 @Composable
-fun QuickActionsRow(onAddZone: () -> Unit, onShare: () -> Unit, onAlerts: () -> Unit) {
+fun QuickActionsRow(onAddZone: () -> Unit) {
     Row(
         modifier = Modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.spacedBy(12.dp)
@@ -1411,17 +1310,6 @@ fun ProfileCard(
 
 
         }
-    }
-}
-
-@Preview(showBackground = true)
-@Composable
-fun CurrentLocationCardPreview() {
-    GeoWavTheme {
-        CurrentLocationCard(
-            "Ahmedabad",
-            "3 min ago"
-        ) { }
     }
 }
 

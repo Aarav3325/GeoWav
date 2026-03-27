@@ -1,5 +1,6 @@
 package com.aarav.geowav.presentation.addplace
 
+import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.aarav.geowav.core.utils.FeatureAccess
@@ -17,6 +18,7 @@ import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
@@ -26,6 +28,7 @@ import javax.inject.Inject
 class PlaceViewModel @Inject constructor(
     val placeRepository: PlaceRepository
 ) : ViewModel() {
+
     val allPlaces: StateFlow<List<Place>> = placeRepository.getPlaces()
         .stateIn(
             viewModelScope,
@@ -49,14 +52,18 @@ class PlaceViewModel @Inject constructor(
 
 
         viewModelScope.launch {
-            val currentPlaces  = allPlaces.value
+
+            val currentPlaces = placeRepository.getPlaces().first()
+
             val isPlacesAlreadyAdded = currentPlaces.any {
                 it.placeId == place.placeId
             }
 
+            Log.i("MYTAG", "isPlacesAlreadyAdded: $isPlacesAlreadyAdded")
+
             val max = FeatureAccess.maxSavedPlaces(userPlan)
 
-            if (currentPlaces .size >= max) {
+            if (currentPlaces.size >= max) {
 
                 val upgradeTo = when (userPlan) {
                     UserPlan.FREE -> UserPlan.PREMIUM
@@ -79,7 +86,7 @@ class PlaceViewModel @Inject constructor(
             }
 
 
-            if(isPlacesAlreadyAdded != null) {
+            if (isPlacesAlreadyAdded) {
                 _placeEvents.emit(
                     PlacesEvent.Error(
                         "Place already added"
@@ -192,6 +199,6 @@ data class AddPlaceScreenUiState(
 )
 
 sealed class PlacesEvent {
-    object Success: PlacesEvent()
+    object Success : PlacesEvent()
     data class Error(val message: String) : PlacesEvent()
 }

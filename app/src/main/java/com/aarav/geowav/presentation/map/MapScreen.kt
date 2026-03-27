@@ -9,7 +9,9 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.input.clearText
 import androidx.compose.foundation.text.input.rememberTextFieldState
+import androidx.compose.material3.ContainedLoadingIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -50,7 +52,7 @@ import com.google.maps.android.compose.rememberCameraPositionState
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 fun MapScreen(
     isDarkThemeEnabled: Boolean,
@@ -68,6 +70,10 @@ fun MapScreen(
 
     var mapProperties by remember {
         mutableStateOf(MapProperties(isMyLocationEnabled = true))
+    }
+
+    var mapLoaded by remember {
+        mutableStateOf(false)
     }
 
     var uiSettings by remember {
@@ -184,11 +190,20 @@ fun MapScreen(
 //                onExpandedChange = { expanded = it },
 //            ) { }
 
+            if(!mapLoaded) {
+                ContainedLoadingIndicator(
+                    Modifier.align(Alignment.Center)
+                )
+            }
+
 
             GoogleMap(
                 modifier = Modifier.fillMaxSize(),
                 properties = mapProperties,
                 uiSettings = uiSettings,
+                onMapLoaded = {
+                    mapLoaded = true
+                },
                 cameraPositionState = cameraPositionState,
                 onMapClick = { /* later we'll handle adding a place */ }
             ) {

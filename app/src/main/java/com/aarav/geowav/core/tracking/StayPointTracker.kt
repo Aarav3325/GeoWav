@@ -78,17 +78,6 @@ class StayPointTracker {
         return _finalizedStays.toList()
     }
 
-    fun consumeFinalizedStays(): List<StayPoint> {
-        val stays = _finalizedStays.toList()
-        _finalizedStays.clear()
-        return stays
-    }
-
-    fun reset() {
-        _finalizedStays.clear()
-        _activeStay = null
-    }
-
     // Check if active is qualified to be marked as a stay point
     private fun finalizeActiveIfQualified() {
         // Nothing to do if no active stay

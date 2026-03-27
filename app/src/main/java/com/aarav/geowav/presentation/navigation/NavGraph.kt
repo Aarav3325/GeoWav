@@ -348,8 +348,6 @@ fun AddHomeScreen(
             navigateToObserve = {
                 navController.navigate(NavRoute.ObserveUsers.path)
             },
-            onShareLocation = {},
-            onOpenAlerts = {},
             homeScreenVM = sharedVM,
             subscriptionViewModel = subscriptionVM,
             navigateToSettings = {

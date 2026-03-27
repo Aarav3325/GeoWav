@@ -104,9 +104,8 @@ fun AddPlaceScreen(
         mutableStateOf(selectedPlace?.displayName ?: "")
     }
 
-    var addSuccess by remember {
-        mutableStateOf(false)
-    }
+    val context = LocalContext.current
+
 
     LaunchedEffect(Unit) {
         placeViewModel.events.collect { event ->
@@ -120,13 +119,16 @@ fun AddPlaceScreen(
         placeViewModel.placeEvents.collect { event ->
             when (event) {
                 is PlacesEvent.Error -> {
-                    addSuccess = false
                     SnackbarManager.showMessage(event.message)
                 }
 
                 is PlacesEvent.Success -> {
-                    addSuccess = true
-                    SnackbarManager.showMessage("Place added successfully")
+                    navigateToYourPlaces()
+                    Toast.makeText(
+                        context,
+                        "$placeName added to geofence",
+                        Toast.LENGTH_LONG
+                    ).show()
                 }
             }
         }
@@ -155,6 +157,7 @@ fun AddPlaceScreen(
         }
     }
 
+
     var latlng by remember {
         mutableStateOf<LatLng>(LatLng(0.0, 0.0))
     }
@@ -164,8 +167,6 @@ fun AddPlaceScreen(
             latlng = LatLng(it.latitude, it.longitude)
         }
     }
-
-    val context = LocalContext.current
 
 
     LaunchedEffect(placeId) {
@@ -252,14 +253,7 @@ fun AddPlaceScreen(
 
                             placeViewModel.addPlace(finalPlace, plan)
 
-                            if (addSuccess) {
-                                navigateToYourPlaces()
-                                Toast.makeText(
-                                    context,
-                                    "$placeName added to geofence",
-                                    Toast.LENGTH_LONG
-                                ).show()
-                            }
+
 
                         },
                         modifier = Modifier

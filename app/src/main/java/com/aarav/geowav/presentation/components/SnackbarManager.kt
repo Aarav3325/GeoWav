@@ -1,5 +1,6 @@
 package com.aarav.geowav.presentation.components
 
+import android.util.Log
 import androidx.compose.material3.SnackbarDuration
 import androidx.compose.material3.SnackbarHostState
 
@@ -8,6 +9,7 @@ object SnackbarManager {
 
     fun bind(state: SnackbarHostState) {
         snackbarHostState = state
+        Log.i("SNACKBAR", "bind success")
     }
 
     suspend fun showMessage(message: String) {
