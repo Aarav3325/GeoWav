@@ -7,6 +7,4 @@ sealed class NavItem(val name: String, val path: String, val icon: Int) {
     object Activity : NavItem("Activity", NavRoute.ActivityScreen.path, R.drawable.activity)
     object YourPlaces : NavItem("Your Places", NavRoute.YourPlaces.path, R.drawable.map_pin_area)
     object LocationSharing : NavItem("Share", NavRoute.LocationSharing.path, R.drawable.location_sharing)
-
-//    object AddPlace: NavItem("Add Place", NavRoute.AddPlace.path, R.drawable.map_pin_area)
 }

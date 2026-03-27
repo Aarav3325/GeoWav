@@ -69,6 +69,7 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
@@ -78,6 +79,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.zIndex
 import com.aarav.geowav.R
+import com.aarav.geowav.core.utils.UserColorMapper
 import com.aarav.geowav.core.utils.ViewerLocationState
 import com.aarav.geowav.core.utils.formatTime
 import com.aarav.geowav.data.model.CircleMember
@@ -307,7 +309,10 @@ fun ObserveLiveLocationCard(
             properties = mapProperties,
             onMapLoaded = { mapLoaded = true }
         ) {
+
             locations.forEach { (userId, state) ->
+
+                val baseColor = UserColorMapper.getUserColor(userId).toArgb()
                 val markerState = markerStates.getOrPut(userId) {
                     MarkerState()
                 }
@@ -316,6 +321,7 @@ fun ObserveLiveLocationCard(
                     userId = userId,
                     markerState = markerState,
                     state = state,
+                    baseColor = baseColor,
                     isSelected = selectedUser == userId
                 )
             }
@@ -323,6 +329,7 @@ fun ObserveLiveLocationCard(
 
             userPaths.forEach { (userId, path) ->
 
+                val colorInt = UserColorMapper.getUserColor(userId)
                 val state = locations[userId]
 
                 if (path.points.size > 1 && state != null && selectedUser == userId) {
@@ -338,7 +345,7 @@ fun ObserveLiveLocationCard(
                                 Color.Red
 
                             path.isActive ->
-                                Color.Blue
+                                colorInt
 
                             else ->
                                 Color.Gray
@@ -1059,7 +1066,8 @@ fun EmergencyRipple(
 
 
 fun createUserMarkerBitmap(
-    isEmergency: Boolean
+    isEmergency: Boolean,
+    baseColor: Int
 ): Bitmap {
     val size = 96
     val bitmap = Bitmap.createBitmap(size, size, Bitmap.Config.ARGB_8888)
@@ -1077,7 +1085,7 @@ fun createUserMarkerBitmap(
 
     // Main dot
     paint.alpha = 255
-    paint.color = if (isEmergency) android.graphics.Color.RED else android.graphics.Color.BLUE
+    paint.color = if (isEmergency) android.graphics.Color.RED else baseColor
     canvas.drawCircle(size / 2f, size / 2f, size / 4f, paint)
 
     // White border
@@ -1090,10 +1098,11 @@ fun createUserMarkerBitmap(
 }
 
 fun markerIcon(
-    isEmergency: Boolean
+    isEmergency: Boolean,
+    baseColor: Int
 ): BitmapDescriptor {
     return BitmapDescriptorFactory.fromBitmap(
-        createUserMarkerBitmap(isEmergency)
+        createUserMarkerBitmap(isEmergency, baseColor)
     )
 }
 
@@ -1136,6 +1145,7 @@ fun UserMarker(
     userId: String,
     markerState: MarkerState,
     state: ViewerLocationState,
+    baseColor: Int,
     isSelected: Boolean
 ) {
     if (state is ViewerLocationState.Blocked) return
@@ -1160,7 +1170,7 @@ fun UserMarker(
 
     Marker(
         state = markerState,
-        icon = if (isEmergency) markerIcon(true) else markerIcon(false),
+        icon = if (isEmergency) markerIcon(true, baseColor) else markerIcon(false, baseColor),
         anchor = Offset(0.5f, 0.5f),
         zIndex = if (isEmergency) 2f else 1f
     )

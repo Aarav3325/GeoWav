@@ -1,7 +1,6 @@
 package com.aarav.geowav.di
 
 import android.content.Context
-import com.aarav.geowav.data.datasource.room.ConnectionDao
 import com.aarav.geowav.data.datasource.room.PlaceDatabase
 import com.aarav.geowav.data.datasource.room.PlacesDAO
 import dagger.Module
@@ -26,16 +25,4 @@ object DatabaseModule {
     fun provideDao(placeDatabase: PlaceDatabase) : PlacesDAO{
         return placeDatabase.placeDao
     }
-
-    @Provides
-    @Singleton
-    fun provideConnectionDao(placeDatabase: PlaceDatabase): ConnectionDao{
-        return placeDatabase.connectionDao
-    }
-
-//    @Provides
-//    @Singleton
-//    fun provideSessionHistoryDao(placeDatabase: PlaceDatabase): SessionHistoryDao{
-//        return placeDatabase.sessionHistoryDao
-//    }
 }

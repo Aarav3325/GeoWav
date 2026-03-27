@@ -226,7 +226,7 @@ fun AddNewPlaceScreen(
             },
             navigateToYourPlaces = {
                 navController.navigate(NavRoute.YourPlaces.path) {
-                    popUpTo(NavRoute.HomeScreen.path) {
+                    popUpTo(navController.graph.startDestinationId) {
                         inclusive = false
                     }
                     launchSingleTop = true

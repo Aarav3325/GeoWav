@@ -1,18 +1,10 @@
 package com.aarav.geowav.presentation.home
 
-import android.app.Activity
 import android.content.Context
-import android.location.Geocoder
-import android.net.Uri
 import android.util.Log
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.aarav.geowav.core.tracking.StayPointTracker
 import com.aarav.geowav.core.utils.ActivityFilter
-import com.aarav.geowav.core.utils.LiveLocationState
 import com.aarav.geowav.core.utils.Resource
 import com.aarav.geowav.core.utils.ViewerLocationState
 import com.aarav.geowav.core.utils.formatRemainingForEmergency
@@ -20,22 +12,13 @@ import com.aarav.geowav.data.authentication.GoogleSignInClient
 import com.aarav.geowav.data.model.CircleMember
 import com.aarav.geowav.data.model.GeoAlert
 import com.aarav.geowav.data.model.GeoConnection
-import com.aarav.geowav.data.model.PaymentTransactions
 import com.aarav.geowav.data.model.Place
-import com.aarav.geowav.data.model.SessionHistory
 import com.aarav.geowav.data.model.StayPoint
-import com.aarav.geowav.data.model.UpiApp
 import com.aarav.geowav.data.model.User
 import com.aarav.geowav.data.model.UserPath
-import com.aarav.geowav.data.model.toUserPathLatLng
 import com.aarav.geowav.data.repository.GeoActivityRepositoryImpl
-import com.aarav.geowav.data.repository.GeoConnectionRepositoryImpl
-import com.aarav.geowav.data.repository.PaymentRepositoryImpl
 import com.aarav.geowav.data.repository.PlaceRepositoryImpl
 import com.aarav.geowav.domain.repository.CircleRepository
-import com.aarav.geowav.domain.repository.LiveLocationSharingRepository
-import com.aarav.geowav.domain.repository.PaymentRepository
-import com.aarav.geowav.domain.repository.SessionHistoryRepository
 import com.aarav.geowav.domain.repository.ViewerLocationRepository
 import com.google.android.gms.maps.model.LatLng
 import com.google.maps.android.SphericalUtil
@@ -53,21 +36,16 @@ import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import java.util.Locale
-import java.util.UUID
 import javax.inject.Inject
-import kotlin.random.Random
 
 @HiltViewModel
 class HomeScreenVM @Inject constructor(
     @ApplicationContext val context: Context,
     private val googleSignInClient: GoogleSignInClient,
-    private val connectionRepository: GeoConnectionRepositoryImpl,
     private val placeRepository: PlaceRepositoryImpl,
     private val geoActivityRepositoryImpl: GeoActivityRepositoryImpl,
     private val circleRepository: CircleRepository,
     private val viewerLocationRepository: ViewerLocationRepository,
-    private val paymentRepository: PaymentRepository
 ) : ViewModel() {
 
     private val _uiState: MutableStateFlow<HomeScreenUiState> =
@@ -228,26 +206,6 @@ class HomeScreenVM @Inject constructor(
             }
     }
 
-
-    /*
-    No longer using room to store connections, instead using rtdb
-     */
-    fun addConnection(connection: GeoConnection) {
-        viewModelScope.launch {
-            connectionRepository.addNewConnection(connection)
-        }
-    }
-
-    fun deleteConnection(connection: GeoConnection) {
-        viewModelScope.launch {
-            connectionRepository.deleteConnection(connection)
-        }
-    }
-
-    // Remove this flow after full implementation session history
-    val allConnections = connectionRepository.getConnections()
-        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
-
     val allPlaces = placeRepository.getPlaces()
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
 
@@ -255,7 +213,6 @@ class HomeScreenVM @Inject constructor(
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
 
     fun loadLovedOnes() {
-        Log.i("Circle", "list: called")
         if (viewerId.isEmpty()) return
 
         viewModelScope.launch {
@@ -267,7 +224,6 @@ class HomeScreenVM @Inject constructor(
                 is Resource.Success -> {
                     _uiState.update {
 
-                       // Log.i("Circle", "list: ${result.data}")
                         it.copy(
                             lovedOnes = result.data ?: emptyList(),
                         )
@@ -317,12 +273,11 @@ class HomeScreenVM @Inject constructor(
 
     init {
         viewModelScope.launch {
-            combine(allConnections, allPlaces, alerts) { c, p, a ->
-                Triple(c, p, a)
-            }.collect { (connections, places, alerts) ->
+            combine( allPlaces, alerts) { p, a ->
+                Pair(p, a)
+            }.collect { ( places, alerts) ->
                 _uiState.update {
                     it.copy(
-                        connectionsList = connections,
                         placesList = places,
                         alertsList = alerts
                     )
@@ -342,7 +297,7 @@ class HomeScreenVM @Inject constructor(
         pathJob?.cancel()
 
         pathJob = viewModelScope.launch {
-            for(i in _uiState.value.playbackIndex until path.size - 1) {
+            for (i in _uiState.value.playbackIndex until path.size - 1) {
 
                 val start = _uiState.value.lastPosition ?: path[i]
                 val end = path[i + 1]
@@ -353,7 +308,7 @@ class HomeScreenVM @Inject constructor(
 
                 val steps = (duration / 16).toInt().coerceAtLeast(1)
 
-                for(step in 0..steps) {
+                for (step in 0..steps) {
                     val fraction = step / steps.toFloat()
                     val interpolated = SphericalUtil.interpolate(start, end, fraction.toDouble())
 

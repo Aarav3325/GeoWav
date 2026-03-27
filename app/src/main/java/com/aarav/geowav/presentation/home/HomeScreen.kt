@@ -3,7 +3,6 @@ package com.aarav.geowav.presentation.home
 
 import android.Manifest
 import android.app.Activity
-import android.net.Uri
 import android.util.Log
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.animateColorAsState
@@ -34,7 +33,6 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -71,30 +69,27 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil.ImageLoader
-import coil.compose.AsyncImage
 import coil.decode.SvgDecoder
 import com.aarav.geowav.R
+import com.aarav.geowav.core.utils.SubscriptionHelper
 import com.aarav.geowav.core.utils.ViewerLocationState
 import com.aarav.geowav.core.utils.formatRemainingForEmergency
 import com.aarav.geowav.core.utils.formatTime
 import com.aarav.geowav.data.model.CircleMember
 import com.aarav.geowav.data.model.Place
-import com.aarav.geowav.presentation.theme.GeoWavTheme
-import com.aarav.geowav.presentation.theme.manrope
-import com.google.accompanist.permissions.ExperimentalPermissionsApi
-import com.google.accompanist.permissions.isGranted
-import com.google.accompanist.permissions.rememberPermissionState
-import kotlinx.coroutines.delay
-import com.aarav.geowav.core.utils.SubscriptionHelper
 import com.aarav.geowav.data.model.User
 import com.aarav.geowav.data.model.UserPlan
 import com.aarav.geowav.presentation.components.AvatarImage
 import com.aarav.geowav.presentation.components.SnackbarManager
 import com.aarav.geowav.presentation.subscription.SubscriptionViewModel
+import com.aarav.geowav.presentation.theme.manrope
+import com.google.accompanist.permissions.ExperimentalPermissionsApi
+import com.google.accompanist.permissions.isGranted
+import com.google.accompanist.permissions.rememberPermissionState
+import kotlinx.coroutines.delay
 
 @OptIn(
     ExperimentalMaterial3Api::class, ExperimentalPermissionsApi::class,
@@ -139,6 +134,8 @@ fun GeoWavHomeScreen(
         }
     }
 
+    val hideTopBar = uiState.currentUser == null
+
 
     val context = LocalContext.current
     val activity = context as? Activity
@@ -180,24 +177,29 @@ fun GeoWavHomeScreen(
 
     // Animate colors smoothly
     val textColor by animateColorAsState(
-        targetValue = if (useDarkIcons) {
-            if (isDarkThemeEnabled) {
-                Color.White
+        targetValue =
+
+            if (hideTopBar) Color.Transparent
+            else if (useDarkIcons) {
+                if (isDarkThemeEnabled) {
+                    Color.White
+                } else {
+                    Color.Black
+                }
             } else {
                 Color.Black
-            }
-        } else {
-            Color.Black
-        },
+            },
         animationSpec = tween(durationMillis = 500), // smooth 0.8s fade
         label = "TextColorAnimation"
     )
 
     val backgroundColor by animateColorAsState(
-        targetValue = if (useDarkIcons)
-            MaterialTheme.colorScheme.primaryContainer
-        else
-            Color.Transparent,
+        targetValue =
+            if (hideTopBar) Color.Transparent
+            else if (useDarkIcons)
+                MaterialTheme.colorScheme.primaryContainer
+            else
+                Color.Transparent,
         animationSpec = tween(durationMillis = 500),
         label = "BackgroundColorAnimation"
     )
@@ -219,21 +221,21 @@ fun GeoWavHomeScreen(
                         )
                     },
                     actions = {
-                    IconButton(
-                        onClick = {
-                            navigateToPaywall()
+                        IconButton(
+                            onClick = {
+                                navigateToPaywall()
 //                            activity?.let {
 //                                homeScreenVM.launchBillingFlow(it, "")
 //                            }
+                            }
+                        ) {
+                            Image(
+                                painter = painterResource(R.drawable.payment),
+                                contentDescription = "payment",
+                                modifier = Modifier.size(28.dp),
+                                colorFilter = ColorFilter.tint(textColor)
+                            )
                         }
-                    ) {
-                        Image(
-                            painter = painterResource(R.drawable.payment),
-                            contentDescription = "payment",
-                            modifier = Modifier.size(28.dp),
-                            colorFilter = ColorFilter.tint(textColor)
-                        )
-                    }
 
                         IconButton(
 //                        onClick = onThemeChange
@@ -644,7 +646,7 @@ fun ConnectionsList(
                     )
                 }
 
-                if(connections.isEmpty()) {
+                if (connections.isEmpty()) {
                     QuickActionButton(R.drawable.add, "Add", onManage)
                 }
             }

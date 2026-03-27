@@ -44,9 +44,7 @@ fun BottomNavigationBar(
 
             NavigationBarItem(
                 selected = isSelected,
-                //selected = if(destination.name == "Home") true else false,
                 onClick = {
-                    Log.i("NAV", "BottomNavigationBar: $currentRoute, dest : ${destination.path}")
                     if (currentRoute != destination.path) {
                         navController.navigate(destination.path) {
                             launchSingleTop = true
