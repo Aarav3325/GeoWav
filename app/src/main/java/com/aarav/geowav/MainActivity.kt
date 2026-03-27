@@ -100,8 +100,6 @@ class MainActivity : ComponentActivity() {
     @Inject
     lateinit var geofencingClient: GeofencingClient
 
-    private var isAppEnabled = false
-
     private var notificationIntent by mutableStateOf<String?>(null)
 
     override fun onNewIntent(intent: Intent) {
@@ -142,38 +140,6 @@ class MainActivity : ComponentActivity() {
 
         fusedClient = LocationServices.getFusedLocationProviderClient(this)
 
-//        lifecycleScope.launch {
-//            killSwitchManager.fetchAndActivate()
-//
-//            killSwitchManager.observeAppEnabled()
-//                .collect { enabled ->
-//
-//                    Log.i("KILL", "app in kill mode: $enabled")
-//
-//                    if (!enabled) {
-//                        stopAllCriticalServices()
-//                        showAppDisabledState = true
-//
-////                        startActivity(
-////                            Intent(this@MainActivity, AppDisabledActivity::class.java)
-////                        )
-////                        finish()
-//                    }
-//                }
-//        }
-
-
-//        lifecycleScope.launch {
-//            killSwitchManager.fetchAndActivate()
-//
-//            if(!killSwitchManager.isAppEnabled()) {
-//
-//                startActivity(Intent(this@MainActivity, AppDisabledActivity::class.java))
-//                finish()
-//                Log.e("KILL", "App is in kill mode")
-//            }
-//
-//        }
 
         setContent {
 
@@ -198,15 +164,6 @@ class MainActivity : ComponentActivity() {
                 Log.i("MYTAG", "notification permissions: $check")
             }
 
-//            val check = ContextCompat.checkSelfPermission(
-//                this,
-//                Manifest.permission.POST_NOTIFICATIONS
-//            ) == PackageManager.PERMISSION_GRANTED
-//
-//            val notificationPermission =
-//                rememberPermissionState(Manifest.permission.POST_NOTIFICATIONS)
-//
-
             val isLoggedIn by googleSignInClient.getUserIdFlow()
                 .map { it.isNotBlank() }
                 .collectAsState(initial = false)
@@ -216,7 +173,7 @@ class MainActivity : ComponentActivity() {
             }
 
             LaunchedEffect(isLoggedIn) {
-                if(!isLoggedIn) return@LaunchedEffect
+                if (!isLoggedIn) return@LaunchedEffect
             }
 
             NotificationServiceInitializer(
@@ -241,18 +198,6 @@ class MainActivity : ComponentActivity() {
                     }
                 )
             }
-
-
-//            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-//
-//
-//                if (!check) {
-//                    showNotificationPermissionDialog()
-//                }
-//            } else {
-//                var notificationPermission =
-//                    rememberPermissionState(Manifest.permission.POST_NOTIFICATIONS)
-//            }
 
             LaunchedEffect(Unit) {
                 if (googleSignInClient.isLoggedIn()) {
@@ -284,19 +229,9 @@ class MainActivity : ComponentActivity() {
             LaunchedEffect(Unit) {
                 locationManager.getLocationUpdates().distinctUntilChanged().collectLatest {
                     location = it
-
-                   // Log.i("LOCATION", "lat: ${location?.latitude}, long: ${location?.longitude}")
-
                 }
-
-
-//                if (location == null) {
-//                    Log.i("LOCATION", "null")
-//
-//                } else {
-//                    Log.i("LOCATION", "lat: ${location?.latitude}, long: ${location?.longitude}")
-//                }
             }
+
 
             val mainVM: MainVM = hiltViewModel()
             val themeMode by mainVM.themeMode.collectAsState()
@@ -312,9 +247,6 @@ class MainActivity : ComponentActivity() {
 
             val subscriptionVM: SubscriptionViewModel = hiltViewModel()
 
-//            LaunchedEffect(Unit) {
-//                subscriptionVM.startListening()
-//            }
 
             val plan by subscriptionVM.userPlan.collectAsState()
 
@@ -349,36 +281,6 @@ class MainActivity : ComponentActivity() {
 
                     Log.i("MYTAG", "permissions $permissionsGranted")
 
-
-//                    if (permissionsGranted && isAppEnabled) {
-//                        val intent = Intent(context, GeofenceForegroundService::class.java)
-//                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-//                            context.startForegroundService(intent)
-//                        } else {
-//                            context.startService(intent)
-//                        }
-//                    } else {
-//                        if (isOnboarded) {
-//                            LocationPermissionDialog(
-//                                true,
-//                                onConfirmClick = {
-//                                    openAppSettings(
-//                                        context,
-//                                        Settings.ACTION_LOCATION_SOURCE_SETTINGS
-//                                    )
-//                                }
-//                            )
-//                        }
-//                    }
-
-//                    LaunchedEffect(Unit) {
-//                        GeoNotificationHelper.show(
-//                            context,
-//                            "circle_channel",
-//                            "New Invite",
-//                            "Aarav invited you"
-//                        )
-//                    }
 
                     LaunchedEffect(permissionsGranted && isLoggedIn) {
 
@@ -445,7 +347,6 @@ class MainActivity : ComponentActivity() {
 
                     Scaffold(
                         snackbarHost = {
-                            //SnackbarManager.bind(snackbarHostState)
                             SnackbarHost(snackbarHostState)
                         },
                         modifier = Modifier.fillMaxSize(),
@@ -470,7 +371,7 @@ class MainActivity : ComponentActivity() {
                             subscriptionVM = subscriptionVM,
                             sharedPreferences = sharedPreferences,
                             location = location1,
-                            googleSignInClient =  googleSignInClient,
+                            googleSignInClient = googleSignInClient,
                             modifier = Modifier.padding(it)
                         )
                     }
@@ -509,6 +410,7 @@ class MainActivity : ComponentActivity() {
 
             Log.i("SERVICE", "NOTIFICATION SERVICE STARTED")
         }
+
         val runtimeGranted = notificationPermission.status.isGranted
         val enabled = NotificationManagerCompat
             .from(context)
@@ -611,12 +513,12 @@ class MainActivity : ComponentActivity() {
 }
 
 
-fun startNotificationService(context: Context) {
-    val intent = Intent(context, NotificationService::class.java)
-
-    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-        context.startForegroundService(intent)
-    } else {
-        context.startService(intent)
-    }
-}
+//fun startNotificationService(context: Context) {
+//    val intent = Intent(context, NotificationService::class.java)
+//
+//    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+//        context.startForegroundService(intent)
+//    } else {
+//        context.startService(intent)
+//    }
+//}

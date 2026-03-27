@@ -41,12 +41,22 @@ class PlaceViewModel @Inject constructor(
     private val _events = MutableSharedFlow<UpgradeEvents>()
     val events = _events.asSharedFlow()
 
+
+    private val _placeEvents = MutableSharedFlow<PlacesEvent>()
+    val placeEvents = _placeEvents.asSharedFlow()
+
     fun addPlace(place: Place, userPlan: UserPlan) {
+
+
         viewModelScope.launch {
+            val currentPlaces  = allPlaces.value
+            val isPlacesAlreadyAdded = currentPlaces.any {
+                it.placeId == place.placeId
+            }
 
             val max = FeatureAccess.maxSavedPlaces(userPlan)
 
-            if (allPlaces.value.size >= max) {
+            if (currentPlaces .size >= max) {
 
                 val upgradeTo = when (userPlan) {
                     UserPlan.FREE -> UserPlan.PREMIUM
@@ -68,7 +78,22 @@ class PlaceViewModel @Inject constructor(
                 return@launch
             }
 
+
+            if(isPlacesAlreadyAdded != null) {
+                _placeEvents.emit(
+                    PlacesEvent.Error(
+                        "Place already added"
+                    )
+                )
+
+                return@launch
+            }
+
+
             placeRepository.addPlace(place)
+            _placeEvents.emit(
+                PlacesEvent.Success
+            )
         }
     }
 
@@ -165,3 +190,8 @@ data class AddPlaceScreenUiState(
     val error: String? = null,
     val showErrorDialog: Boolean = false
 )
+
+sealed class PlacesEvent {
+    object Success: PlacesEvent()
+    data class Error(val message: String) : PlacesEvent()
+}

@@ -44,7 +44,7 @@ class GeoWavApp : Application(), Configuration.Provider {
         applicationContext.createGeoWavChannels()
 
         if(!Places.isInitialized()){
-            Places.initializeWithNewPlacesApiEnabled(applicationContext, getString(R.string.maps_api))
+            Places.initializeWithNewPlacesApiEnabled(applicationContext, BuildConfig.GOOGLE_MAPS_API_KEY)
         }
     }
 

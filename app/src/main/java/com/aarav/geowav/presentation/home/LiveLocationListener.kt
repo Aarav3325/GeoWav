@@ -129,10 +129,6 @@ fun ObserveLiveLocationCard(
         mutableStateMapOf<String, MarkerState>()
     }
 
-    val movingIcon = remember(mapLoaded) {
-        if (mapLoaded) movingPlaybackMarkerIcon() else null
-    }
-
     LaunchedEffect(showMapModeToast) {
         if (showMapModeToast) {
             delay(1500)
@@ -151,19 +147,6 @@ fun ObserveLiveLocationCard(
 
     val emergencyLat = emergencyState?.location?.lat
     val emergencyLng = emergencyState?.location?.lng
-
-    //    val cameraPositionState = rememberCameraPositionState()
-
-    //    Card(
-    //        shape = RoundedCornerShape(16.dp),
-    //        colors = CardDefaults.cardColors(
-    //            containerColor = MaterialTheme.colorScheme.secondaryContainer
-    //        ),
-    //        modifier = Modifier
-    //            .padding(top = 16.dp)
-    //            .fillMaxWidth()
-    //            .height(220.dp)
-    //    ) {
 
 
     val visibleLatLngs = locations.values
@@ -194,8 +177,6 @@ fun ObserveLiveLocationCard(
         viewModel.fetchViewerInfo()
     }
 
-    val viewerInfo = uiState.currentViewers
-
 
     var uiSettings by remember {
         mutableStateOf(
@@ -224,10 +205,6 @@ fun ObserveLiveLocationCard(
                 16f
             )
         } else {
-//            com.google.android.gms.maps.model.CameraPosition.fromLatLngZoom(
-//                LatLng(20.0, 78.0),
-//                5f
-//            )
             CameraPosition.fromLatLngZoom(
                 LatLng(47.6677146, -122.3470447),
                 5f
@@ -240,30 +217,6 @@ fun ObserveLiveLocationCard(
         position = initialCameraPosition
     }
 
-
-    /* Calculate a rectangle that contains all currently visible users, then smoothly
-     move and zoom the map camera so everyone fits nicely inside the card*/
-    // Normal mode camera behavior - show all visible users on map
-//    LaunchedEffect(visibleLatLngs, mapLoaded, emergencyUser) {
-//        if (!mapLoaded) return@LaunchedEffect // no camera animation until map loads
-//        if (visibleLatLngs.isEmpty()) return@LaunchedEffect // nothing to show on map
-//
-//        if (emergencyUser != null) return@LaunchedEffect
-//
-//        isUserPanning = false
-//
-//        // Draws an invisible rectangle on map to show all visible users (zoom so that all users are visible)
-//        val bounds = LatLngBounds.builder().apply {
-//            visibleLatLngs.forEach { include(it) } // use include to add latlng to bounds
-//        }.build()
-//        // The smallest map rectangle that contains all visible users
-//
-//        /* Move the camera so that this bounds fits completely inside the screen,
-//           Camera auto-zooms until all dots are visible. */
-//        cameraPositionState.animate(
-//            CameraUpdateFactory.newLatLngBounds(bounds, 80)
-//        )
-//    }
     LaunchedEffect(visibleLatLngs, mapLoaded, emergencyUser) {
 
         if (!mapLoaded) return@LaunchedEffect
@@ -280,83 +233,9 @@ fun ObserveLiveLocationCard(
         )
     }
 
-    //
-    //    LaunchedEffect(emergencyLocation) {
-    //        if (emergencyLocation != null) {
-    //            cameraMode = CameraMode.EMERGENCY_AUTO
-    //        }
-    //    }
-
 
     val isEmergencyActive =
         locations.values.any { it is ViewerLocationState.EmergencySharing }
-
-
-//        LaunchedEffect(emergencyLocation, mapLoaded) {
-//
-//            if (!mapLoaded) return@LaunchedEffect
-//            if (emergencyLocation == null) {
-//                return@LaunchedEffect
-//            }
-//            if(isUserPanning) return@LaunchedEffect
-//
-//    //        if (cameraMode == CameraMode.USER_MANUAL) return@LaunchedEffect
-//
-//            // First time → move instantly (guaranteed)
-//            cameraPositionState.move(
-//                CameraUpdateFactory.newLatLngZoom(
-//                    LatLng(emergencyLocation.lat, emergencyLocation.lng),
-//                    16f
-//                )
-//            )
-//        }
-
-    //    LaunchedEffect(emergencyLocation) {
-    //        if (emergencyLocation == null) {
-    //            cameraMode = CameraMode.NORMAL
-    //        }
-    //    }
-//
-//    LaunchedEffect(isFullScreen, mapLoaded) {
-//        if (!mapLoaded) return@LaunchedEffect
-//        if (!isFullScreen) return@LaunchedEffect
-//        if (emergencyLat == null || emergencyLng == null) return@LaunchedEffect
-//
-//        isUserPanning = false
-//
-//        cameraPositionState.move(
-//            CameraUpdateFactory.newLatLngZoom(
-//                LatLng(emergencyLat, emergencyLng),
-//                16f
-//            )
-//        )
-//    }
-
-//
-//        /* “When an emergency is active, automatically focus the camera on the emergency user
-//        unless the user manually moved the map
-//     */
-//        LaunchedEffect(emergencyUser, mapLoaded, isFullScreen) {
-//            if (!mapLoaded) return@LaunchedEffect // no animations before map is loaded
-//            if (emergencyUser == null) {
-//                userMovedCamera = false
-//                return@LaunchedEffect
-//            } /*
-//                    if no emergency is active then normal camera logic will handle things
-//                */
-//
-////            if(isUserPanning) return@LaunchedEffect
-//
-//            val state = emergencyUser.value as ViewerLocationState.EmergencySharing
-//            val loc = state.location
-//
-//            cameraPositionState.animate(
-//                CameraUpdateFactory.newLatLngZoom(
-//                    LatLng(loc.lat, loc.lng),
-//                    16f
-//                )
-//            )
-//        }
 
     LaunchedEffect(
         isFullScreen,
@@ -384,32 +263,6 @@ fun ObserveLiveLocationCard(
     }
 
 
-//    LaunchedEffect(mapLoaded, emergencyLat, emergencyLng, isFullScreen, isUserPanning, isFollowingEmergency) {
-//
-//        if (!mapLoaded) return@LaunchedEffect
-//        if (emergencyLat == null || emergencyLng == null) {
-//            isFollowingEmergency = false
-//            return@LaunchedEffect
-//        }
-//
-//        // When entering fullscreen during emergency → enable follow
-//        if (isFullScreen && !isFollowingEmergency) {
-//            isFollowingEmergency = true
-//            isUserPanning = false
-//        }
-//
-//        // Follow ONLY if fullscreen AND not panning AND following is enabled
-//        if (isFullScreen && !isUserPanning && isFollowingEmergency) {
-//            cameraPositionState.animate(
-//                CameraUpdateFactory.newLatLngZoom(
-//                    LatLng(emergencyLat, emergencyLng),
-//                    16f
-//                )
-//            )
-//        }
-//    }
-
-
     LaunchedEffect(cameraPositionState) {
         snapshotFlow {
             cameraPositionState.isMoving to
@@ -428,33 +281,6 @@ fun ObserveLiveLocationCard(
     }
 
 
-//    Log.i("OBSERVE", "current viewer: " + viewerInfo.toString())
-
-
-    //    Column(
-    //        modifier = Modifier.fillMaxWidth()
-    //            .padding(top = 16.dp)
-    //    ) {
-
-
-    /*.shadow(
-                elevation = 24.dp,
-                shape = RoundedCornerShape(16.dp),
-                ambientColor = MaterialTheme.colorScheme.inversePrimary,
-                spotColor = MaterialTheme.colorScheme.inversePrimary,
-                clip = false
-            )*/
-
-    //        Card(
-    //            modifier = Modifier.shadow(
-    //                elevation = 24.dp,
-    //                shape = RoundedCornerShape(16.dp),
-    //                ambientColor = MaterialTheme.colorScheme.inversePrimary,
-    //                spotColor = MaterialTheme.colorScheme.inversePrimary,
-    //                clip = false
-    //            ).fillMaxWidth()
-    //                .height(220.dp)
-    //        ) {
 
     val scope = rememberCoroutineScope()
 
@@ -494,7 +320,6 @@ fun ObserveLiveLocationCard(
                 )
             }
 
-//            Log.i("POLYLINE", "selected user: $selectedUser")
 
             userPaths.forEach { (userId, path) ->
 
@@ -516,7 +341,7 @@ fun ObserveLiveLocationCard(
                                 Color.Blue
 
                             else ->
-                                Color.Gray // summary line
+                                Color.Gray
                         },
                         width = if (isEmergency) 10f else 6f,
                         jointType = JointType.ROUND,
@@ -557,13 +382,6 @@ fun ObserveLiveLocationCard(
             }
         }
 
-//        LaunchedEffect(isFullScreen, mapLoaded) {
-//            if (!mapLoaded) return@LaunchedEffect
-//
-//            cameraPositionState.move(
-//                CameraUpdateFactory.newCameraPosition(initialCameraPosition)
-//            )
-//        }
 
         var lastUser by remember { mutableStateOf<String?>(null) }
 
@@ -1041,14 +859,6 @@ fun RichTooltipExample(
 }
 
 
-/*
-Text(
-                "Watching: $text",
-                fontFamily = manrope,
-                fontWeight = FontWeight.SemiBold,
-                fontSize = 16.sp
-            )*/
-
 @Preview(showBackground = true)
 @Composable
 fun ViewerTrayOverlay(
@@ -1138,9 +948,6 @@ fun ViewerCardHome(
         modifier = Modifier
             .fillMaxWidth()
             .padding(bottom = 16.dp)
-//            .clickable {
-//                navigateToObserve()
-//            }
     ) {
         Row(
             verticalAlignment = Alignment.CenterVertically,
@@ -1325,42 +1132,6 @@ fun stayPointMarkerIcon(): BitmapDescriptor {
 
 
 @Composable
-fun animateLatLngAsState(
-    target: LatLng
-): State<LatLng> {
-
-    val lat = remember(target.latitude) {
-        Animatable(target.latitude.toFloat())
-    }
-    val lng = remember(target.longitude) {
-        Animatable(target.longitude.toFloat())
-    }
-
-    LaunchedEffect(target) {
-        coroutineScope {
-            launch {
-                lat.animateTo(
-                    target.latitude.toFloat(),
-                    tween(1000, easing = LinearOutSlowInEasing)
-                )
-            }
-            launch {
-                lng.animateTo(
-                    target.longitude.toFloat(),
-                    tween(1000, easing = LinearOutSlowInEasing)
-                )
-            }
-        }
-    }
-
-    return remember {
-        derivedStateOf {
-            LatLng(lat.value.toDouble(), lng.value.toDouble())
-        }
-    }
-}
-
-@Composable
 fun UserMarker(
     userId: String,
     markerState: MarkerState,
@@ -1425,23 +1196,3 @@ fun FullScreenIcon(
     }
 
 }
-
-//fun formatTime(timestamp: Long): String {
-//    val diff = System.currentTimeMillis() - timestamp
-//
-//    val seconds = diff / 1000
-//    val minutes = seconds / 60
-//    val hours = minutes / 60
-//    val days = hours / 24
-//
-//    return when {
-//        seconds < 60 -> "Just now"
-//        minutes < 60 -> "$minutes min ago"
-//        hours < 24 -> "$hours hr ago"
-//        days < 7 -> "$days day${if (days > 1) "s" else ""} ago"
-//        else -> {
-//            val sdf = java.text.SimpleDateFormat("dd MMM yyyy", java.util.Locale.getDefault())
-//            sdf.format(java.util.Date(timestamp))
-//        }
-//    }
-//}

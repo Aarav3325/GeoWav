@@ -138,7 +138,7 @@ fun SheetContent(
                     contentDescription = null,
                     modifier = Modifier
                         .size(24.dp)
-                        .padding(4.dp),
+                        .padding(6.dp),
                     tint = MaterialTheme.colorScheme.onSecondaryContainer
                 )
             }
