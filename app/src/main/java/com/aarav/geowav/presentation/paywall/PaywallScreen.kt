@@ -958,7 +958,7 @@ private data class CompareRow(
 fun ComparisonTable() {
     val rows = listOf(
         CompareRow("Playback", "–", "✓", "✓"),
-        CompareRow("Live Location Sharing", "up to 30 mins", "Unlimited", "Unlimited"),
+        CompareRow("Live Location Sharing", "up to 30 minutes", "Unlimited", "Unlimited"),
         CompareRow("Session History", "Today", "2 days", "Full"),
         CompareRow("Places", "2", "10", "Unlimited"),
         CompareRow("Connections", "1", "5", "Unlimited"),
