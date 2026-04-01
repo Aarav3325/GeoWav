@@ -127,12 +127,12 @@ fun GeoWavHomeScreen(
         }
     }
 
-    LaunchedEffect(uiState.username, uiState.currentUser) {
-        if (!homeScreenVM.hasShownWelcome && uiState.username != null && uiState.currentUser != null) {
-            SnackbarManager.showMessage("Welcome ${uiState.username}")
-            homeScreenVM.hasShownWelcome = true
-        }
-    }
+//    LaunchedEffect(uiState.username, uiState.currentUser) {
+//        if (!homeScreenVM.hasShownWelcome && uiState.username != null && uiState.currentUser != null) {
+//            SnackbarManager.showMessage("Welcome ${uiState.username}")
+//            homeScreenVM.hasShownWelcome = true
+//        }
+//    }
 
     val hideTopBar = uiState.currentUser == null
 

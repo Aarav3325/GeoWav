@@ -217,6 +217,7 @@ class MainActivity : ComponentActivity() {
                 }
             }
 
+
             if (showAppDisabledState) {
                 AppDisabled()
                 return@setContent
@@ -235,8 +236,15 @@ class MainActivity : ComponentActivity() {
 
             val mainVM: MainVM = hiltViewModel()
             val themeMode by mainVM.themeMode.collectAsState()
+            val currentUser by mainVM.currentUser.collectAsState()
 
             Log.i("MYTAG", "theme $themeMode")
+
+            LaunchedEffect(currentUser) {
+                currentUser?.let {
+                    mainVM.showMessage()
+                }
+            }
 
 
             val isDarkTheme = when (themeMode) {
@@ -511,6 +519,23 @@ class MainActivity : ComponentActivity() {
     }
 
 }
+
+
+//fun startNotificationService(context: Context) {
+//    val intent = Intent(context, NotificationService::class.java)
+//
+//    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+//        context.startForegroundService(intent)
+//    } else {
+//        context.startService(intent)
+//    }
+//}          PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_MUTABLE
+//        )
+//
+//        geofencingClient.removeGeofences(pendingIntent)
+//    }
+
+//}
 
 
 //fun startNotificationService(context: Context) {
