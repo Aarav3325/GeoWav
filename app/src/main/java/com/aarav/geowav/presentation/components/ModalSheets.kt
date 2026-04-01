@@ -52,6 +52,7 @@ import com.aarav.geowav.data.model.UpgradeContext
 import com.aarav.geowav.data.model.UserPlan
 import com.aarav.geowav.data.model.getPlanContent
 import com.aarav.geowav.data.model.getReasonContent
+import com.aarav.geowav.presentation.locationsharing.itemShape
 import com.aarav.geowav.presentation.paywall.PlanColors
 import com.aarav.geowav.presentation.paywall.freePlanColors
 import com.aarav.geowav.presentation.paywall.premiumPlanColors
@@ -345,14 +346,17 @@ fun UpgradeBottomSheetContent(
             modifier = Modifier
                 .padding(horizontal = 20.dp)
                 .fillMaxWidth(),
-            shape = RoundedCornerShape(16.dp)
+            shape = RoundedCornerShape(16.dp),
+            colors = CardDefaults.cardColors(
+                containerColor = Color.Transparent
+            )
         ) {
             Column(
-                modifier = Modifier.padding(16.dp),
-                verticalArrangement = Arrangement.spacedBy(12.dp)
+                modifier = Modifier.padding(0.dp),
+                verticalArrangement = Arrangement.spacedBy(0.dp)
             ) {
-                planContent.features.forEach {
-                    FeatureItem(it, colors)
+                planContent.features.forEachIndexed { index, feature ->
+                    FeatureItem(feature, colors, index, planContent.features.size)
                 }
             }
         }
@@ -472,8 +476,19 @@ fun UpgradeBottomSheetContent(
 //}
 
 @Composable
-fun FeatureItem(text: String, colors: PlanColors) {
-    Row(verticalAlignment = Alignment.CenterVertically) {
+fun FeatureItem(text: String, colors: PlanColors, index: Int, total: Int) {
+    val shape = itemShape(index, total)
+
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 1.5.dp)
+            .clip(shape)
+            .background(MaterialTheme.colorScheme.surfaceContainerHigh)
+            .padding(vertical = 16.dp, horizontal = 16.dp)
+
+    ) {
         Icon(
             painter = painterResource(R.drawable.check),
             contentDescription = null,
@@ -663,11 +678,11 @@ fun PurchaseSuccessBottomSheet(
             shape = RoundedCornerShape(16.dp)
         ) {
             Column(
-                modifier = Modifier.padding(16.dp),
-                verticalArrangement = Arrangement.spacedBy(12.dp)
+                modifier = Modifier.padding(0.dp),
+                verticalArrangement = Arrangement.spacedBy(0.dp)
             ) {
-                planInfo.features.forEach {
-                    FeatureItem(it, colors)
+                planInfo.features.forEachIndexed { index, feature ->
+                    FeatureItem(feature, colors, index, planInfo.features.size)
                 }
             }
         }

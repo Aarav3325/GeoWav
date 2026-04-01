@@ -127,8 +127,8 @@ fun GeoWavHomeScreen(
         }
     }
 
-    LaunchedEffect(uiState.username) {
-        if (!homeScreenVM.hasShownWelcome && uiState.username != null) {
+    LaunchedEffect(uiState.username, uiState.currentUser) {
+        if (!homeScreenVM.hasShownWelcome && uiState.username != null && uiState.currentUser != null) {
             SnackbarManager.showMessage("Welcome ${uiState.username}")
             homeScreenVM.hasShownWelcome = true
         }
@@ -189,7 +189,7 @@ fun GeoWavHomeScreen(
             } else {
                 Color.Black
             },
-        animationSpec = tween(durationMillis = 500), // smooth 0.8s fade
+        animationSpec = tween(durationMillis = 500), // smooth 0.5s fade
         label = "TextColorAnimation"
     )
 
