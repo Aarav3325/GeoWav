@@ -18,7 +18,10 @@ import com.google.android.libraries.identity.googleid.GoogleIdTokenCredential
 import com.google.android.libraries.identity.googleid.GoogleIdTokenParsingException
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.GoogleAuthProvider
+import com.google.firebase.database.DataSnapshot
+import com.google.firebase.database.DatabaseError
 import com.google.firebase.database.FirebaseDatabase
+import com.google.firebase.database.ValueEventListener
 import com.google.firebase.storage.FirebaseStorage
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.CancellationException
@@ -147,8 +150,6 @@ class GoogleSignInClient @Inject constructor(
 
             if (finalEmail.isBlank() || finalPass.isBlank()) return false
 
-
-
             val user =
                 firebaseAuth.createUserWithEmailAndPassword(finalEmail, finalPass).await().user
 
@@ -197,7 +198,13 @@ class GoogleSignInClient @Inject constructor(
                 email
             )
 
-            userReference.child(userId).setValue(user)
+            val userData = hashMapOf<String, Any>()
+
+            userData["userId"] = getUserId()
+            userData["username"] = username.trim()
+            userData["email"] = email
+
+            userReference.child(userId).updateChildren(userData)
                 .addOnSuccessListener {
                     Log.d(tag, "userReference: Success")
                 }
@@ -208,6 +215,35 @@ class GoogleSignInClient @Inject constructor(
             lookupReference
                 .child(encodeEmail(email))
                 .setValue(userId)
+        }
+    }
+
+    fun currentUser(): Flow<User?> = callbackFlow {
+        val uid = getUserId()
+        if(uid.isEmpty()) {
+            trySend(null)
+            close()
+            return@callbackFlow
+        }
+
+        val ref = userReference.child(uid)
+
+        val listener = object : ValueEventListener {
+            override fun onDataChange(p0: DataSnapshot) {
+                val currentUser = p0.getValue(User::class.java)
+                trySend(currentUser)
+            }
+
+            override fun onCancelled(p0: DatabaseError) {
+                close(p0.toException())
+            }
+
+        }
+
+        ref.addValueEventListener(listener)
+
+        awaitClose {
+            ref.removeEventListener(listener)
         }
     }
 

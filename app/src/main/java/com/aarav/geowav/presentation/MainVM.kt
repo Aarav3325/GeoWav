@@ -1,6 +1,7 @@
 package com.aarav.geowav.presentation
 
 import android.content.SharedPreferences
+import android.util.Log
 import androidx.lifecycle.ViewModel
 import com.aarav.geowav.presentation.profile.ThemeMode
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -12,6 +13,8 @@ import androidx.lifecycle.viewModelScope
 import com.aarav.geowav.data.authentication.GoogleSignInClient
 import com.aarav.geowav.data.model.User
 import com.aarav.geowav.presentation.components.SnackbarManager
+import kotlinx.coroutines.flow.catch
+import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 

@@ -67,14 +67,14 @@ class HomeScreenVM @Inject constructor(
 
     fun fetchUser() {
         viewModelScope.launch {
-            val user = googleSignInClient.fetchCurrentUser()
-            val uri = googleSignInClient.getUserProfile()
-            _uiState.update {
-                it.copy(
-                    currentUser = user,
-                    userAvatar = uri.toString()
-                )
-            }
+            googleSignInClient.currentUser()
+                .collect {
+                    _uiState.update { state ->
+                        state.copy(
+                            currentUser = it
+                        )
+                    }
+                }
         }
     }
 

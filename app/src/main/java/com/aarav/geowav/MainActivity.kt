@@ -246,7 +246,7 @@ class MainActivity : ComponentActivity() {
             }
 
 
-            LaunchedEffect(isLoggedIn) {
+            LaunchedEffect(Unit) {
                 if(!isLoggedIn) return@LaunchedEffect
                 mainVM.fetchUser()
             }

@@ -83,7 +83,6 @@ import com.aarav.geowav.data.model.Place
 import com.aarav.geowav.data.model.User
 import com.aarav.geowav.data.model.UserPlan
 import com.aarav.geowav.presentation.components.AvatarImage
-import com.aarav.geowav.presentation.components.SnackbarManager
 import com.aarav.geowav.presentation.subscription.SubscriptionViewModel
 import com.aarav.geowav.presentation.theme.manrope
 import com.google.accompanist.permissions.ExperimentalPermissionsApi
@@ -260,7 +259,6 @@ fun GeoWavHomeScreen(
         ) {
 
 
-
             if (uiState.currentUser == null) {
                 ContainedLoadingIndicator(
                     Modifier.align(Alignment.Center)
@@ -328,7 +326,6 @@ fun GeoWavHomeScreen(
                             .padding(horizontal = 12.dp)
                             .background(MaterialTheme.colorScheme.background)
                     ) {
-
 
 
                         val activeViewerIds = locations
@@ -1141,7 +1138,7 @@ fun ProfileCard(
     modifier: Modifier = Modifier,
     isDarkThemeEnabled: Boolean
 ) {
-    Log.i("HOME", "recompose")
+    Log.i("USER", "home user: $currentUser")
     Card(
         modifier = modifier
             .fillMaxWidth()
@@ -1181,17 +1178,8 @@ fun ProfileCard(
             }
 
 
-
-
-
             val imageUrl =
                 currentUser?.avatar?.takeIf { it.isNotBlank() }
-                    ?: avatar.takeIf { !it.isNullOrBlank() }
-                    ?: if (isDarkThemeEnabled) {
-                        "https://storage.googleapis.com/geowav-bucket-1/user_dark_theme.svg"
-                    } else {
-                        "https://storage.googleapis.com/geowav-bucket-1/user_light_theme.svg"
-                    }
 
             val context = LocalContext.current
             val imageLoader = ImageLoader.Builder(context)
@@ -1203,29 +1191,80 @@ fun ProfileCard(
             val badge = SubscriptionHelper.getPlanBadge(plan)
 
             Box() {
-                AvatarImage(
-                    avatarUrl = imageUrl,
-                    isUploading = false,
+
+                Surface(
+                    shape = CircleShape,
+                    color = Color.White,
                     modifier = Modifier
                         .size(84.dp)
                         .clip(CircleShape)
-                        .background(Color.White)
-                )
-//                Surface(
-//                    shape = CircleShape,
-//                    modifier = Modifier.size(84.dp),
-//                    color = Color.White
-//                ) {
-//                    AsyncImage(
-//                        model = imageUrl,
-//                        contentDescription = "User avatar",
-//                        imageLoader = imageLoader,
-//                        placeholder = painterResource(R.drawable.user),
-//                        contentScale = ContentScale.Crop,
-//                        modifier = Modifier.size(84.dp)
-//                    )
-//                }
+                ) {
+                    Box(
+                        modifier = Modifier
+                            .clip(CircleShape)
+                            .background(Color.White)
+                            .size(84.dp),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        if (!imageUrl.isNullOrBlank()) {
+                            AvatarImage(
+                                avatarUrl = imageUrl,
+                                isUploading = false,
+                                modifier = Modifier.size(84.dp)
+                            )
+                        } else {
+//
+                            Log.d("USER", "name: ${currentUser?.username}")
 
+                            Text(
+                                text = currentUser?.username?.take(1) ?: "",
+                                color = Color.Black,
+                                fontSize = 42.sp,
+                                fontWeight = FontWeight.SemiBold,
+                                modifier = Modifier
+
+                            )
+                        }
+                    }
+
+                }
+
+//                AsyncImage(
+//                    model = imageUrl,
+//                    contentDescription = "User avatar",
+//                    imageLoader = imageLoader,
+//                    placeholder = painterResource(R.drawable.user),
+//                    contentScale = ContentScale.Crop,
+//                    modifier = Modifier.size(84.dp)
+//                )
+//                Box(
+//                    modifier = Modifier
+//                        .clip(CircleShape)
+//                        .background(Color.White)
+//                        .size(84.dp),
+//                    contentAlignment = Alignment.Center
+//                ) {
+//                    if (!imageUrl.isNullOrBlank()) {
+//                        Log.d("USER", "avatar: async")
+//                        AvatarImage(
+//                            avatarUrl = imageUrl,
+//                            isUploading = false,
+//                            modifier = Modifier
+//                                .size(84.dp)
+//                                .clip(CircleShape)
+//                                .background(Color.White)
+//                        )
+//                    } else {
+//                        Text(
+//                            text = currentUser?.username?.take(1) ?: "",
+//                            color = Color.Black,
+//                            fontSize = 42.sp,
+//                            fontWeight = FontWeight.SemiBold,
+//                            modifier = Modifier
+//
+//                        )
+//                    }
+//                }
                 badge?.let {
                     Icon(
                         painter = painterResource(badge),
@@ -1236,9 +1275,9 @@ fun ProfileCard(
                             .align(Alignment.BottomEnd)
                     )
                 }
+
+
             }
-
-
         }
     }
 }

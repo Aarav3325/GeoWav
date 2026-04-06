@@ -62,6 +62,7 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import com.aarav.geowav.R
+import com.aarav.geowav.data.model.User
 import com.aarav.geowav.presentation.circle.ConnectionUsageCard
 import com.aarav.geowav.presentation.components.AboutDialog
 import com.aarav.geowav.presentation.components.ProfileCard

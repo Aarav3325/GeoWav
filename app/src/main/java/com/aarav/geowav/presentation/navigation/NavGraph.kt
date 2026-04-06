@@ -15,6 +15,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.navigation
 import androidx.navigation.navArgument
 import com.aarav.geowav.data.authentication.GoogleSignInClient
+import com.aarav.geowav.data.model.User
 import com.aarav.geowav.presentation.activity.ActivityScreen
 import com.aarav.geowav.presentation.addplace.AddPlaceScreen
 import com.aarav.geowav.presentation.auth.LoginScreen

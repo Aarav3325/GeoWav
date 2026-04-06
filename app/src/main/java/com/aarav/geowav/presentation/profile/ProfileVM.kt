@@ -126,11 +126,11 @@ class ProfileVM @Inject constructor(
     fun fetchUser() {
         viewModelScope.launch {
             val user = googleSignInClient.fetchCurrentUser()
-            val uri = googleSignInClient.getUserProfile()?.toString()
+//            val uri = googleSignInClient.getUserProfile()?.toString()
             _uiState.update {
                 it.copy(
                     currentUser = user,
-                    userAvatar = uri
+//                    userAvatar = uri
                 )
             }
         }

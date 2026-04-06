@@ -220,7 +220,6 @@ fun AddLocationFAB(
         )
     }
 }
-
 @Composable
 fun PlacesUsageCard(
     current: Int,
@@ -229,7 +228,6 @@ fun PlacesUsageCard(
     modifier: Modifier = Modifier
 ) {
     val max = FeatureAccess.maxSavedPlaces(plan)
-
     val isUnlimited = max == Int.MAX_VALUE
     val isLimitReached = !isUnlimited && current >= max
 
@@ -239,115 +237,110 @@ fun PlacesUsageCard(
         UserPlan.PRO -> "GeoWav Pro"
     }
 
-    val usageText = if (isUnlimited) {
+    val usageText = if (isUnlimited)
         "$current places"
-    } else {
+    else
         "$current / $max places used"
-    }
+
+    // ✅ SAME COLOR SYSTEM AS CONNECTION CARD
+    val cardBg = if (isLimitReached)
+        MaterialTheme.colorScheme.errorContainer
+    else
+        MaterialTheme.colorScheme.primaryContainer
+
+    val cardFg = if (isLimitReached)
+        MaterialTheme.colorScheme.onErrorContainer
+    else
+        MaterialTheme.colorScheme.onPrimaryContainer
+
+    val cardFgMuted = cardFg.copy(alpha = 0.65f)
+
+    val badgeBg = if (isLimitReached)
+        MaterialTheme.colorScheme.error
+    else
+        MaterialTheme.colorScheme.primary
+
+    val badgeFg = if (isLimitReached)
+        MaterialTheme.colorScheme.onError
+    else
+        MaterialTheme.colorScheme.onPrimary
 
     Card(
-        modifier = modifier
-            .fillMaxWidth()
-            .border(
-                1.dp,
-                if (isLimitReached)
-                    MaterialTheme.colorScheme.error.copy(alpha = 0.4f)
-                else
-                    MaterialTheme.colorScheme.outlineVariant,
-                RoundedCornerShape(16.dp)
-            ),
-        shape = RoundedCornerShape(16.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = if (isLimitReached)
-                MaterialTheme.colorScheme.errorContainer.copy(alpha = 0.3f)
-            else
-                MaterialTheme.colorScheme.surfaceContainer
-        ),
+        modifier = modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(20.dp),
+        colors = CardDefaults.cardColors(containerColor = cardBg),
         elevation = CardDefaults.cardElevation(0.dp)
     ) {
-
         Column(
-            modifier = Modifier.padding(14.dp),
+            modifier = Modifier.padding(18.dp),
             verticalArrangement = Arrangement.spacedBy(10.dp)
         ) {
 
-            if(showPlanInfo) {
+            if (showPlanInfo) {
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-
                     Text(
                         text = planText,
-                        fontSize = 13.sp,
+                        fontSize = 12.sp,
                         fontWeight = FontWeight.Medium,
                         fontFamily = manrope,
-                        color = MaterialTheme.colorScheme.outline
+                        color = cardFgMuted
                     )
 
                     Surface(
-                        shape = RoundedCornerShape(25),
-                        color = if (isLimitReached)
-                            MaterialTheme.colorScheme.errorContainer
-                        else
-                            MaterialTheme.colorScheme.surfaceVariant
+                        shape = RoundedCornerShape(99.dp),
+                        color = badgeBg
                     ) {
                         Text(
-                            text = if (isLimitReached) "Limit Reached" else "Active",
+                            text = if (isLimitReached) "Limit reached" else "Active",
                             modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp),
-                            fontSize = 12.sp,
-                            fontWeight = FontWeight.Medium,
+                            fontSize = 11.sp,
+                            fontWeight = FontWeight.SemiBold,
                             fontFamily = manrope,
-                            color = if (isLimitReached)
-                                MaterialTheme.colorScheme.onErrorContainer
-                            else
-                                MaterialTheme.colorScheme.onSurfaceVariant
+                            color = badgeFg
                         )
                     }
                 }
             }
 
+            // ✅ SAME TYPOGRAPHY SCALE
             Text(
                 text = usageText,
-                fontSize = 16.sp,
-                fontWeight = FontWeight.SemiBold,
+                fontSize = 22.sp,
+                fontWeight = FontWeight.Bold,
                 fontFamily = manrope,
-                color = if (isLimitReached)
-                    MaterialTheme.colorScheme.error
-                else
-                    MaterialTheme.colorScheme.onBackground
+                color = cardFg
             )
 
-
+            // ✅ SAME PROGRESS BAR STYLE
+            if (!isUnlimited) {
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .height(6.dp)
-                        .clip(RoundedCornerShape(50))
-                        .background(MaterialTheme.colorScheme.surfaceVariant)
+                        .height(5.dp)
+                        .clip(RoundedCornerShape(99.dp))
+                        .background(cardFg.copy(alpha = 0.2f))
                 ) {
                     Box(
                         modifier = Modifier
                             .fillMaxWidth(current.toFloat() / max)
                             .fillMaxHeight()
-                            .background(
-                                if (isLimitReached)
-                                    MaterialTheme.colorScheme.error
-                                else
-                                    MaterialTheme.colorScheme.secondary
-                            )
+                            .clip(RoundedCornerShape(99.dp))
+                            .background(cardFg)
                     )
                 }
-
+            }
 
             if (isLimitReached) {
                 Text(
                     text = "Upgrade to add more places",
-                    fontSize = 13.sp,
+                    fontSize = 12.sp,
                     fontWeight = FontWeight.Medium,
                     fontFamily = manrope,
-                    color = MaterialTheme.colorScheme.primary
+                    color = cardFgMuted
                 )
             }
         }

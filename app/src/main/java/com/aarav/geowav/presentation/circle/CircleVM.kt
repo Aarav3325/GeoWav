@@ -155,13 +155,6 @@ class CircleVM
 
         val max = FeatureAccess.maxConnections(userPlan)
 
-        if (_uiState.value.lovedOnes.size >= max) {
-            emitUpgrade(
-                userPlan
-            )
-            return
-        }
-
         if (trimmedEmail.isEmpty()) {
             emitError("Email cannot be empty")
             return
@@ -171,6 +164,13 @@ class CircleVM
             emitError("Name cannot be empty")
             return
         }
+        if (_uiState.value.lovedOnes.size >= max) {
+            emitUpgrade(
+                userPlan
+            )
+            return
+        }
+
 
         if (trimmedEmail == encodeEmail(currentUserEmail)) {
             emitError("You cannot invite yourself")

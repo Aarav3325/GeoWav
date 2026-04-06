@@ -1,6 +1,6 @@
 package com.aarav.geowav.presentation.components
 
-import android.util.Log
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -28,12 +28,11 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import coil.ImageLoader
 import coil.compose.AsyncImage
-import coil.compose.AsyncImagePainter
-import coil.compose.SubcomposeAsyncImage
-import coil.compose.SubcomposeAsyncImageContent
 import coil.decode.SvgDecoder
 import com.aarav.geowav.R
 import com.aarav.geowav.data.model.User
@@ -62,16 +61,10 @@ fun ProfileCard(
     val imageUrl =
         currentUser?.avatar?.takeIf { it.isNotBlank() }
             ?: userAvatar.takeIf { !it.isNullOrBlank() }
-            ?: if (isDarkThemeEnabled) {
-                "https://storage.googleapis.com/geowav-bucket-1/user_dark_theme.svg"
-            } else {
-                "https://storage.googleapis.com/geowav-bucket-1/user_light_theme.svg"
-            }
 
     val stableAvatar = remember(currentUser?.avatar) {
         currentUser?.avatar
     }
-
 
 
     val badge = when (plan) {
@@ -111,15 +104,35 @@ fun ProfileCard(
                             onAvatarClick()
                         }
                 ) {
-                    AvatarImage(
-                        avatarUrl = imageUrl,
-                        isUploading = isUploading,
-                        modifier = Modifier.size(84.dp)
-                    )
+                    Box(
+                        modifier = Modifier
+                            .clip(CircleShape)
+                            .background(Color.White)
+                            .size(84.dp),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        if (!imageUrl.isNullOrBlank()) {
+                            AvatarImage(
+                                avatarUrl = imageUrl,
+                                isUploading = isUploading,
+                                modifier = Modifier.size(84.dp)
+                            )
+                        } else {
+//
+                            Text(
+                                text = currentUser?.username?.take(1) ?: "",
+                                color = Color.Black,
+                                fontSize = 42.sp,
+                                fontWeight = FontWeight.SemiBold,
+                                modifier = Modifier
+
+                            )
+                        }
+                    }
 
                 }
 
-                if(!isUploading) {
+                if (!isUploading) {
                     Surface(
                         shape = CircleShape,
                         color = MaterialTheme.colorScheme.tertiaryContainer,
@@ -194,9 +207,9 @@ fun AvatarImage(
     AsyncImage(
         model = avatarUrl,
         contentDescription = null,
-        placeholder = painterResource(R.drawable.user),
-        error = painterResource(R.drawable.user),
-        fallback = painterResource(R.drawable.user),
+//        placeholder = painterResource(R.drawable.user),
+//        error = painterResource(R.drawable.user),
+//        fallback = painterResource(R.drawable.user),
         contentScale = ContentScale.Crop,
         modifier = modifier
     )
