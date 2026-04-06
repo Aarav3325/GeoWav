@@ -25,8 +25,6 @@ class TimelineViewModel
     val sessionHistoryRepository: SessionHistoryRepository
 ) : ViewModel() {
 
-//    private var _sessionHistory = MutableStateFlow<List<SessionHistory>>(emptyList())
-//    val sessionHistory: StateFlow<List<SessionHistory>> = _sessionHistory.asStateFlow()
 
     private var _uiState = MutableStateFlow(TimelineUiState())
     val uiState: StateFlow<TimelineUiState> = _uiState.asStateFlow()
@@ -35,26 +33,6 @@ class TimelineViewModel
 
     private var observeJob: Job? = null
 
-//    fun getUserSessions(userId: String) {
-//
-//
-//        _uiState.update {
-//            it.copy(
-//                isLoading = true
-//            )
-//        }
-//
-//        viewModelScope.launch {
-//            sessionHistoryRepository.getSessionsVisibleTo(userId, currentUserId).collect { list ->
-//                _uiState.update {
-//                    it.copy(
-//                        sessions = list,
-//                        isLoading = false
-//                    )
-//                }
-//            }
-//        }
-//    }
 
     fun getMySessions(
         filter: ActivityFilter,
@@ -72,7 +50,7 @@ class TimelineViewModel
                 sessionHistoryRepository.getSessionsForCurrentUser(currentUserId, filter, plan)
                     .collect { list ->
 
-                        //  Log.i("SESSIONS", "currentUserId: ${list.toString()}")
+
                         _uiState.update {
                             it.copy(
                                 mySessions = list,
@@ -140,22 +118,6 @@ class TimelineViewModel
     }
 
 
-//    fun getUserSessionHistory(userId: String) {
-//
-//
-//
-//        viewModelScope.launch {
-//            sessionHistoryRepository.getSessionsForUser(userId).collect { list ->
-//                _uiState.update {
-//                    it.copy(
-//                        sessions = list,
-//                        isLoading = false
-//                    )
-//                }
-//            }
-//        }
-//
-//    }
 }
 
 data class TimelineUiState(

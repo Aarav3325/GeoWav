@@ -77,19 +77,6 @@ fun ObserveScreen(
         contentWindowInsets = WindowInsets(0, 0, 0, 0),
         containerColor = MaterialTheme.colorScheme.background,
     ) {
-//        LaunchedEffect(Unit) {
-//            viewModel.loadLovedOnes()
-//        }
-//
-//        LaunchedEffect(uiState.lovedOnes) {
-//            if (uiState.lovedOnes.isNotEmpty()) {
-//                Log.i("OBSERVE", "observe called")
-//                viewModel.observeUsers()
-//                viewModel.cleanupRemovedUsers(
-//                    uiState.lovedOnes.map { it.id }.toSet()
-//                )
-//            }
-//        }
 
 
         var showStopDialog by remember {
@@ -128,16 +115,6 @@ fun ObserveScreen(
         }
 
 
-        /*
-        listOf(
-//                    CircleMember(
-//                        id = "",
-//                        profileName = "Aarav",
-//                        selected = false,
-//                        receiverEmail = "TODO()",
-//                        alias = null
-//                    )
-         */
 
         val emergencyUser = locations
             .entries

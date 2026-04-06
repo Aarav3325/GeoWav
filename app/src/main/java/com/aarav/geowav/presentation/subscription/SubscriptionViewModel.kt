@@ -62,14 +62,7 @@ class SubscriptionViewModel
         observePurchases()
     }
 
-//    fun startListening() {
-//        listeningJob?.cancel()
-//        listeningJob = viewModelScope.launch {
-//            subscriptionRepository.observeUserPlan().collect {
-//                _userPlan.value = it
-//            }
-//        }
-//    }
+
 
     fun setupBillingClient() {
         viewModelScope.launch {

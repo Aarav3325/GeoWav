@@ -1,6 +1,5 @@
 package com.aarav.geowav.presentation.home
 
-import android.content.Context
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -23,7 +22,6 @@ import com.aarav.geowav.domain.repository.ViewerLocationRepository
 import com.google.android.gms.maps.model.LatLng
 import com.google.maps.android.SphericalUtil
 import dagger.hilt.android.lifecycle.HiltViewModel
-import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
@@ -40,7 +38,6 @@ import javax.inject.Inject
 
 @HiltViewModel
 class HomeScreenVM @Inject constructor(
-    @ApplicationContext val context: Context,
     private val googleSignInClient: GoogleSignInClient,
     private val placeRepository: PlaceRepositoryImpl,
     private val geoActivityRepositoryImpl: GeoActivityRepositoryImpl,
@@ -64,29 +61,9 @@ class HomeScreenVM @Inject constructor(
     private val _liveStayPoints = MutableStateFlow<Map<String, List<StayPoint>>>(emptyMap())
     val liveStayPoints: StateFlow<Map<String, List<StayPoint>>> = _liveStayPoints.asStateFlow()
 
-//    val userSessionHistory = sessionHistoryRepository.getSessionsForUser("7sZTZoNLRpUBcJSevQJyNq2XRVw1")
-//        .stateIn(viewModelScope, SharingStarted.Lazily, emptyList<SessionHistory>())
-
     val viewerId = googleSignInClient.getUserId()
 
-//    private var countdownJob: Job? = null
-
     private val observerJobs = mutableMapOf<String, Job>()
-
-
-//    fun launchBillingFlow(
-//        activity: Activity,
-//        productId: String
-//    ) {
-//        viewModelScope.launch {
-//            paymentRepository.processPurchases(activity, productId)
-//        }
-//    }
-
-    init {
-        fetchUser()
-        Log.i("HOME", "init called")
-    }
 
     fun fetchUser() {
         viewModelScope.launch {
@@ -272,10 +249,12 @@ class HomeScreenVM @Inject constructor(
 
 
     init {
+        fetchUser()
+
         viewModelScope.launch {
-            combine( allPlaces, alerts) { p, a ->
+            combine(allPlaces, alerts) { p, a ->
                 Pair(p, a)
-            }.collect { ( places, alerts) ->
+            }.collect { (places, alerts) ->
                 _uiState.update {
                     it.copy(
                         placesList = places,
@@ -338,7 +317,7 @@ class HomeScreenVM @Inject constructor(
             it.copy(
                 lastPosition = location
             )
-        }
+        }   
     }
 
     fun setPlaybackIndex(index: Int) {
@@ -407,8 +386,4 @@ data class HomeScreenUiState(
     val username: String? = null,
     val viewerState: ViewerLocationState? = ViewerLocationState.Blocked,
     val remainingTime: String? = null
-)
-
-sealed class PurchaseUiEvent(
-
 )

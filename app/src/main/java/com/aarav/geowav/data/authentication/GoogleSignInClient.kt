@@ -147,9 +147,6 @@ class GoogleSignInClient @Inject constructor(
 
             if (finalEmail.isBlank() || finalPass.isBlank()) return false
 
-//            firebaseAuth
-//                .createUserWithEmailAndPassword(finalEmail, finalPass)
-//                .await()
 
 
             val user =

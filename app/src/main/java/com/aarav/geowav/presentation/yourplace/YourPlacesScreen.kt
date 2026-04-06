@@ -105,7 +105,6 @@ fun YourPlacesScreen(
     Box(
         modifier = Modifier
             .background(MaterialTheme.colorScheme.background)
-            //.padding(it)
             .fillMaxSize()
     ) {
 
@@ -320,7 +319,7 @@ fun PlacesUsageCard(
                     MaterialTheme.colorScheme.onBackground
             )
 
-//            if (plan != UserPlan.FREE) {
+
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -340,7 +339,7 @@ fun PlacesUsageCard(
                             )
                     )
                 }
-//            }
+
 
             if (isLimitReached) {
                 Text(

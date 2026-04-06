@@ -72,11 +72,6 @@ fun OnboardingScreen(
     val showLocationDialog = uiState.showPermissionDialog
 
 
-//    var permissionsGranted by remember { mutableStateOf(false) }
-//
-//    var isOnboarded by remember {
-//        mutableStateOf(false)
-//    }
 
     val pages = uiState.pages
 

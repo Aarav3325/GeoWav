@@ -110,26 +110,7 @@ class PlaceViewModel @Inject constructor(
         }
     }
 
-//    fun searchPlaces(
-//        query: String
-//    ) {
-//        val token = AutocompleteSessionToken.newInstance()
-//
-//        val request = FindAutocompletePredictionsRequest.builder()
-//            .setQuery(query)
-//            .setSessionToken(token)
-//            .build()
-//
-//
-//        placesClient.findAutocompletePredictions(request)
-//            .addOnSuccessListener { response ->
-//                onResult(response.autocompletePredictions)
-//            }
-//            .addOnFailureListener { exception ->
-//                exception.printStackTrace()
-//                onResult(emptyList())
-//            }
-//    }
+
 
     fun fetchPlace(placeId: String) {
 

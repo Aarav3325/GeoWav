@@ -73,11 +73,6 @@ fun ProfileCard(
     }
 
 
-//    val finalAvatar = if (userAvatar.toString().isEmpty()) {
-//        R.drawable.user
-//    } else {
-//        userAvatar
-//    }
 
     val badge = when (plan) {
         UserPlan.FREE -> null
@@ -85,23 +80,6 @@ fun ProfileCard(
         UserPlan.PRO -> R.drawable.geowav_pro_badge
     }
 
-
-//    val imageUrl = when {
-//        !userAvatar.toString().isBlank() && !currentUser?.avatar.isNullOrBlank() ->
-//            currentUser.avatar
-//
-//        userAvatar.toString().isBlank() && !currentUser?.avatar.isNullOrBlank() ->
-//            currentUser.avatar
-//
-//        userAvatar.toString().isBlank() && currentUser?.avatar.isNullOrBlank() ->
-//            if (isDarkThemeEnabled) {
-//                "https://storage.googleapis.com/geowav-bucket-1/user_dark_theme.svg"
-//            } else {
-//                "https://storage.googleapis.com/geowav-bucket-1/user_light_theme.svg"
-//            }
-//
-//        else -> userAvatar
-//    }
 
     Card(
         shape = RoundedCornerShape(16.dp),
@@ -138,16 +116,6 @@ fun ProfileCard(
                         isUploading = isUploading,
                         modifier = Modifier.size(84.dp)
                     )
-//                    SubcomposeAsyncImage(
-//                        model = imageUrl,
-//                        contentDescription = null,
-//                        contentScale = ContentScale.Crop,
-//                        modifier = Modifier.size(84.dp),
-//                    ) {
-//                        val state = painter.state
-//
-//
-//                    }
 
                 }
 
@@ -178,11 +146,7 @@ fun ProfileCard(
                     )
                 }
 
-//                Icon(
-//                    painter = painterResource(R.drawable.user),
-//                    contentDescription = "avatar",
-//                    modifier = Modifier.padding(12.dp)
-//                )
+
             }
 
             Column(

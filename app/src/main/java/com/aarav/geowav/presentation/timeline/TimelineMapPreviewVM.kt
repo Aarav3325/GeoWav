@@ -227,23 +227,7 @@ class TimelineMapPreviewVM @Inject constructor(
         _uiState.update { it.copy(mapType = next) }
     }
 
-//    fun updateShowUpgrade() {
-//        viewModelScope.launch {
-//            if (!hasShownStayPointsUpgrade) {
-//
-//                hasShownStayPointsUpgrade = true
-//
-//                _uiEvent.emit(
-//                    UpgradeEvents.ShowUpgrade(
-//                        UpgradeContext(
-//                            upgradeTo = UserPlan.PRO,
-//                            reason = UpgradeReason.StayPoints
-//                        )
-//                    )
-//                )
-//            }
-//        }
-//    }
+
 
     private fun emitUpgradeEvent(upgradeContext: UpgradeContext) {
         viewModelScope.launch {

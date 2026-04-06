@@ -46,14 +46,6 @@ class LocationSharingVM
     val locationLocationSharingRepository: LiveLocationSharingRepository
 ) : ViewModel() {
 
-//
-//    init {
-//        sharedPreferences.edit {
-//            remove("live_location_state")
-//        }
-//    }
-
-
     val ACTION_STOP = "ACTION_STOP_LIVE_LOCATION"
     private var _uiState: MutableStateFlow<LiveLocationUiState> =
         MutableStateFlow(LiveLocationUiState(sharingState = LiveLocationState.NotSharing))
@@ -78,9 +70,6 @@ class LocationSharingVM
         observeEmergency()
         recoverActualSharingState()
 
-//        if(recovered !is LiveLocationState.NotSharing) {
-//            getLatestTimestamp()
-//        }
     }
 
     private var emergencyTimerJob: Job? = null
@@ -208,7 +197,6 @@ class LocationSharingVM
                         action = ACTION_STOP
                     }
                     context.startService(intent)
-//                    stopLiveLocationSharing()
                 }
 
             } catch (e: Exception) {
@@ -284,8 +272,6 @@ class LocationSharingVM
                     lastUpdatedText = System.currentTimeMillis()
                 )
 
-//            ServiceState.ERROR.name ->
-//                LiveLocationState.Error("Failed to share live location")
 
             else -> LiveLocationState.NotSharing
         }
@@ -431,22 +417,6 @@ class LocationSharingVM
     }
 
 
-//    fun startLiveLocationSharing() {
-//
-//        if (_uiState.value.selectedViewerIds.isEmpty()) {
-//            emitError("Select at least one person to share location with")
-//            return
-//        }
-//
-//        _uiState.update {
-//            it.copy(
-//                isServiceActionLoading  = true,
-//            )
-//        }
-//
-//        val intent = Intent(context, LiveLocationService::class.java)
-//        context.startForegroundService(intent)
-//    }
 
     // stop location sharing
     fun stopLiveLocationSharing() {

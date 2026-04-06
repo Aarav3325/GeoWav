@@ -127,12 +127,6 @@ fun GeoWavHomeScreen(
         }
     }
 
-//    LaunchedEffect(uiState.username, uiState.currentUser) {
-//        if (!homeScreenVM.hasShownWelcome && uiState.username != null && uiState.currentUser != null) {
-//            SnackbarManager.showMessage("Welcome ${uiState.username}")
-//            homeScreenVM.hasShownWelcome = true
-//        }
-//    }
 
     val hideTopBar = uiState.currentUser == null
 
@@ -151,13 +145,13 @@ fun GeoWavHomeScreen(
         )
     }
 
-//    Log.i("SESSION", sessionHistory.toString())
+
 
     LaunchedEffect(Unit) {
         homeScreenVM.loadLovedOnes()
     }
 
-//    Log.i("HOME", uiState.lovedOnes.toString())
+
 
     LaunchedEffect(locations) {
         if (locations.isNotEmpty()) {
@@ -238,11 +232,8 @@ fun GeoWavHomeScreen(
                         }
 
                         IconButton(
-//                        onClick = onThemeChange
                             onClick = {
                                 navigateToSettings()
-//                            homeScreenVM.signOut()
-//                            navigateToAuth()
                             }
                         ) {
                             Image(
@@ -268,23 +259,7 @@ fun GeoWavHomeScreen(
                 .background(MaterialTheme.colorScheme.background)
         ) {
 
-//            locations.forEach { (ownerId, state) ->
-//                when (state) {
-//                    is ViewerLocationState.NormalSharing -> {
-//                        Log.i("OBSERVE", "user: $ownerId, location: ${state.location}")
-//                    }
-//
-//
-//                    is ViewerLocationState.EmergencySharing -> {
-//                        Log.i(
-//                            "OBSERVE",
-//                            "user: $ownerId, location: ${state.location}, remaining: ${state.endsAt}"
-//                        )
-//                    }
-//
-//                    ViewerLocationState.Blocked -> Unit
-//                }
-//            }
+
 
             if (uiState.currentUser == null) {
                 ContainedLoadingIndicator(
@@ -354,12 +329,7 @@ fun GeoWavHomeScreen(
                             .background(MaterialTheme.colorScheme.background)
                     ) {
 
-//                    val hasAnyLiveSharing = uiState.locations.values.any {
-//                        it is ViewerLocationState.NormalSharing ||
-//                                it is ViewerLocationState.EmergencySharing
-//                    }
-//
-//                    val viewerInfo = uiState.currentViewers
+
 
                         val activeViewerIds = locations
                             .filterValues {
@@ -398,20 +368,6 @@ fun GeoWavHomeScreen(
                             }
                         }
 
-//                    ObserveLiveLocationCard(
-//                        homeScreenVM, uiState, false, navigateToObserve, Modifier
-//                            .height(220.dp)
-//                    )
-
-//                    ObserveLiveLocationCard(
-//                        uiState.locations
-//                    )
-
-
-//
-//                    AnimatedVisibility(hasAnyLiveSharing && viewerInfo.isNotEmpty()) {
-//                        ViewerCardHome(viewerInfo, navigateToObserve)
-//                    }
 
 
                         ConnectionsList(
@@ -492,24 +448,7 @@ fun GeoWavHomeScreen(
                                 fontWeight = FontWeight.Bold
                             )
 
-//                        Row(
-//                            horizontalArrangement = Arrangement.spacedBy(8.dp)
-//                        ) {
-//                            Text(
-//                                text = "Made With Love",
-//                                color = MaterialTheme.colorScheme.onBackground,
-//                                fontSize = 16.sp,
-//                                fontFamily = manrope,
-//                                fontWeight = FontWeight.Bold
-//                            )
-//
-//                            Icon(
-//                                painter = painterResource(R.drawable.heart_fill),
-//                                contentDescription = "logo",
-//                                modifier = Modifier.size(24.dp),
-//                                tint = MaterialTheme.colorScheme.error
-//                            )
-//                        }
+
                         }
                     }
                 }
@@ -1153,7 +1092,6 @@ fun AlertItem(alert: com.aarav.geowav.data.model.GeoAlert, isDarkThemeEnabled: B
                 modifier = Modifier
                     .size(44.dp)
                     .clip(RoundedCornerShape(8.dp))
-                    //.background(Color(0xFFBAFFDF)),
                     .background(
                         boxColor
                     ),
@@ -1243,17 +1181,7 @@ fun ProfileCard(
             }
 
 
-//            val imageUrl = remember(avatar, isDarkThemeEnabled) {
-//                if (avatar.isNullOrBlank()) {
-//                    if (isDarkThemeEnabled) {
-//                        "https://storage.googleapis.com/geowav-bucket-1/user_dark_theme.svg"
-//                    } else {
-//                        "https://storage.googleapis.com/geowav-bucket-1/user_light_theme.svg"
-//                    }
-//                } else {
-//                    avatar
-//                }
-//            }
+
 
 
             val imageUrl =
