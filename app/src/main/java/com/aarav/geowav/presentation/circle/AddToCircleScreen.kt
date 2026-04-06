@@ -13,6 +13,7 @@ import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -49,6 +50,8 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.TextStyle
@@ -219,6 +222,7 @@ fun CircleContent(
     LazyColumn(
         modifier = modifier
             .fillMaxSize()
+            .imePadding()
             .background(MaterialTheme.colorScheme.background),
         verticalArrangement = Arrangement.spacedBy(8.dp),
         contentPadding = androidx.compose.foundation.layout.PaddingValues(
@@ -305,6 +309,9 @@ fun AddLovedOneCard(
     ) {
         Column(Modifier.padding(16.dp)) {
 
+            val focusRequester = remember { FocusRequester() }
+
+
             Text(
                 text = "Invite a loved one",
                 style = MaterialTheme.typography.titleMedium.copy(
@@ -350,6 +357,12 @@ fun AddLovedOneCard(
                         )
                     }
                 },
+                keyboardOptions = KeyboardOptions(
+                    imeAction = ImeAction.Next
+                ),
+                keyboardActions = KeyboardActions(
+                    onNext = { focusRequester.requestFocus() }
+                ),
                 modifier = Modifier.fillMaxWidth(),
                 singleLine = true,
                 leadingIcon = {
@@ -402,8 +415,12 @@ fun AddLovedOneCard(
                     }
                 },
                 keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
-                keyboardActions = KeyboardActions(onDone = { focusManager.clearFocus() }),
-                modifier = Modifier.fillMaxWidth(),
+                keyboardActions = KeyboardActions(onDone = {
+                    focusManager.clearFocus()
+                    onSendInvite(uiState.email, uiState.name, userPlan)
+                }),
+                modifier = Modifier.fillMaxWidth()
+                    .focusRequester(focusRequester),
                 singleLine = true,
                 leadingIcon = {
                     Icon(

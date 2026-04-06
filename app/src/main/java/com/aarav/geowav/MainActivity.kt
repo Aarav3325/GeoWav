@@ -175,7 +175,6 @@ class MainActivity : ComponentActivity() {
             LaunchedEffect(isLoggedIn) {
                 if (!isLoggedIn) return@LaunchedEffect
             }
-
             NotificationServiceInitializer(
                 isLoggedIn = isLoggedIn,
                 showSettingsDialog = {
@@ -245,6 +244,14 @@ class MainActivity : ComponentActivity() {
                     mainVM.showMessage()
                 }
             }
+
+
+            LaunchedEffect(isLoggedIn) {
+                if(!isLoggedIn) return@LaunchedEffect
+                mainVM.fetchUser()
+            }
+
+
 
 
             val isDarkTheme = when (themeMode) {

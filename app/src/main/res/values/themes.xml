@@ -1,12 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
 
-    <style name="Theme.GeoWav" parent="android:Theme.Material.Light.NoActionBar">
-        <item name="android:windowSplashScreenBackground">#FBF8FF</item>
-        <item name="android:windowSplashScreenAnimatedIcon">@null</item>
-        <item name="android:windowBackground">@android:color/transparent</item>
-    </style>
-
     <style name="Theme.MyApp" parent="Theme.Material3.DayNight.NoActionBar" />
 
 </resources>

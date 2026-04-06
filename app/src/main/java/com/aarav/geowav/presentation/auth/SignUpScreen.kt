@@ -103,28 +103,12 @@ fun SignupScreen(
             .background(MaterialTheme.colorScheme.background)
     ) {
 
-        if (uiState.isLoading) {
-            Dialog(onDismissRequest = {}, content = {
-                Card(
-                    shape = RoundedCornerShape(16.dp),
-                    modifier = Modifier
-                        .padding(16.dp)
-                        .fillMaxWidth()
-                        .height(100.dp)
-                ) {
-                    Box(
-                        modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center
-                    ) {
-                        ContainedLoadingIndicator()
-                    }
-                }
-            })
-        }
 
         Column(
             modifier = Modifier
-                .padding(24.dp)
                 .fillMaxSize()
+                .padding(24.dp)
+                .imePadding()
                 .verticalScroll(rememberScrollState()),
             verticalArrangement = Arrangement.Center,
             horizontalAlignment = Alignment.CenterHorizontally
@@ -405,6 +389,7 @@ fun SignupScreen(
 
             Button(
                 onClick = {
+                    keyboardController?.hide()
                     signUpVM.signUpWithEmailAndPassword(
                         uiState.username,
                         uiState.email,
@@ -463,6 +448,18 @@ fun SignupScreen(
 
             }
 
+        }
+
+
+        if (uiState.isLoading) {
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(Color.Black.copy(alpha = 0.3f)),
+                contentAlignment = Alignment.Center
+            ) {
+                ContainedLoadingIndicator()
+            }
         }
     }
 }

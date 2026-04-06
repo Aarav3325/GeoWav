@@ -24,13 +24,15 @@ class MainVM @Inject constructor(
     private val _themeMode = MutableStateFlow(loadTheme())
     val themeMode = _themeMode.asStateFlow()
 
-    init {
-        fetchUser()
-    }
-
     private val _currentUser = MutableStateFlow<User?>(null)
     val currentUser = _currentUser.asStateFlow()
 
+//
+//    init {
+//        if(currentUser != null) {
+//            fetchUser()
+//        }
+//    }
 
     fun setThemeMode(mode: ThemeMode) {
         prefs.edit { putString("theme_mode", mode.name) }

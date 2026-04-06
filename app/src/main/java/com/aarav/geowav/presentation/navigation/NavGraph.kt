@@ -270,7 +270,11 @@ fun AddSignUpScreen(
         SignupScreen(
             signUpVM = hiltViewModel(),
             navigateToHome = {
-                navController.navigate(NavRoute.HomeScreen.path)
+                navController.navigate(NavRoute.HomeScreen.path) {
+                    popUpTo(NavRoute.SignUp.path) {
+                        inclusive = true
+                    }
+                }
             },
             navigateToLogin = {
                 navController.navigate(NavRoute.Login.path)
@@ -289,7 +293,11 @@ fun AddLoginScreen(
         LoginScreen(
             loginVM = hiltViewModel(),
             navigateToHome = {
-                navController.navigate(NavRoute.HomeScreen.path)
+                navController.navigate(NavRoute.HomeScreen.path) {
+                    popUpTo(NavRoute.Login.path) {
+                        inclusive = true
+                    }
+                }
             },
             navigateToSignUp = {
                 navController.navigate(NavRoute.SignUp.path)
@@ -307,7 +315,11 @@ fun AddOnBoard(
     ) {
         OnboardingScreen(
             navigateToAuth = {
-                navController.navigate(NavRoute.SignUp.path)
+                navController.navigate(NavRoute.SignUp.path) {
+                    popUpTo(navController.graph.findStartDestination().id) {
+                        inclusive = true
+                    }
+                }
             },
             sharedPreferences,
             onBoardVM = hiltViewModel()

@@ -78,28 +78,9 @@ fun LoginScreen(
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .imePadding()
             .background(MaterialTheme.colorScheme.background)
 
     ) {
-
-        if (uiState.isLoading) {
-            Dialog(onDismissRequest = {}, content = {
-                Card(
-                    shape = RoundedCornerShape(16.dp),
-                    modifier = Modifier
-                        .padding(16.dp)
-                        .fillMaxWidth()
-                        .height(100.dp)
-                ) {
-                    Box(
-                        modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center
-                    ) {
-                        ContainedLoadingIndicator()
-                    }
-                }
-            })
-        }
 
         LaunchedEffect(Unit) {
             loginVM.events.collect { event ->
@@ -122,8 +103,9 @@ fun LoginScreen(
 
         Column(
             modifier = Modifier
-                .padding(24.dp)
                 .fillMaxSize()
+                .padding(24.dp)
+                .imePadding()
                 .verticalScroll(rememberScrollState()),
             verticalArrangement = Arrangement.Center,
             horizontalAlignment = Alignment.CenterHorizontally
@@ -345,6 +327,8 @@ fun LoginScreen(
 
             Button(
                 onClick = {
+
+                    keyboardController?.hide()
                     loginVM.signInWithEmailAndPassword(
                         uiState.email, uiState.password
                     )
@@ -399,6 +383,18 @@ fun LoginScreen(
                         fontFamily = manrope
                     )
                 }
+            }
+        }
+
+
+        if (uiState.isLoading) {
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(Color.Black.copy(alpha = 0.3f)),
+                contentAlignment = Alignment.Center
+            ) {
+                ContainedLoadingIndicator()
             }
         }
     }
