@@ -59,6 +59,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.aarav.geowav.R
@@ -892,6 +893,7 @@ fun PendingInviteRow(
 fun ConnectionUsageCard(
     current: Int,
     plan: UserPlan,
+    textSize: TextUnit? = null,
     showPlanInfo: Boolean = true,
     modifier: Modifier = Modifier
 ) {
@@ -972,7 +974,7 @@ fun ConnectionUsageCard(
 
             Text(
                 text = usageText,
-                fontSize = 22.sp,
+                fontSize = textSize ?: 22.sp,
                 fontWeight = FontWeight.Bold,
                 fontFamily = manrope,
                 color = cardFg

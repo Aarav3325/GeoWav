@@ -154,7 +154,7 @@ fun SignupScreen(
                     modifier = Modifier.fillMaxSize()
                 ) {
                     Icon(
-                        painter = painterResource(id = R.drawable.google), // Add your Google icon
+                        painter = painterResource(id = R.drawable.google),
                         contentDescription = "Google Icon",
                         modifier = Modifier.size(24.dp),
                         tint = Color.Unspecified

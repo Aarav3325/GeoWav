@@ -38,9 +38,11 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.aarav.geowav.R
@@ -224,6 +226,7 @@ fun AddLocationFAB(
 fun PlacesUsageCard(
     current: Int,
     plan: UserPlan,
+    textSize: TextUnit? = null,
     showPlanInfo: Boolean = true,
     modifier: Modifier = Modifier
 ) {
@@ -242,7 +245,6 @@ fun PlacesUsageCard(
     else
         "$current / $max places used"
 
-    // ✅ SAME COLOR SYSTEM AS CONNECTION CARD
     val cardBg = if (isLimitReached)
         MaterialTheme.colorScheme.errorContainer
     else
@@ -306,16 +308,14 @@ fun PlacesUsageCard(
                 }
             }
 
-            // ✅ SAME TYPOGRAPHY SCALE
             Text(
                 text = usageText,
-                fontSize = 22.sp,
+                fontSize = textSize ?: 22.sp,
                 fontWeight = FontWeight.Bold,
                 fontFamily = manrope,
                 color = cardFg
             )
 
-            // ✅ SAME PROGRESS BAR STYLE
             if (!isUnlimited) {
                 Box(
                     modifier = Modifier

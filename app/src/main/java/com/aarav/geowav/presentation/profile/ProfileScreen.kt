@@ -260,6 +260,7 @@ fun ProfileScreen(
                         ConnectionUsageCard(
                             uiState.lovedOnes.size,
                             plan,
+                            textSize = MaterialTheme.typography.bodyMedium.fontSize,
                             false,
                             Modifier.padding(bottom = 8.dp)
                         )
@@ -267,6 +268,7 @@ fun ProfileScreen(
                         PlacesUsageCard(
                             uiState.placesList.size,
                             plan,
+                            textSize = MaterialTheme.typography.bodyMedium.fontSize,
                             false,
                             Modifier.padding(top = 8.dp)
                         )

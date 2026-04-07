@@ -33,6 +33,11 @@ class LocationManager @Inject constructor(
     // get user location updates for showing on maps
     @SuppressLint("MissingPermission")
     fun getLocationUpdates(): Flow<Location> = callbackFlow {
+        val lastLocation = fusedClient.lastLocation.await()
+        if (lastLocation != null) {
+            trySend(lastLocation)
+        }
+
         val request = LocationRequest.Builder(Priority.PRIORITY_HIGH_ACCURACY, 5_000L)
             .setMinUpdateIntervalMillis(2_000L)
             .build()
