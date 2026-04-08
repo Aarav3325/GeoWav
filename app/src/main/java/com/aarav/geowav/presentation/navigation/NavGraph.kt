@@ -278,7 +278,11 @@ fun AddSignUpScreen(
                 }
             },
             navigateToLogin = {
-                navController.navigate(NavRoute.Login.path)
+                navController.navigate(NavRoute.Login.path) {
+                    popUpTo(NavRoute.SignUp.path) {
+                        inclusive = true
+                    }
+                }
             }
         )
     }
@@ -301,7 +305,11 @@ fun AddLoginScreen(
                 }
             },
             navigateToSignUp = {
-                navController.navigate(NavRoute.SignUp.path)
+                navController.navigate(NavRoute.SignUp.path) {
+                    popUpTo(NavRoute.Login.path) {
+                        inclusive = true
+                    }
+                }
             }
         )
     }
