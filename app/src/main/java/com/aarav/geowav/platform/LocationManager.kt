@@ -34,6 +34,7 @@ class LocationManager @Inject constructor(
     @SuppressLint("MissingPermission")
     fun getLocationUpdates(): Flow<Location> = callbackFlow {
         val lastLocation = fusedClient.lastLocation.await()
+        //val lastLocation = getLastKnownLocation()
         if (lastLocation != null) {
             trySend(lastLocation)
         }

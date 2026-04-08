@@ -226,7 +226,7 @@ class MainActivity : ComponentActivity() {
                 mutableStateOf<Location?>(null)
             }
 
-            LaunchedEffect(Unit) {
+            LaunchedEffect(isLoggedIn) {
                 locationManager.getLocationUpdates().distinctUntilChanged().collectLatest {
                     location = it
                 }

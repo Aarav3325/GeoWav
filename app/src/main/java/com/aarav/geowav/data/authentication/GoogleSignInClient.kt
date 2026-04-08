@@ -42,7 +42,6 @@ class GoogleSignInClient @Inject constructor(
     private val userReference = firebaseDatabase.getReference("users")
     private val lookupReference = firebaseDatabase.getReference("user_lookup")
 
-
     // To implement Google Sign In
     @Inject
     lateinit var credentialManager: CredentialManager

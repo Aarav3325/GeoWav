@@ -11,6 +11,7 @@ import android.util.Log
 import androidx.annotation.RequiresPermission
 import androidx.hilt.work.HiltWorkerFactory
 import androidx.work.Configuration
+import com.aarav.geowav.core.managers.StrictModeHelper
 import com.aarav.geowav.data.repository.GeofenceRepositoryImpl
 import com.aarav.geowav.data.repository.PlaceRepositoryImpl
 import com.google.android.gms.location.FusedLocationProviderClient
@@ -42,6 +43,7 @@ class GeoWavApp : Application(), Configuration.Provider {
         super.onCreate()
 
         applicationContext.createGeoWavChannels()
+        //StrictModeHelper.enable()
 
         if(!Places.isInitialized()){
             Places.initializeWithNewPlacesApiEnabled(applicationContext, BuildConfig.GOOGLE_MAPS_API_KEY)
