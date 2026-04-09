@@ -12,6 +12,7 @@ import android.provider.Settings
 import android.util.Log
 import android.view.View
 import androidx.activity.ComponentActivity
+import androidx.activity.SystemBarStyle
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.annotation.RequiresPermission
@@ -21,6 +22,7 @@ import androidx.compose.animation.core.tween
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Scaffold
@@ -115,7 +117,12 @@ class MainActivity : ComponentActivity() {
     @OptIn(ExperimentalPermissionsApi::class, ExperimentalMaterial3Api::class)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        enableEdgeToEdge()
+        enableEdgeToEdge(
+            navigationBarStyle = SystemBarStyle.auto(
+                android.graphics.Color.TRANSPARENT,
+                android.graphics.Color.TRANSPARENT
+            )
+        )
         ViewCompat.setOnApplyWindowInsetsListener(View(applicationContext)) { v, insets ->
             val systemBars =
                 insets.getInsets(WindowInsetsCompat.Type.systemBars())
@@ -172,9 +179,6 @@ class MainActivity : ComponentActivity() {
                 Log.i("SERVICE", "logged in : $isLoggedIn")
             }
 
-            LaunchedEffect(isLoggedIn) {
-                if (!isLoggedIn) return@LaunchedEffect
-            }
             NotificationServiceInitializer(
                 isLoggedIn = isLoggedIn,
                 showSettingsDialog = {
@@ -387,7 +391,8 @@ class MainActivity : ComponentActivity() {
                             sharedPreferences = sharedPreferences,
                             location = location1,
                             googleSignInClient = googleSignInClient,
-                            modifier = Modifier.padding(it)
+                            modifier = Modifier
+                                .padding(it)
                         )
                     }
                 }

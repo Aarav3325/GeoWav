@@ -134,7 +134,7 @@ fun ActivityScreen(
             fontFamily = manrope,
             fontWeight = FontWeight.Bold,
             color = MaterialTheme.colorScheme.onBackground,
-            modifier = Modifier.padding(top = 54.dp, start = 16.dp, end = 16.dp)
+            modifier = Modifier.padding(top = 54.dp, start = 12.dp, end = 12.dp)
         )
 
         FilterRow(
@@ -329,7 +329,7 @@ fun FilterRow(
         modifier = Modifier
             .fillMaxWidth()
             .padding(start = 0.dp, top = 8.dp),
-        horizontalArrangement = Arrangement.spacedBy(2.dp),
+        horizontalArrangement = Arrangement.spacedBy(4.dp),
     ) {
         item {
             LogFilterChip(
@@ -409,7 +409,7 @@ fun LogFilterChip(
         modifier = Modifier
             .wrapContentWidth()
             .wrapContentHeight()
-            .padding(start = 4.dp)
+            .padding(start = 0.dp)
             .alpha(if (isLocked) 0.7f else 1f),
         leadingIcon = {
             if (selected) {

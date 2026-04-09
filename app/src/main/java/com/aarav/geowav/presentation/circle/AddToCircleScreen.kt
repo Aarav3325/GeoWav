@@ -235,14 +235,14 @@ fun CircleContent(
             ConnectionUsageCard(
                 current = uiState.lovedOnes.size,
                 plan = userPlan,
-                modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp)
+                modifier = Modifier.padding(horizontal = 12.dp, vertical = 4.dp)
             )
         }
 
         item {
             SectionLabel(
                 text = "Add someone",
-                modifier = Modifier.padding(top = 8.dp, start = 16.dp, end = 16.dp)
+                modifier = Modifier.padding(top = 8.dp, start = 12.dp, end = 12.dp)
             )
         }
         item {
@@ -259,7 +259,7 @@ fun CircleContent(
         item {
             SectionLabel(
                 text = "My circle",
-                modifier = Modifier.padding(top = 8.dp, start = 16.dp, end = 16.dp)
+                modifier = Modifier.padding(top = 8.dp, start = 12.dp, end = 12.dp)
             )
         }
         item {
@@ -273,7 +273,7 @@ fun CircleContent(
         item {
             SectionLabel(
                 text = "Pending invites",
-                modifier = Modifier.padding(top = 8.dp, start = 16.dp, end = 16.dp)
+                modifier = Modifier.padding(top = 8.dp, start = 12.dp, end = 12.dp)
             )
         }
         item {
@@ -305,7 +305,7 @@ fun AddLovedOneCard(
         ),
         modifier = Modifier
             .fillMaxWidth()
-            .padding(horizontal = 16.dp, vertical = 4.dp),
+            .padding(horizontal = 12.dp, vertical = 4.dp),
         elevation = CardDefaults.cardElevation(0.dp)
     ) {
         Column(Modifier.padding(16.dp)) {
@@ -507,7 +507,7 @@ fun MyCircleSection(
     Card(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(horizontal = 16.dp, vertical = 4.dp),
+            .padding(horizontal = 12.dp, vertical = 4.dp),
         colors = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.surfaceContainerHigh
         ),
@@ -598,7 +598,7 @@ fun PendingInviteSection(
     Card(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(horizontal = 16.dp, vertical = 4.dp),
+            .padding(horizontal = 12.dp, vertical = 4.dp),
         colors = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.surfaceContainerHigh
         ),

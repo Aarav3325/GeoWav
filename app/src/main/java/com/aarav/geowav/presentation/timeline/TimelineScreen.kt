@@ -327,7 +327,7 @@ fun TimelineItem(
     Card(
         modifier = modifier
             .fillMaxWidth()
-            .padding(horizontal = 16.dp, vertical = 8.dp),
+            .padding(horizontal = 12.dp, vertical = 8.dp),
         shape = RoundedCornerShape(20.dp),
         colors = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.surfaceContainerHigh
@@ -581,7 +581,7 @@ fun ButtonGroupTimeline(
 ) {
 
     Row(
-        Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
+        Modifier.padding(horizontal = 12.dp, vertical = 8.dp),
         horizontalArrangement = Arrangement.spacedBy(ButtonGroupDefaults.ConnectedSpaceBetween),
     ) {
         TimelineOptions.entries.forEach { timelineOptions ->

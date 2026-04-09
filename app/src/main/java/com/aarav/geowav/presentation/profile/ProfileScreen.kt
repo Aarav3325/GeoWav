@@ -236,7 +236,7 @@ fun ProfileScreen(
                         .fillMaxSize()
                         .verticalScroll(rememberScrollState())
                         .background(MaterialTheme.colorScheme.background)
-                        .padding(horizontal = 16.dp),
+                        .padding(horizontal = 12.dp),
                     verticalArrangement = Arrangement.spacedBy(24.dp)
                 ) {
 

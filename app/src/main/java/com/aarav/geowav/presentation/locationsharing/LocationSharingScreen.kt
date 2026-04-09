@@ -394,7 +394,7 @@ fun StatusCard(
         ),
         modifier = Modifier
             .fillMaxWidth()
-            .padding(start = 16.dp, end = 16.dp, top = 8.dp, bottom = 16.dp)
+            .padding(start = 12.dp, end = 12.dp, top = 8.dp, bottom = 16.dp)
     ) {
         Column(
             modifier = Modifier
@@ -577,7 +577,7 @@ fun MapPreviewCard(
         tonalElevation = 4.dp,
         modifier = Modifier
             .fillMaxWidth()
-            .padding(16.dp)
+            .padding(12.dp)
             .size(200.dp)
     ) {
         Box(
@@ -686,7 +686,7 @@ fun LovedOnesCard(
     Card(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(16.dp),
+            .padding(12.dp),
         colors = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.surfaceContainerHigh
         ),
@@ -1033,7 +1033,7 @@ fun EmergencyShareButton(
         enabled = enabled,
         modifier = Modifier
             .fillMaxWidth()
-            .padding(horizontal = 16.dp, vertical = 8.dp)
+            .padding(horizontal = 12.dp, vertical = 8.dp)
             .padding(bottom = 36.dp)
             .height(52.dp),
         shape = RoundedCornerShape(16.dp),

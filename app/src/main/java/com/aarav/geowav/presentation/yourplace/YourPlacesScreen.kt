@@ -121,14 +121,14 @@ fun YourPlacesScreen(
                 fontFamily = manrope,
                 fontWeight = FontWeight.Bold,
                 color = MaterialTheme.colorScheme.onBackground,
-                modifier = Modifier.padding(top = 54.dp, start = 16.dp, end = 16.dp)
+                modifier = Modifier.padding(top = 54.dp, start = 12.dp, end = 12.dp)
             )
 
             PlacesUsageCard(
                 uiState.placesList.size,
                 plan,
                 modifier = Modifier
-                    .padding(horizontal = 16.dp)
+                    .padding(horizontal = 12.dp)
                     .padding(top = 16.dp, bottom = 8.dp)
             )
 

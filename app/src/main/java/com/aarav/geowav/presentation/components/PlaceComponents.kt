@@ -53,7 +53,7 @@ fun GeofencePlaceCard(
         modifier = Modifier
             .fillMaxWidth()
             .wrapContentHeight()
-            .padding(vertical = 8.dp, horizontal = 16.dp),
+            .padding(vertical = 8.dp, horizontal = 12.dp),
         shape = RoundedCornerShape(16.dp),
         colors = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.surfaceContainer
