@@ -17,8 +17,11 @@ animationCore = "1.10.3"
 uiText = "1.10.3"
 #animationCore = "1.10.3"
 #uiGraphics = "1.10.3"
+concurrentFutures = "1.2.0"
 
 [libraries]
+androidx-concurrent-futures = { group = "androidx.concurrent", name = "concurrent-futures", version.ref = "concurrentFutures" }
+androidx-concurrent-futures-ktx = { group = "androidx.concurrent", name = "concurrent-futures-ktx", version.ref = "concurrentFutures" }
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
 junit = { group = "junit", name = "junit", version.ref = "junit" }
 androidx-junit = { group = "androidx.test.ext", name = "junit", version.ref = "junitVersion" }

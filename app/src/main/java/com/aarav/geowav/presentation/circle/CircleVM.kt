@@ -60,7 +60,7 @@ class CircleVM
 
 
     fun updateEmail(email: String) {
-        hasInteractedWithName = true
+        hasInteractedWithEmail = true
         _uiState.update {
             it.copy(
                 email = email

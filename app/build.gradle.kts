@@ -4,6 +4,7 @@ val localProperties = Properties()
 localProperties.load(rootProject.file("local.properties").inputStream())
 
 val mapsApiKey = localProperties.getProperty("GOOGLE_MAPS_API_KEY") ?: ""
+val metaAccessToken = localProperties.getProperty("META_ACCESS_TOEKN") ?: ""
 
 plugins {
     alias(libs.plugins.android.application)
@@ -37,6 +38,7 @@ android {
 
             manifestPlaceholders["GOOGLE_MAPS_API_KEY"] = mapsApiKey
             buildConfigField("String", "GOOGLE_MAPS_API_KEY", "\"$mapsApiKey\"")
+            buildConfigField("String", "META_ACCESS_TOEKN", "\"$metaAccessToken\"")
         }
 
         release {
@@ -49,6 +51,7 @@ android {
             manifestPlaceholders["GOOGLE_MAPS_API_KEY"] = mapsApiKey
 
             buildConfigField("String", "GOOGLE_MAPS_API_KEY", "\"$mapsApiKey\"")
+            buildConfigField("String", "META_ACCESS_TOEKN", "\"$metaAccessToken\"")
         }
     }
     compileOptions {
@@ -159,6 +162,8 @@ dependencies {
     implementation("com.google.maps.android:android-maps-utils:2.3.0")
     implementation("com.google.firebase:firebase-config-ktx:22.1.2")
 
+    implementation(libs.androidx.concurrent.futures)
+    implementation(libs.androidx.concurrent.futures.ktx)
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)
     implementation(libs.androidx.activity.compose)
