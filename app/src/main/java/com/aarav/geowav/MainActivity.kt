@@ -226,8 +226,10 @@ class MainActivity : ComponentActivity() {
             }
 
             LaunchedEffect(isLoggedIn) {
-                locationManager.getLocationUpdates().distinctUntilChanged().collectLatest {
-                    location = it
+                if(isLoggedIn) {
+                    locationManager.getLocationUpdates().distinctUntilChanged().collectLatest {
+                        location = it
+                    }
                 }
             }
 
