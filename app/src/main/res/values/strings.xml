@@ -1,0 +1,7 @@
+<resources>
+    <string name="app_name">GeoWav</string>
+    <string name="maps_api">AIzaSyC5QSHxk6-DXDKjiC5tTpPdP9LCajr1TQ0</string>
+    <string name="cloud_api_bearer">EAAMtbQLe21UBQlcF3aoLbJtDElJAbWc4AdxKbZBw6qPQoK5Cb5xbOYSlmhlTibNZBAvNyeXLR8MU84ixM7tPXxMMYgZC13Kf1ljMPhFnZCgyEvbGBa3muB3NsE5fhuKnpxCPs4xjQsj53ZBeRXqpJJZAeewlwLJIhy7KF9BYlsH9tZC84DfNM9h6xyOo6kqP1LJvgSv1AiQC6Eq85iTMRXObp8BmDxTMr17KZBZBLA04sRgkowF78ntkTwZBIC0JjIQOcvmjZCQL586bc0ZClVL7lEw3VNMqr8Y7NjPMOkHnv0wZD</string>
+    <string name="google_client_id">173198777031-k4r0anmv65abqa4h57fiq75m00hbem0p.apps.googleusercontent.com</string>
+    <string name="title_activity_app_disabled">AppDisabledActivity</string>
+</resources>

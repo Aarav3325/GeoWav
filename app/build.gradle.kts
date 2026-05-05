@@ -25,17 +25,29 @@ android {
         applicationId = "com.aarav.geowav"
         minSdk = 26
         targetSdk = 36
-        versionCode = 10
-        versionName = "0.9.0-beta"
+        versionCode = 27
+        versionName = "0.9.17"
+
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
 
+    signingConfigs {
+        create("release") {
+            val keystorePath = System.getenv("KEYSTORE_PATH")
+            if (keystorePath != null) {
+                storeFile = rootProject.file(keystorePath)
+                storePassword = System.getenv("KEYSTORE_PASSWORD")
+                keyAlias = System.getenv("KEY_ALIAS")
+                keyPassword = System.getenv("KEY_PASSWORD")
+            }
+        }
+    }
+
     buildTypes {
 
         debug {
-
             manifestPlaceholders["GOOGLE_MAPS_API_KEY"] = mapsApiKey
             buildConfigField("String", "GOOGLE_MAPS_API_KEY", "\"$mapsApiKey\"")
             buildConfigField("String", "META_ACCESS_TOEKN", "\"$metaAccessToken\"")
@@ -52,6 +64,11 @@ android {
 
             buildConfigField("String", "GOOGLE_MAPS_API_KEY", "\"$mapsApiKey\"")
             buildConfigField("String", "META_ACCESS_TOEKN", "\"$metaAccessToken\"")
+            
+            val keystorePath = System.getenv("KEYSTORE_PATH")
+            if (keystorePath != null) {
+                signingConfig = signingConfigs.getByName("release")
+            }
         }
     }
     compileOptions {

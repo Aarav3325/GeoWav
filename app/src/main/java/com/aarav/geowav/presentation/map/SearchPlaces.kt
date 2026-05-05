@@ -1,7 +1,6 @@
 package com.aarav.geowav.presentation.map
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -17,7 +16,6 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.input.TextFieldState
 import androidx.compose.foundation.text.input.clearText
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ContainedLoadingIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
@@ -39,12 +37,8 @@ import androidx.compose.ui.unit.sp
 import com.aarav.geowav.R
 import com.aarav.geowav.presentation.components.SearchItem
 import com.aarav.geowav.presentation.theme.manrope
-import com.aarav.geowav.presentation.theme.sora
-import com.aarav.geowav.presentation.theme.surfaceContainerHighDark
-import com.aarav.geowav.presentation.theme.surfaceContainerHighLight
-import com.aarav.geowav.presentation.theme.surfaceContainerLowDarkHighContrast
-import com.aarav.geowav.presentation.theme.surfaceContainerLowestLightHighContrast
 import com.google.android.libraries.places.api.model.AutocompletePrediction
+
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3ExpressiveApi::class)
 @Composable

@@ -85,6 +85,6 @@ class GeoWavApp : Application(), Configuration.Provider {
         manager.createNotificationChannel(emergency)
 
 
-        Log.i("MYTAG", "channels created")
+        Log.i("MYTAG", "channels created ")
     }
 }
