@@ -3,8 +3,8 @@ package com.aarav.geowav.data.repository
 import android.app.Activity
 import android.content.Context
 import android.util.Log
-import com.aarav.geowav.core.managers.SubscriptionMapper
 import com.aarav.geowav.data.authentication.GoogleSignInClient
+import com.aarav.geowav.data.datasource.revenuecat.RevenueCatDataSource
 import com.aarav.geowav.data.model.PurchaseResult
 import com.aarav.geowav.data.model.UserPlan
 import com.aarav.geowav.data.model.UserSubscription
@@ -22,6 +22,7 @@ import com.android.billingclient.api.QueryProductDetailsParams
 import com.android.billingclient.api.QueryPurchasesParams
 import com.android.billingclient.api.queryProductDetails
 import com.google.firebase.database.FirebaseDatabase
+import com.revenuecat.purchases.Package
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
@@ -33,6 +34,7 @@ import javax.inject.Inject
 
 class PaymentRepositoryImpl @Inject constructor(
     val firebaseDatabase: FirebaseDatabase,
+    private val revenueCatDataSource: RevenueCatDataSource,
     val googleSignInClient: GoogleSignInClient
 ) : PaymentRepository {
 
@@ -137,6 +139,74 @@ class PaymentRepositoryImpl @Inject constructor(
 
     override fun observePurchasesUpdate(): Flow<PurchaseResult> {
         return purchaseEvents
+    }
+
+    override suspend fun purchase(
+        activity: Activity,
+        rcPackage: Package,
+        plan: UserPlan
+    ): PurchaseResult {
+        val result = revenueCatDataSource.purchase(
+            activity,
+            rcPackage,
+            plan
+        )
+
+        if (result is PurchaseResult.Success) {
+            val expiryTime = result.purchaseTime + getPlanDuration(plan)
+            savePurchase(
+                plan = plan.name,
+                token = result.purchaseToken,
+                purchaseTime = result.purchaseTime,
+                expiryTime = expiryTime,
+                isAutoRenewing = true
+            )
+        }
+
+        _purchaseEvents.emit(result)
+        return result
+    }
+
+    override suspend fun restorePurchases(): PurchaseResult {
+        val customerInfo = revenueCatDataSource.restorePurchases()
+            ?: return PurchaseResult.Error("Restore failed")
+
+        val plan = revenueCatDataSource.resolveActivePlan(customerInfo)
+
+        return if (plan != UserPlan.FREE) {
+            savePurchase(
+                plan = plan.name,
+                token = "restored",
+                purchaseTime = System.currentTimeMillis(),
+                expiryTime = System.currentTimeMillis() + getPlanDuration(plan),
+                isAutoRenewing = true
+            )
+            PurchaseResult.Success(
+                plan = plan,
+                purchaseToken = "restored",
+                orderId = null,
+                purchaseTime = System.currentTimeMillis()
+            )
+        } else {
+            savePurchase("FREE", "", 0L, 0L, false)
+            PurchaseResult.Error("No active subscription found")
+        }
+    }
+
+    override suspend fun syncEntitlements(): UserPlan {
+        val customerInfo = revenueCatDataSource.getCustomerInfo() ?: return UserPlan.FREE
+        val plan = revenueCatDataSource.resolveActivePlan(customerInfo)
+
+        savePurchase(
+            plan = plan.name,
+            token = "",
+            purchaseTime = 0L,
+            expiryTime = 0L,
+            isAutoRenewing = plan != UserPlan.FREE
+        )
+
+        Log.i(BILLING_TAG, "Entitlements synced. Active plan: $plan")
+        return plan
     }
 
 //    override fun observePurchasesUpdate(): Flow<PurchaseResult> = callbackFlow {
@@ -255,11 +325,12 @@ class PaymentRepositoryImpl @Inject constructor(
     }
 
     override suspend fun syncAfterLogin(context: Context) {
-        if (!isBillingInitialized) {
-            createBillingClient(context)
-        } else {
-            connectToGooglePlay()
-        }
+//        if (!isBillingInitialized) {
+//            createBillingClient(context)
+//        } else {
+//            connectToGooglePlay()
+//        }
+        syncEntitlements()
     }
 
     override fun syncPurchases() {

@@ -5,6 +5,7 @@ localProperties.load(rootProject.file("local.properties").inputStream())
 
 val mapsApiKey = localProperties.getProperty("GOOGLE_MAPS_API_KEY") ?: ""
 val metaAccessToken = localProperties.getProperty("META_ACCESS_TOEKN") ?: ""
+val revenuecatApiKey = localProperties.getProperty("REVENUE_CAT_API_KEY") ?: ""
 
 plugins {
     alias(libs.plugins.android.application)
@@ -51,6 +52,7 @@ android {
             manifestPlaceholders["GOOGLE_MAPS_API_KEY"] = mapsApiKey
             buildConfigField("String", "GOOGLE_MAPS_API_KEY", "\"$mapsApiKey\"")
             buildConfigField("String", "META_ACCESS_TOEKN", "\"$metaAccessToken\"")
+            buildConfigField("String", "REVENUE_CAT_API_KEY", "\"$revenuecatApiKey\"")
         }
 
         release {
@@ -64,7 +66,8 @@ android {
 
             buildConfigField("String", "GOOGLE_MAPS_API_KEY", "\"$mapsApiKey\"")
             buildConfigField("String", "META_ACCESS_TOEKN", "\"$metaAccessToken\"")
-            
+            buildConfigField("String", "REVENUE_CAT_API_KEY", "\"$revenuecatApiKey\"")
+
             val keystorePath = System.getenv("KEYSTORE_PATH")
             if (keystorePath != null) {
                 signingConfig = signingConfigs.getByName("release")
@@ -98,6 +101,10 @@ dependencies {
     val billing_version = "8.3.0"
 
     implementation("com.android.billingclient:billing-ktx:$billing_version")
+
+    // RevenueCat
+    implementation("com.revenuecat.purchases:purchases:8.10.8")
+    implementation("com.revenuecat.purchases:purchases-ui:8.10.8")
 
     // Firebase
     implementation("com.google.firebase:firebase-auth")
@@ -169,9 +176,9 @@ dependencies {
     // Maps Compose
     implementation("com.google.maps.android:maps-compose:4.3.0")
     implementation("com.google.android.gms:play-services-maps:18.2.0")
-// Location Services
+    // Location Services
     implementation("com.google.android.gms:play-services-location:21.3.0")
-// Lifecycle + ViewModel
+    // Lifecycle + ViewModel
     implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.8.6")
     implementation("androidx.lifecycle:lifecycle-runtime-compose:2.8.6")
 
