@@ -2,6 +2,7 @@ package com.aarav.geowav.data.repository
 
 import android.util.Log
 import com.aarav.geowav.data.authentication.GoogleSignInClient
+import com.aarav.geowav.data.datasource.revenuecat.RevenueCatDataSource
 import com.aarav.geowav.data.model.UserPlan
 import com.aarav.geowav.data.model.UserSubscription
 import com.aarav.geowav.domain.repository.SubscriptionRepository
@@ -9,6 +10,7 @@ import com.google.firebase.database.DataSnapshot
 import com.google.firebase.database.DatabaseError
 import com.google.firebase.database.FirebaseDatabase
 import com.google.firebase.database.ValueEventListener
+import com.revenuecat.purchases.Package
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
@@ -20,6 +22,7 @@ import javax.inject.Inject
 
 class SubscriptionRepositoryImpl
 @Inject constructor(
+    private val revenueCatDataSource: RevenueCatDataSource,
     private val firebaseDatabase: FirebaseDatabase,
     private val googleSignInClient: GoogleSignInClient
 ) : SubscriptionRepository {
@@ -100,5 +103,9 @@ class SubscriptionRepositoryImpl
         awaitClose {
             ref.removeEventListener(listener)
         }
+    }
+
+    override suspend fun fetchAllPackages(): List<Package>? {
+        return revenueCatDataSource.getAllPackages()
     }
 }
