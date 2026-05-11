@@ -1,16 +1,17 @@
-name: Android CI/CD - Play Store Release
+name: Android Release Pipeline
 
 permissions:
   contents: write
 
 on:
   push:
-    branches:
-      - main
+    tags:
+      - 'v*'
+
   workflow_dispatch:
     inputs:
       track:
-        description: 'Play Store track (internal, alpha, beta, production)'
+        description: 'Play Store track'
         required: false
         default: 'internal'
         type: choice
@@ -26,17 +27,11 @@ env:
 
 jobs:
   build-and-deploy:
-    if: "!contains(github.event.head_commit.message, '[skip release]')"
     runs-on: ubuntu-latest
-    permissions:
-      contents: write
 
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-          token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Set up JDK
         uses: actions/setup-java@v4
@@ -46,45 +41,6 @@ jobs:
 
       - name: Grant execute permission for gradlew
         run: chmod +x gradlew
-
-      - name: Bump version
-        id: version
-        run: |
-          # Read current version from app/build.gradle.kts
-          CURRENT_VERSION=$(grep -oP 'versionName\s*=\s*"\K[^"]+' app/build.gradle.kts)
-          CURRENT_VERSION_CODE=$(grep -oP 'versionCode\s*=\s*\K\d+' app/build.gradle.kts)
-          
-          if [ -z "$CURRENT_VERSION" ]; then
-            CURRENT_VERSION="1.0.0"
-          fi
-          if [ -z "$CURRENT_VERSION_CODE" ]; then
-            CURRENT_VERSION_CODE=0
-          fi
-          
-          # Increment patch version (assuming X.Y.Z format)
-          IFS='.' read -r MAJOR MINOR PATCH <<< "$CURRENT_VERSION"
-          if [ -z "$PATCH" ]; then PATCH=0; fi
-          NEW_PATCH=$((PATCH + 1))
-          NEW_VERSION="${MAJOR}.${MINOR}.${NEW_PATCH}"
-          
-          # Increment version code
-          NEW_VERSION_CODE=$((CURRENT_VERSION_CODE + 1))
-          
-          echo "Updating version from $CURRENT_VERSION ($CURRENT_VERSION_CODE) to $NEW_VERSION ($NEW_VERSION_CODE)"
-          
-          # Update build.gradle.kts
-          sed -i "s/versionCode = $CURRENT_VERSION_CODE/versionCode = $NEW_VERSION_CODE/" app/build.gradle.kts
-          sed -i "s/versionName = \"$CURRENT_VERSION\"/versionName = \"$NEW_VERSION\"/" app/build.gradle.kts
-          
-          # Commit and push
-          git config --local user.email "github-actions[bot]@users.noreply.github.com"
-          git config --local user.name "github-actions[bot]"
-          git add app/build.gradle.kts
-          git commit -m "chore: bump version to $NEW_VERSION ($NEW_VERSION_CODE) [skip ci]"
-          git push
-          
-          echo "VERSION_CODE=$NEW_VERSION_CODE" >> $GITHUB_OUTPUT
-          echo "VERSION_NAME=$NEW_VERSION" >> $GITHUB_OUTPUT
 
       - name: Decode Keystore
         env:
@@ -103,7 +59,7 @@ jobs:
           GOOGLE_SERVICES_JSON: ${{ secrets.GOOGLE_SERVICES_JSON }}
         run: echo "$GOOGLE_SERVICES_JSON" > app/google-services.json
 
-      - name: Build AAB
+      - name: Build Release AAB
         env:
           KEYSTORE_PATH: "keystore/keystore"
           KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
@@ -115,24 +71,24 @@ jobs:
       - name: Verify AAB exists
         run: |
           AAB_PATH="app/build/outputs/bundle/release/app-release.aab"
+
           if [ ! -f "$AAB_PATH" ]; then
             echo "❌ AAB not found!"
             exit 1
           fi
-          echo "✅ AAB found at $AAB_PATH"
 
-      - name: Upload AAB as artifact
+          echo "✅ AAB found"
+
+      - name: Upload AAB Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: app-release-${{ steps.version.outputs.VERSION_CODE }}
+          name: release-aab
           path: app/build/outputs/bundle/release/app-release.aab
           retention-days: 30
 
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v1
         with:
-          tag_name: v${{ steps.version.outputs.VERSION_NAME }}-${{ steps.version.outputs.VERSION_CODE }}
-          name: Release v${{ steps.version.outputs.VERSION_NAME }} (Code ${{ steps.version.outputs.VERSION_CODE }})
           files: app/build/outputs/bundle/release/app-release.aab
           generate_release_notes: true
 
@@ -140,25 +96,26 @@ jobs:
         uses: ruby/setup-ruby@v1
         with:
           ruby-version: '3.2'
-          bundler-cache: true
 
       - name: Install Fastlane
         run: |
           gem install fastlane -NV
 
       - name: Deploy to Play Store
-        continue-on-error: true # Prevents the whole workflow from failing if Play Store keys aren't set up yet
+        continue-on-error: true
         env:
           PLAY_JSON_KEY_DATA: ${{ secrets.PLAY_JSON_KEY_DATA }}
         run: |
+
           if [ -z "$PLAY_JSON_KEY_DATA" ]; then
-            echo "Skipping Play Store deployment: PLAY_JSON_KEY_DATA secret is not set."
+            echo "Skipping Play Store deployment."
             exit 0
           fi
-          
+
           TRACK="${{ github.event.inputs.track || 'internal' }}"
+
           echo "Deploying to track: $TRACK"
-          
+
           case $TRACK in
             internal) fastlane deploy_internal ;;
             alpha) fastlane deploy_alpha ;;
@@ -170,6 +127,6 @@ jobs:
       - name: Build Summary
         run: |
           echo "## Release Summary" >> $GITHUB_STEP_SUMMARY
-          echo "- **Version Code**: ${{ steps.version.outputs.VERSION_CODE }}" >> $GITHUB_STEP_SUMMARY
-          echo "- **Version Name**: ${{ steps.version.outputs.VERSION_NAME }}" >> $GITHUB_STEP_SUMMARY
-          echo "- **Status**: ✅ Release built and GitHub Release created" >> $GITHUB_STEP_SUMMARY
+          echo "- Release Triggered By Tag" >> $GITHUB_STEP_SUMMARY
+          echo "- Signed AAB Built Successfully" >> $GITHUB_STEP_SUMMARY
+          echo "- GitHub Release Created" >> $GITHUB_STEP_SUMMARY
