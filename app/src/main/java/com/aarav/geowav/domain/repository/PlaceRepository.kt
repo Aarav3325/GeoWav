@@ -9,6 +9,7 @@ interface PlaceRepository {
     suspend fun addPlace(place: Place)
     fun getPlaces(): Flow<List<Place>>
     suspend fun deletePlace(place: Place)
+    suspend fun updatePlace(place: Place)
 
     suspend fun fetchPlace(placeId: String): Resource<com.google.android.libraries.places.api.model.Place>
     suspend fun searchPlaces(

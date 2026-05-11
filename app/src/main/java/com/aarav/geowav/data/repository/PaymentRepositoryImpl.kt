@@ -266,7 +266,7 @@ class PaymentRepositoryImpl @Inject constructor(
         val uid = googleSignInClient.getUserId()
         if (uid.isBlank()) return
 
-        if (uid == "7sZTZoNLRpUBcJSevQJyNq2XRVw1") return
+        if (uid == "7sZTZoNLRpUBcJSevQJyNq2XRVw1" || uid == "OS9fTE5P0rXp6hrHDJkjzxERDD32" || uid == "6dvjKdiUqmSmWgV08NTtH8lpC1K2") return
 
         Log.i(BILLING_TAG, "syncPurchases called")
 

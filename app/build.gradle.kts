@@ -85,6 +85,9 @@ android {
 
     kapt {
         correctErrorTypes = true
+        arguments {
+            arg("room.schemaLocation", "$projectDir/schemas")
+        }
     }
 
 //    composeOptions {
@@ -94,90 +97,78 @@ android {
 
 dependencies {
 
-    // Play Billing
-    val billing_version = "8.3.0"
-
-    implementation("com.android.billingclient:billing-ktx:$billing_version")
+    implementation(libs.billing.ktx)
 
     // Firebase
-    implementation("com.google.firebase:firebase-auth")
-    implementation("com.google.firebase:firebase-storage")
-    implementation("com.google.firebase:firebase-config-ktx")
-
-//    implementation("com.google.firebase:firebase-analytics")
-////    implementation("com.google.firebase:firebase-inappmessaging-display")
-////    implementation("com.google.firebase:firebase-ai")
-//    implementation("com.google.firebase:firebase-crashlytics-ndk")
+    implementation(libs.firebase.auth)
+    implementation(libs.firebase.storage)
+    implementation(libs.firebase.config.ktx)
 
     // Crashlytics
-    implementation("com.google.firebase:firebase-crashlytics")
-    implementation("com.google.firebase:firebase-analytics")
+    implementation(libs.firebase.crashlytics)
+    implementation(libs.firebase.analytics)
 
     //Retrofit
-    implementation("com.squareup.retrofit2:retrofit:3.0.0")
-    implementation("com.squareup.retrofit2:converter-gson:2.11.0")
+    implementation(libs.retrofit)
+    implementation(libs.converter.gson)
 
     //Coil
-    implementation("io.coil-kt:coil-compose:2.6.0")
-    implementation("io.coil-kt:coil-svg:2.6.0")
+    implementation(libs.coil.compose)
+    implementation(libs.coil.svg)
 
     //Constraint Layout
 
-    implementation("androidx.constraintlayout:constraintlayout-compose:1.0.1")
+    implementation(libs.constraintlayout.compose)
 
     // Firebase Credential Manager
-    implementation("androidx.credentials:credentials:1.5.0")
-    implementation("androidx.credentials:credentials-play-services-auth:1.5.0")
-    implementation("com.google.android.libraries.identity.googleid:googleid:1.2.0")
+    implementation(libs.credentials)
+    implementation(libs.credentials.play.services.auth)
+    implementation(libs.googleid)
 
-    implementation("org.jetbrains.kotlinx:kotlinx-metadata-jvm:0.9.0")
+    implementation(libs.kotlinx.metadata.jvm)
 
     // Hilt
-    implementation("com.google.dagger:hilt-android:2.57.2")
+    implementation(libs.hilt.android)
     implementation(libs.androidx.hilt.common)
     implementation(libs.androidx.compose.animation.core)
     implementation(libs.androidx.compose.ui.graphics)
     implementation(libs.androidx.compose.material3)
     implementation(libs.androidx.animation.core)
     implementation(libs.androidx.compose.ui.text)
-    kapt("com.google.dagger:hilt-android-compiler:2.57.2")
-    implementation("androidx.hilt:hilt-navigation-compose:1.3.0")
+    kapt(libs.hilt.android.compiler)
+    implementation(libs.hilt.navigation.compose)
 
     // Navigation
-    implementation("androidx.constraintlayout:constraintlayout-compose:1.1.1")
-    implementation("androidx.navigation:navigation-compose:2.9.5")
+    implementation(libs.navigation.compose)
 
-    implementation("com.google.accompanist:accompanist-drawablepainter:0.34.0")
+    implementation(libs.accompanist.drawablepainter)
 
     //Places
-    implementation("com.google.android.libraries.places:places:5.0.0")
+    implementation(libs.places)
 
     implementation(libs.androidx.work.runtime.ktx)
     // Room
-    val room_version = "2.8.2"
-    implementation("androidx.room:room-runtime:$room_version")
-    kapt("androidx.room:room-compiler:$room_version")
-    implementation("androidx.room:room-ktx:$room_version")
+    implementation(libs.room.runtime)
+    kapt(libs.room.compiler)
+    implementation(libs.room.ktx)
 
-    implementation(platform("com.google.firebase:firebase-bom:34.9.0"))
-    implementation("com.google.firebase:firebase-analytics")
+    implementation(platform(libs.firebase.bom))
 
-    implementation("androidx.hilt:hilt-work:1.2.0")
-    kapt("androidx.hilt:hilt-compiler:1.2.0")
+    implementation(libs.hilt.work)
+    kapt(libs.hilt.compiler)
 
 
     // Maps Compose
-    implementation("com.google.maps.android:maps-compose:4.3.0")
-    implementation("com.google.android.gms:play-services-maps:18.2.0")
+    implementation(libs.maps.compose)
+    implementation(libs.play.services.maps)
 // Location Services
-    implementation("com.google.android.gms:play-services-location:21.3.0")
+    implementation(libs.play.services.location)
 // Lifecycle + ViewModel
-    implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.8.6")
-    implementation("androidx.lifecycle:lifecycle-runtime-compose:2.8.6")
+    implementation(libs.lifecycle.viewmodel.compose)
+    implementation(libs.lifecycle.runtime.compose)
 
-    implementation("com.google.accompanist:accompanist-permissions:0.37.3")
-    implementation("com.google.maps.android:android-maps-utils:2.3.0")
-    implementation("com.google.firebase:firebase-config-ktx:22.1.2")
+    implementation(libs.accompanist.permissions)
+    implementation(libs.android.maps.utils)
 
     implementation(libs.androidx.concurrent.futures)
     implementation(libs.androidx.concurrent.futures.ktx)

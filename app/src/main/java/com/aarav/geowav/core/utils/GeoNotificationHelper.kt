@@ -1,4 +1,8 @@
+@file:SuppressLint("InlinedApi")
+
 package com.aarav.geowav.core.utils
+
+import android.annotation.SuppressLint
 
 import android.Manifest
 import android.app.PendingIntent

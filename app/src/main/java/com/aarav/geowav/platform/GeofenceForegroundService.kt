@@ -78,7 +78,13 @@ class GeofenceForegroundService : Service() {
             }
 
             // Start only once
-            startForegroundService()
+            if (ActivityCompat.checkSelfPermission(
+                    this@GeofenceForegroundService,
+                    Manifest.permission.ACCESS_FINE_LOCATION
+                ) == PackageManager.PERMISSION_GRANTED
+            ) {
+                startForegroundService()
+            }
 
 //            if (googleSignInClient.isLoggedIn()) {
 //                observePlaces()

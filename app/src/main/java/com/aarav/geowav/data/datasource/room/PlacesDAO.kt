@@ -18,4 +18,7 @@ interface PlacesDAO {
 
     @Query("SELECT * FROM places")
     fun getAllPlaces() : Flow<List<Place>>
+
+    @androidx.room.Update
+    suspend fun updatePlace(place: Place)
 }

@@ -39,6 +39,10 @@ class PlaceRepositoryImpl @Inject constructor(
         placesDAO.deletePlace(place)
     }
 
+    override suspend fun updatePlace(place: Place) {
+        placesDAO.updatePlace(place)
+    }
+
     override fun getPlaces(): Flow<List<Place>> {
         return placesDAO.getAllPlaces()
     }

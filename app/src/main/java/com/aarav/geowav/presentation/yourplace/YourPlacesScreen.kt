@@ -54,6 +54,9 @@ import com.aarav.geowav.data.model.UserPlan
 import com.aarav.geowav.presentation.components.GeofencePlaceCard
 import com.aarav.geowav.presentation.components.CustomBottomSheet
 import com.aarav.geowav.presentation.components.UpgradeBottomSheetContent
+import com.aarav.geowav.presentation.components.RadiusChipGroup
+import androidx.compose.material3.Button
+import androidx.compose.foundation.layout.Spacer
 import com.aarav.geowav.presentation.subscription.SubscriptionViewModel
 import com.aarav.geowav.presentation.theme.manrope
 
@@ -73,6 +76,49 @@ fun YourPlacesScreen(
 
 
     var upgradeContext by remember { mutableStateOf<UpgradeContext?>(null) }
+    var placeToEditRadius by remember { mutableStateOf<Place?>(null) }
+
+    placeToEditRadius?.let { place ->
+        CustomBottomSheet(
+            onDismissRequest = {
+                placeToEditRadius = null
+            }
+        ) {
+            var selectedRadius by remember { mutableStateOf(place.radius) }
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp),
+                verticalArrangement = Arrangement.spacedBy(16.dp)
+            ) {
+                Text(
+                    text = "Edit Radius",
+                    style = MaterialTheme.typography.titleLarge,
+                    color = MaterialTheme.colorScheme.onSurface,
+                    fontFamily = manrope,
+                    fontWeight = FontWeight.Bold
+                )
+
+                RadiusChipGroup(
+                    chips = listOf(200f, 300f, 400f, 500f),
+                    selectedRadius = selectedRadius,
+                    onRadiusSelected = { selectedRadius = it }
+                )
+
+                Button(
+                    onClick = {
+                        yourPlacesVM.updatePlaceRadius(place, selectedRadius)
+                        placeToEditRadius = null
+                    },
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Text("Save Changes", fontFamily = manrope)
+                }
+                
+                Spacer(modifier = Modifier.height(32.dp))
+            }
+        }
+    }
 
 
     upgradeContext?.let {
@@ -172,9 +218,15 @@ fun YourPlacesScreen(
                     .padding(top = 8.dp, bottom = 12.dp)
             ) {
                 items(uiState.placesList) { place ->
-                    GeofencePlaceCard(place) {
-                        yourPlacesVM.deletePlace(place)
-                    }
+                    GeofencePlaceCard(
+                        place = place,
+                        onDeleteClick = {
+                            yourPlacesVM.deletePlace(place)
+                        },
+                        onEditRadiusClick = {
+                            placeToEditRadius = place
+                        }
+                    )
                 }
             }
         }
