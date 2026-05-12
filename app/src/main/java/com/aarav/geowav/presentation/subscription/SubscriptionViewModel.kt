@@ -65,7 +65,6 @@ class SubscriptionViewModel
 
 //        setupBillingClient()
 //        observePurchases()
-        observePurchases()
         fetchOfferings()
         syncEntitlementsOnStart()
     }
