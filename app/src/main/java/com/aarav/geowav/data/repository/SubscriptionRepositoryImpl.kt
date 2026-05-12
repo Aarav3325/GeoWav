@@ -45,9 +45,19 @@ class SubscriptionRepositoryImpl
                         override fun onDataChange(snapshot: DataSnapshot) {
                             val planString = snapshot.child("plan")
                                 .getValue(String::class.java)
+                            val forcedPlan = snapshot.child("forcedPlan")
+                                .getValue(String::class.java)
+                            val overrideEnabled = snapshot.child("overrideEnabled")
+                                .getValue(Boolean::class.java) ?: false
+
+                            val resolvedPlanString = if (overrideEnabled && forcedPlan != null) {
+                                forcedPlan
+                            } else {
+                                planString ?: "FREE"
+                            }
 
                             val plan = try {
-                                UserPlan.valueOf(planString ?: "FREE")
+                                UserPlan.valueOf(resolvedPlanString)
                             } catch (e: Exception) {
                                 UserPlan.FREE
                             }
@@ -87,8 +97,16 @@ class SubscriptionRepositoryImpl
                 val status = p0.getValue(UserSubscription::class.java)
 
                 status?.let {
-                    Log.i("PLAN", status.toString())
-                    trySend(it)
+                    val resolvedPlan = if (it.overrideEnabled && it.forcedPlan != null) {
+                        it.forcedPlan
+                    } else {
+                        it.plan
+                    }
+                    
+                    val finalStatus = it.copy(plan = resolvedPlan)
+                    
+                    Log.i("PLAN", finalStatus.toString())
+                    trySend(finalStatus)
                 }
             }
 

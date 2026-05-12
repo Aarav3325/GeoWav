@@ -43,7 +43,8 @@ class PaymentRepositoryImpl @Inject constructor(
                 token = result.purchaseToken,
                 purchaseTime = result.purchaseTime,
                 expiryTime = expiryTime,
-                isAutoRenewing = true
+                isAutoRenewing = true,
+                active = true
             )
         }
 
@@ -56,7 +57,8 @@ class PaymentRepositoryImpl @Inject constructor(
         token: String,
         purchaseTime: Long,
         expiryTime: Long,
-        isAutoRenewing: Boolean
+        isAutoRenewing: Boolean,
+        active: Boolean
     ) {
         val uid = googleSignInClient.getUserId()
         if (uid.isBlank()) return
@@ -65,18 +67,19 @@ class PaymentRepositoryImpl @Inject constructor(
             .getReference("subscriptions")
             .child(uid)
 
-        val subscriptionData = UserSubscription(
-            plan = plan,
-            active = true,
-            purchaseToken = token,
-            purchaseTime = purchaseTime,
-            updatedAt = System.currentTimeMillis(),
-            expiryTime = expiryTime,
-            autoRenewing = isAutoRenewing
+        val updates = hashMapOf<String, Any>(
+            "plan" to plan,
+            "active" to active,
+            "source" to "REVENUECAT",
+            "purchaseToken" to token,
+            "purchaseTime" to purchaseTime,
+            "updatedAt" to System.currentTimeMillis(),
+            "expiryTime" to expiryTime,
+            "autoRenewing" to isAutoRenewing
         )
 
-        ref.setValue(subscriptionData)
-        Log.i(TAG, "Subscription saved to Firebase: $plan")
+        ref.updateChildren(updates)
+        Log.i(TAG, "Subscription updated in Firebase: $plan")
     }
 
     override suspend fun restorePurchases(): PurchaseResult {
@@ -92,7 +95,8 @@ class PaymentRepositoryImpl @Inject constructor(
                 token = "restored",
                 purchaseTime = System.currentTimeMillis(),
                 expiryTime = System.currentTimeMillis() + getPlanDuration(plan),
-                isAutoRenewing = true
+                isAutoRenewing = true,
+                active = true
             )
             PurchaseResult.Success(
                 plan = plan,
@@ -101,7 +105,7 @@ class PaymentRepositoryImpl @Inject constructor(
                 purchaseTime = System.currentTimeMillis()
             )
         } else {
-            savePurchase("FREE", "", 0L, 0L, false)
+            savePurchase("FREE", "", 0L, 0L, false, false)
             PurchaseResult.Error("No active subscription found")
         }
     }
@@ -116,7 +120,8 @@ class PaymentRepositoryImpl @Inject constructor(
             token = "",
             purchaseTime = 0L,
             expiryTime = 0L,
-            isAutoRenewing = plan != UserPlan.FREE
+            isAutoRenewing = plan != UserPlan.FREE,
+            active = plan != UserPlan.FREE
         )
 
         Log.i(TAG, "Entitlements synced. Active plan: $plan")

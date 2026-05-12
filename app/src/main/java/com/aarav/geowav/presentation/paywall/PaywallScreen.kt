@@ -679,7 +679,7 @@ fun CurrentPlanCard(
                 val label = when {
                     status?.isExpired == true -> "Expired"
                     status?.isCancelled == true -> "Ending"
-                    status?.isActive == true -> "Active"
+                    status?.active == true -> "Active"
                     else -> "Free"
                 }
 

@@ -15,7 +15,8 @@ interface PaymentRepository {
         token: String,
         purchaseTime: Long,
         expiryTime: Long,
-        isAutoRenewing: Boolean
+        isAutoRenewing: Boolean,
+        active: Boolean
     )
 
     suspend fun purchase(activity: Activity, rcPackage: Package, plan: UserPlan): PurchaseResult
