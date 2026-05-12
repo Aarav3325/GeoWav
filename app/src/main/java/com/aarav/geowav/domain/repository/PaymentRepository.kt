@@ -1,36 +1,29 @@
 package com.aarav.geowav.domain.repository
 
 import android.app.Activity
-import android.content.Context
-import android.net.Uri
-import com.aarav.geowav.data.model.PaymentTransactions
 import com.aarav.geowav.data.model.PurchaseResult
-import com.aarav.geowav.data.model.UpiApp
-import com.android.billingclient.api.Purchase
+import com.aarav.geowav.data.model.UserPlan
+import com.revenuecat.purchases.Package
 import kotlinx.coroutines.flow.Flow
 
 interface PaymentRepository {
 
-    suspend fun createBillingClient(
-        context: Context
-    )
-
     fun observePurchasesUpdate(): Flow<PurchaseResult>
-
-    suspend fun processPurchases(
-        activity: Activity,
-        productId: String
-    )
 
     fun savePurchase(
         plan: String,
-        token:  String,
+        token: String,
         purchaseTime: Long,
         expiryTime: Long,
-        isAutoRenewing: Boolean
+        isAutoRenewing: Boolean,
+        active: Boolean
     )
 
-    suspend fun syncAfterLogin(context: Context)
+    suspend fun purchase(activity: Activity, rcPackage: Package, plan: UserPlan): PurchaseResult
 
-    fun syncPurchases()
+    suspend fun restorePurchases(): PurchaseResult
+
+    suspend fun syncEntitlements(): UserPlan
+
+    fun observeRealTimeEntitlements(): Flow<UserPlan>
 }

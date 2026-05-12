@@ -5,6 +5,7 @@ localProperties.load(rootProject.file("local.properties").inputStream())
 
 val mapsApiKey = localProperties.getProperty("GOOGLE_MAPS_API_KEY") ?: ""
 val metaAccessToken = localProperties.getProperty("META_ACCESS_TOEKN") ?: ""
+val revenuecatApiKey = localProperties.getProperty("REVENUE_CAT_API_KEY") ?: ""
 
 plugins {
     alias(libs.plugins.android.application)
@@ -25,8 +26,8 @@ android {
         applicationId = "com.aarav.geowav"
         minSdk = 26
         targetSdk = 36
-        versionCode = 27
-        versionName = "0.9.17"
+        versionCode = 30
+        versionName = "0.9.20"
 
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
@@ -51,6 +52,7 @@ android {
             manifestPlaceholders["GOOGLE_MAPS_API_KEY"] = mapsApiKey
             buildConfigField("String", "GOOGLE_MAPS_API_KEY", "\"$mapsApiKey\"")
             buildConfigField("String", "META_ACCESS_TOEKN", "\"$metaAccessToken\"")
+            buildConfigField("String", "REVENUE_CAT_API_KEY", "\"$revenuecatApiKey\"")
         }
 
         release {
@@ -64,7 +66,8 @@ android {
 
             buildConfigField("String", "GOOGLE_MAPS_API_KEY", "\"$mapsApiKey\"")
             buildConfigField("String", "META_ACCESS_TOEKN", "\"$metaAccessToken\"")
-            
+            buildConfigField("String", "REVENUE_CAT_API_KEY", "\"$revenuecatApiKey\"")
+
             val keystorePath = System.getenv("KEYSTORE_PATH")
             if (keystorePath != null) {
                 signingConfig = signingConfigs.getByName("release")
@@ -97,7 +100,10 @@ android {
 
 dependencies {
 
-    implementation(libs.billing.ktx)
+
+    // RevenueCat
+    implementation("com.revenuecat.purchases:purchases:8.10.8")
+    implementation("com.revenuecat.purchases:purchases-ui:8.10.8")
 
     // Firebase
     implementation(libs.firebase.auth)
@@ -157,8 +163,6 @@ dependencies {
     implementation(libs.hilt.work)
     kapt(libs.hilt.compiler)
 
-
-    // Maps Compose
     implementation(libs.maps.compose)
     implementation(libs.play.services.maps)
 // Location Services

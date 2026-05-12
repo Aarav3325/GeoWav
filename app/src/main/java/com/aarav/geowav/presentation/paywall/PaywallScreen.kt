@@ -165,11 +165,11 @@ fun PaywallScreen(
         showUpgradeConfirm = true
     }
 
-    val productId = when (selectedPlan) {
-        UserPlan.PREMIUM -> SubscriptionMapper.PREMIUM_ID
-        UserPlan.PRO -> SubscriptionMapper.PRO_ID
-        else -> null
-    }
+//    val productId = when (selectedPlan) {
+//        UserPlan.PREMIUM -> SubscriptionMapper.PREMIUM_ID
+//        UserPlan.PRO -> SubscriptionMapper.PRO_ID
+//        else -> null
+//    }
 
     if (showUpgradeConfirm && selectedPlan != null) {
         CustomBottomSheet(
@@ -181,11 +181,11 @@ fun PaywallScreen(
                 plan = selectedPlan!!,
                 onConfirm = {
                     showUpgradeConfirm = false
-                    if (selectedPlan != null && productId != null) {
+                    if (selectedPlan != null) {
                         activity?.let {
-                            subscriptionViewModel.launchBillingFlow(
+                            subscriptionViewModel.purchasePlan(
                                 activity = it,
-                                productId = productId
+                                plan = selectedPlan!!
                             )
                         }
                     }
@@ -383,6 +383,20 @@ fun PaywallScreen(
                 Spacer(Modifier.height(24.dp))
 
                 ComparisonTable()
+
+                Spacer(Modifier.height(8.dp))
+
+                Text(
+                    text = "Restore Purchases",
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clickable { subscriptionViewModel.restorePurchases() },
+                    textAlign = TextAlign.Center,
+                    color = MaterialTheme.colorScheme.outline,
+                    fontSize = 13.sp,
+                    fontFamily = manrope,
+                    fontWeight = FontWeight.Medium
+                )
             }
 
             val nextPlan = when (plan) {
@@ -665,7 +679,7 @@ fun CurrentPlanCard(
                 val label = when {
                     status?.isExpired == true -> "Expired"
                     status?.isCancelled == true -> "Ending"
-                    status?.isActive == true -> "Active"
+                    status?.active == true -> "Active"
                     else -> "Free"
                 }
 

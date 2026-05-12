@@ -71,7 +71,7 @@ class LoginVM @Inject constructor(
             }
 
             if (result) {
-                paymentRepository.syncAfterLogin(context)
+                paymentRepository.syncEntitlements()
             }
 
             _uiState.update { it.copy(isLoading = false) }
@@ -99,7 +99,7 @@ class LoginVM @Inject constructor(
             val result = googleSignInClient.signIn(activity)
 
             if (result) {
-                paymentRepository.syncAfterLogin(context)
+                paymentRepository.syncEntitlements()
             }
 
             _uiState.update { it.copy(isLoading = false) }

@@ -18,6 +18,10 @@ import com.google.android.gms.location.FusedLocationProviderClient
 import com.google.android.gms.location.LocationServices
 import com.google.android.libraries.places.api.Places
 import com.google.android.libraries.places.api.net.PlacesClient
+import com.revenuecat.purchases.LogLevel
+import com.revenuecat.purchases.Purchases
+import com.revenuecat.purchases.PurchasesConfiguration
+import com.revenuecat.purchases.getCustomerInfoWith
 import dagger.hilt.android.HiltAndroidApp
 import javax.inject.Inject
 
@@ -25,6 +29,8 @@ import javax.inject.Inject
 @HiltAndroidApp
 class GeoWavApp : Application(), Configuration.Provider {
 
+
+    val TAG = "RevenueCat"
     @Inject
     lateinit var geofencingRepo: GeofenceRepositoryImpl
 
@@ -48,6 +54,27 @@ class GeoWavApp : Application(), Configuration.Provider {
         if(!Places.isInitialized()){
             Places.initializeWithNewPlacesApiEnabled(applicationContext, BuildConfig.GOOGLE_MAPS_API_KEY)
         }
+
+        Purchases.logLevel = LogLevel.DEBUG // Change to LogLevel.ERROR for release
+        Purchases.configure(
+            PurchasesConfiguration.Builder(
+                context = this,
+                apiKey = BuildConfig.REVENUE_CAT_API_KEY // from RC dashboard
+            ).build()
+        )
+
+        Log.i(TAG, "Before customer info")
+
+        Purchases.sharedInstance.getCustomerInfoWith(
+            onSuccess = {
+                Log.i(TAG, "Customer info success")
+            },
+            onError = {
+                Log.e(TAG, "Customer info error")
+            }
+        )
+
+        Log.i(TAG, "After customer info")
     }
 
     fun Context.createGeoWavChannels() {

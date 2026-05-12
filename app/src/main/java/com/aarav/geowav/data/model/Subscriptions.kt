@@ -13,6 +13,9 @@ enum class UserPlan {
 data class UserSubscription(
     val plan: String = "FREE",
     val active: Boolean = false,
+    val source: String = "REVENUECAT",
+    val forcedPlan: String? = null,
+    val overrideEnabled: Boolean = false,
     val purchaseToken: String = "",
     val purchaseTime: Long = 0L,
     val updatedAt: Long = 0L,

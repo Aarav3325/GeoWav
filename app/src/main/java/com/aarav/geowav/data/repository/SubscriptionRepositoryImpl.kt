@@ -2,6 +2,7 @@ package com.aarav.geowav.data.repository
 
 import android.util.Log
 import com.aarav.geowav.data.authentication.GoogleSignInClient
+import com.aarav.geowav.data.datasource.revenuecat.RevenueCatDataSource
 import com.aarav.geowav.data.model.UserPlan
 import com.aarav.geowav.data.model.UserSubscription
 import com.aarav.geowav.domain.repository.SubscriptionRepository
@@ -9,6 +10,7 @@ import com.google.firebase.database.DataSnapshot
 import com.google.firebase.database.DatabaseError
 import com.google.firebase.database.FirebaseDatabase
 import com.google.firebase.database.ValueEventListener
+import com.revenuecat.purchases.Package
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
@@ -20,6 +22,7 @@ import javax.inject.Inject
 
 class SubscriptionRepositoryImpl
 @Inject constructor(
+    private val revenueCatDataSource: RevenueCatDataSource,
     private val firebaseDatabase: FirebaseDatabase,
     private val googleSignInClient: GoogleSignInClient
 ) : SubscriptionRepository {
@@ -42,9 +45,19 @@ class SubscriptionRepositoryImpl
                         override fun onDataChange(snapshot: DataSnapshot) {
                             val planString = snapshot.child("plan")
                                 .getValue(String::class.java)
+                            val forcedPlan = snapshot.child("forcedPlan")
+                                .getValue(String::class.java)
+                            val overrideEnabled = snapshot.child("overrideEnabled")
+                                .getValue(Boolean::class.java) ?: false
+
+                            val resolvedPlanString = if (overrideEnabled && forcedPlan != null) {
+                                forcedPlan
+                            } else {
+                                planString ?: "FREE"
+                            }
 
                             val plan = try {
-                                UserPlan.valueOf(planString ?: "FREE")
+                                UserPlan.valueOf(resolvedPlanString)
                             } catch (e: Exception) {
                                 UserPlan.FREE
                             }
@@ -84,8 +97,16 @@ class SubscriptionRepositoryImpl
                 val status = p0.getValue(UserSubscription::class.java)
 
                 status?.let {
-                    Log.i("PLAN", status.toString())
-                    trySend(it)
+                    val resolvedPlan = if (it.overrideEnabled && it.forcedPlan != null) {
+                        it.forcedPlan
+                    } else {
+                        it.plan
+                    }
+                    
+                    val finalStatus = it.copy(plan = resolvedPlan)
+                    
+                    Log.i("PLAN", finalStatus.toString())
+                    trySend(finalStatus)
                 }
             }
 
@@ -100,5 +121,9 @@ class SubscriptionRepositoryImpl
         awaitClose {
             ref.removeEventListener(listener)
         }
+    }
+
+    override suspend fun fetchAllPackages(): List<Package>? {
+        return revenueCatDataSource.fetchAllPackages()
     }
 }

@@ -5,7 +5,7 @@ import com.aarav.geowav.data.model.UserPlan
 import com.aarav.geowav.data.model.UserSubscription
 
 data class SubscriptionStatus(
-    val isActive: Boolean,
+    val active: Boolean,
     val isCancelled: Boolean,
     val isExpired: Boolean,
     val daysRemaining: Int
@@ -15,16 +15,16 @@ object SubscriptionHelper {
     fun getSubscriptionStatus(data: UserSubscription): SubscriptionStatus {
         val now = System.currentTimeMillis()
 
-        val isExpired = now > data.expiryTime
+        val isExpired = if (data.overrideEnabled) false else now > data.expiryTime
         val isCancelled = !data.autoRenewing
-        val isActive = !isExpired
+        val active = if (data.overrideEnabled) true else !isExpired
 
-        val daysRemaining = ((data.expiryTime - now) / (1000 * 60 * 60 * 24))
+        val daysRemaining = if (data.overrideEnabled) 365 else ((data.expiryTime - now) / (1000 * 60 * 60 * 24))
             .toInt()
             .coerceAtLeast(0)
 
         return SubscriptionStatus(
-            isActive = isActive,
+            active = active,
             isCancelled = isCancelled,
             isExpired = isExpired,
             daysRemaining = daysRemaining

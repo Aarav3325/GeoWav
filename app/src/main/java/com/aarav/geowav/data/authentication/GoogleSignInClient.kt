@@ -23,6 +23,8 @@ import com.google.firebase.database.DatabaseError
 import com.google.firebase.database.FirebaseDatabase
 import com.google.firebase.database.ValueEventListener
 import com.google.firebase.storage.FirebaseStorage
+import com.revenuecat.purchases.Purchases
+import com.revenuecat.purchases.logInWith
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.channels.awaitClose
@@ -132,7 +134,7 @@ class GoogleSignInClient @Inject constructor(
         credentialManager.clearCredentialState(
             ClearCredentialStateRequest()
         )
-
+        Purchases.sharedInstance.logOut()
         firebaseAuth.signOut()
     }
 
@@ -167,21 +169,53 @@ class GoogleSignInClient @Inject constructor(
 
     // firebase sign in using email
     suspend fun signInWithEmailAndPassword(
-        email: String, password: String
+        email: String,
+        password: String
     ): Boolean {
-        try {
+
+        return try {
+
             val finalEmail = email.trim()
             val finalPass = password.trim()
 
-            if (finalEmail.isBlank() || finalPass.isBlank()) return false
+            if (
+                finalEmail.isBlank() ||
+                finalPass.isBlank()
+            ) {
+                return false
+            }
 
+            val user = firebaseAuth
+                .signInWithEmailAndPassword(
+                    finalEmail,
+                    finalPass
+                )
+                .await()
+                .user
 
-            val user = firebaseAuth.signInWithEmailAndPassword(finalEmail, finalPass).await().user
-
-            if (user != null) return true else return false
+            if (user != null) {
+                Purchases.sharedInstance.logInWith(
+                    user.uid,
+                    onSuccess = { _, created ->
+                        Log.i(
+                            "RevenueCat",
+                            "RC user identified: ${user.uid}, new=$created"
+                        )
+                    },
+                    onError = { error ->
+                        Log.e(
+                            "RevenueCat",
+                            "Login error: ${error.message}"
+                        )
+                    }
+                )
+                true
+            } else {
+                false
+            }
         } catch (e: Exception) {
-            Log.i(tag, e.message.toString())
-            return false
+            Log.e(tag, e.message.toString())
+            false
         }
     }
 
@@ -211,6 +245,22 @@ class GoogleSignInClient @Inject constructor(
                     Log.e(tag, "userReference: Success")
                 }
 
+            Purchases.sharedInstance.logInWith(
+                userId,
+                onSuccess = { customerInfo, created ->
+                    Log.i(
+                        "RevenueCat",
+                        "RC user identified: $userId, new=$created"
+                    )
+                },
+                onError = { error ->
+                    Log.e(
+                        "RevenueCat",
+                        "Login error: ${error.message}"
+                    )
+                }
+            )
+
             lookupReference
                 .child(encodeEmail(email))
                 .setValue(userId)
@@ -219,7 +269,7 @@ class GoogleSignInClient @Inject constructor(
 
     fun currentUser(): Flow<User?> = callbackFlow {
         val uid = getUserId()
-        if(uid.isEmpty()) {
+        if (uid.isEmpty()) {
             trySend(null)
             close()
             return@callbackFlow
@@ -270,7 +320,6 @@ class GoogleSignInClient @Inject constructor(
 
         return snapshot.getValue(User::class.java)
     }
-
 
 
     // get username of current user
@@ -336,10 +385,11 @@ class GoogleSignInClient @Inject constructor(
 
         awaitClose { uploadTask.cancel() }
     }
+
     fun storeAvatar(url: String) {
         val uid = getUserId()
 
-        if(uid.isEmpty()) return
+        if (uid.isEmpty()) return
 
         userReference.child(uid)
             .child("avatar")

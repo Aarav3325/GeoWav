@@ -11,6 +11,7 @@ import com.aarav.geowav.data.model.UserPlan
 import com.aarav.geowav.data.model.UserSubscription
 import com.aarav.geowav.domain.repository.PaymentRepository
 import com.aarav.geowav.domain.repository.SubscriptionRepository
+import com.revenuecat.purchases.Package
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Job
@@ -21,6 +22,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
@@ -51,6 +53,9 @@ class SubscriptionViewModel
     private val _subscriptionState = MutableStateFlow<UserSubscription?>(null)
     val subscriptionState: StateFlow<UserSubscription?> = _subscriptionState.asStateFlow()
 
+    private val _offeringState = MutableStateFlow(OfferingState())
+    val offeringState: StateFlow<OfferingState> = _offeringState.asStateFlow()
+
 
     private var purchaseJob: Job? = null
     private var listeningJob: Job? = null
@@ -58,62 +63,84 @@ class SubscriptionViewModel
     init {
         Log.i("SUBSCRIPTION", "init")
 
-        setupBillingClient()
-        observePurchases()
+        fetchOfferings()
+        startRealTimeEntitlementSync()
     }
 
 
+    fun fetchOfferings() {
 
-    fun setupBillingClient() {
+        Log.i("SUBSCRIPTION", "Offerings loading")
         viewModelScope.launch {
-            paymentRepository.createBillingClient(context)
+            _offeringState.update { it.copy(isLoading = true, error = null) }
+            val allPackages = subscriptionRepository.fetchAllPackages()
+            _offeringState.update {
+                it.copy(
+                    allPackages = allPackages ?: emptyList(),
+                    isLoading = false,
+                    error = if (it.allPackages.isEmpty()) "Offerings unavailable" else null
+                )
+            }
+            Log.i("SUBSCRIPTION", "Offerings loaded: ${allPackages}")
         }
     }
 
-    fun launchBillingFlow(
-        activity: Activity,
-        productId: String
-    ) {
+    private fun startRealTimeEntitlementSync() {
+        listeningJob?.cancel()
+        listeningJob = viewModelScope.launch {
+            paymentRepository.observeRealTimeEntitlements().collect { plan ->
+                Log.i("SUBSCRIPTION", "Real-time plan updated: $plan")
+            }
+        }
+    }
+
+    fun purchasePlan(activity: Activity, plan: UserPlan) {
+        val rcPackage = when (plan) {
+            UserPlan.PREMIUM -> _offeringState.value.allPackages.find {
+                it.identifier == "premium_monthly"
+            }
+            UserPlan.PRO -> _offeringState.value.allPackages.find {
+                it.identifier == "pro_monthly"
+            }
+            UserPlan.FREE -> null
+        }
+
+
+        if (rcPackage == null) {
+            viewModelScope.launch {
+                _uiEvents.emit(SubscriptionEvents.ShowError("Package not available. Please try again."))
+            }
+            return
+        }
+
         viewModelScope.launch {
-            paymentRepository.processPurchases(activity, productId)
+            val result = paymentRepository.purchase(activity, rcPackage, plan)
+            _purchaseResult.value = result
+            when (result) {
+                is PurchaseResult.Success ->
+                    _uiEvents.emit(SubscriptionEvents.PurchaseSuccess(result))
+                is PurchaseResult.Error ->
+                    _uiEvents.emit(SubscriptionEvents.ShowError(result.message))
+                PurchaseResult.Cancelled ->
+                    _uiEvents.emit(SubscriptionEvents.PurchaseCancelled)
+            }
         }
     }
 
-    fun observePurchases() {
-
-        purchaseJob?.cancel()
-
-        purchaseJob = viewModelScope.launch {
-            paymentRepository.observePurchasesUpdate()
-                .collect { purchaseResult ->
-                    when (purchaseResult) {
-                        is PurchaseResult.Success -> {
-
-                            _purchaseResult.value = purchaseResult
-                            _uiEvents.emit(
-                                SubscriptionEvents.PurchaseSuccess(purchaseResult)
-                            )
-                        }
-
-                        is PurchaseResult.Error -> {
-
-                            _purchaseResult.value = purchaseResult
-                            _uiEvents.emit(
-                                SubscriptionEvents.ShowError(purchaseResult.message)
-                            )
-                        }
-
-                        PurchaseResult.Cancelled -> {
-
-                            _purchaseResult.value = purchaseResult
-                            _uiEvents.emit(
-                                SubscriptionEvents.PurchaseCancelled
-                            )
-                        }
-                    }
-                }
+    fun restorePurchases() {
+        viewModelScope.launch {
+            val result = paymentRepository.restorePurchases()
+            _purchaseResult.value = result
+            when (result) {
+                is PurchaseResult.Success ->
+                    _uiEvents.emit(SubscriptionEvents.PurchaseSuccess(result))
+                is PurchaseResult.Error ->
+                    _uiEvents.emit(SubscriptionEvents.ShowError(result.message))
+                else -> Unit
+            }
         }
     }
+
 
     fun fetchSubscriptionStatus() {
         viewModelScope.launch {
@@ -140,4 +167,11 @@ sealed class SubscriptionEvents {
     data class PurchaseSuccess(val purchaseSuccess: PurchaseResult.Success) : SubscriptionEvents()
     object PurchaseCancelled : SubscriptionEvents()
     data class ShowError(val message: String) : SubscriptionEvents()
+    object RestoreSuccess : SubscriptionEvents()
 }
+
+data class OfferingState(
+    val allPackages: List<Package> = emptyList(),
+    val isLoading: Boolean = false,
+    val error: String? = null
+)

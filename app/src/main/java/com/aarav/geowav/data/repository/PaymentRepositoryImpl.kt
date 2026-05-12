@@ -1,219 +1,76 @@
 package com.aarav.geowav.data.repository
 
 import android.app.Activity
-import android.content.Context
 import android.util.Log
-import com.aarav.geowav.core.managers.SubscriptionMapper
 import com.aarav.geowav.data.authentication.GoogleSignInClient
+import com.aarav.geowav.data.datasource.revenuecat.RevenueCatDataSource
 import com.aarav.geowav.data.model.PurchaseResult
 import com.aarav.geowav.data.model.UserPlan
-import com.aarav.geowav.data.model.UserSubscription
 import com.aarav.geowav.data.model.getPlanDuration
 import com.aarav.geowav.domain.repository.PaymentRepository
-import com.android.billingclient.api.AcknowledgePurchaseParams
-import com.android.billingclient.api.BillingClient
-import com.android.billingclient.api.BillingClientStateListener
-import com.android.billingclient.api.BillingFlowParams
-import com.android.billingclient.api.BillingResult
-import com.android.billingclient.api.PendingPurchasesParams
-import com.android.billingclient.api.Purchase
-import com.android.billingclient.api.PurchasesUpdatedListener
-import com.android.billingclient.api.QueryProductDetailsParams
-import com.android.billingclient.api.QueryPurchasesParams
-import com.android.billingclient.api.queryProductDetails
 import com.google.firebase.database.FirebaseDatabase
+import com.revenuecat.purchases.Package
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.asSharedFlow
+import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 import javax.inject.Inject
 
 class PaymentRepositoryImpl @Inject constructor(
-    val firebaseDatabase: FirebaseDatabase,
-    val googleSignInClient: GoogleSignInClient
+    private val revenueCatDataSource: RevenueCatDataSource,
+    private val firebaseDatabase: FirebaseDatabase,
+    private val googleSignInClient: GoogleSignInClient
 ) : PaymentRepository {
 
-    private var isBillingInitialized = false
-
-    private val BILLING_TAG = "BILLING"
+    private val TAG = "PaymentRepository"
+    private val scope = CoroutineScope(Dispatchers.IO + SupervisorJob())
     private val _purchaseEvents = MutableSharedFlow<PurchaseResult>()
-    val purchaseEvents = _purchaseEvents.asSharedFlow()
 
-
-    private var purchasesUpdatedListener = PurchasesUpdatedListener { result, purchases ->
-        if (result.responseCode == BillingClient.BillingResponseCode.OK && purchases != null) {
-            for (purchase in purchases) {
-                Log.i(BILLING_TAG, "purchase success: ${purchase.orderId}")
-                if (purchase.purchaseState == Purchase.PurchaseState.PURCHASED) {
-                    if (!purchase.isAcknowledged) {
-                        val params = AcknowledgePurchaseParams.newBuilder()
-                            .setPurchaseToken(purchase.purchaseToken)
-                            .build()
-
-                        billingClient.acknowledgePurchase(params) {
-                            Log.i(BILLING_TAG, "Purchase acknowledged")
-                        }
-                    }
-
-                    val productId = purchase.products.first()
-
-                    val plan = when (productId) {
-                        "geowav_premium" -> "PREMIUM"
-                        "geowav_pro" -> "PRO"
-                        else -> "FREE"
-                    }
-
-                    //val plan = SubscriptionMapper.fromProductId(productId).name
-
-                    val finalPurchaseTime = if (
-                        purchase.purchaseTime == 0L
-                    ) System.currentTimeMillis() else purchase.purchaseTime
-
-                    val expiryTime = finalPurchaseTime + getPlanDuration(UserPlan.valueOf(plan))
-
-                    savePurchase(
-                        plan,
-                        purchase.purchaseToken,
-                        finalPurchaseTime,
-                        expiryTime,
-                        purchase.isAutoRenewing
-                    )
-
-                    Log.i(BILLING_TAG, "Plan detected: $plan")
-
-                    CoroutineScope(Dispatchers.IO).launch {
-                        _purchaseEvents.emit(
-                            PurchaseResult.Success(
-                                plan = UserPlan.valueOf(plan),
-                                purchaseToken = purchase.purchaseToken,
-                                orderId = purchase.orderId,
-                                purchaseTime = finalPurchaseTime
-                            )
-                        )
-                    }
-                }
-            }
-        } else if (result.responseCode == BillingClient.BillingResponseCode.USER_CANCELED) {
-            Log.i(BILLING_TAG, "purchase cancelled")
-            CoroutineScope(Dispatchers.IO).launch {
-                _purchaseEvents.emit(
-                    PurchaseResult.Cancelled
-                )
-            }
-        } else {
-            Log.i(BILLING_TAG, "purchase failed: ${result.responseCode}")
-            CoroutineScope(Dispatchers.IO).launch {
-                _purchaseEvents.emit(
-                    PurchaseResult.Error(
-                        result.debugMessage
-                    )
-                )
+    init {
+        scope.launch {
+            revenueCatDataSource.onEntitlementChanged.collectLatest {
+                Log.d(TAG, "Global sync triggered by RevenueCat change")
+                syncEntitlements()
             }
         }
+        
+        scope.launch {
+            syncEntitlements()
+        }
     }
-    lateinit var billingClient: BillingClient
 
-    override suspend fun createBillingClient(context: Context) {
-        billingClient = BillingClient.newBuilder(
-            context
-        )
-            .setListener(purchasesUpdatedListener).enablePendingPurchases(
-                PendingPurchasesParams
-                    .newBuilder()
-                    .enablePrepaidPlans()
-                    .enableOneTimeProducts()
-                    .build()
+    override fun observePurchasesUpdate(): Flow<PurchaseResult> =
+        _purchaseEvents.asSharedFlow()
+
+    override suspend fun purchase(
+        activity: Activity,
+        rcPackage: Package,
+        plan: UserPlan
+    ): PurchaseResult {
+        Log.i(TAG, "Initiating purchase for ${plan.name}")
+        val result = revenueCatDataSource.purchase(activity, rcPackage, plan)
+
+        if (result is PurchaseResult.Success) {
+            val expiryTime = result.purchaseTime + getPlanDuration(plan)
+            savePurchase(
+                plan = plan.name,
+                token = result.purchaseToken,
+                purchaseTime = result.purchaseTime,
+                expiryTime = expiryTime,
+                isAutoRenewing = true,
+                active = true
             )
-            .enableAutoServiceReconnection()
-            .build()
+        }
 
-        isBillingInitialized = true
-
-        connectToGooglePlay()
-    }
-
-    override fun observePurchasesUpdate(): Flow<PurchaseResult> {
-        return purchaseEvents
-    }
-
-//    override fun observePurchasesUpdate(): Flow<PurchaseResult> = callbackFlow {
-//        purchasesUpdatedListener = PurchasesUpdatedListener { result, purchases ->
-//            if (result.responseCode == BillingClient.BillingResponseCode.OK && purchases != null) {
-//                for (purchase in purchases) {
-//                    Log.i(BILLING_TAG, "purchase success: ${purchase.orderId}")
-//                    if (purchase.purchaseState == Purchase.PurchaseState.PURCHASED) {
-//                        if (!purchase.isAcknowledged) {
-//                            val params = AcknowledgePurchaseParams.newBuilder()
-//                                .setPurchaseToken(purchase.purchaseToken)
-//                                .build()
-//
-//                            billingClient.acknowledgePurchase(params) {
-//                                Log.i(BILLING_TAG, "Purchase acknowledged")
-//                            }
-//                        }
-//
-//                        val productId = purchase.products.first()
-//
-//                        val plan = when (productId) {
-//                            "geowav_premium" -> "PREMIUM"
-//                            "geowav_pro" -> "PRO"
-//                            else -> "PREMIUM"
-//                        }
-//
-//                        savePurchase(
-//                            plan,
-//                            purchase.purchaseToken,
-//                            purchase.purchaseTime
-//                        )
-//
-//                        Log.i(BILLING_TAG, "Plan detected: $plan")
-//
-//                        trySend(
-//                            PurchaseResult.Success(
-//                                plan = UserPlan.valueOf(plan),
-//                                purchaseToken = purchase.purchaseToken,
-//                                orderId = purchase.orderId,
-//                                purchaseTime = purchase.purchaseTime
-//                            )
-//                        )
-//                    }
-//                }
-//            } else if (result.responseCode == BillingClient.BillingResponseCode.USER_CANCELED) {
-//                Log.i(BILLING_TAG, "purchase cancelled")
-//                trySend(PurchaseResult.Cancelled)
-//            } else {
-//                Log.i(BILLING_TAG, "purchase failed: ${result.responseCode}")
-//                trySend(
-//                    PurchaseResult.Error(
-//                        result.debugMessage
-//                    )
-//                )
-//            }
-//        }
-//
-//        awaitClose {
-//            Log.i(BILLING_TAG, "Purchase listener removed")
-//        }
-//    }
-
-
-    fun connectToGooglePlay() {
-        billingClient.startConnection(object : BillingClientStateListener {
-            override fun onBillingServiceDisconnected() {
-
-            }
-
-            override fun onBillingSetupFinished(p0: BillingResult) {
-                if (p0.responseCode == BillingClient.BillingResponseCode.OK) {
-                    Log.i(BILLING_TAG, "Billing client connected")
-                    syncPurchases()
-                }
-            }
-
-        })
+        _purchaseEvents.emit(result)
+        return result
     }
 
     override fun savePurchase(
@@ -221,183 +78,107 @@ class PaymentRepositoryImpl @Inject constructor(
         token: String,
         purchaseTime: Long,
         expiryTime: Long,
-        isAutoRenewing: Boolean
+        isAutoRenewing: Boolean,
+        active: Boolean
     ) {
         val uid = googleSignInClient.getUserId()
-
-        if (uid.isBlank()) {
-            return
-        }
+        if (uid.isBlank()) return
 
         val ref = firebaseDatabase
             .getReference("subscriptions")
             .child(uid)
 
-        val subscriptionData = UserSubscription(
-            plan = plan,
-            active = true,
-            purchaseToken = token,
-            purchaseTime = purchaseTime,
-            updatedAt = System.currentTimeMillis(),
-            expiryTime = expiryTime,
-            autoRenewing = isAutoRenewing
+        val updates = hashMapOf<String, Any>(
+            "plan" to plan,
+            "active" to active,
+            "source" to "REVENUECAT",
+            "purchaseToken" to token,
+            "purchaseTime" to purchaseTime,
+            "updatedAt" to System.currentTimeMillis(),
+            "expiryTime" to expiryTime,
+            "autoRenewing" to isAutoRenewing
         )
 
-//        val data = mapOf(
-//            "plan" to plan,
-//            "isActive" to true,
-//            "purchaseToken" to token,
-//            "purchaseTime" to purchaseTime,
-//            "updatedAt" to System.currentTimeMillis()
-//        )
-
-        ref.setValue(subscriptionData)
+        ref.updateChildren(updates)
+        Log.i(TAG, "Subscription updated in Firebase: $plan (Expiry: $expiryTime)")
     }
 
-    override suspend fun syncAfterLogin(context: Context) {
-        if (!isBillingInitialized) {
-            createBillingClient(context)
-        } else {
-            connectToGooglePlay()
-        }
-    }
+    override suspend fun restorePurchases(): PurchaseResult {
+        Log.i(TAG, "Restoring purchases...")
+        val customerInfo = revenueCatDataSource.restorePurchases()
+            ?: return PurchaseResult.Error("Restore failed")
 
-    override fun syncPurchases() {
-        val uid = googleSignInClient.getUserId()
-        if (uid.isBlank()) return
+        val plan = revenueCatDataSource.resolveActivePlan(customerInfo)
+        val expiryTime = revenueCatDataSource.getExpiryTime(customerInfo)
+        val purchaseTime = revenueCatDataSource.getPurchaseTime(customerInfo)
 
-        if (uid == "7sZTZoNLRpUBcJSevQJyNq2XRVw1" || uid == "OS9fTE5P0rXp6hrHDJkjzxERDD32" || uid == "6dvjKdiUqmSmWgV08NTtH8lpC1K2") return
-
-        Log.i(BILLING_TAG, "syncPurchases called")
-
-        val params = QueryPurchasesParams.newBuilder()
-            .setProductType(BillingClient.ProductType.SUBS)
-            .build()
-
-        billingClient.queryPurchasesAsync(params) { result, purchases ->
-            if (result.responseCode == BillingClient.BillingResponseCode.OK) {
-                if (purchases.isEmpty()) {
-                    savePurchase(
-                        "FREE",
-                        "",
-                        purchaseTime = 0L,
-                        expiryTime = 0L,
-                        isAutoRenewing = false
-                    )
-
-                    Log.i(BILLING_TAG, "No active subscription")
-                } else {
-                    Log.i(BILLING_TAG, purchases.toString())
-                    var finalPlan = "FREE"
-                    var token = ""
-                    var purchaseTime = 0L
-                    var expiryTime = 0L
-                    var isAutoRenewing = false
-
-                    for (purchase in purchases) {
-
-                        val productId = purchase.products.first()
-
-                        if (productId == "geowav_pro") {
-                            finalPlan = "PRO"
-                            token = purchase.purchaseToken
-                            purchaseTime = purchase.purchaseTime
-                            expiryTime =
-                                purchase.purchaseTime + getPlanDuration(UserPlan.valueOf(finalPlan))
-                            isAutoRenewing = purchase.isAutoRenewing
-                            break
-                        } else if (productId == "geowav_premium") {
-                            finalPlan = "PREMIUM"
-                            token = purchase.purchaseToken
-                            purchaseTime = purchase.purchaseTime
-                            expiryTime =
-                                purchase.purchaseTime + getPlanDuration(UserPlan.valueOf(finalPlan))
-                            isAutoRenewing = purchase.isAutoRenewing
-                        }
-                    }
-
-                    savePurchase(
-                        plan = finalPlan,
-                        token = token,
-                        purchaseTime = purchaseTime,
-                        expiryTime = expiryTime,
-                        isAutoRenewing = isAutoRenewing
-                    )
-
-                    Log.i(BILLING_TAG, "Synced plan: $finalPlan")
-
-                }
-            }
-        }
-    }
-
-    override suspend fun processPurchases(
-        activity: Activity,
-        productId: String
-    ) {
-        val productList = listOf(
-            QueryProductDetailsParams.Product.newBuilder()
-                .setProductId(productId)
-                .setProductType(BillingClient.ProductType.SUBS)
-                .build()
-        )
-
-//        val productList = listOf(
-//            QueryProductDetailsParams.Product.newBuilder()
-//                .setProductId("android.test.purchased")
-//                .setProductType(BillingClient.ProductType.INAPP)
-//                .build()
-//        )
-
-        val params = QueryProductDetailsParams.newBuilder()
-        params.setProductList(productList)
-
-        val productDetailsResult = withContext(Dispatchers.IO) {
-            billingClient.queryProductDetails(params.build())
-        }
-
-
-        val productDetailsList = productDetailsResult.productDetailsList
-
-        if (productDetailsList.isNullOrEmpty()) {
-            Log.e(BILLING_TAG, "No products found")
-            return
-        }
-
-        val productDetails = productDetailsList.first()
-
-        Log.d("BILLING", "Offer details: ${productDetails.subscriptionOfferDetails}")
-
-        val offerToken = productDetails.subscriptionOfferDetails
-            ?.firstOrNull()
-            ?.offerToken
-
-        if (offerToken == null) {
-            Log.e(BILLING_TAG, "Offer token not found")
-            return
-        }
-
-        val productDetailsParamsList = listOf(
-            BillingFlowParams.ProductDetailsParams.newBuilder()
-                .setProductDetails(productDetails)
-                .setOfferToken(offerToken)
-                .build()
-        )
-
-        val billingFlowParams = BillingFlowParams.newBuilder()
-            .setProductDetailsParamsList(productDetailsParamsList)
-            .build()
-
-        val result = billingClient.launchBillingFlow(
-            activity,
-            billingFlowParams
-        )
-
-        if (result.responseCode == BillingClient.BillingResponseCode.OK) {
-            Log.i(
-                BILLING_TAG,
-                "process purchase:" + productDetailsResult.productDetailsList.toString()
+        return if (plan != UserPlan.FREE) {
+            savePurchase(
+                plan = plan.name,
+                token = "restored",
+                purchaseTime = purchaseTime,
+                expiryTime = expiryTime,
+                isAutoRenewing = true,
+                active = true
             )
+            
+            PurchaseResult.Success(
+                plan = plan,
+                purchaseToken = "restored",
+                orderId = null,
+                purchaseTime = purchaseTime
+            )
+        } else {
+            savePurchase("FREE", "", 0L, 0L, false, false)
+            PurchaseResult.Error("No active subscription found")
         }
     }
+
+    override suspend fun syncEntitlements(): UserPlan {
+        Log.i(TAG, "Syncing entitlements with cache invalidation...")
+        val customerInfo = revenueCatDataSource.getCustomerInfo(forceRefresh = true)
+            ?: return UserPlan.FREE
+            
+        val plan = revenueCatDataSource.resolveActivePlan(customerInfo)
+        val expiryTime = revenueCatDataSource.getExpiryTime(customerInfo)
+        val purchaseTime = revenueCatDataSource.getPurchaseTime(customerInfo)
+
+        savePurchase(
+            plan = plan.name,
+            token = "",
+            purchaseTime = purchaseTime,
+            expiryTime = expiryTime,
+            isAutoRenewing = plan != UserPlan.FREE,
+            active = plan != UserPlan.FREE
+        )
+
+        // Schedule a proactive sync if there's an active subscription about to expire
+        if (plan != UserPlan.FREE && expiryTime > System.currentTimeMillis()) {
+            scheduleExpirySync(expiryTime)
+        }
+
+        Log.i(TAG, "Entitlements synced. Active plan: $plan")
+        return plan
+    }
+
+    private fun scheduleExpirySync(expiryTime: Long) {
+        val delayMs = (expiryTime - System.currentTimeMillis()).coerceAtLeast(0L)
+        Log.d(TAG, "Scheduling proactive expiry sync in ${delayMs / 1000} seconds")
+        scope.launch {
+            delay(delayMs + 2000) // Buffer 2 seconds to ensure RevenueCat server is updated
+            Log.d(TAG, "Executing proactive expiry sync now that time has passed")
+            syncEntitlements()
+        }
+    }
+
+    override fun observeRealTimeEntitlements(): Flow<UserPlan> =
+        revenueCatDataSource.onEntitlementChanged
+            .onStart { 
+                Log.d(TAG, "Starting real-time entitlement sync")
+                emit(Unit) 
+            }
+            .map {
+                // When RevenueCat notifies of a change, we force a fresh sync
+                syncEntitlements()
+            }
 }
