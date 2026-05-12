@@ -63,14 +63,14 @@ class SubscriptionViewModel
     init {
         Log.i("SUBSCRIPTION", "init")
 
-//        setupBillingClient()
-//        observePurchases()
         fetchOfferings()
         syncEntitlementsOnStart()
     }
 
 
     fun fetchOfferings() {
+
+        Log.i("SUBSCRIPTION", "Offerings loading")
         viewModelScope.launch {
             _offeringState.update { it.copy(isLoading = true, error = null) }
             val allPackages = subscriptionRepository.fetchAllPackages()
@@ -101,6 +101,7 @@ class SubscriptionViewModel
             }
             UserPlan.FREE -> null
         }
+
 
         if (rcPackage == null) {
             viewModelScope.launch {
@@ -137,56 +138,6 @@ class SubscriptionViewModel
         }
     }
 
-    fun setupBillingClient() {
-        viewModelScope.launch {
-            paymentRepository.createBillingClient(context)
-        }
-    }
-
-    fun launchBillingFlow(
-        activity: Activity,
-        productId: String
-    ) {
-        viewModelScope.launch {
-            paymentRepository.processPurchases(activity, productId)
-        }
-    }
-
-    fun observePurchases() {
-
-        purchaseJob?.cancel()
-
-        purchaseJob = viewModelScope.launch {
-            paymentRepository.observePurchasesUpdate()
-                .collect { purchaseResult ->
-                    when (purchaseResult) {
-                        is PurchaseResult.Success -> {
-
-                            _purchaseResult.value = purchaseResult
-                            _uiEvents.emit(
-                                SubscriptionEvents.PurchaseSuccess(purchaseResult)
-                            )
-                        }
-
-                        is PurchaseResult.Error -> {
-
-                            _purchaseResult.value = purchaseResult
-                            _uiEvents.emit(
-                                SubscriptionEvents.ShowError(purchaseResult.message)
-                            )
-                        }
-
-                        PurchaseResult.Cancelled -> {
-
-                            _purchaseResult.value = purchaseResult
-                            _uiEvents.emit(
-                                SubscriptionEvents.PurchaseCancelled
-                            )
-                        }
-                    }
-                }
-        }
-    }
 
     fun fetchSubscriptionStatus() {
         viewModelScope.launch {

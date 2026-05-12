@@ -13,6 +13,7 @@ import com.revenuecat.purchases.awaitCustomerInfo
 import com.revenuecat.purchases.awaitOfferings
 import com.revenuecat.purchases.awaitPurchase
 import com.revenuecat.purchases.awaitRestore
+import com.revenuecat.purchases.getOfferingsWith
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import javax.inject.Inject
@@ -24,21 +25,23 @@ class RevenueCatDataSource @Inject constructor() {
 
 
     private val _purchaseEvents = MutableSharedFlow<PurchaseResult>()
-    val purchaseEvents= _purchaseEvents.asSharedFlow()
+    val purchaseEvents = _purchaseEvents.asSharedFlow()
 
-    suspend fun fetchOfferings(): Offerings? {
+    suspend fun fetchAllPackages(): List<Package>? {
+        Log.i(TAG, "Offerings loading...")
         return try {
-            Purchases.sharedInstance.awaitOfferings()
-        }
-        catch (e: Exception) {
-            Log.e(TAG, "Failed to fetch offerings: ${e.message}")
+            val offerings = Purchases.sharedInstance.awaitOfferings()
+            Log.i(TAG, "Offerings success: ${offerings.current?.identifier}")
+            
+            offerings.current?.availablePackages?.forEach {
+                Log.i(TAG, "Package: ${it.identifier} -> ${it.product.id}")
+            }
+            
+            offerings.current?.availablePackages
+        } catch (e: Exception) {
+            Log.e(TAG, "Offerings error: ${e.message}")
             null
         }
-    }
-
-    suspend fun getAllPackages(): List<Package>? {
-        val offerings = fetchOfferings() ?: return null
-        return offerings.current?.availablePackages
     }
 
     suspend fun purchase(
@@ -86,6 +89,7 @@ class RevenueCatDataSource @Inject constructor() {
 
     suspend fun getCustomerInfo(): CustomerInfo? {
         return try {
+            Purchases.sharedInstance.invalidateCustomerInfoCache()
             Purchases.sharedInstance.awaitCustomerInfo()
         } catch (e: Exception) {
             Log.e(TAG, "Failed to get customer info: ${e.message}")

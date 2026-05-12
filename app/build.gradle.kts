@@ -26,8 +26,8 @@ android {
         applicationId = "com.aarav.geowav"
         minSdk = 26
         targetSdk = 36
-        versionCode = 27
-        versionName = "0.9.17"
+        versionCode = 30
+        versionName = "0.9.20"
 
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
@@ -97,10 +97,6 @@ android {
 
 dependencies {
 
-    // Play Billing
-    val billing_version = "8.3.0"
-
-    implementation("com.android.billingclient:billing-ktx:$billing_version")
 
     // RevenueCat
     implementation("com.revenuecat.purchases:purchases:8.10.8")
