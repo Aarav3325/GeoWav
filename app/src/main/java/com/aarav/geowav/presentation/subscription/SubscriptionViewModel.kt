@@ -64,7 +64,7 @@ class SubscriptionViewModel
         Log.i("SUBSCRIPTION", "init")
 
         fetchOfferings()
-        syncEntitlementsOnStart()
+        startRealTimeEntitlementSync()
     }
 
 
@@ -85,9 +85,12 @@ class SubscriptionViewModel
         }
     }
 
-    private fun syncEntitlementsOnStart() {
-        viewModelScope.launch {
-            paymentRepository.syncEntitlements()
+    private fun startRealTimeEntitlementSync() {
+        listeningJob?.cancel()
+        listeningJob = viewModelScope.launch {
+            paymentRepository.observeRealTimeEntitlements().collect { plan ->
+                Log.i("SUBSCRIPTION", "Real-time plan updated: $plan")
+            }
         }
     }
 

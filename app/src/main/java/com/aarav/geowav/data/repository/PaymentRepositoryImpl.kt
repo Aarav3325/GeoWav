@@ -6,14 +6,21 @@ import com.aarav.geowav.data.authentication.GoogleSignInClient
 import com.aarav.geowav.data.datasource.revenuecat.RevenueCatDataSource
 import com.aarav.geowav.data.model.PurchaseResult
 import com.aarav.geowav.data.model.UserPlan
-import com.aarav.geowav.data.model.UserSubscription
 import com.aarav.geowav.data.model.getPlanDuration
 import com.aarav.geowav.domain.repository.PaymentRepository
 import com.google.firebase.database.FirebaseDatabase
 import com.revenuecat.purchases.Package
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.asSharedFlow
+import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.onStart
+import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 class PaymentRepositoryImpl @Inject constructor(
@@ -23,7 +30,21 @@ class PaymentRepositoryImpl @Inject constructor(
 ) : PaymentRepository {
 
     private val TAG = "PaymentRepository"
+    private val scope = CoroutineScope(Dispatchers.IO + SupervisorJob())
     private val _purchaseEvents = MutableSharedFlow<PurchaseResult>()
+
+    init {
+        scope.launch {
+            revenueCatDataSource.onEntitlementChanged.collectLatest {
+                Log.d(TAG, "Global sync triggered by RevenueCat change")
+                syncEntitlements()
+            }
+        }
+        
+        scope.launch {
+            syncEntitlements()
+        }
+    }
 
     override fun observePurchasesUpdate(): Flow<PurchaseResult> =
         _purchaseEvents.asSharedFlow()
@@ -79,7 +100,7 @@ class PaymentRepositoryImpl @Inject constructor(
         )
 
         ref.updateChildren(updates)
-        Log.i(TAG, "Subscription updated in Firebase: $plan")
+        Log.i(TAG, "Subscription updated in Firebase: $plan (Expiry: $expiryTime)")
     }
 
     override suspend fun restorePurchases(): PurchaseResult {
@@ -88,13 +109,15 @@ class PaymentRepositoryImpl @Inject constructor(
             ?: return PurchaseResult.Error("Restore failed")
 
         val plan = revenueCatDataSource.resolveActivePlan(customerInfo)
+        val expiryTime = revenueCatDataSource.getExpiryTime(customerInfo)
+        val purchaseTime = revenueCatDataSource.getPurchaseTime(customerInfo)
 
         return if (plan != UserPlan.FREE) {
             savePurchase(
                 plan = plan.name,
                 token = "restored",
-                purchaseTime = System.currentTimeMillis(),
-                expiryTime = System.currentTimeMillis() + getPlanDuration(plan),
+                purchaseTime = purchaseTime,
+                expiryTime = expiryTime,
                 isAutoRenewing = true,
                 active = true
             )
@@ -102,7 +125,7 @@ class PaymentRepositoryImpl @Inject constructor(
                 plan = plan,
                 purchaseToken = "restored",
                 orderId = null,
-                purchaseTime = System.currentTimeMillis()
+                purchaseTime = purchaseTime
             )
         } else {
             savePurchase("FREE", "", 0L, 0L, false, false)
@@ -111,20 +134,50 @@ class PaymentRepositoryImpl @Inject constructor(
     }
 
     override suspend fun syncEntitlements(): UserPlan {
-        Log.i(TAG, "Syncing entitlements...")
-        val customerInfo = revenueCatDataSource.getCustomerInfo() ?: return UserPlan.FREE
+        Log.i(TAG, "Syncing entitlements with cache invalidation...")
+        val customerInfo = revenueCatDataSource.getCustomerInfo(forceRefresh = true)
+            ?: return UserPlan.FREE
+            
         val plan = revenueCatDataSource.resolveActivePlan(customerInfo)
+        val expiryTime = revenueCatDataSource.getExpiryTime(customerInfo)
+        val purchaseTime = revenueCatDataSource.getPurchaseTime(customerInfo)
 
         savePurchase(
             plan = plan.name,
             token = "",
-            purchaseTime = 0L,
-            expiryTime = 0L,
+            purchaseTime = purchaseTime,
+            expiryTime = expiryTime,
             isAutoRenewing = plan != UserPlan.FREE,
             active = plan != UserPlan.FREE
         )
 
+        // Schedule a proactive sync if there's an active subscription about to expire
+        if (plan != UserPlan.FREE && expiryTime > System.currentTimeMillis()) {
+            scheduleExpirySync(expiryTime)
+        }
+
         Log.i(TAG, "Entitlements synced. Active plan: $plan")
         return plan
     }
+
+    private fun scheduleExpirySync(expiryTime: Long) {
+        val delayMs = (expiryTime - System.currentTimeMillis()).coerceAtLeast(0L)
+        Log.d(TAG, "Scheduling proactive expiry sync in ${delayMs / 1000} seconds")
+        scope.launch {
+            delay(delayMs + 2000) // Buffer 2 seconds to ensure RevenueCat server is updated
+            Log.d(TAG, "Executing proactive expiry sync now that time has passed")
+            syncEntitlements()
+        }
+    }
+
+    override fun observeRealTimeEntitlements(): Flow<UserPlan> =
+        revenueCatDataSource.onEntitlementChanged
+            .onStart { 
+                Log.d(TAG, "Starting real-time entitlement sync")
+                emit(Unit) 
+            }
+            .map {
+                // When RevenueCat notifies of a change, we force a fresh sync
+                syncEntitlements()
+            }
 }

@@ -24,4 +24,6 @@ interface PaymentRepository {
     suspend fun restorePurchases(): PurchaseResult
 
     suspend fun syncEntitlements(): UserPlan
+
+    fun observeRealTimeEntitlements(): Flow<UserPlan>
 }

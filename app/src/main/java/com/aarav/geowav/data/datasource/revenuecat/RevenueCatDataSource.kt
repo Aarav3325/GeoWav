@@ -5,38 +5,51 @@ import android.util.Log
 import com.aarav.geowav.data.model.PurchaseResult
 import com.aarav.geowav.data.model.UserPlan
 import com.revenuecat.purchases.CustomerInfo
-import com.revenuecat.purchases.Offerings
 import com.revenuecat.purchases.Package
 import com.revenuecat.purchases.PurchaseParams
 import com.revenuecat.purchases.Purchases
+import com.revenuecat.purchases.PurchasesErrorCode
+import com.revenuecat.purchases.PurchasesException
 import com.revenuecat.purchases.awaitCustomerInfo
 import com.revenuecat.purchases.awaitOfferings
 import com.revenuecat.purchases.awaitPurchase
 import com.revenuecat.purchases.awaitRestore
-import com.revenuecat.purchases.getOfferingsWith
+import com.revenuecat.purchases.interfaces.UpdatedCustomerInfoListener
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.asSharedFlow
+import kotlinx.coroutines.launch
 import javax.inject.Inject
 import javax.inject.Singleton
 
 @Singleton
 class RevenueCatDataSource @Inject constructor() {
     private val TAG = "RevenueCat"
+    private val scope = CoroutineScope(Dispatchers.IO + SupervisorJob())
 
+    private val _onEntitlementChanged = MutableSharedFlow<Unit>(replay = 1)
+    val onEntitlementChanged: SharedFlow<Unit> = _onEntitlementChanged.asSharedFlow()
 
-    private val _purchaseEvents = MutableSharedFlow<PurchaseResult>()
-    val purchaseEvents = _purchaseEvents.asSharedFlow()
+    init {
+        Purchases.sharedInstance.updatedCustomerInfoListener = UpdatedCustomerInfoListener {
+            Log.i(TAG, "Customer info update detected by RevenueCat listener")
+            scope.launch {
+                _onEntitlementChanged.emit(Unit)
+            }
+        }
+        
+        scope.launch {
+            _onEntitlementChanged.emit(Unit)
+        }
+    }
 
     suspend fun fetchAllPackages(): List<Package>? {
         Log.i(TAG, "Offerings loading...")
         return try {
             val offerings = Purchases.sharedInstance.awaitOfferings()
-            Log.i(TAG, "Offerings success: ${offerings.current?.identifier}")
-            
-            offerings.current?.availablePackages?.forEach {
-                Log.i(TAG, "Package: ${it.identifier} -> ${it.product.id}")
-            }
-            
             offerings.current?.availablePackages
         } catch (e: Exception) {
             Log.e(TAG, "Offerings error: ${e.message}")
@@ -87,9 +100,12 @@ class RevenueCatDataSource @Inject constructor() {
         }
     }
 
-    suspend fun getCustomerInfo(): CustomerInfo? {
+    suspend fun getCustomerInfo(forceRefresh: Boolean = false): CustomerInfo? {
         return try {
-            Purchases.sharedInstance.invalidateCustomerInfoCache()
+            if (forceRefresh) {
+                Log.d(TAG, "Invalidating CustomerInfo cache to fetch fresh data")
+                Purchases.sharedInstance.invalidateCustomerInfoCache()
+            }
             Purchases.sharedInstance.awaitCustomerInfo()
         } catch (e: Exception) {
             Log.e(TAG, "Failed to get customer info: ${e.message}")
@@ -104,5 +120,17 @@ class RevenueCatDataSource @Inject constructor() {
             entitlements.containsKey("premium") -> UserPlan.PREMIUM
             else -> UserPlan.FREE
         }
+    }
+
+    fun getExpiryTime(customerInfo: CustomerInfo): Long {
+        val entitlements = customerInfo.entitlements.active
+        val activeEntitlement = entitlements["pro"] ?: entitlements["premium"]
+        return activeEntitlement?.expirationDate?.time ?: 0L
+    }
+
+    fun getPurchaseTime(customerInfo: CustomerInfo): Long {
+        val entitlements = customerInfo.entitlements.active
+        val activeEntitlement = entitlements["pro"] ?: entitlements["premium"]
+        return activeEntitlement?.latestPurchaseDate?.time ?: System.currentTimeMillis()
     }
 }
