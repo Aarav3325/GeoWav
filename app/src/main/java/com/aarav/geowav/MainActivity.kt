@@ -1,4 +1,8 @@
+@file:SuppressLint("InlinedApi")
+
 package com.aarav.geowav
+
+import android.annotation.SuppressLint
 
 import android.Manifest
 import android.app.PendingIntent
@@ -166,9 +170,11 @@ class MainActivity : ComponentActivity() {
                 Log.i("MYTAG", "notification permissions: $check")
             }
 
-            val isLoggedIn by googleSignInClient.getUserIdFlow()
-                .map { it.isNotBlank() }
-                .collectAsState(initial = false)
+            val isLoggedInFlow = remember {
+                googleSignInClient.getUserIdFlow()
+                    .map { it.isNotBlank() }
+            }
+            val isLoggedIn by isLoggedInFlow.collectAsState(initial = false)
 
             LaunchedEffect(isLoggedIn) {
                 Log.i("SERVICE", "logged in : $isLoggedIn")

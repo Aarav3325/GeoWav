@@ -1,4 +1,8 @@
+@file:SuppressLint("InlinedApi")
+
 package com.aarav.geowav.presentation.profile
+
+import android.annotation.SuppressLint
 
 import android.Manifest
 import android.content.Context

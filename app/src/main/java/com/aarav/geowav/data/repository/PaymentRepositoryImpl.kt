@@ -121,6 +121,7 @@ class PaymentRepositoryImpl @Inject constructor(
                 isAutoRenewing = true,
                 active = true
             )
+            
             PurchaseResult.Success(
                 plan = plan,
                 purchaseToken = "restored",

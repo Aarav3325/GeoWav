@@ -460,6 +460,14 @@ fun AddPlaceScreen(
                                 ),
                                 title = selectedPlace?.displayName ?: ""
                             )
+                            
+                            com.google.maps.android.compose.Circle(
+                                center = latlng,
+                                radius = uiState.selectedRadius.toDouble(),
+                                fillColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.2f),
+                                strokeColor = MaterialTheme.colorScheme.primary,
+                                strokeWidth = 2f
+                            )
                         }
 
                     }

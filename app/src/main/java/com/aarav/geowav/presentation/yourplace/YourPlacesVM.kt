@@ -37,6 +37,13 @@ class YourPlacesVM @Inject constructor(
         }
     }
 
+    fun updatePlaceRadius(place: Place, newRadius: Float) {
+        viewModelScope.launch {
+            val updatedPlace = place.copy(radius = newRadius)
+            placeRepository.updatePlace(updatedPlace)
+        }
+    }
+
     fun getPlaces() {
         _uiState.update {
             it.copy(
