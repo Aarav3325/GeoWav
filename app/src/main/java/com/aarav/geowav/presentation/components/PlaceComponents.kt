@@ -5,6 +5,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -47,7 +48,8 @@ import kotlin.math.roundToInt
 @Composable
 fun GeofencePlaceCard(
     place: Place,
-    onDeleteClick: (Place) -> Unit
+    onDeleteClick: (Place) -> Unit,
+    onEditRadiusClick: (Place) -> Unit = {}
 ) {
     Card(
         modifier = Modifier
@@ -145,7 +147,7 @@ fun GeofencePlaceCard(
                 ) {
 
                     AssistChip(
-                        onClick = {},
+                        onClick = { onEditRadiusClick(place) },
                         colors = AssistChipDefaults.assistChipColors(
                             containerColor = MaterialTheme.colorScheme.surfaceVariant
                         ),
@@ -208,6 +210,33 @@ fun GeofencePlaceCard(
                         )
                     }
                 )
+            }
+
+            Spacer(modifier = Modifier.height(0.dp))
+
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.End
+            ) {
+//                androidx.compose.material3.TextButton(
+//                    contentPadding = PaddingValues(0.dp),
+//                    onClick = {  },
+//
+//                ) {
+                    Text(
+                        text = "Edit Radius",
+                        fontFamily = manrope,
+                        style = MaterialTheme.typography.labelMedium,
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.primary,
+                        modifier = Modifier.clickable(
+                            indication = null,
+                            interactionSource = null
+                        ) {
+                            onEditRadiusClick(place)
+                        }
+                    )
+//                }
             }
         }
     }
