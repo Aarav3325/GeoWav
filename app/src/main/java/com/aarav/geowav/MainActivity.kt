@@ -55,6 +55,7 @@ import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.aarav.geowav.core.managers.KillSwitchManager
+import com.aarav.geowav.core.permissions.GeoPermissionCoordinator
 import com.aarav.geowav.data.authentication.GoogleSignInClient
 import com.aarav.geowav.platform.GeofenceBroadcastReceiver
 import com.aarav.geowav.platform.GeofenceForegroundService
@@ -82,7 +83,6 @@ import com.google.android.gms.location.LocationServices
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.distinctUntilChanged
-import kotlinx.coroutines.flow.map
 import javax.inject.Inject
 
 @AndroidEntryPoint
@@ -102,6 +102,9 @@ class MainActivity : ComponentActivity() {
 
     @Inject
     lateinit var locationManager: LocationManager
+
+    @Inject
+    lateinit var permissionCoordinator: GeoPermissionCoordinator
 
     @Inject
     lateinit var geofencingClient: GeofencingClient
@@ -170,14 +173,18 @@ class MainActivity : ComponentActivity() {
                 Log.i("MYTAG", "notification permissions: $check")
             }
 
-            val isLoggedInFlow = remember {
+            val userIdFlow = remember {
                 googleSignInClient.getUserIdFlow()
-                    .map { it.isNotBlank() }
             }
-            val isLoggedIn by isLoggedInFlow.collectAsState(initial = false)
+            val userId by userIdFlow.collectAsState(initial = googleSignInClient.getUserId())
+            val isLoggedIn = userId.isNotBlank()
 
-            LaunchedEffect(isLoggedIn) {
+            LaunchedEffect(userId) {
                 Log.i("SERVICE", "logged in : $isLoggedIn")
+                if (!isLoggedIn) {
+                    stopAllCriticalServices()
+                    showDialog = false
+                }
             }
 
             NotificationServiceInitializer(
@@ -203,22 +210,25 @@ class MainActivity : ComponentActivity() {
                 )
             }
 
-            LaunchedEffect(Unit) {
-                if (googleSignInClient.isLoggedIn()) {
-                    killSwitchManager.fetchAndActivate()
-                    killSwitchManager.observeAppEnabled()
-                        .collect { enabled ->
-                            if (!enabled) {
-
-                                Log.i("KILL", "app in kill mode")
-                                stopAllCriticalServices()
-                                showAppDisabledState = true
-                            } else {
-                                showAppDisabledState = false
-                                Log.i("KILL", "app not in kill mode")
-                            }
-                        }
+            LaunchedEffect(userId) {
+                if (!isLoggedIn) {
+                    showAppDisabledState = false
+                    return@LaunchedEffect
                 }
+
+                killSwitchManager.fetchAndActivate()
+                killSwitchManager.observeAppEnabled()
+                    .collect { enabled ->
+                        if (!enabled) {
+
+                            Log.i("KILL", "app in kill mode")
+                            stopAllCriticalServices()
+                            showAppDisabledState = true
+                        } else {
+                            showAppDisabledState = false
+                            Log.i("KILL", "app not in kill mode")
+                        }
+                    }
             }
 
 
@@ -231,11 +241,13 @@ class MainActivity : ComponentActivity() {
                 mutableStateOf<Location?>(null)
             }
 
-            LaunchedEffect(isLoggedIn) {
-                if(isLoggedIn) {
+            LaunchedEffect(userId) {
+                if (isLoggedIn) {
                     locationManager.getLocationUpdates().distinctUntilChanged().collectLatest {
                         location = it
                     }
+                } else {
+                    location = null
                 }
             }
 
@@ -253,9 +265,12 @@ class MainActivity : ComponentActivity() {
             }
 
 
-            LaunchedEffect(Unit) {
-                if(!isLoggedIn) return@LaunchedEffect
-                mainVM.fetchUser()
+            LaunchedEffect(userId) {
+                if (isLoggedIn) {
+                    mainVM.fetchUser()
+                } else {
+                    mainVM.clearCurrentUser()
+                }
             }
 
 
@@ -298,8 +313,11 @@ class MainActivity : ComponentActivity() {
                         rememberPermissionState(Manifest.permission.ACCESS_BACKGROUND_LOCATION)
 
 
+                    val permissionState = permissionCoordinator.refresh()
                     val permissionsGranted =
-                        fineLocationPermission.status.isGranted && backgroundLocationPermission.status.isGranted
+                        fineLocationPermission.status.isGranted &&
+                            backgroundLocationPermission.status.isGranted &&
+                            permissionState.locationServicesReady
 
                     Log.i("MYTAG", "permissions $permissionsGranted")
 
@@ -500,8 +518,14 @@ class MainActivity : ComponentActivity() {
 
                     } else {
                         // Android 13+
-                        if (notificationPermission.status.isGranted) {
+                        if (
+                            notificationPermission.status.isGranted &&
+                            NotificationManagerCompat.from(context).areNotificationsEnabled()
+                        ) {
+                            dismissDialog()
                             startServiceIfNeeded()
+                        } else if (notificationPermission.status.isGranted) {
+                            showSettingsDialog()
                         }
                     }
                 }

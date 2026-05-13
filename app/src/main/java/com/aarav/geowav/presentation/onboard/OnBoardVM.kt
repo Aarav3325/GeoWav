@@ -1,6 +1,7 @@
 package com.aarav.geowav.presentation.onboard
 
 import androidx.lifecycle.ViewModel
+import com.aarav.geowav.core.permissions.GeoPermissionCoordinator
 import dagger.hilt.android.lifecycle.HiltViewModel
 import jakarta.inject.Inject
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -9,7 +10,9 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 
 @HiltViewModel
-class OnBoardVM @Inject constructor(): ViewModel() {
+class OnBoardVM @Inject constructor(
+    private val permissionCoordinator: GeoPermissionCoordinator
+) : ViewModel() {
 
     private val _uiState = MutableStateFlow(OnBoardUIState())
     val uiState: StateFlow<OnBoardUIState> = _uiState.asStateFlow()
@@ -29,6 +32,7 @@ class OnBoardVM @Inject constructor(): ViewModel() {
     }
 
     fun onFineLocationResult(granted: Boolean) {
+        permissionCoordinator.refresh()
         _uiState.update {
             it.copy(
                 isFineLocationGranted = granted,
@@ -38,6 +42,7 @@ class OnBoardVM @Inject constructor(): ViewModel() {
     }
 
     fun onBackgroundLocationResult(granted: Boolean) {
+        permissionCoordinator.refresh()
         _uiState.update {
             it.copy(
                 isBackgroundGranted = granted,
@@ -47,6 +52,7 @@ class OnBoardVM @Inject constructor(): ViewModel() {
     }
 
     fun completeOnboarding(skippedPermissionSetup: Boolean) {
+        permissionCoordinator.markOnboardingEducationComplete(skippedPermissionSetup)
         _uiState.update {
             it.copy(
                 isOnboardingComplete = true,

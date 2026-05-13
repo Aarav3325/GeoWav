@@ -77,4 +77,8 @@ class MainVM @Inject constructor(
             _currentUser.value = user
         }
     }
+
+    fun clearCurrentUser() {
+        _currentUser.value = null
+    }
 }

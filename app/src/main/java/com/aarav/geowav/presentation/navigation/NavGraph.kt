@@ -93,8 +93,7 @@ fun NavGraph(
 
         AddOnBoard(
             navHostController,
-            this,
-            sharedPreferences
+            this
         )
 
 //        AddHomeScreen(
@@ -316,8 +315,7 @@ fun AddLoginScreen(
 }
 
 fun AddOnBoard(
-    navController: NavController, navGraphBuilder: NavGraphBuilder,
-    sharedPreferences: SharedPreferences
+    navController: NavController, navGraphBuilder: NavGraphBuilder
 ) {
     navGraphBuilder.composable(
         route = NavRoute.OnBoard.path
@@ -330,7 +328,6 @@ fun AddOnBoard(
                     }
                 }
             },
-            sharedPreferences,
             onBoardVM = hiltViewModel()
         )
     }

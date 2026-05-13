@@ -10,6 +10,8 @@ import androidx.lifecycle.application
 import androidx.lifecycle.viewModelScope
 import com.aarav.geowav.core.utils.Resource
 import com.aarav.geowav.core.utils.UploadResult
+import com.aarav.geowav.core.permissions.GeoPermissionCoordinator
+import com.aarav.geowav.core.permissions.GeoPermissionUiState
 import com.aarav.geowav.data.authentication.GoogleSignInClient
 import com.aarav.geowav.data.model.CircleMember
 import com.aarav.geowav.data.model.Place
@@ -42,7 +44,8 @@ class ProfileVM @Inject constructor(
     private val subscriptionRepository: SubscriptionRepository,
     private val circleRepository: CircleRepository,
     private val placeRepository: PlaceRepository,
-    private val googleSignInClient: GoogleSignInClient
+    private val googleSignInClient: GoogleSignInClient,
+    private val permissionCoordinator: GeoPermissionCoordinator
 ) : AndroidViewModel(application) {
 
     private val _uiState: MutableStateFlow<SettingsUiState> = MutableStateFlow(SettingsUiState())
@@ -62,6 +65,7 @@ class ProfileVM @Inject constructor(
         loadLovedOnes()
         getPlaces()
         updateAppVersion()
+        observePermissionState()
     }
 
     fun loadLovedOnes() {
@@ -120,6 +124,32 @@ class ProfileVM @Inject constructor(
             it.copy(
                 notificationsEnabled = notificationsEnabled
             )
+        }
+    }
+
+    fun refreshPermissionState() {
+        val permissionState = permissionCoordinator.refresh()
+        _uiState.update {
+            it.copy(
+                permissionState = permissionState,
+                hasLocationPermission = permissionState.locationServicesReady,
+                notificationsEnabled = permissionState.notificationsGranted
+            )
+        }
+    }
+
+    private fun observePermissionState() {
+        refreshPermissionState()
+        viewModelScope.launch {
+            permissionCoordinator.state.collectLatest { permissionState ->
+                _uiState.update {
+                    it.copy(
+                        permissionState = permissionState,
+                        hasLocationPermission = permissionState.locationServicesReady,
+                        notificationsEnabled = permissionState.notificationsGranted
+                    )
+                }
+            }
         }
     }
 
@@ -246,6 +276,7 @@ data class SettingsUiState(
     val placesError: String? = null,
     val lovedOnes: List<CircleMember> = emptyList(),
     val placesList: List<Place> = emptyList(),
-    val showDeleteDialog: Boolean = false
+    val showDeleteDialog: Boolean = false,
+    val permissionState: GeoPermissionUiState = GeoPermissionUiState()
 )
 

@@ -3,7 +3,6 @@
 package com.aarav.geowav.presentation.onboard
 
 import android.Manifest
-import android.content.SharedPreferences
 import android.os.Build
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.TweenSpec
@@ -52,7 +51,6 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.core.content.edit
 import com.aarav.geowav.R
 import com.aarav.geowav.presentation.theme.manrope
 import com.aarav.geowav.presentation.theme.onPrimaryDark
@@ -62,17 +60,10 @@ import com.google.accompanist.permissions.isGranted
 import com.google.accompanist.permissions.rememberPermissionState
 import kotlinx.coroutines.launch
 
-private const val PREF_IS_ONBOARDED = "isOnboarded"
-private const val PREF_PERMISSION_SETUP_SKIPPED = "permissionSetupSkipped"
-private const val PREF_LOCATION_EDUCATION_SEEN = "locationEducationSeen"
-private const val PREF_NOTIFICATION_EDUCATION_SEEN = "notificationEducationSeen"
-private const val PREF_BACKGROUND_EDUCATION_SEEN = "backgroundLocationEducationSeen"
-
 @OptIn(ExperimentalPermissionsApi::class)
 @Composable
 fun OnboardingScreen(
     navigateToAuth: () -> Unit,
-    sharedPreferences: SharedPreferences,
     onBoardVM: OnBoardVM,
 ) {
     val uiState by onBoardVM.uiState.collectAsState()
@@ -89,13 +80,6 @@ fun OnboardingScreen(
 
     LaunchedEffect(uiState.isOnboardingComplete) {
         if (uiState.isOnboardingComplete) {
-            sharedPreferences.edit(commit = true) {
-                putBoolean(PREF_IS_ONBOARDED, true)
-                putBoolean(PREF_PERMISSION_SETUP_SKIPPED, uiState.skippedPermissionSetup)
-                putBoolean(PREF_LOCATION_EDUCATION_SEEN, true)
-                putBoolean(PREF_NOTIFICATION_EDUCATION_SEEN, true)
-                putBoolean(PREF_BACKGROUND_EDUCATION_SEEN, true)
-            }
             navigateToAuth()
         }
     }

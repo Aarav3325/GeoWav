@@ -4,10 +4,8 @@ package com.aarav.geowav.presentation.profile
 
 import android.annotation.SuppressLint
 
-import android.Manifest
 import android.content.Context
 import android.content.Intent
-import android.content.pm.PackageManager
 import android.net.Uri
 import android.provider.Settings
 import android.util.Log
@@ -62,7 +60,6 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.core.content.ContextCompat
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
@@ -77,14 +74,11 @@ import com.aarav.geowav.presentation.paywall.CurrentPlanCard
 import com.aarav.geowav.presentation.subscription.SubscriptionViewModel
 import com.aarav.geowav.presentation.theme.manrope
 import com.aarav.geowav.presentation.yourplace.PlacesUsageCard
-import com.google.accompanist.permissions.ExperimentalPermissionsApi
-import com.google.accompanist.permissions.isGranted
-import com.google.accompanist.permissions.rememberPermissionState
 
 
 enum class ThemeMode { SYSTEM, LIGHT, DARK }
 
-@OptIn(ExperimentalMaterial3Api::class, ExperimentalPermissionsApi::class,
+@OptIn(ExperimentalMaterial3Api::class,
     ExperimentalMaterial3ExpressiveApi::class
 )
 @Composable
@@ -121,25 +115,12 @@ fun ProfileScreen(
         mutableStateOf(false)
     }
 
-    val notificationPermission = rememberPermissionState(Manifest.permission.POST_NOTIFICATIONS)
-
-    val fineLocation = rememberPermissionState(Manifest.permission.ACCESS_FINE_LOCATION)
-    val background = rememberPermissionState(Manifest.permission.ACCESS_BACKGROUND_LOCATION)
-
     val lifecycleOwner = LocalLifecycleOwner.current
 
     DisposableEffect(lifecycleOwner) {
         val observer = LifecycleEventObserver { _, event ->
             if (event == Lifecycle.Event.ON_RESUME) {
-
-                val isGranted =
-                    ContextCompat.checkSelfPermission(
-                        context,
-                        Manifest.permission.POST_NOTIFICATIONS
-                    ) == PackageManager.PERMISSION_GRANTED
-
-                Log.i("NOTI", "granted: " + isGranted)
-                profileVM.updateNotificationsEnabled(isGranted)
+                profileVM.refreshPermissionState()
             }
         }
 
@@ -148,21 +129,6 @@ fun ProfileScreen(
         onDispose {
             lifecycleOwner.lifecycle.removeObserver(observer)
         }
-    }
-
-    LaunchedEffect(fineLocation.status, background.status) {
-        if (fineLocation.status.isGranted && background.status.isGranted) {
-            profileVM.updateLocationPermission(true)
-        } else {
-            profileVM.updateLocationPermission(false)
-        }
-    }
-
-    val isPermissionGranted =
-        CheckBackgroundPermission() && CheckFineLocationPermission()
-
-    LaunchedEffect(Unit) {
-        profileVM.updateLocationPermission(isPermissionGranted)
     }
 
     val launcher = rememberLauncherForActivityResult(
@@ -285,7 +251,11 @@ fun ProfileScreen(
                     Section(title = "Trust & Permissions") {
                         SettingItemNew(
                             title = "Permission Education",
-                            subtitle = "Review how GeoWav uses location, alerts, and background access",
+                            subtitle = if (uiState.permissionState.allCorePermissionsGranted) {
+                                "Location, background access, and alerts are enabled"
+                            } else {
+                                "Review how GeoWav uses location, alerts, and background access"
+                            },
                             onClick = {
                                 showPermissionEducation = true
                             },
@@ -297,7 +267,11 @@ fun ProfileScreen(
                     Section(title = "Location") {
                         SettingItemNew(
                             title = "Location Access",
-                            subtitle = "Manage live and background location access",
+                            subtitle = if (uiState.permissionState.locationServicesReady) {
+                                "Live and background location enabled"
+                            } else {
+                                "Manage live and background location access"
+                            },
                             onClick = {
                                 openAppDetailsSettings(context)
                             },
@@ -306,7 +280,7 @@ fun ProfileScreen(
                         )
 
                         TriggerTypeSelector(
-                            enabled = hasLocationPermission && notificationsEnabled,
+                            enabled = uiState.hasLocationPermission && uiState.notificationsEnabled,
                             index = 1,
                             count = 2
                         )
@@ -755,23 +729,6 @@ fun ThemeChips(
             labelColor = MaterialTheme.colorScheme.onSurfaceVariant
         )
     )
-}
-
-@OptIn(ExperimentalPermissionsApi::class)
-@Composable
-fun CheckFineLocationPermission(): Boolean {
-    val permissionState = rememberPermissionState(Manifest.permission.ACCESS_FINE_LOCATION)
-
-    return permissionState.status.isGranted
-}
-
-@Composable
-@OptIn(ExperimentalPermissionsApi::class)
-fun CheckBackgroundPermission(): Boolean {
-    val permissionState =
-        rememberPermissionState(Manifest.permission.ACCESS_BACKGROUND_LOCATION)
-
-    return permissionState.status.isGranted
 }
 
 @Composable
