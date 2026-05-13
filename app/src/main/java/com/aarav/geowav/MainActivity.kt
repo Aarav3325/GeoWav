@@ -454,10 +454,8 @@ class MainActivity : ComponentActivity() {
                         startServiceIfNeeded()
                     }
 
-                    // Runtime denied - request permission (first launch case)
-                    !runtimeGranted -> {
-                        notificationPermission.launchPermissionRequest()
-                    }
+                    // Runtime denied: onboarding/profile explain this before the system prompt.
+                    !runtimeGranted -> Unit
 
                     // Runtime granted but toggle disabled - user turned off in settings
                     runtimeGranted && !enabled -> {

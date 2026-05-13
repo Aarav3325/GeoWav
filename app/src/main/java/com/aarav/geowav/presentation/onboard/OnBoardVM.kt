@@ -1,10 +1,6 @@
 package com.aarav.geowav.presentation.onboard
 
-import androidx.compose.foundation.pager.PagerState
 import androidx.lifecycle.ViewModel
-import com.google.accompanist.permissions.ExperimentalPermissionsApi
-import com.google.accompanist.permissions.PermissionState
-import com.google.accompanist.permissions.isGranted
 import dagger.hilt.android.lifecycle.HiltViewModel
 import jakarta.inject.Inject
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -24,12 +20,12 @@ class OnBoardVM @Inject constructor(): ViewModel() {
 
     fun onContinueClicked() {
         if (_uiState.value.currentPage == _uiState.value.pages.lastIndex) {
-            _uiState.update { it.copy(showPermissionDialog = true) }
+            _uiState.update { it.copy(showPermissionSetup = true) }
         }
     }
 
-    fun onPermissionDialogDismiss() {
-        _uiState.update { it.copy(showPermissionDialog = false) }
+    fun onPermissionSetupDismiss() {
+        _uiState.update { it.copy(showPermissionSetup = false) }
     }
 
     fun onFineLocationResult(granted: Boolean) {
@@ -49,15 +45,27 @@ class OnBoardVM @Inject constructor(): ViewModel() {
             )
         }
     }
+
+    fun completeOnboarding(skippedPermissionSetup: Boolean) {
+        _uiState.update {
+            it.copy(
+                isOnboardingComplete = true,
+                skippedPermissionSetup = skippedPermissionSetup,
+                showPermissionSetup = false
+            )
+        }
+    }
 }
 
 
 data class OnBoardUIState(
     val pages: List<OnBoardingPage> = OnBoardContent.pages,
     val currentPage: Int = 0,
-    val showPermissionDialog: Boolean = false,
+    val showPermissionSetup: Boolean = false,
     val isFineLocationGranted: Boolean = false,
     val isBackgroundGranted: Boolean = false,
     val requestingBackground: Boolean = false,
-    val allPermissionsGranted: Boolean = false
+    val allPermissionsGranted: Boolean = false,
+    val isOnboardingComplete: Boolean = false,
+    val skippedPermissionSetup: Boolean = false
 )

@@ -8,6 +8,7 @@ import android.Manifest
 import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
+import android.net.Uri
 import android.provider.Settings
 import android.util.Log
 import androidx.activity.compose.rememberLauncherForActivityResult
@@ -114,6 +115,9 @@ fun ProfileScreen(
         mutableStateOf(false)
     }
     var tc by remember {
+        mutableStateOf(false)
+    }
+    var showPermissionEducation by remember {
         mutableStateOf(false)
     }
 
@@ -278,12 +282,24 @@ fun ProfileScreen(
                         )
                     }
 
+                    Section(title = "Trust & Permissions") {
+                        SettingItemNew(
+                            title = "Permission Education",
+                            subtitle = "Review how GeoWav uses location, alerts, and background access",
+                            onClick = {
+                                showPermissionEducation = true
+                            },
+                            index = 0,
+                            count = 1
+                        )
+                    }
+
                     Section(title = "Location") {
                         SettingItemNew(
                             title = "Location Access",
-                            subtitle = "Manage location permission",
+                            subtitle = "Manage live and background location access",
                             onClick = {
-                                openAppSettings(context, Settings.ACTION_LOCATION_SOURCE_SETTINGS)
+                                openAppDetailsSettings(context)
                             },
                             index = 0,
                             count = 2,
@@ -399,6 +415,19 @@ fun ProfileScreen(
             }
         )
     }
+
+    PermissionEducationDialog(
+        showDialog = showPermissionEducation,
+        onDismiss = { showPermissionEducation = false },
+        onOpenAppSettings = {
+            showPermissionEducation = false
+            openAppDetailsSettings(context)
+        },
+        onOpenNotificationSettings = {
+            showPermissionEducation = false
+            openAppSettings(context, Settings.ACTION_APP_NOTIFICATION_SETTINGS)
+        }
+    )
 }
 
 @Composable
@@ -432,6 +461,78 @@ fun openAppSettings(
         putExtra(Settings.EXTRA_CHANNEL_ID, context.applicationInfo.uid)
     }
     context.startActivity(intent)
+}
+
+fun openAppDetailsSettings(context: Context) {
+    val intent = Intent(
+        Settings.ACTION_APPLICATION_DETAILS_SETTINGS,
+        Uri.parse("package:${context.packageName}")
+    )
+    context.startActivity(intent)
+}
+
+@Composable
+fun PermissionEducationDialog(
+    showDialog: Boolean,
+    onDismiss: () -> Unit,
+    onOpenAppSettings: () -> Unit,
+    onOpenNotificationSettings: () -> Unit
+) {
+    if (!showDialog) return
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = {
+            Text(
+                text = "How permissions support safety",
+                fontFamily = manrope,
+                fontWeight = FontWeight.SemiBold
+            )
+        },
+        text = {
+            Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                Text(
+                    text = "Location powers live movement updates only during active sharing, safety sessions, and place alerts.",
+                    fontFamily = manrope,
+                    fontSize = 13.sp,
+                    color = MaterialTheme.colorScheme.onSurface
+                )
+                Text(
+                    text = "Background access keeps those active sessions and place alerts working when GeoWav is not open.",
+                    fontFamily = manrope,
+                    fontSize = 13.sp,
+                    color = MaterialTheme.colorScheme.onSurface
+                )
+                Text(
+                    text = "Notifications let GeoWav tell you about invites, sharing changes, place alerts, and emergency activity.",
+                    fontFamily = manrope,
+                    fontSize = 13.sp,
+                    color = MaterialTheme.colorScheme.onSurface
+                )
+                Text(
+                    text = "You stay in control. Android settings can change or remove access anytime.",
+                    fontFamily = manrope,
+                    fontSize = 13.sp,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+        },
+        confirmButton = {
+            TextButton(onClick = onOpenAppSettings) {
+                Text("App settings", fontFamily = manrope)
+            }
+        },
+        dismissButton = {
+            Row {
+                TextButton(onClick = onOpenNotificationSettings) {
+                    Text("Notification settings", fontFamily = manrope)
+                }
+                TextButton(onClick = onDismiss) {
+                    Text("Close", fontFamily = manrope)
+                }
+            }
+        }
+    )
 }
 
 @Composable

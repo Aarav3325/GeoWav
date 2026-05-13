@@ -5,7 +5,6 @@ package com.aarav.geowav.presentation.home
 import android.annotation.SuppressLint
 
 
-import android.Manifest
 import android.app.Activity
 import android.util.Log
 import androidx.compose.animation.AnimatedVisibility
@@ -90,8 +89,6 @@ import com.aarav.geowav.presentation.components.AvatarImage
 import com.aarav.geowav.presentation.subscription.SubscriptionViewModel
 import com.aarav.geowav.presentation.theme.manrope
 import com.google.accompanist.permissions.ExperimentalPermissionsApi
-import com.google.accompanist.permissions.isGranted
-import com.google.accompanist.permissions.rememberPermissionState
 import kotlinx.coroutines.delay
 
 @OptIn(
@@ -118,17 +115,6 @@ fun GeoWavHomeScreen(
     val locations by homeScreenVM.locations.collectAsState()
 
     val plan by subscriptionViewModel.userPlan.collectAsState()
-
-
-    val notificationPermission =
-        rememberPermissionState(Manifest.permission.POST_NOTIFICATIONS)
-
-    LaunchedEffect(Unit) {
-        if (!notificationPermission.status.isGranted) {
-
-            notificationPermission.launchPermissionRequest()
-        }
-    }
 
 
     val hideTopBar = uiState.currentUser == null
