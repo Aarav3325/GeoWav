@@ -37,6 +37,7 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import com.aarav.geowav.R
 import com.aarav.geowav.presentation.components.MyAlertDialog
+import com.aarav.geowav.presentation.components.PermissionRequiredContent
 import com.aarav.geowav.presentation.components.PlaceModalSheet
 import com.aarav.geowav.presentation.theme.manrope
 import com.aarav.geowav.presentation.theme.surfaceContainerLowDarkHighContrast
@@ -59,7 +60,9 @@ fun MapScreen(
     isDarkThemeEnabled: Boolean,
     mapViewModel: MapViewModel,
     location: Pair<Double, Double>?,
+    hasForegroundLocationPermission: Boolean,
     navigateToAddPlace: (String) -> Unit,
+    navigateToSettings: () -> Unit,
     navigateToHome: () -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -70,7 +73,11 @@ fun MapScreen(
     val cameraPositionState = rememberCameraPositionState()
 
     var mapProperties by remember {
-        mutableStateOf(MapProperties(isMyLocationEnabled = true))
+        mutableStateOf(MapProperties(isMyLocationEnabled = hasForegroundLocationPermission))
+    }
+
+    LaunchedEffect(hasForegroundLocationPermission) {
+        mapProperties = mapProperties.copy(isMyLocationEnabled = hasForegroundLocationPermission)
     }
 
     var mapLoaded by remember {
@@ -166,6 +173,19 @@ fun MapScreen(
             }
         }
     ) { innerPadding ->
+        if (!hasForegroundLocationPermission) {
+            PermissionRequiredContent(
+                title = "Location access is needed",
+                message = "Adding places uses your current area to help position the map and set up reliable place alerts.",
+                primaryActionText = "Review setup",
+                onPrimaryAction = navigateToSettings,
+                secondaryActionText = "Go back",
+                onSecondaryAction = navigateToHome,
+                modifier = Modifier.padding(innerPadding)
+            )
+            return@Scaffold
+        }
+
         Box(
             modifier = Modifier
                 .fillMaxSize()

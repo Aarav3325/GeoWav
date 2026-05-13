@@ -386,7 +386,7 @@ class MainActivity : ComponentActivity() {
                             }
                         }) {
                         val location1 =
-                            location?.let { it.latitude to it.longitude } ?: (0.0 to 0.0)
+                            location?.let { it.latitude to it.longitude }
 
 
                         NavGraph(
@@ -399,6 +399,7 @@ class MainActivity : ComponentActivity() {
                             subscriptionVM = subscriptionVM,
                             sharedPreferences = sharedPreferences,
                             location = location1,
+                            permissionState = permissionUiState,
                             googleSignInClient = googleSignInClient,
                             modifier = Modifier
                                 .padding(it)

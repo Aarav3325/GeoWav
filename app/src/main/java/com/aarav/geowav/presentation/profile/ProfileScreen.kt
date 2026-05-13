@@ -273,7 +273,7 @@ fun ProfileScreen(
                                 "Manage live and background location access"
                             },
                             onClick = {
-                                openAppDetailsSettings(context)
+                                openAppSettings(context, Settings.ACTION_LOCATION_SOURCE_SETTINGS)
                             },
                             index = 0,
                             count = 2,

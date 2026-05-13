@@ -61,6 +61,7 @@ import com.aarav.geowav.data.model.UpgradeEvents
 import com.aarav.geowav.presentation.components.CustomBottomSheet
 import com.aarav.geowav.presentation.components.CustomChip
 import com.aarav.geowav.presentation.components.MyAlertDialog
+import com.aarav.geowav.presentation.components.PermissionRequiredContent
 import com.aarav.geowav.presentation.components.PlaceTextField
 import com.aarav.geowav.presentation.components.RadiusChipGroup
 import com.aarav.geowav.presentation.components.SnackbarManager
@@ -87,6 +88,8 @@ fun AddPlaceScreen(
     navigateToMaps: () -> Unit,
     navigateToPaywall: () -> Unit,
     navigateToYourPlaces: () -> Unit,
+    navigateToSettings: () -> Unit,
+    locationServicesReady: Boolean,
     placeViewModel: PlaceViewModel,
     subscriptionVM: SubscriptionViewModel
 ) {
@@ -210,73 +213,88 @@ fun AddPlaceScreen(
             )
         },
         bottomBar = {
-            Card(
-                elevation = CardDefaults.cardElevation(4.dp),
-                modifier = Modifier
-                    .padding(top = 3.dp)
-                    .graphicsLayer {
-                        shadowElevation = 16f
-                        shape = RoundedCornerShape(0.dp)
+            if (locationServicesReady) {
+                Card(
+                    elevation = CardDefaults.cardElevation(4.dp),
+                    modifier = Modifier
+                        .padding(top = 3.dp)
+                        .graphicsLayer {
+                            shadowElevation = 16f
+                            shape = RoundedCornerShape(0.dp)
 //                        clip = true
-                        ambientShadowColor = Color.White.copy(alpha = 0.25f)
-                        spotShadowColor = Color.White.copy(alpha = 0.25f)
-                    },
-                colors = CardDefaults.cardColors(
-                    containerColor = MaterialTheme.colorScheme.surfaceContainer,
-                    contentColor = MaterialTheme.colorScheme.onSurface
-                )
-            ) {
-                Row(
-                    modifier = Modifier.padding(
-                        start = 12.dp,
-                        end = 12.dp,
-                        top = 12.dp,
-                        bottom = 28.dp
+                            ambientShadowColor = Color.White.copy(alpha = 0.25f)
+                            spotShadowColor = Color.White.copy(alpha = 0.25f)
+                        },
+                    colors = CardDefaults.cardColors(
+                        containerColor = MaterialTheme.colorScheme.surfaceContainer,
+                        contentColor = MaterialTheme.colorScheme.onSurface
                     )
                 ) {
-                    FilledTonalButton(
-                        onClick = {
-
-                            val finalPlace = Place(
-                                placeId = placeId,
-                                customName = placeName,
-                                placeName = selectedPlace?.displayName
-                                    ?: "Place Name Unavailable",
-                                latitude = latlng.latitude,
-                                longitude = latlng.longitude,
-                                address = selectedPlace?.shortFormattedAddress
-                                    ?: "Address Unavailable",
-                                radius = uiState.selectedRadius,
-                                triggerType = "ENTER_EXIT",
-                                addedOn = getFormattedDate()
-                            )
-
-                            placeViewModel.addPlace(finalPlace, plan)
-
-
-
-                        },
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(48.dp),
-                        colors = ButtonDefaults.buttonColors(
-                            containerColor = MaterialTheme.colorScheme.primary
-                        ),
-                        shape = RoundedCornerShape(10.dp)
-                    ) {
-                        Text(
-                            text = "Save Place",
-                            style = MaterialTheme.typography.titleMedium,
-                            color = MaterialTheme.colorScheme.onPrimary,
-                            fontFamily = manrope,
-                            fontSize = 18.sp,
-                            fontWeight = FontWeight.SemiBold
+                    Row(
+                        modifier = Modifier.padding(
+                            start = 12.dp,
+                            end = 12.dp,
+                            top = 12.dp,
+                            bottom = 28.dp
                         )
+                    ) {
+                        FilledTonalButton(
+                            onClick = {
+
+                                val finalPlace = Place(
+                                    placeId = placeId,
+                                    customName = placeName,
+                                    placeName = selectedPlace?.displayName
+                                        ?: "Place Name Unavailable",
+                                    latitude = latlng.latitude,
+                                    longitude = latlng.longitude,
+                                    address = selectedPlace?.shortFormattedAddress
+                                        ?: "Address Unavailable",
+                                    radius = uiState.selectedRadius,
+                                    triggerType = "ENTER_EXIT",
+                                    addedOn = getFormattedDate()
+                                )
+
+                                placeViewModel.addPlace(finalPlace, plan)
+
+
+
+                            },
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(48.dp),
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = MaterialTheme.colorScheme.primary
+                            ),
+                            shape = RoundedCornerShape(10.dp)
+                        ) {
+                            Text(
+                                text = "Save Place",
+                                style = MaterialTheme.typography.titleMedium,
+                                color = MaterialTheme.colorScheme.onPrimary,
+                                fontFamily = manrope,
+                                fontSize = 18.sp,
+                                fontWeight = FontWeight.SemiBold
+                            )
+                        }
                     }
                 }
             }
         }
     ) {
+
+        if (!locationServicesReady) {
+            PermissionRequiredContent(
+                title = "Place alerts need location setup",
+                message = "GeoWav needs live and background location access before it can save places that trigger entry and exit alerts.",
+                primaryActionText = "Review setup",
+                onPrimaryAction = navigateToSettings,
+                secondaryActionText = "Go back",
+                onSecondaryAction = navigateToMaps,
+                modifier = Modifier.padding(it)
+            )
+            return@Scaffold
+        }
 
         if (uiState.isLoading) {
             Box(

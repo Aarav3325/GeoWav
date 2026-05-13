@@ -14,6 +14,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.navigation
 import androidx.navigation.navArgument
+import com.aarav.geowav.core.permissions.GeoPermissionUiState
 import com.aarav.geowav.data.authentication.GoogleSignInClient
 import com.aarav.geowav.data.model.User
 import com.aarav.geowav.presentation.activity.ActivityScreen
@@ -44,6 +45,7 @@ fun NavGraph(
     subscriptionVM: SubscriptionViewModel,
     sharedPreferences: SharedPreferences,
     location: Pair<Double, Double>?,
+    permissionState: GeoPermissionUiState,
     googleSignInClient: GoogleSignInClient,
     modifier: Modifier
 ) {
@@ -65,14 +67,16 @@ fun NavGraph(
             isDarkThemeEnabled,
             navHostController,
             this,
-            location
+            location,
+            permissionState.foregroundLocationGranted
         )
 
         AddNewPlaceScreen(
             isDarkThemeEnabled,
             navHostController,
             this,
-            subscriptionVM
+            subscriptionVM,
+            permissionState.locationServicesReady
         )
 
         AddYourPlacesScreen(
@@ -119,7 +123,8 @@ fun NavGraph(
             navHostController,
             this,
             location,
-            subscriptionVM
+            subscriptionVM,
+            permissionState.locationServicesReady
         )
 
         AddTimelineScreen(
@@ -180,7 +185,8 @@ fun AddMapsScreen(
     isDarkThemeEnabled: Boolean,
     navController: NavController,
     navGraphBuilder: NavGraphBuilder,
-    location: Pair<Double, Double>?
+    location: Pair<Double, Double>?,
+    hasForegroundLocationPermission: Boolean
 ) {
     navGraphBuilder.composable(
         route = NavRoute.MapScreen.path
@@ -189,8 +195,12 @@ fun AddMapsScreen(
             isDarkThemeEnabled,
             mapViewModel = hiltViewModel(),
             location,
+            hasForegroundLocationPermission = hasForegroundLocationPermission,
             navigateToAddPlace = { id ->
                 navController.navigate(NavRoute.AddPlace.createRoute(id))
+            },
+            navigateToSettings = {
+                navController.navigate(NavRoute.Settings.path)
             },
             navigateToHome = {
                 navController.navigateUp()
@@ -203,7 +213,8 @@ fun AddNewPlaceScreen(
     isDarkThemeEnabled: Boolean,
     navController: NavController,
     navGraphBuilder: NavGraphBuilder,
-    subscriptionVM: SubscriptionViewModel
+    subscriptionVM: SubscriptionViewModel,
+    locationServicesReady: Boolean
 ) {
     navGraphBuilder.composable(
         route = NavRoute.AddPlace.path.plus("/{placeId}"),
@@ -232,6 +243,10 @@ fun AddNewPlaceScreen(
                     launchSingleTop = true
                 }
             },
+            navigateToSettings = {
+                navController.navigate(NavRoute.Settings.path)
+            },
+            locationServicesReady = locationServicesReady,
             subscriptionVM = subscriptionVM,
             placeViewModel = hiltViewModel()
         )
@@ -438,7 +453,8 @@ fun AddLocationSharingScreen(
     navController: NavController,
     navGraphBuilder: NavGraphBuilder,
     location: Pair<Double, Double>?,
-    subscriptionVM: SubscriptionViewModel
+    subscriptionVM: SubscriptionViewModel,
+    locationServicesReady: Boolean
 ) {
     navGraphBuilder.composable(
         route = NavRoute.LocationSharing.path
@@ -448,8 +464,12 @@ fun AddLocationSharingScreen(
             navigateToPaywall = {
                 navController.navigate(NavRoute.Paywall.path)
             },
+            navigateToSettings = {
+                navController.navigate(NavRoute.Settings.path)
+            },
             subscriptionVM = subscriptionVM,
-            location
+            location = location,
+            locationServicesReady = locationServicesReady
         )
     }
 }
