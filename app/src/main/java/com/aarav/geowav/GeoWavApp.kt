@@ -59,22 +59,22 @@ class GeoWavApp : Application(), Configuration.Provider {
         Purchases.configure(
             PurchasesConfiguration.Builder(
                 context = this,
-                apiKey = BuildConfig.REVENUE_CAT_API_KEY // from RC dashboard
+                apiKey = BuildConfig.REVENUE_CAT_API_KEY
             ).build()
         )
 
-        Log.i(TAG, "Before customer info")
-
-        Purchases.sharedInstance.getCustomerInfoWith(
-            onSuccess = {
-                Log.i(TAG, "Customer info success")
-            },
-            onError = {
-                Log.e(TAG, "Customer info error")
-            }
-        )
-
-        Log.i(TAG, "After customer info")
+//        Log.i(TAG, "Before customer info")
+//
+//        Purchases.sharedInstance.getCustomerInfoWith(
+//            onSuccess = {
+//                Log.i(TAG, "Customer info success")
+//            },
+//            onError = {
+//                Log.e(TAG, "Customer info error")
+//            }
+//        )
+//
+//        Log.i(TAG, "After customer info")
     }
 
     fun Context.createGeoWavChannels() {

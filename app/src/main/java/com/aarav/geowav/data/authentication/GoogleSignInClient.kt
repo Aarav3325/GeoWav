@@ -193,26 +193,7 @@ class GoogleSignInClient @Inject constructor(
                 .await()
                 .user
 
-            if (user != null) {
-                Purchases.sharedInstance.logInWith(
-                    user.uid,
-                    onSuccess = { _, created ->
-                        Log.i(
-                            "RevenueCat",
-                            "RC user identified: ${user.uid}, new=$created"
-                        )
-                    },
-                    onError = { error ->
-                        Log.e(
-                            "RevenueCat",
-                            "Login error: ${error.message}"
-                        )
-                    }
-                )
-                true
-            } else {
-                false
-            }
+            if (user != null) return true else false
         } catch (e: Exception) {
             Log.e(tag, e.message.toString())
             false
@@ -245,21 +226,21 @@ class GoogleSignInClient @Inject constructor(
                     Log.e(tag, "userReference: Success")
                 }
 
-            Purchases.sharedInstance.logInWith(
-                userId,
-                onSuccess = { customerInfo, created ->
-                    Log.i(
-                        "RevenueCat",
-                        "RC user identified: $userId, new=$created"
-                    )
-                },
-                onError = { error ->
-                    Log.e(
-                        "RevenueCat",
-                        "Login error: ${error.message}"
-                    )
-                }
-            )
+//            Purchases.sharedInstance.logInWith(
+//                userId,
+//                onSuccess = { customerInfo, created ->
+//                    Log.i(
+//                        "RevenueCat",
+//                        "RC user identified: $userId, new=$created"
+//                    )
+//                },
+//                onError = { error ->
+//                    Log.e(
+//                        "RevenueCat",
+//                        "Login error: ${error.message}"
+//                    )
+//                }
+//            )
 
             lookupReference
                 .child(encodeEmail(email))

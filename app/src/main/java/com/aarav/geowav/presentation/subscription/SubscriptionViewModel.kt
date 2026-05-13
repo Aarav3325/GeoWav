@@ -64,7 +64,7 @@ class SubscriptionViewModel
         Log.i("SUBSCRIPTION", "init")
 
         fetchOfferings()
-        startRealTimeEntitlementSync()
+//        startRealTimeEntitlementSync()
     }
 
 

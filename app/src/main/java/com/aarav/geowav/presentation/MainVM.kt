@@ -12,16 +12,20 @@ import androidx.core.content.edit
 import androidx.lifecycle.viewModelScope
 import com.aarav.geowav.data.authentication.GoogleSignInClient
 import com.aarav.geowav.data.model.User
+import com.aarav.geowav.domain.repository.PaymentRepository
 import com.aarav.geowav.presentation.components.SnackbarManager
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
 @HiltViewModel
 class MainVM @Inject constructor(
     private val prefs: SharedPreferences,
-    private val googleSignInClient: GoogleSignInClient
+    private val googleSignInClient: GoogleSignInClient,
+    private val paymentRepository: PaymentRepository,
+
 ) : ViewModel() {
 
     private val _themeMode = MutableStateFlow(loadTheme())
@@ -36,6 +40,21 @@ class MainVM @Inject constructor(
 //            fetchUser()
 //        }
 //    }
+
+    init {
+        viewModelScope.launch {
+            googleSignInClient.getUserIdFlow()
+                .distinctUntilChanged()
+                .collectLatest { uid ->
+                if(uid.isNotEmpty()) {
+                    paymentRepository.initializeUser(uid)
+                }
+//                else {
+//                    paymentRepository.clear()
+//                }
+            }
+        }
+    }
 
     fun setThemeMode(mode: ThemeMode) {
         prefs.edit { putString("theme_mode", mode.name) }

@@ -19,6 +19,10 @@ interface PaymentRepository {
         active: Boolean
     )
 
+    suspend fun initializeUser(uid: String)
+
+    suspend fun clear()
+
     suspend fun purchase(activity: Activity, rcPackage: Package, plan: UserPlan): PurchaseResult
 
     suspend fun restorePurchases(): PurchaseResult
