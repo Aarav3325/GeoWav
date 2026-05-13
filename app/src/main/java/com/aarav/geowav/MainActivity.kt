@@ -64,7 +64,6 @@ import com.aarav.geowav.platform.LocationManager
 import com.aarav.geowav.platform.NotificationService
 import com.aarav.geowav.presentation.MainVM
 import com.aarav.geowav.presentation.components.AppDisabled
-import com.aarav.geowav.presentation.components.LocationPermissionDialog
 import com.aarav.geowav.presentation.components.NotificationDisabledDialog
 import com.aarav.geowav.presentation.components.SnackbarManager
 import com.aarav.geowav.presentation.navigation.BottomNavigationBar
@@ -241,8 +240,10 @@ class MainActivity : ComponentActivity() {
                 mutableStateOf<Location?>(null)
             }
 
-            LaunchedEffect(userId) {
-                if (isLoggedIn) {
+            val permissionUiState by permissionCoordinator.state.collectAsState()
+
+            LaunchedEffect(userId, permissionUiState.foregroundLocationGranted) {
+                if (isLoggedIn && permissionUiState.foregroundLocationGranted) {
                     locationManager.getLocationUpdates().distinctUntilChanged().collectLatest {
                         location = it
                     }
@@ -305,8 +306,6 @@ class MainActivity : ComponentActivity() {
                     controller.isAppearanceLightStatusBars = !isDark
 
 
-                    val isOnboarded = sharedPreferences.getBoolean("isOnboarded", false)
-
                     val fineLocationPermission =
                         rememberPermissionState(Manifest.permission.ACCESS_FINE_LOCATION)
                     val backgroundLocationPermission =
@@ -338,17 +337,6 @@ class MainActivity : ComponentActivity() {
                         }
 
                     }
-
-                    LocationPermissionDialog(
-                        isOnboarded && !permissionsGranted,
-                        onConfirmClick = {
-                            openAppSettings(
-                                context,
-                                Settings.ACTION_LOCATION_SOURCE_SETTINGS
-                            )
-                        }
-                    )
-
 
                     val navController = rememberNavController()
 

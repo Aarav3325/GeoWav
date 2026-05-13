@@ -74,9 +74,13 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
+import androidx.lifecycle.compose.LocalLifecycleOwner
 import coil.ImageLoader
 import coil.decode.SvgDecoder
 import com.aarav.geowav.R
+import com.aarav.geowav.core.permissions.GeoPermissionUiState
 import com.aarav.geowav.core.utils.SubscriptionHelper
 import com.aarav.geowav.core.utils.ViewerLocationState
 import com.aarav.geowav.core.utils.formatRemainingForEmergency
@@ -122,6 +126,21 @@ fun GeoWavHomeScreen(
 
     val context = LocalContext.current
     val activity = context as? Activity
+    val lifecycleOwner = LocalLifecycleOwner.current
+
+    androidx.compose.runtime.DisposableEffect(lifecycleOwner) {
+        val observer = LifecycleEventObserver { _, event ->
+            if (event == Lifecycle.Event.ON_RESUME) {
+                homeScreenVM.refreshPermissionState()
+            }
+        }
+
+        lifecycleOwner.lifecycle.addObserver(observer)
+
+        onDispose {
+            lifecycleOwner.lifecycle.removeObserver(observer)
+        }
+    }
 
 
     LaunchedEffect(uiState.lovedOnes) {
@@ -327,6 +346,14 @@ fun GeoWavHomeScreen(
 
                         val hasAnyLiveSharing = activeViewerIds.isNotEmpty()
 
+                        AnimatedVisibility(uiState.permissionState.shouldShowSetupCard) {
+                            LocationSetupReminderCard(
+                                permissionState = uiState.permissionState,
+                                onReviewClick = navigateToSettings,
+                                modifier = Modifier.padding(top = 16.dp)
+                            )
+                        }
+
 
                         AnimatedVisibility(hasAnyLiveSharing) {
                             Column(
@@ -486,6 +513,98 @@ fun UserMarkerUi(
                 )
                 .border(2.dp, Color.White, CircleShape)
         )
+    }
+}
+
+@Composable
+fun LocationSetupReminderCard(
+    permissionState: GeoPermissionUiState,
+    onReviewClick: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    val title = when {
+        !permissionState.foregroundLocationGranted -> "Live location is not set up"
+        !permissionState.backgroundLocationGranted -> "Background access is not set up"
+        else -> "Permission setup is incomplete"
+    }
+
+    val message = when {
+        !permissionState.foregroundLocationGranted ->
+            "Live movement, emergency sharing, and place alerts need location access before they can run."
+        !permissionState.backgroundLocationGranted ->
+            "Place alerts and active safety sessions need background access to keep working when GeoWav is not open."
+        else ->
+            "Some safety alerts may stay paused until permissions are enabled."
+    }
+
+    Surface(
+        modifier = modifier.fillMaxWidth(),
+        color = MaterialTheme.colorScheme.secondaryContainer,
+        shape = RoundedCornerShape(16.dp)
+    ) {
+        Column(
+            modifier = Modifier.padding(14.dp),
+            verticalArrangement = Arrangement.spacedBy(10.dp)
+        ) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Surface(
+                    color = MaterialTheme.colorScheme.secondary,
+                    shape = CircleShape
+                ) {
+                    Icon(
+                        painter = painterResource(R.drawable.map_pin),
+                        contentDescription = null,
+                        tint = MaterialTheme.colorScheme.onSecondary,
+                        modifier = Modifier
+                            .size(34.dp)
+                            .padding(7.dp)
+                    )
+                }
+
+                Spacer(modifier = Modifier.width(10.dp))
+
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(
+                        text = title,
+                        fontFamily = manrope,
+                        fontSize = 14.sp,
+                        fontWeight = FontWeight.SemiBold,
+                        color = MaterialTheme.colorScheme.onSecondaryContainer
+                    )
+                    Text(
+                        text = "Features stay paused until you enable access.",
+                        fontFamily = manrope,
+                        fontSize = 11.sp,
+                        color = MaterialTheme.colorScheme.onSecondaryContainer.copy(alpha = 0.78f)
+                    )
+                }
+            }
+
+            Text(
+                text = message,
+                fontFamily = manrope,
+                fontSize = 12.sp,
+                lineHeight = 17.sp,
+                color = MaterialTheme.colorScheme.onSecondaryContainer
+            )
+
+            FilledTonalButton(
+                onClick = onReviewClick,
+                shape = RoundedCornerShape(12.dp),
+                colors = ButtonDefaults.filledTonalButtonColors(
+                    containerColor = MaterialTheme.colorScheme.secondary,
+                    contentColor = MaterialTheme.colorScheme.onSecondary
+                ),
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Text(
+                    text = "Review setup",
+                    fontFamily = manrope,
+                    fontSize = 12.sp,
+                    fontWeight = FontWeight.SemiBold
+                )
+            }
+        }
     }
 }
 
