@@ -542,8 +542,13 @@ class MainActivity : ComponentActivity() {
     private fun stopAllCriticalServices() {
 
         stopService(Intent(this, LiveLocationService::class.java))
+        Log.d("SERVICE", "Live Location services stopped - 1/3")
         stopService(Intent(this, GeofenceForegroundService::class.java))
+        Log.d("SERVICE", "Geofence services stopped - 2/3")
         stopService(Intent(this, NotificationService::class.java))
+        Log.d("SERVICE", "Notification service stopped - 3/3")
+
+        Log.d("SERVICE", "All services stopped")
 
         val pendingIntent = PendingIntent.getBroadcast(
             this,
@@ -553,6 +558,7 @@ class MainActivity : ComponentActivity() {
         )
 
         geofencingClient.removeGeofences(pendingIntent)
+        Log.d("SERVICE", "Geofence pending intent removed")
     }
 
 }
