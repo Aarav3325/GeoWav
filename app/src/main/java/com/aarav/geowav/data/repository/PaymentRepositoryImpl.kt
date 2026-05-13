@@ -22,7 +22,9 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.launch
 import javax.inject.Inject
+import javax.inject.Singleton
 
+@Singleton
 class PaymentRepositoryImpl @Inject constructor(
     private val revenueCatDataSource: RevenueCatDataSource,
     private val firebaseDatabase: FirebaseDatabase,
@@ -41,9 +43,9 @@ class PaymentRepositoryImpl @Inject constructor(
             }
         }
         
-        scope.launch {
-            syncEntitlements()
-        }
+//        scope.launch {
+//            syncEntitlements()
+//        }
     }
 
     override fun observePurchasesUpdate(): Flow<PurchaseResult> =
@@ -103,6 +105,20 @@ class PaymentRepositoryImpl @Inject constructor(
         Log.i(TAG, "Subscription updated in Firebase: $plan (Expiry: $expiryTime)")
     }
 
+    override suspend fun initializeUser(uid: String) {
+        if (uid.isBlank()) {
+            revenueCatDataSource.reset()
+            return
+        }
+        
+        // This will trigger the identify call which then emits the sync signal
+        revenueCatDataSource.identify(uid)
+    }
+
+    override suspend fun clear() {
+        revenueCatDataSource.reset()
+    }
+
     override suspend fun restorePurchases(): PurchaseResult {
         Log.i(TAG, "Restoring purchases...")
         val customerInfo = revenueCatDataSource.restorePurchases()
@@ -138,7 +154,8 @@ class PaymentRepositoryImpl @Inject constructor(
         Log.i(TAG, "Syncing entitlements with cache invalidation...")
         val customerInfo = revenueCatDataSource.getCustomerInfo(forceRefresh = true)
             ?: return UserPlan.FREE
-            
+        Log.i(TAG, "Customer info on sync: ${com.revenuecat.purchases.Purchases.sharedInstance.appUserID}")
+
         val plan = revenueCatDataSource.resolveActivePlan(customerInfo)
         val expiryTime = revenueCatDataSource.getExpiryTime(customerInfo)
         val purchaseTime = revenueCatDataSource.getPurchaseTime(customerInfo)
@@ -173,10 +190,6 @@ class PaymentRepositoryImpl @Inject constructor(
 
     override fun observeRealTimeEntitlements(): Flow<UserPlan> =
         revenueCatDataSource.onEntitlementChanged
-            .onStart { 
-                Log.d(TAG, "Starting real-time entitlement sync")
-                emit(Unit) 
-            }
             .map {
                 // When RevenueCat notifies of a change, we force a fresh sync
                 syncEntitlements()
