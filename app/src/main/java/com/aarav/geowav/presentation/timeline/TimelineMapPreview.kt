@@ -26,12 +26,11 @@ import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ContainedLoadingIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
-import androidx.compose.material3.FloatingToolbarColors
 import androidx.compose.material3.HorizontalDivider
-import androidx.compose.material3.HorizontalFloatingToolbar
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.IconButtonDefaults
+import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Slider
@@ -63,7 +62,6 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.compose.ui.zIndex
 import androidx.core.graphics.createBitmap
 import com.aarav.geowav.R
 import com.aarav.geowav.core.utils.FeatureAccess
@@ -534,196 +532,77 @@ fun TimelineMapPreview(
                 }
             }
 
-            HorizontalFloatingToolbar(
-                colors = FloatingToolbarColors(
-                    toolbarContainerColor = MaterialTheme.colorScheme.surfaceBright.copy(alpha = 0.85f),
-                    toolbarContentColor = MaterialTheme.colorScheme.onSurface,
-                    fabContentColor = MaterialTheme.colorScheme.onSurface,
-                    fabContainerColor = MaterialTheme.colorScheme.surfaceContainer
-                ),
+            PlaybackDock(
                 modifier = Modifier
                     .align(Alignment.BottomCenter)
                     .offset(y = (-32).dp)
-                    .zIndex(1f),
-                expanded = true,
-                content = {
-                    Row(
-                        modifier = Modifier.padding(horizontal = 4.dp),
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(6.dp)
-                    ) {
+                    .padding(horizontal = 16.dp),
+                isPlaying = uiState.isPlaying,
+                canUsePlayback = FeatureAccess.canUsePlayback(plan),
+                canControlSpeed = FeatureAccess.canControlSpeed(plan),
+                progress = if (finalSnappedPath.size > 1) {
+                    uiState.playbackIndex / (finalSnappedPath.lastIndex).toFloat()
+                } else 0f,
+                speedLabel = when (uiState.speed) {
+                    2f -> "0.5x"
+                    5f -> "1x"
+                    8f -> "2x"
+                    else -> "1x"
+                },
+                showTray = showTray,
+                mapMode = mapMode,
+                onPlayPause = {
+                    if (uiState.isPlaying) {
+                        viewModel.pausePlayback()
+                    } else {
+                        viewModel.startPlayback(plan)
+                    }
+                },
+                onRestart = {
+                    startLatLng?.let { viewModel.restartPlayback(it) }
+                },
+                onSpeed = {
+                    if (!FeatureAccess.canControlSpeed(plan)) {
+                        upgradeContext = UpgradeContext(
+                            upgradeTo = UserPlan.PREMIUM,
+                            reason = UpgradeReason.SpeedControl
+                        )
+                    } else {
+                        showPlaybackSpeedControls = !showPlaybackSpeedControls
+                    }
+                },
+                onToggleTray = { showTray = !showTray },
+                onFitRoute = {
+                    currentSession?.let { session ->
+                        scope.launch {
+                            val boundsBuilder = LatLngBounds.builder()
+                                .include(LatLng(session.startLat, session.startLng))
+                                .include(LatLng(session.endLat, session.endLng))
 
-                        IconButton(
-                            modifier = Modifier.size(40.dp),
-                            colors = IconButtonDefaults.iconButtonColors(
-                                containerColor = when {
-                                    uiState.isPlaying ->
-                                        MaterialTheme.colorScheme.tertiaryContainer
+                            session.stayPoints.forEach {
+                                boundsBuilder.include(LatLng(it.lat, it.lng))
+                            }
 
-                                    !FeatureAccess.canUsePlayback(plan) ->
-                                        MaterialTheme.colorScheme.surfaceVariant // cleaner disabled look
-
-                                    else ->
-                                        MaterialTheme.colorScheme.surfaceContainer
-                                },
-
-                                contentColor = when {
-                                    !FeatureAccess.canUsePlayback(plan) ->
-                                        MaterialTheme.colorScheme.onSurface.copy(alpha = 0.4f)
-
-                                    else ->
-                                        MaterialTheme.colorScheme.onSurface
-                                }
-                            ),
-                            onClick = {
-                                if (uiState.isPlaying) {
-                                    viewModel.pausePlayback()
-                                } else {
-                                    viewModel.startPlayback(plan)
+                            if (uiState.isPlaying && lastPosition != null) {
+                                lastPosition?.let {
+                                    boundsBuilder.include(it)
                                 }
                             }
-                        ) {
-                            LockedIcon(
-                                isLocked = !FeatureAccess.canUsePlayback(plan),
-                                icon = painterResource(
-                                    if (uiState.isPlaying) R.drawable.pause else R.drawable.play_v2
-                                ),
-                                contentDescription = "play/pause"
+
+                            cameraPositionState.animate(
+                                CameraUpdateFactory.newLatLngBounds(
+                                    boundsBuilder.build(), 200
+                                )
                             )
-                        }
 
-                        IconButton(
-                            modifier = Modifier.size(40.dp),
-                            colors = IconButtonDefaults.iconButtonColors(
-                                containerColor = MaterialTheme.colorScheme.surfaceContainer,
-                                contentColor = MaterialTheme.colorScheme.onSurface
-                            ),
-                            onClick = {
-                                startLatLng?.let { viewModel.restartPlayback(it) }
-                            }
-                        ) {
-                            Icon(
-                                painter = painterResource(R.drawable.restart),
-                                contentDescription = "restart",
-                                modifier = Modifier.size(22.dp)
-                            )
-                        }
-
-                        IconButton(
-                            modifier = Modifier.size(40.dp),
-                            colors = IconButtonDefaults.iconButtonColors(
-                                containerColor = when {
-                                    !FeatureAccess.canControlSpeed(plan) ->
-                                        MaterialTheme.colorScheme.surfaceVariant
-
-                                    else ->
-                                        MaterialTheme.colorScheme.surfaceContainer
-                                },
-                                contentColor = when {
-                                    !FeatureAccess.canControlSpeed(plan) ->
-                                        MaterialTheme.colorScheme.onSurface.copy(alpha = 0.4f)
-
-                                    else ->
-                                        MaterialTheme.colorScheme.onSurface
-                                }
-                            ),
-                            onClick = {
-                                if (!FeatureAccess.canUsePlayback(plan)) {
-                                    upgradeContext = UpgradeContext(
-                                        upgradeTo = UserPlan.PREMIUM,
-                                        reason = UpgradeReason.SpeedControl
-                                    )
-                                } else {
-                                    showPlaybackSpeedControls = !showPlaybackSpeedControls
-                                }
-                            }
-                        ) {
-                            LockedIcon(
-                                isLocked = !FeatureAccess.canControlSpeed(plan),
-                                icon = painterResource(R.drawable.playback_speed),
-                                contentDescription = "speed"
-                            )
-                        }
-
-                        IconButton(
-                            modifier = Modifier.size(40.dp),
-                            colors = IconButtonDefaults.iconButtonColors(
-                                containerColor = if (showTray)
-                                    MaterialTheme.colorScheme.tertiaryContainer
-                                else MaterialTheme.colorScheme.surfaceContainer,
-                                contentColor = if (showTray)
-                                    MaterialTheme.colorScheme.onTertiaryContainer
-                                else MaterialTheme.colorScheme.onSurface
-                            ),
-                            onClick = { showTray = !showTray }
-                        ) {
-                            Icon(
-                                painter = painterResource(R.drawable.info),
-                                contentDescription = "Toggle Tray",
-                                modifier = Modifier.size(22.dp)
-                            )
-                        }
-
-                        IconButton(
-                            modifier = Modifier.size(40.dp),
-                            onClick = {
-                                currentSession?.let { session ->
-                                    scope.launch {
-                                        val boundsBuilder = LatLngBounds.builder()
-                                            .include(LatLng(session.startLat, session.startLng))
-                                            .include(LatLng(session.endLat, session.endLng))
-
-                                        session.stayPoints.forEach {
-                                            boundsBuilder.include(LatLng(it.lat, it.lng))
-                                        }
-
-                                        if (uiState.isPlaying && lastPosition != null) {
-                                            lastPosition?.let {
-                                                boundsBuilder.include(it)
-                                            }
-                                        }
-
-                                        cameraPositionState.animate(
-                                            CameraUpdateFactory.newLatLngBounds(
-                                                boundsBuilder.build(), 200
-                                            )
-                                        )
-
-                                        delay(1000)
-                                        followUser = true
-                                    }
-                                }
-                            },
-                            colors = IconButtonDefaults.iconButtonColors(
-                                containerColor = MaterialTheme.colorScheme.primary,
-                                contentColor = MaterialTheme.colorScheme.onPrimary
-                            )
-                        ) {
-                            Icon(
-                                painter = painterResource(R.drawable.gps),
-                                contentDescription = "Fit All",
-                                modifier = Modifier.size(22.dp)
-                            )
-                        }
-
-                        IconButton(
-                            modifier = Modifier.size(40.dp),
-                            onClick = {
-                                viewModel.toggleMapType()
-                                showMapModeToast = true
-                            },
-                            colors = IconButtonDefaults.iconButtonColors(
-                                containerColor = MaterialTheme.colorScheme.surfaceContainer,
-                                contentColor = MaterialTheme.colorScheme.onSurface
-                            )
-                        ) {
-                            Icon(
-                                painter = painterResource(R.drawable.map_trifold),
-                                contentDescription = mapMode,
-                                modifier = Modifier.size(22.dp)
-                            )
+                            delay(1000)
+                            followUser = true
                         }
                     }
+                },
+                onMapMode = {
+                    viewModel.toggleMapType()
+                    showMapModeToast = true
                 }
             )
 
@@ -743,6 +622,179 @@ fun TimelineMapPreview(
     }
 }
 
+
+@Composable
+private fun PlaybackDock(
+    isPlaying: Boolean,
+    canUsePlayback: Boolean,
+    canControlSpeed: Boolean,
+    progress: Float,
+    speedLabel: String,
+    showTray: Boolean,
+    mapMode: String,
+    onPlayPause: () -> Unit,
+    onRestart: () -> Unit,
+    onSpeed: () -> Unit,
+    onToggleTray: () -> Unit,
+    onFitRoute: () -> Unit,
+    onMapMode: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    Surface(
+        modifier = modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(28.dp),
+        color = Color(0xEE111820),
+        tonalElevation = 0.dp,
+        shadowElevation = 12.dp
+    ) {
+        Column(
+            modifier = Modifier.padding(horizontal = 14.dp, vertical = 12.dp),
+            verticalArrangement = Arrangement.spacedBy(10.dp)
+        ) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                Column(
+                    modifier = Modifier.weight(1f),
+                    verticalArrangement = Arrangement.spacedBy(5.dp)
+                ) {
+                    Text(
+                        text = if (isPlaying) "Replaying movement" else "Journey replay",
+                        fontFamily = manrope,
+                        fontSize = 13.sp,
+                        fontWeight = FontWeight.SemiBold,
+                        color = Color.White
+                    )
+
+                    LinearProgressIndicator(
+                        progress = { progress.coerceIn(0f, 1f) },
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(4.dp)
+                            .clip(RoundedCornerShape(99.dp)),
+                        color = Color(0xFF8FD8EA),
+                        trackColor = Color.White.copy(alpha = 0.16f)
+                    )
+                }
+
+                Surface(
+                    shape = RoundedCornerShape(99.dp),
+                    color = Color.White.copy(alpha = 0.10f)
+                ) {
+                    Text(
+                        text = speedLabel,
+                        modifier = Modifier.padding(horizontal = 10.dp, vertical = 5.dp),
+                        fontFamily = manrope,
+                        fontSize = 12.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = Color.White.copy(alpha = if (canControlSpeed) 0.90f else 0.45f)
+                    )
+                }
+            }
+
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                DockIconButton(
+                    onClick = onPlayPause,
+                    containerColor = if (isPlaying) Color(0xFF8FD8EA) else Color.White,
+                    contentColor = Color(0xFF101820),
+                    size = 48.dp
+                ) {
+                    LockedIcon(
+                        isLocked = !canUsePlayback,
+                        icon = painterResource(if (isPlaying) R.drawable.pause else R.drawable.play_v2),
+                        contentDescription = "play/pause",
+                        iconSize = 24.dp
+                    )
+                }
+
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    DockIconButton(onClick = onRestart) {
+                        Icon(
+                            painter = painterResource(R.drawable.restart),
+                            contentDescription = "restart",
+                            modifier = Modifier.size(21.dp)
+                        )
+                    }
+
+                    DockIconButton(onClick = onSpeed) {
+                        LockedIcon(
+                            isLocked = !canControlSpeed,
+                            icon = painterResource(R.drawable.playback_speed),
+                            contentDescription = "speed",
+                            iconSize = 21.dp
+                        )
+                    }
+
+                    DockIconButton(
+                        onClick = onToggleTray,
+                        containerColor = if (showTray) Color.White.copy(alpha = 0.22f) else Color.White.copy(alpha = 0.10f),
+                        contentColor = Color.White
+                    ) {
+                        Icon(
+                            painter = painterResource(R.drawable.info),
+                            contentDescription = "Toggle Tray",
+                            modifier = Modifier.size(21.dp)
+                        )
+                    }
+
+                    DockIconButton(
+                        onClick = onFitRoute,
+                        containerColor = Color(0xFF8FD8EA),
+                        contentColor = Color(0xFF101820)
+                    ) {
+                        Icon(
+                            painter = painterResource(R.drawable.gps),
+                            contentDescription = "Fit All",
+                            modifier = Modifier.size(21.dp)
+                        )
+                    }
+
+                    DockIconButton(onClick = onMapMode) {
+                        Icon(
+                            painter = painterResource(R.drawable.map_trifold),
+                            contentDescription = mapMode,
+                            modifier = Modifier.size(21.dp)
+                        )
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun DockIconButton(
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+    enabled: Boolean = true,
+    size: Dp = 40.dp,
+    containerColor: Color = Color.White.copy(alpha = 0.10f),
+    contentColor: Color = Color.White.copy(alpha = if (enabled) 0.92f else 0.42f),
+    content: @Composable () -> Unit
+) {
+    IconButton(
+        modifier = modifier.size(size),
+        enabled = enabled,
+        colors = IconButtonDefaults.iconButtonColors(
+            containerColor = containerColor,
+            contentColor = contentColor,
+            disabledContainerColor = Color.White.copy(alpha = 0.08f),
+            disabledContentColor = Color.White.copy(alpha = 0.42f)
+        ),
+        onClick = onClick
+    ) {
+        content()
+    }
+}
 
 @Composable
 private fun StayPointMarker(stay: StayPoint, icon: BitmapDescriptor?) {
