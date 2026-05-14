@@ -24,6 +24,7 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ContainedLoadingIndicator
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.Icon
@@ -56,9 +57,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.compose.ui.window.Dialog
 import com.aarav.geowav.R
-import com.aarav.geowav.presentation.components.MyAlertDialog
 import com.aarav.geowav.presentation.theme.manrope
 
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
@@ -89,16 +88,6 @@ fun LoginScreen(
                     is LoginEvent.ShowError -> loginVM.showError(event.message)
                 }
             }
-        }
-
-        MyAlertDialog(
-            shouldShowDialog = uiState.showErrorDialog,
-            onDismissRequest = { loginVM.clearError() },
-            title = "Error",
-            message = uiState.error ?: "An unknown error occurred",
-            confirmButtonText = "Dismiss"
-        ) {
-            loginVM.clearError()
         }
 
         Column(
@@ -197,6 +186,16 @@ fun LoginScreen(
             )
 
             Spacer(modifier = Modifier.height(16.dp))
+
+            AuthErrorMessage(
+                visible = uiState.showErrorDialog,
+                message = uiState.error ?: "An unknown error occurred",
+                onDismiss = { loginVM.clearError() }
+            )
+
+            if (uiState.showErrorDialog) {
+                Spacer(modifier = Modifier.height(12.dp))
+            }
 
 
             TextField(
@@ -351,8 +350,8 @@ fun LoginScreen(
                 )
             ) {
                 if (uiState.isLoading) {
-                    ContainedLoadingIndicator(
-                        modifier = Modifier.size(22.dp)
+                    CircularProgressIndicator(
+                        modifier = Modifier.size(32.dp)
                     )
                 } else {
                     Text(
@@ -364,6 +363,11 @@ fun LoginScreen(
                     )
                 }
             }
+
+            AuthLoadingNote(
+                visible = uiState.isLoading,
+                text = "Checking your sign-in securely..."
+            )
 
             Spacer(modifier = Modifier.height(12.dp))
 
@@ -396,18 +400,6 @@ fun LoginScreen(
                         fontFamily = manrope
                     )
                 }
-            }
-        }
-
-
-        if (uiState.isLoading) {
-            Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .background(Color.Black.copy(alpha = 0.3f)),
-                contentAlignment = Alignment.Center
-            ) {
-                ContainedLoadingIndicator()
             }
         }
     }
