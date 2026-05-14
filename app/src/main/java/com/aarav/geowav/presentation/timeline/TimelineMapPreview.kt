@@ -29,6 +29,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.IconButtonDefaults
 import androidx.compose.material3.LinearProgressIndicator
+import androidx.compose.material3.LoadingIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
@@ -288,11 +289,6 @@ fun TimelineMapPreview(
                 .padding(padding)
         ) {
 
-            if (!mapLoaded) {
-                ContainedLoadingIndicator(
-                    Modifier.align(Alignment.Center)
-                )
-            }
             GoogleMap(
                 modifier = Modifier
                     .fillMaxSize(),
@@ -364,6 +360,40 @@ fun TimelineMapPreview(
                             }
                         }
                     }
+                }
+            }
+
+            val hasRecordedMovement = !userPaths.isNullOrEmpty()
+            val isPreparingRoute = mapLoaded && currentSession != null &&
+                    hasRecordedMovement && finalSnappedPath.isEmpty()
+            val hasNoMovementData = mapLoaded && currentSession != null && !hasRecordedMovement
+
+            when {
+                !mapLoaded -> {
+                    ReplayStatusOverlay(
+                        title = "Preparing replay",
+                        message = "Loading the map and route context",
+                        showLoader = true,
+                        modifier = Modifier.align(Alignment.Center)
+                    )
+                }
+
+                isPreparingRoute -> {
+                    ReplayStatusOverlay(
+                        title = "Refining route",
+                        message = "Preparing movement playback",
+                        showLoader = true,
+                        modifier = Modifier.align(Alignment.Center)
+                    )
+                }
+
+                hasNoMovementData -> {
+                    ReplayStatusOverlay(
+                        title = "No movement to replay",
+                        message = "This session does not include enough route data",
+                        showLoader = false,
+                        modifier = Modifier.align(Alignment.Center)
+                    )
                 }
             }
 
@@ -490,6 +520,50 @@ fun TimelineMapPreview(
                     )
                 }
             }
+        }
+    }
+}
+
+
+@Composable
+@OptIn(ExperimentalMaterial3ExpressiveApi::class)
+private fun ReplayStatusOverlay(
+    title: String,
+    message: String,
+    showLoader: Boolean,
+    modifier: Modifier = Modifier
+) {
+    Surface(
+        modifier = modifier.padding(horizontal = 32.dp),
+        shape = RoundedCornerShape(24.dp),
+        color = Color(0xEE111820),
+        shadowElevation = 10.dp
+    ) {
+        Column(
+            modifier = Modifier.padding(horizontal = 18.dp, vertical = 16.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            if (showLoader) {
+                LoadingIndicator(
+                    modifier = Modifier.size(34.dp)
+                )
+            }
+
+            Text(
+                text = title,
+                fontFamily = manrope,
+                fontSize = 15.sp,
+                fontWeight = FontWeight.SemiBold,
+                color = Color.White
+            )
+
+            Text(
+                text = message,
+                fontFamily = manrope,
+                fontSize = 12.sp,
+                color = Color.White.copy(alpha = 0.62f)
+            )
         }
     }
 }
