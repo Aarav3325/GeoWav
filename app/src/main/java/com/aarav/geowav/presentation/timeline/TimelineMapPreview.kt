@@ -3,7 +3,6 @@ package com.aarav.geowav.presentation.timeline
 import android.graphics.Bitmap
 import android.graphics.Canvas
 import android.graphics.Paint
-import android.util.Log
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -12,7 +11,6 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -20,6 +18,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.ContainedLoadingIndicator
@@ -32,12 +31,8 @@ import androidx.compose.material3.IconButtonDefaults
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Slider
-import androidx.compose.material3.SliderDefaults
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBar
-import androidx.compose.material3.rememberSliderState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -76,13 +71,6 @@ import com.aarav.geowav.presentation.components.UpgradeBottomSheetContent
 import com.aarav.geowav.presentation.subscription.SubscriptionViewModel
 import com.aarav.geowav.presentation.theme.GeoWavTheme
 import com.aarav.geowav.presentation.theme.manrope
-import com.aarav.geowav.presentation.theme.onBackgroundDark
-import com.aarav.geowav.presentation.theme.onPrimaryLight
-import com.aarav.geowav.presentation.theme.outlineLight
-import com.aarav.geowav.presentation.theme.outlineVariantLight
-import com.aarav.geowav.presentation.theme.primaryLight
-import com.aarav.geowav.presentation.theme.surfaceContainerDark
-import com.aarav.geowav.presentation.theme.surfaceLight
 import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.model.BitmapDescriptor
 import com.google.android.gms.maps.model.BitmapDescriptorFactory
@@ -101,7 +89,6 @@ import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
-import kotlin.math.roundToInt
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3ExpressiveApi::class)
 @Composable
@@ -290,27 +277,6 @@ fun TimelineMapPreview(
     }
 
     Scaffold(
-        topBar = {
-            TopAppBar(
-                title = {
-                    Text(
-                        text = "Session Preview",
-                        fontFamily = manrope,
-                        fontSize = 20.sp,
-                        fontWeight = FontWeight.Bold
-                    )
-                },
-                navigationIcon = {
-                    IconButton(onClick = back) {
-                        Icon(
-                            painter = painterResource(R.drawable.back),
-                            contentDescription = "back",
-                            modifier = Modifier.size(24.dp)
-                        )
-                    }
-                }
-            )
-        },
         contentWindowInsets = WindowInsets(0, 0, 0, 0)
     ) { padding ->
 //
@@ -329,15 +295,14 @@ fun TimelineMapPreview(
             }
             GoogleMap(
                 modifier = Modifier
-                    .fillMaxSize()
-                    .clip(RoundedCornerShape(16.dp)),
+                    .fillMaxSize(),
                 cameraPositionState = cameraPositionState,
                 properties = MapProperties(
                     mapType = uiState.mapType
                 ),
                 uiSettings = MapUiSettings(
-                    zoomControlsEnabled = true,
-                    compassEnabled = true,
+                    zoomControlsEnabled = false,
+                    compassEnabled = false,
                     mapToolbarEnabled = false
                 ),
                 onMapLoaded = { mapLoaded = true }
@@ -410,11 +375,18 @@ fun TimelineMapPreview(
                 else -> "Map"
             }
 
+            SessionPreviewTopBar(
+                onBack = back,
+                modifier = Modifier
+                    .align(Alignment.TopStart)
+                    .statusBarsPadding()
+                    .padding(start = 16.dp, top = 10.dp)
+            )
+
             AnimatedVisibility(
                 showMapModeToast,
                 modifier = Modifier
-                    .align(Alignment.TopCenter)
-                    .padding(top = 16.dp)
+                    .align(Alignment.Center)
             ) {
                 Surface(
                     shape = RoundedCornerShape(24.dp),
@@ -509,6 +481,7 @@ fun TimelineMapPreview(
                 AnimatedVisibility(
                     visible = showTray,
                     modifier = Modifier.align(Alignment.TopCenter)
+                        .padding(top = 90.dp)
                 ) {
                     SessionPreviewTray(
                         session = session,
@@ -517,6 +490,49 @@ fun TimelineMapPreview(
                     )
                 }
             }
+        }
+    }
+}
+
+
+@Composable
+private fun SessionPreviewTopBar(
+    onBack: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    Row(
+        modifier = modifier,
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(10.dp)
+    ) {
+        IconButton(
+            modifier = Modifier.size(42.dp),
+            colors = IconButtonDefaults.iconButtonColors(
+                containerColor = Color(0xCC111820),
+                contentColor = Color.White.copy(alpha = 0.88f)
+            ),
+            onClick = onBack
+        ) {
+            Icon(
+                painter = painterResource(R.drawable.back),
+                contentDescription = "Back",
+                tint = Color.White.copy(alpha = 0.84f),
+                modifier = Modifier.size(21.dp).align(Alignment.CenterVertically)
+            )
+        }
+
+        Surface(
+            shape = RoundedCornerShape(99.dp),
+            color = Color(0xCC111820)
+        ) {
+            Text(
+                text = "Session replay",
+                modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp),
+                fontFamily = manrope,
+                fontSize = 13.sp,
+                fontWeight = FontWeight.SemiBold,
+                color = Color.White.copy(alpha = 0.84f)
+            )
         }
     }
 }
