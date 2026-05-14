@@ -5,6 +5,7 @@ import android.graphics.Canvas
 import android.graphics.Paint
 import android.graphics.Typeface
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.animateContentSize
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInVertically
@@ -136,6 +137,9 @@ fun TimelineMapPreview(
     var showMapModeToast by remember {
         mutableStateOf(false)
     }
+    var showReplayHelp by remember {
+        mutableStateOf(false)
+    }
 
     val movingMarkerState = remember {
         MarkerState()
@@ -198,6 +202,16 @@ fun TimelineMapPreview(
                     navigateToPaywall()
                 },
                 onDismiss = { upgradeContext = null }
+            )
+        }
+    }
+
+    if (showReplayHelp) {
+        CustomBottomSheet(
+            onDismissRequest = { showReplayHelp = false }
+        ) {
+            ReplayHelpSheetContent(
+                onDismiss = { showReplayHelp = false }
             )
         }
     }
@@ -411,6 +425,7 @@ fun TimelineMapPreview(
 
             SessionPreviewTopBar(
                 onBack = back,
+                onHelp = { showReplayHelp = true },
                 modifier = Modifier
                     .align(Alignment.TopStart)
                     .statusBarsPadding()
@@ -597,6 +612,7 @@ private fun ReplayStatusOverlay(
 @Composable
 private fun SessionPreviewTopBar(
     onBack: () -> Unit,
+    onHelp: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     Row(
@@ -631,6 +647,177 @@ private fun SessionPreviewTopBar(
                 fontSize = 13.sp,
                 fontWeight = FontWeight.SemiBold,
                 color = Color.White.copy(alpha = 0.84f)
+            )
+        }
+
+        Surface(
+            modifier = Modifier.clickable(
+                interactionSource = remember { MutableInteractionSource() },
+                indication = null,
+                onClick = onHelp
+            ),
+            shape = RoundedCornerShape(99.dp),
+            color = Color(0xCC111820)
+        ) {
+            Text(
+                text = "Help",
+                modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp),
+                fontFamily = manrope,
+                fontSize = 13.sp,
+                fontWeight = FontWeight.SemiBold,
+                color = Color.White.copy(alpha = 0.84f)
+            )
+        }
+    }
+}
+
+
+@Composable
+private fun ReplayHelpSheetContent(
+    onDismiss: () -> Unit
+) {
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 20.dp, vertical = 18.dp),
+        verticalArrangement = Arrangement.spacedBy(16.dp)
+    ) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.Top,
+            horizontalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            Column(
+                modifier = Modifier.weight(1f),
+                verticalArrangement = Arrangement.spacedBy(4.dp)
+            ) {
+                Text(
+                    text = "How replay works",
+                    fontFamily = manrope,
+                    fontSize = 20.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onSurface
+                )
+
+                Text(
+                    text = "Use these controls to replay, inspect, and reframe the session.",
+                    fontFamily = manrope,
+                    fontSize = 13.sp,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+
+            IconButton(
+                modifier = Modifier.size(36.dp),
+                colors = IconButtonDefaults.iconButtonColors(
+                    containerColor = MaterialTheme.colorScheme.surfaceContainer,
+                    contentColor = MaterialTheme.colorScheme.onSurface
+                ),
+                onClick = onDismiss
+            ) {
+                Icon(
+                    painter = painterResource(R.drawable.clear),
+                    contentDescription = "Close help",
+                    modifier = Modifier.size(18.dp)
+                )
+            }
+        }
+
+        HorizontalDivider(
+            color = MaterialTheme.colorScheme.outlineVariant
+        )
+
+        Column(
+            verticalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            ReplayHelpRow(
+                icon = painterResource(R.drawable.play_v2),
+                title = "Play / Pause",
+                message = "Replay movement along the route, or pause the replay."
+            )
+            ReplayHelpRow(
+                icon = painterResource(R.drawable.restart),
+                title = "Restart",
+                message = "Start the replay again from the beginning."
+            )
+            ReplayHelpRow(
+                icon = painterResource(R.drawable.info),
+                title = "Details",
+                message = "Show or hide the session summary with start, end, and stops."
+            )
+            ReplayHelpRow(
+                icon = painterResource(R.drawable.gps),
+                title = "Fit route",
+                message = "Zoom out to see the full journey on the map."
+            )
+            ReplayHelpRow(
+                icon = painterResource(R.drawable.map_trifold),
+                title = "Map style",
+                message = "Switch between map views when the route needs more context."
+            )
+        }
+
+        Surface(
+            shape = RoundedCornerShape(18.dp),
+            color = MaterialTheme.colorScheme.surfaceContainer
+        ) {
+            Text(
+                text = "Tip: Drag or zoom the map anytime to explore manually.",
+                modifier = Modifier.padding(horizontal = 14.dp, vertical = 11.dp),
+                fontFamily = manrope,
+                fontSize = 13.sp,
+                fontWeight = FontWeight.SemiBold,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+        }
+    }
+}
+
+@Composable
+private fun ReplayHelpRow(
+    icon: Painter,
+    title: String,
+    message: String
+) {
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(12.dp)
+    ) {
+        Surface(
+            modifier = Modifier.size(38.dp),
+            shape = CircleShape,
+            color = MaterialTheme.colorScheme.surfaceContainerHigh
+        ) {
+            Box(
+                contentAlignment = Alignment.Center
+            ) {
+                Icon(
+                    painter = icon,
+                    contentDescription = null,
+                    modifier = Modifier.size(20.dp),
+                    tint = MaterialTheme.colorScheme.onSurface
+                )
+            }
+        }
+
+        Column(
+            modifier = Modifier.weight(1f),
+            verticalArrangement = Arrangement.spacedBy(2.dp)
+        ) {
+            Text(
+                text = title,
+                fontFamily = manrope,
+                fontSize = 14.sp,
+                fontWeight = FontWeight.SemiBold,
+                color = MaterialTheme.colorScheme.onSurface
+            )
+
+            Text(
+                text = message,
+                fontFamily = manrope,
+                fontSize = 12.sp,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
             )
         }
     }
@@ -941,21 +1128,32 @@ fun SessionPreviewTray(
     val endLocation = remember(session.endAddress) {
         compactTimelineLocation(session.endAddress)
     }
+
     val stayCount = session.stayPoints.size
     val totalStayMins = session.stayPoints.sumOf { it.durationMillis } / 60_000
     val totalStayText = if (totalStayMins < 60) "$totalStayMins min"
     else "${totalStayMins / 60}h ${totalStayMins % 60}m"
 
+    var showFullAddress by remember {
+        mutableStateOf(false)
+    }
+
     Surface(
         modifier = modifier
             .fillMaxWidth()
-            .padding(16.dp),
+            .padding(16.dp)
+            .animateContentSize()
+            .clickable {
+                showFullAddress = !showFullAddress
+            },
         shape = RoundedCornerShape(22.dp),
         color = Color(0xEE111820),
-        shadowElevation = 10.dp
+        shadowElevation = 0.dp
     ) {
         Column(
-            modifier = Modifier.padding(16.dp),
+            modifier = Modifier
+                .background(Color.Transparent)
+                .padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
 
@@ -1016,7 +1214,8 @@ fun SessionPreviewTray(
                 SessionEndpointSummary(
                     label = "Start",
                     time = startTime,
-                    location = startLocation,
+                    location = if(showFullAddress) session.startAddress else startLocation,
+                    showFullAddress = showFullAddress,
                     accentColor = Color(0xFF8FD8EA),
                     modifier = Modifier.weight(1f)
                 )
@@ -1024,7 +1223,8 @@ fun SessionPreviewTray(
                 SessionEndpointSummary(
                     label = "End",
                     time = endTime,
-                    location = endLocation,
+                    location = if(showFullAddress) session.endAddress else endLocation,
+                    showFullAddress = showFullAddress,
                     accentColor = Color(0xFFFFB4A9),
                     modifier = Modifier.weight(1f)
                 )
@@ -1058,6 +1258,7 @@ private fun SessionEndpointSummary(
     time: String,
     location: String,
     accentColor: Color,
+    showFullAddress: Boolean,
     modifier: Modifier = Modifier
 ) {
     Column(
@@ -1079,7 +1280,7 @@ private fun SessionEndpointSummary(
             style = MaterialTheme.typography.bodyMedium,
             fontFamily = manrope,
             color = Color.White.copy(alpha = 0.82f),
-            maxLines = 1,
+            maxLines = if(showFullAddress) Int.MAX_VALUE else 1,
             overflow = TextOverflow.Ellipsis
         )
     }
