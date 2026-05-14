@@ -22,8 +22,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ContainedLoadingIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
@@ -38,7 +36,6 @@ import androidx.compose.material3.Slider
 import androidx.compose.material3.SliderDefaults
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.rememberSliderState
 import androidx.compose.runtime.Composable
@@ -59,6 +56,7 @@ import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
@@ -805,119 +803,163 @@ fun SessionPreviewTray(
         "${hours}h ${mins}m"
     }
 
-    Card(
+    val startLocation = remember(session.startAddress) {
+        compactTimelineLocation(session.startAddress)
+    }
+    val endLocation = remember(session.endAddress) {
+        compactTimelineLocation(session.endAddress)
+    }
+    val stayCount = session.stayPoints.size
+    val totalStayMins = session.stayPoints.sumOf { it.durationMillis } / 60_000
+    val totalStayText = if (totalStayMins < 60) "$totalStayMins min"
+    else "${totalStayMins / 60}h ${totalStayMins % 60}m"
+
+    Surface(
         modifier = modifier
             .fillMaxWidth()
             .padding(16.dp),
-        shape = RoundedCornerShape(24.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceBright.copy(0.95f)
-        ),
-        elevation = CardDefaults.cardElevation(8.dp)
+        shape = RoundedCornerShape(22.dp),
+        color = Color(0xEE111820),
+        shadowElevation = 10.dp
     ) {
         Column(
-            modifier = Modifier
-                .background(MaterialTheme.colorScheme.surfaceBright.copy(0.95f))
-                .padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(16.dp)
+            modifier = Modifier.padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
 
             Row(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween
+                horizontalArrangement = Arrangement.spacedBy(12.dp),
+                verticalAlignment = Alignment.Top
             ) {
 
-                Column {
+                Column(
+                    modifier = Modifier.weight(1f),
+                    verticalArrangement = Arrangement.spacedBy(3.dp)
+                ) {
                     Text(
                         text = session.name,
                         style = MaterialTheme.typography.titleMedium,
-                        fontFamily = manrope
+                        fontFamily = manrope,
+                        fontWeight = FontWeight.SemiBold,
+                        color = Color.White,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
                     )
 
                     Text(
-                        text = "Location session • $date • $durationText",
+                        text = "$date / $durationText journey",
                         style = MaterialTheme.typography.labelMedium,
                         fontFamily = manrope,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                        color = Color.White.copy(alpha = 0.62f),
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
                     )
                 }
 
-                TextButton(onClick = onClose) {
-                    Text(
-                        "Close",
-                        fontFamily = manrope
+                IconButton(
+                    modifier = Modifier.size(34.dp),
+                    colors = IconButtonDefaults.iconButtonColors(
+                        containerColor = Color.White.copy(alpha = 0.08f),
+                        contentColor = Color.White.copy(alpha = 0.78f)
+                    ),
+                    onClick = onClose
+                ) {
+                    Icon(
+                        painter = painterResource(R.drawable.clear),
+                        contentDescription = "Close",
+                        modifier = Modifier.size(18.dp)
                     )
                 }
             }
 
             HorizontalDivider(
-                color = MaterialTheme.colorScheme.outline
+                color = Color.White.copy(alpha = 0.10f)
             )
 
-            Column(
-                verticalArrangement = Arrangement.spacedBy(4.dp)
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(14.dp)
             ) {
-                Text(
-                    text = "Started at $startTime",
-                    style = MaterialTheme.typography.labelMedium,
-                    fontFamily = manrope,
-                    color = MaterialTheme.colorScheme.primary
+                SessionEndpointSummary(
+                    label = "Start",
+                    time = startTime,
+                    location = startLocation,
+                    accentColor = Color(0xFF8FD8EA),
+                    modifier = Modifier.weight(1f)
                 )
 
-                Text(
-                    text = session.startAddress,
-                    style = MaterialTheme.typography.bodyMedium,
-                    fontFamily = manrope,
-                )
-            }
-
-            Column(
-                verticalArrangement = Arrangement.spacedBy(4.dp)
-            ) {
-                Text(
-                    text = "Ended at $endTime",
-                    style = MaterialTheme.typography.labelMedium,
-                    fontFamily = manrope,
-                    color = MaterialTheme.colorScheme.secondary
-                )
-
-                Text(
-                    text = session.endAddress,
-                    style = MaterialTheme.typography.bodyMedium,
-                    fontFamily = manrope,
+                SessionEndpointSummary(
+                    label = "End",
+                    time = endTime,
+                    location = endLocation,
+                    accentColor = Color(0xFFFFB4A9),
+                    modifier = Modifier.weight(1f)
                 )
             }
 
 
-            if (session.stayPoints.isNotEmpty()) {
-                HorizontalDivider(
-                    color = MaterialTheme.colorScheme.outline
-                )
-
-                val stayCount = session.stayPoints.size
-                val totalStayMins = session.stayPoints.sumOf { it.durationMillis } / 60_000
-                val totalStayText = if (totalStayMins < 60) "$totalStayMins min"
-                else "${totalStayMins / 60}h ${totalStayMins % 60}m"
-
-                Column(
-                    verticalArrangement = Arrangement.spacedBy(4.dp)
+            if (stayCount > 0) {
+                Surface(
+                    shape = RoundedCornerShape(99.dp),
+                    color = Color.White.copy(alpha = 0.08f)
                 ) {
                     Text(
-                        text = "$stayCount Stay Point${if (stayCount > 1) "s" else ""}",
+                        text = "$stayCount stop${if (stayCount > 1) "s" else ""} / $totalStayText paused",
+                        modifier = Modifier.padding(horizontal = 11.dp, vertical = 6.dp),
                         style = MaterialTheme.typography.labelMedium,
                         fontFamily = manrope,
-                        color = Color(0xFFFF9800)
-                    )
-
-                    Text(
-                        text = "Total time stayed: $totalStayText",
-                        style = MaterialTheme.typography.bodyMedium,
-                        fontFamily = manrope,
+                        fontWeight = FontWeight.SemiBold,
+                        color = Color(0xFFFFD39B),
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
                     )
                 }
             }
         }
     }
+}
+
+@Composable
+private fun SessionEndpointSummary(
+    label: String,
+    time: String,
+    location: String,
+    accentColor: Color,
+    modifier: Modifier = Modifier
+) {
+    Column(
+        modifier = modifier,
+        verticalArrangement = Arrangement.spacedBy(4.dp)
+    ) {
+        Text(
+            text = "$label / $time",
+            style = MaterialTheme.typography.labelMedium,
+            fontFamily = manrope,
+            fontWeight = FontWeight.SemiBold,
+            color = accentColor,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis
+        )
+
+        Text(
+            text = location,
+            style = MaterialTheme.typography.bodyMedium,
+            fontFamily = manrope,
+            color = Color.White.copy(alpha = 0.82f),
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis
+        )
+    }
+}
+
+private fun compactTimelineLocation(address: String): String {
+    val parts = address
+        .split(",")
+        .map { it.trim() }
+        .filter { it.isNotEmpty() }
+
+    return parts.take(2).joinToString(", ").ifBlank { address }
 }
 
 @Composable
