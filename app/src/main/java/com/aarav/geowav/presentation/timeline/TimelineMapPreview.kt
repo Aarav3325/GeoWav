@@ -3,6 +3,7 @@ package com.aarav.geowav.presentation.timeline
 import android.graphics.Bitmap
 import android.graphics.Canvas
 import android.graphics.Paint
+import android.graphics.Typeface
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -142,10 +143,10 @@ fun TimelineMapPreview(
     }
 
     val startIcon = remember(mapLoaded) {
-        if (mapLoaded) timelineMarkerIcon(Color(0xFF515B92), true) else null
+        if (mapLoaded) timelineMarkerIcon(Color(0xFF8FD8EA), true) else null
     }
     val endIcon = remember(mapLoaded) {
-        if (mapLoaded) timelineMarkerIcon(Color(0xFF904A44), false) else null
+        if (mapLoaded) timelineMarkerIcon(Color(0xFFFFB4A9), false) else null
     }
     val movingIcon = remember(mapLoaded) {
         if (mapLoaded) movingPlaybackMarkerIcon() else null
@@ -1101,26 +1102,42 @@ fun createTimelineMarkerBitmap(
     isStart: Boolean
 ): Bitmap {
 
-    val size = 96
+    val size = 92
     val bitmap = createBitmap(size, size)
     val canvas = Canvas(bitmap)
     val paint = Paint(Paint.ANTI_ALIAS_FLAG)
 
+    val center = size / 2f
 
-    paint.color = color
-    paint.alpha = 60
-    canvas.drawCircle(size / 2f, size / 2f, size / 2.2f, paint)
-
-
-    paint.alpha = 255
-    paint.color = color
-    canvas.drawCircle(size / 2f, size / 2f, size / 3f, paint)
+    paint.style = Paint.Style.FILL
+    paint.color = android.graphics.Color.parseColor("#101820")
+    paint.alpha = 180
+    canvas.drawCircle(center, center, size / 2.55f, paint)
 
 
     paint.style = Paint.Style.STROKE
-    paint.strokeWidth = 6f
+    paint.strokeWidth = 7f
+    paint.color = color
+    paint.alpha = 255
+    canvas.drawCircle(center, center, size / 3.15f, paint)
+
+
+    paint.style = Paint.Style.FILL
     paint.color = android.graphics.Color.WHITE
-    canvas.drawCircle(size / 2f, size / 2f, size / 3f, paint)
+    paint.alpha = 245
+    canvas.drawCircle(center, center, size / 4.15f, paint)
+
+    paint.color = color
+    paint.alpha = 255
+    canvas.drawCircle(center, center, size / 9.5f, paint)
+
+    paint.color = android.graphics.Color.parseColor("#101820")
+    paint.textAlign = Paint.Align.CENTER
+    paint.typeface = Typeface.create(Typeface.DEFAULT, Typeface.BOLD)
+    paint.textSize = 22f
+    val label = if (isStart) "S" else "E"
+    val textCenterOffset = (paint.descent() + paint.ascent()) / 2f
+    canvas.drawText(label, center, center - textCenterOffset, paint)
 
     return bitmap
 }
