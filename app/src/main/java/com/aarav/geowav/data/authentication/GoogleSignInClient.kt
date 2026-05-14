@@ -73,7 +73,7 @@ class GoogleSignInClient @Inject constructor(
     }
 
     // google sign in
-    suspend fun signIn(activity: Activity): Boolean {
+    suspend fun signIn(activity: Activity): AuthResult {
         try {
             val result = buildCredentialRequest(activity)
             return handleSignIn(result)
@@ -81,12 +81,12 @@ class GoogleSignInClient @Inject constructor(
             if (e is CancellationException)
                 throw e
             Log.e(tag, "signIn error: ${e.message}")
-            return false
+            return AuthResult.Failure(googleAuthFailureMessage(e))
         }
     }
 
     // handle credential response from credential manager
-    private suspend fun handleSignIn(result: GetCredentialResponse): Boolean {
+    private suspend fun handleSignIn(result: GetCredentialResponse): AuthResult {
         val credential = result.credential
 
         if (credential is CustomCredential &&
@@ -103,14 +103,15 @@ class GoogleSignInClient @Inject constructor(
                     storeUserData(authResult.user?.email ?: "", authResult.user?.displayName ?: "")
                 }
 
-                return authResult.user != null
+                return authResult.user?.uid?.let { AuthResult.Success(it) }
+                    ?: AuthResult.Failure("Google sign-in could not be completed. Try again.")
             } catch (e: GoogleIdTokenParsingException) {
                 e.printStackTrace()
-                return false
+                return AuthResult.Failure("Google sign-in could not be verified.")
             }
         } else {
             Log.i(tag, "handleSignIn : Invalid Credential")
-            return false
+            return AuthResult.Failure("Google sign-in could not be verified.")
         }
     }
 
@@ -143,26 +144,28 @@ class GoogleSignInClient @Inject constructor(
         username: String,
         email: String,
         password: String
-    ): Boolean {
+    ): AuthResult {
         return try {
 
             val finalEmail = email.trim()
             val finalPass = password.trim()
 
-            if (finalEmail.isBlank() || finalPass.isBlank()) return false
+            if (finalEmail.isBlank() || finalPass.isBlank()) {
+                return AuthResult.Failure("Enter your email and password to continue.")
+            }
 
             val user =
                 firebaseAuth.createUserWithEmailAndPassword(finalEmail, finalPass).await().user
 
             if (user != null) {
                 storeUserData(finalEmail, username)
-                return true
+                return AuthResult.Success(user.uid)
             } else {
-                return false
+                return AuthResult.Failure("We couldn't create your account. Try again.")
             }
         } catch (e: Exception) {
             Log.e(tag, "signUp failed", e)
-            false
+            AuthResult.Failure(emailAuthFailureMessage(e, "We couldn't create your account. Try again."))
         }
     }
 
@@ -171,7 +174,7 @@ class GoogleSignInClient @Inject constructor(
     suspend fun signInWithEmailAndPassword(
         email: String,
         password: String
-    ): Boolean {
+    ): AuthResult {
 
         return try {
 
@@ -182,7 +185,7 @@ class GoogleSignInClient @Inject constructor(
                 finalEmail.isBlank() ||
                 finalPass.isBlank()
             ) {
-                return false
+                return AuthResult.Failure("Enter your email and password to continue.")
             }
 
             val user = firebaseAuth
@@ -193,10 +196,53 @@ class GoogleSignInClient @Inject constructor(
                 .await()
                 .user
 
-            if (user != null) return true else false
+            if (user != null) {
+                AuthResult.Success(user.uid)
+            } else {
+                AuthResult.Failure("Check your email and password, then try again.")
+            }
         } catch (e: Exception) {
             Log.e(tag, e.message.toString())
-            false
+            AuthResult.Failure(emailAuthFailureMessage(e, "Check your email and password, then try again."))
+        }
+    }
+
+    private fun googleAuthFailureMessage(error: Exception): String {
+        val message = error.message.orEmpty()
+        val type = error.javaClass.simpleName
+
+        return when {
+            type.contains("Cancellation", ignoreCase = true) ->
+                "Sign-in was cancelled."
+
+            message.contains("network", ignoreCase = true) ||
+                    message.contains("connection", ignoreCase = true) ->
+                "Connection issue. Try again in a moment."
+
+            else -> "Google sign-in could not be completed. Try again."
+        }
+    }
+
+    private fun emailAuthFailureMessage(error: Exception, fallback: String): String {
+        val message = error.message.orEmpty()
+
+        return when {
+            message.contains("network", ignoreCase = true) ||
+                    message.contains("connection", ignoreCase = true) ->
+                "Connection issue. Try again in a moment."
+
+            message.contains("email address is badly formatted", ignoreCase = true) ->
+                "Enter a valid email address."
+
+            message.contains("email address is already in use", ignoreCase = true) ->
+                "An account already exists for this email."
+
+            message.contains("password is invalid", ignoreCase = true) ||
+                    message.contains("no user record", ignoreCase = true) ||
+                    message.contains("credential is incorrect", ignoreCase = true) ->
+                "Check your email and password, then try again."
+
+            else -> fallback
         }
     }
 

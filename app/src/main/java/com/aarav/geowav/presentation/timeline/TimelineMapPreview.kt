@@ -822,8 +822,7 @@ private fun ReplayHelpSheetContent(
                 colors = IconButtonDefaults.iconButtonColors(
                     containerColor = MaterialTheme.colorScheme.surfaceContainer,
                     contentColor = MaterialTheme.colorScheme.onSurface
-                ),
-                onClick = onDismiss
+                ),                onClick = onDismiss
             ) {
                 Icon(
                     painter = painterResource(R.drawable.clear),
