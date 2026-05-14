@@ -400,9 +400,7 @@ fun TimelineMapPreview(
 
             val mapMode = when (uiState.mapType) {
                 com.google.maps.android.compose.MapType.NORMAL -> "Normal"
-                com.google.maps.android.compose.MapType.SATELLITE -> "Satellite"
-                com.google.maps.android.compose.MapType.TERRAIN -> "Terrain"
-                com.google.maps.android.compose.MapType.HYBRID -> "Hybrid"
+                com.google.maps.android.compose.MapType.HYBRID -> "Satellite"
                 else -> "Map"
             }
 
@@ -421,15 +419,16 @@ fun TimelineMapPreview(
             ) {
                 Surface(
                     shape = RoundedCornerShape(24.dp),
-                    color = MaterialTheme.colorScheme.surfaceContainerLow
+                    color = Color(0xDD111820),
+                    shadowElevation = 8.dp
                 ) {
                     Text(
-                        text = "Switched to $mapMode mode",
-                        color = MaterialTheme.colorScheme.onSurface,
-                        fontSize = 14.sp,
+                        text = "$mapMode map",
+                        color = Color.White.copy(alpha = 0.86f),
+                        fontSize = 13.sp,
                         fontWeight = FontWeight.SemiBold,
                         fontFamily = manrope,
-                        modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp)
+                        modifier = Modifier.padding(horizontal = 13.dp, vertical = 7.dp)
                     )
                 }
             }
