@@ -32,7 +32,6 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TextField
-import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -122,15 +121,30 @@ fun LoginScreen(
             Spacer(modifier = Modifier.height(8.dp))
 
             Text(
-                text = "Stay synced with your circle",
-                fontSize = 16.sp,
+                text = "Sign in to keep trusted movement sharing within reach.",
+                fontSize = 15.sp,
                 fontFamily = manrope,
                 fontWeight = FontWeight.Medium,
-                color = MaterialTheme.colorScheme.onBackground,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
                 textAlign = TextAlign.Center
             )
 
-            Spacer(modifier = Modifier.height(40.dp))
+            Spacer(modifier = Modifier.height(12.dp))
+
+            Text(
+                text = "Your location stays private until you choose to share it.",
+                fontSize = 13.sp,
+                lineHeight = 18.sp,
+                fontFamily = manrope,
+                fontWeight = FontWeight.Normal,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                textAlign = TextAlign.Center,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 12.dp)
+            )
+
+            Spacer(modifier = Modifier.height(32.dp))
 
             // Google Login Button
             Card(
@@ -173,10 +187,11 @@ fun LoginScreen(
 
 
             Text(
-                text = "Or login with email",
+                text = "Or continue with email",
                 fontSize = 14.sp,
+                fontWeight = FontWeight.Medium,
                 fontFamily = manrope,
-                color = MaterialTheme.colorScheme.inverseSurface
+                color = MaterialTheme.colorScheme.onSurfaceVariant
             )
 
             Spacer(modifier = Modifier.height(16.dp))
@@ -187,7 +202,7 @@ fun LoginScreen(
                     Text(
                         "Email",
                         fontFamily = manrope,
-                        color = MaterialTheme.colorScheme.inverseSurface
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 },
                 isError = uiState.emailError != null,
@@ -219,15 +234,7 @@ fun LoginScreen(
                         contentDescription = "email icon",
                         modifier = Modifier.size(24.dp)
                     )
-                }, colors = TextFieldDefaults.colors(
-                    focusedContainerColor = MaterialTheme.colorScheme.surfaceContainer,
-                    unfocusedContainerColor = MaterialTheme.colorScheme.surfaceContainer,
-                    focusedIndicatorColor = MaterialTheme.colorScheme.primary,
-                    unfocusedIndicatorColor = Color.Transparent,
-                    focusedLabelColor = MaterialTheme.colorScheme.primary,
-                    unfocusedLabelColor = Color.DarkGray,
-                    cursorColor = MaterialTheme.colorScheme.primary
-                ), shape = RoundedCornerShape(12.dp)
+                }, colors = authTextFieldColors(), shape = RoundedCornerShape(12.dp)
             )
 
             Spacer(modifier = Modifier.height(12.dp))
@@ -268,7 +275,7 @@ fun LoginScreen(
                     Text(
                         "Password",
                         fontFamily = manrope,
-                        color = MaterialTheme.colorScheme.inverseSurface
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 },
                 isError = uiState.passwordError != null,
@@ -309,15 +316,7 @@ fun LoginScreen(
                     )
                 },
                 singleLine = true,
-                colors = TextFieldDefaults.colors(
-                    focusedContainerColor = MaterialTheme.colorScheme.surfaceContainer,
-                    unfocusedContainerColor = MaterialTheme.colorScheme.surfaceContainer,
-                    focusedIndicatorColor = MaterialTheme.colorScheme.primary,
-                    unfocusedIndicatorColor = Color.Transparent,
-                    focusedLabelColor = MaterialTheme.colorScheme.primary,
-                    unfocusedLabelColor = Color.DarkGray,
-                    cursorColor = MaterialTheme.colorScheme.primary
-                ),
+                colors = authTextFieldColors(),
                 shape = RoundedCornerShape(12.dp)
             )
 

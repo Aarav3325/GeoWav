@@ -32,7 +32,6 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TextField
-import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -124,15 +123,30 @@ fun SignupScreen(
             Spacer(modifier = Modifier.height(8.dp))
 
             Text(
-                text = "Create your GeoWav account",
-                fontSize = 16.sp,
+                text = "Create a calm space for trusted movement sharing.",
+                fontSize = 15.sp,
                 fontFamily = manrope,
                 fontWeight = FontWeight.Medium,
-                color = MaterialTheme.colorScheme.onBackground,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
                 textAlign = TextAlign.Center
             )
 
-            Spacer(modifier = Modifier.height(40.dp))
+            Spacer(modifier = Modifier.height(12.dp))
+
+            Text(
+                text = "GeoWav only shares location when you allow it.",
+                fontSize = 13.sp,
+                lineHeight = 18.sp,
+                fontFamily = manrope,
+                fontWeight = FontWeight.Normal,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                textAlign = TextAlign.Center,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 12.dp)
+            )
+
+            Spacer(modifier = Modifier.height(32.dp))
 
             // Google Signup
             Card(
@@ -175,10 +189,11 @@ fun SignupScreen(
             Spacer(modifier = Modifier.height(16.dp))
 
             Text(
-                text = "Or sign up with email",
+                text = "Or continue with email",
                 fontSize = 14.sp,
+                fontWeight = FontWeight.Medium,
                 fontFamily = manrope,
-                color = MaterialTheme.colorScheme.inverseSurface
+                color = MaterialTheme.colorScheme.onSurfaceVariant
             )
 
             Spacer(modifier = Modifier.height(16.dp))
@@ -190,7 +205,7 @@ fun SignupScreen(
                     Text(
                         "Name",
                         fontFamily = manrope,
-                        color = MaterialTheme.colorScheme.inverseSurface
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 },
                 leadingIcon = {
@@ -223,15 +238,7 @@ fun SignupScreen(
                 ),
                 modifier = Modifier.fillMaxWidth(),
                 singleLine = true,
-                colors = TextFieldDefaults.colors(
-                    focusedContainerColor = MaterialTheme.colorScheme.surfaceContainer,
-                    unfocusedContainerColor = MaterialTheme.colorScheme.surfaceContainer,
-                    focusedIndicatorColor = MaterialTheme.colorScheme.primary,
-                    unfocusedIndicatorColor = Color.Transparent,
-                    focusedLabelColor = MaterialTheme.colorScheme.primary,
-                    unfocusedLabelColor = Color.DarkGray,
-                    cursorColor = MaterialTheme.colorScheme.primary
-                ),
+                colors = authTextFieldColors(),
                 shape = RoundedCornerShape(12.dp)
             )
 
@@ -244,7 +251,7 @@ fun SignupScreen(
                     Text(
                         "Email",
                         fontFamily = manrope,
-                        color = MaterialTheme.colorScheme.inverseSurface
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 },
                 leadingIcon = {
@@ -279,15 +286,7 @@ fun SignupScreen(
                     .fillMaxWidth()
                     .focusRequester(emailFocusRequester),
                 singleLine = true,
-                colors = TextFieldDefaults.colors(
-                    focusedContainerColor = MaterialTheme.colorScheme.surfaceContainer,
-                    unfocusedContainerColor = MaterialTheme.colorScheme.surfaceContainer,
-                    focusedIndicatorColor = MaterialTheme.colorScheme.primary,
-                    unfocusedIndicatorColor = Color.Transparent,
-                    focusedLabelColor = MaterialTheme.colorScheme.primary,
-                    unfocusedLabelColor = Color.DarkGray,
-                    cursorColor = MaterialTheme.colorScheme.primary
-                ),
+                colors = authTextFieldColors(),
                 shape = RoundedCornerShape(12.dp)
             )
 
@@ -329,7 +328,7 @@ fun SignupScreen(
                     Text(
                         "Password",
                         fontFamily = manrope,
-                        color = MaterialTheme.colorScheme.inverseSurface
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 },
                 leadingIcon = {
@@ -371,15 +370,7 @@ fun SignupScreen(
                         )
                     }
                 ),
-                colors = TextFieldDefaults.colors(
-                    focusedContainerColor = MaterialTheme.colorScheme.surfaceContainer,
-                    unfocusedContainerColor = MaterialTheme.colorScheme.surfaceContainer,
-                    focusedIndicatorColor = MaterialTheme.colorScheme.primary,
-                    unfocusedIndicatorColor = Color.Transparent,
-                    focusedLabelColor = MaterialTheme.colorScheme.primary,
-                    unfocusedLabelColor = Color.DarkGray,
-                    cursorColor = MaterialTheme.colorScheme.primary
-                ),
+                colors = authTextFieldColors(),
                 shape = RoundedCornerShape(12.dp)
             )
 
