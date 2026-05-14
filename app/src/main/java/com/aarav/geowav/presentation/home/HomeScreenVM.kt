@@ -3,6 +3,8 @@ package com.aarav.geowav.presentation.home
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.aarav.geowav.core.permissions.GeoPermissionCoordinator
+import com.aarav.geowav.core.permissions.GeoPermissionUiState
 import com.aarav.geowav.core.utils.ActivityFilter
 import com.aarav.geowav.core.utils.Resource
 import com.aarav.geowav.core.utils.ViewerLocationState
@@ -43,6 +45,7 @@ class HomeScreenVM @Inject constructor(
     private val geoActivityRepositoryImpl: GeoActivityRepositoryImpl,
     private val circleRepository: CircleRepository,
     private val viewerLocationRepository: ViewerLocationRepository,
+    private val permissionCoordinator: GeoPermissionCoordinator,
 ) : ViewModel() {
 
     private val _uiState: MutableStateFlow<HomeScreenUiState> =
@@ -265,6 +268,24 @@ class HomeScreenVM @Inject constructor(
         }
 
         getUserProfile()
+        observePermissionState()
+    }
+
+    fun refreshPermissionState() {
+        _uiState.update {
+            it.copy(permissionState = permissionCoordinator.refresh())
+        }
+    }
+
+    private fun observePermissionState() {
+        refreshPermissionState()
+        viewModelScope.launch {
+            permissionCoordinator.state.collect { permissionState ->
+                _uiState.update {
+                    it.copy(permissionState = permissionState)
+                }
+            }
+        }
     }
 
     fun drawAnimatedPath(
@@ -385,5 +406,6 @@ data class HomeScreenUiState(
     val userAvatar: String? = null,
     val username: String? = null,
     val viewerState: ViewerLocationState? = ViewerLocationState.Blocked,
-    val remainingTime: String? = null
+    val remainingTime: String? = null,
+    val permissionState: GeoPermissionUiState = GeoPermissionUiState()
 )

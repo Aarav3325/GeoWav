@@ -1,10 +1,7 @@
 package com.aarav.geowav.presentation.onboard
 
-import androidx.compose.foundation.pager.PagerState
 import androidx.lifecycle.ViewModel
-import com.google.accompanist.permissions.ExperimentalPermissionsApi
-import com.google.accompanist.permissions.PermissionState
-import com.google.accompanist.permissions.isGranted
+import com.aarav.geowav.core.permissions.GeoPermissionCoordinator
 import dagger.hilt.android.lifecycle.HiltViewModel
 import jakarta.inject.Inject
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -13,7 +10,9 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 
 @HiltViewModel
-class OnBoardVM @Inject constructor(): ViewModel() {
+class OnBoardVM @Inject constructor(
+    private val permissionCoordinator: GeoPermissionCoordinator
+) : ViewModel() {
 
     private val _uiState = MutableStateFlow(OnBoardUIState())
     val uiState: StateFlow<OnBoardUIState> = _uiState.asStateFlow()
@@ -24,15 +23,16 @@ class OnBoardVM @Inject constructor(): ViewModel() {
 
     fun onContinueClicked() {
         if (_uiState.value.currentPage == _uiState.value.pages.lastIndex) {
-            _uiState.update { it.copy(showPermissionDialog = true) }
+            _uiState.update { it.copy(showPermissionSetup = true) }
         }
     }
 
-    fun onPermissionDialogDismiss() {
-        _uiState.update { it.copy(showPermissionDialog = false) }
+    fun onPermissionSetupDismiss() {
+        _uiState.update { it.copy(showPermissionSetup = false) }
     }
 
     fun onFineLocationResult(granted: Boolean) {
+        permissionCoordinator.refresh()
         _uiState.update {
             it.copy(
                 isFineLocationGranted = granted,
@@ -42,10 +42,22 @@ class OnBoardVM @Inject constructor(): ViewModel() {
     }
 
     fun onBackgroundLocationResult(granted: Boolean) {
+        permissionCoordinator.refresh()
         _uiState.update {
             it.copy(
                 isBackgroundGranted = granted,
                 allPermissionsGranted = granted && it.isFineLocationGranted
+            )
+        }
+    }
+
+    fun completeOnboarding(skippedPermissionSetup: Boolean) {
+        permissionCoordinator.markOnboardingEducationComplete(skippedPermissionSetup)
+        _uiState.update {
+            it.copy(
+                isOnboardingComplete = true,
+                skippedPermissionSetup = skippedPermissionSetup,
+                showPermissionSetup = false
             )
         }
     }
@@ -55,9 +67,11 @@ class OnBoardVM @Inject constructor(): ViewModel() {
 data class OnBoardUIState(
     val pages: List<OnBoardingPage> = OnBoardContent.pages,
     val currentPage: Int = 0,
-    val showPermissionDialog: Boolean = false,
+    val showPermissionSetup: Boolean = false,
     val isFineLocationGranted: Boolean = false,
     val isBackgroundGranted: Boolean = false,
     val requestingBackground: Boolean = false,
-    val allPermissionsGranted: Boolean = false
+    val allPermissionsGranted: Boolean = false,
+    val isOnboardingComplete: Boolean = false,
+    val skippedPermissionSetup: Boolean = false
 )

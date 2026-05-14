@@ -55,6 +55,7 @@ import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.aarav.geowav.core.managers.KillSwitchManager
+import com.aarav.geowav.core.permissions.GeoPermissionCoordinator
 import com.aarav.geowav.data.authentication.GoogleSignInClient
 import com.aarav.geowav.platform.GeofenceBroadcastReceiver
 import com.aarav.geowav.platform.GeofenceForegroundService
@@ -63,7 +64,6 @@ import com.aarav.geowav.platform.LocationManager
 import com.aarav.geowav.platform.NotificationService
 import com.aarav.geowav.presentation.MainVM
 import com.aarav.geowav.presentation.components.AppDisabled
-import com.aarav.geowav.presentation.components.LocationPermissionDialog
 import com.aarav.geowav.presentation.components.NotificationDisabledDialog
 import com.aarav.geowav.presentation.components.SnackbarManager
 import com.aarav.geowav.presentation.navigation.BottomNavigationBar
@@ -82,7 +82,6 @@ import com.google.android.gms.location.LocationServices
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.distinctUntilChanged
-import kotlinx.coroutines.flow.map
 import javax.inject.Inject
 
 @AndroidEntryPoint
@@ -102,6 +101,9 @@ class MainActivity : ComponentActivity() {
 
     @Inject
     lateinit var locationManager: LocationManager
+
+    @Inject
+    lateinit var permissionCoordinator: GeoPermissionCoordinator
 
     @Inject
     lateinit var geofencingClient: GeofencingClient
@@ -170,14 +172,18 @@ class MainActivity : ComponentActivity() {
                 Log.i("MYTAG", "notification permissions: $check")
             }
 
-            val isLoggedInFlow = remember {
+            val userIdFlow = remember {
                 googleSignInClient.getUserIdFlow()
-                    .map { it.isNotBlank() }
             }
-            val isLoggedIn by isLoggedInFlow.collectAsState(initial = false)
+            val userId by userIdFlow.collectAsState(initial = googleSignInClient.getUserId())
+            val isLoggedIn = userId.isNotBlank()
 
-            LaunchedEffect(isLoggedIn) {
+            LaunchedEffect(userId) {
                 Log.i("SERVICE", "logged in : $isLoggedIn")
+                if (!isLoggedIn) {
+                    stopAllCriticalServices()
+                    showDialog = false
+                }
             }
 
             NotificationServiceInitializer(
@@ -203,22 +209,25 @@ class MainActivity : ComponentActivity() {
                 )
             }
 
-            LaunchedEffect(Unit) {
-                if (googleSignInClient.isLoggedIn()) {
-                    killSwitchManager.fetchAndActivate()
-                    killSwitchManager.observeAppEnabled()
-                        .collect { enabled ->
-                            if (!enabled) {
-
-                                Log.i("KILL", "app in kill mode")
-                                stopAllCriticalServices()
-                                showAppDisabledState = true
-                            } else {
-                                showAppDisabledState = false
-                                Log.i("KILL", "app not in kill mode")
-                            }
-                        }
+            LaunchedEffect(userId) {
+                if (!isLoggedIn) {
+                    showAppDisabledState = false
+                    return@LaunchedEffect
                 }
+
+                killSwitchManager.fetchAndActivate()
+                killSwitchManager.observeAppEnabled()
+                    .collect { enabled ->
+                        if (!enabled) {
+
+                            Log.i("KILL", "app in kill mode")
+                            stopAllCriticalServices()
+                            showAppDisabledState = true
+                        } else {
+                            showAppDisabledState = false
+                            Log.i("KILL", "app not in kill mode")
+                        }
+                    }
             }
 
 
@@ -231,11 +240,15 @@ class MainActivity : ComponentActivity() {
                 mutableStateOf<Location?>(null)
             }
 
-            LaunchedEffect(isLoggedIn) {
-                if(isLoggedIn) {
+            val permissionUiState by permissionCoordinator.state.collectAsState()
+
+            LaunchedEffect(userId, permissionUiState.foregroundLocationGranted) {
+                if (isLoggedIn && permissionUiState.foregroundLocationGranted) {
                     locationManager.getLocationUpdates().distinctUntilChanged().collectLatest {
                         location = it
                     }
+                } else {
+                    location = null
                 }
             }
 
@@ -253,9 +266,12 @@ class MainActivity : ComponentActivity() {
             }
 
 
-            LaunchedEffect(Unit) {
-                if(!isLoggedIn) return@LaunchedEffect
-                mainVM.fetchUser()
+            LaunchedEffect(userId) {
+                if (isLoggedIn) {
+                    mainVM.fetchUser()
+                } else {
+                    mainVM.clearCurrentUser()
+                }
             }
 
 
@@ -290,16 +306,17 @@ class MainActivity : ComponentActivity() {
                     controller.isAppearanceLightStatusBars = !isDark
 
 
-                    val isOnboarded = sharedPreferences.getBoolean("isOnboarded", false)
-
                     val fineLocationPermission =
                         rememberPermissionState(Manifest.permission.ACCESS_FINE_LOCATION)
                     val backgroundLocationPermission =
                         rememberPermissionState(Manifest.permission.ACCESS_BACKGROUND_LOCATION)
 
 
+                    val permissionState = permissionCoordinator.refresh()
                     val permissionsGranted =
-                        fineLocationPermission.status.isGranted && backgroundLocationPermission.status.isGranted
+                        fineLocationPermission.status.isGranted &&
+                            backgroundLocationPermission.status.isGranted &&
+                            permissionState.locationServicesReady
 
                     Log.i("MYTAG", "permissions $permissionsGranted")
 
@@ -320,17 +337,6 @@ class MainActivity : ComponentActivity() {
                         }
 
                     }
-
-                    LocationPermissionDialog(
-                        isOnboarded && !permissionsGranted,
-                        onConfirmClick = {
-                            openAppSettings(
-                                context,
-                                Settings.ACTION_LOCATION_SOURCE_SETTINGS
-                            )
-                        }
-                    )
-
 
                     val navController = rememberNavController()
 
@@ -380,7 +386,7 @@ class MainActivity : ComponentActivity() {
                             }
                         }) {
                         val location1 =
-                            location?.let { it.latitude to it.longitude } ?: (0.0 to 0.0)
+                            location?.let { it.latitude to it.longitude }
 
 
                         NavGraph(
@@ -393,6 +399,7 @@ class MainActivity : ComponentActivity() {
                             subscriptionVM = subscriptionVM,
                             sharedPreferences = sharedPreferences,
                             location = location1,
+                            permissionState = permissionUiState,
                             googleSignInClient = googleSignInClient,
                             modifier = Modifier
                                 .padding(it)
@@ -454,10 +461,8 @@ class MainActivity : ComponentActivity() {
                         startServiceIfNeeded()
                     }
 
-                    // Runtime denied - request permission (first launch case)
-                    !runtimeGranted -> {
-                        notificationPermission.launchPermissionRequest()
-                    }
+                    // Runtime denied: onboarding/profile explain this before the system prompt.
+                    !runtimeGranted -> Unit
 
                     // Runtime granted but toggle disabled - user turned off in settings
                     runtimeGranted && !enabled -> {
@@ -502,8 +507,14 @@ class MainActivity : ComponentActivity() {
 
                     } else {
                         // Android 13+
-                        if (notificationPermission.status.isGranted) {
+                        if (
+                            notificationPermission.status.isGranted &&
+                            NotificationManagerCompat.from(context).areNotificationsEnabled()
+                        ) {
+                            dismissDialog()
                             startServiceIfNeeded()
+                        } else if (notificationPermission.status.isGranted) {
+                            showSettingsDialog()
                         }
                     }
                 }
@@ -520,8 +531,13 @@ class MainActivity : ComponentActivity() {
     private fun stopAllCriticalServices() {
 
         stopService(Intent(this, LiveLocationService::class.java))
+        Log.d("SERVICE", "Live Location services stopped - 1/3")
         stopService(Intent(this, GeofenceForegroundService::class.java))
+        Log.d("SERVICE", "Geofence services stopped - 2/3")
         stopService(Intent(this, NotificationService::class.java))
+        Log.d("SERVICE", "Notification service stopped - 3/3")
+
+        Log.d("SERVICE", "All services stopped")
 
         val pendingIntent = PendingIntent.getBroadcast(
             this,
@@ -531,6 +547,7 @@ class MainActivity : ComponentActivity() {
         )
 
         geofencingClient.removeGeofences(pendingIntent)
+        Log.d("SERVICE", "Geofence pending intent removed")
     }
 
 }

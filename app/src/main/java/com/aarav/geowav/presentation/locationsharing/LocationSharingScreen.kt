@@ -64,6 +64,7 @@ import com.aarav.geowav.data.model.UpgradeReason
 import com.aarav.geowav.data.model.UserPlan
 import com.aarav.geowav.presentation.components.EmergencyShareDialog
 import com.aarav.geowav.presentation.components.CustomBottomSheet
+import com.aarav.geowav.presentation.components.PermissionRequiredContent
 import com.aarav.geowav.presentation.components.SnackbarManager
 import com.aarav.geowav.presentation.components.UpgradeBottomSheetContent
 import com.aarav.geowav.presentation.subscription.SubscriptionViewModel
@@ -83,8 +84,10 @@ import kotlinx.coroutines.delay
 fun LocationSharingScreen(
     viewModel: LocationSharingVM,
     navigateToPaywall: () -> Unit,
+    navigateToSettings: () -> Unit,
     subscriptionVM: SubscriptionViewModel,
-    location: Pair<Double, Double>?
+    location: Pair<Double, Double>?,
+    locationServicesReady: Boolean
 ) {
 
     val uiState by viewModel.uiState.collectAsState()
@@ -171,6 +174,17 @@ fun LocationSharingScreen(
         contentWindowInsets = WindowInsets(0, 0, 0, 0),
         containerColor = MaterialTheme.colorScheme.background,
     ) { padding ->
+        if (!locationServicesReady) {
+            PermissionRequiredContent(
+                title = "Location setup is needed",
+                message = "Live sharing and emergency sharing need live and background location access so updates can continue reliably.",
+                primaryActionText = "Review setup",
+                onPrimaryAction = navigateToSettings,
+                modifier = Modifier.padding(padding)
+            )
+            return@Scaffold
+        }
+
         LocationSharingContent(
             modifier = Modifier.padding(padding),
             locationUiState = uiState,
