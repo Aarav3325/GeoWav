@@ -18,6 +18,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -53,6 +54,7 @@ import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.scale
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.painter.Painter
@@ -484,7 +486,7 @@ fun TimelineMapPreview(
                 if (!isPreparingRoute) {
                     delay(1200)
                     showReplayHint = true
-                    delay(5000)
+                    delay(4000)
                     showReplayHint = false
                 }
             }
@@ -741,7 +743,8 @@ private fun SessionPreviewTopBar(
 
         Surface(
             shape = RoundedCornerShape(99.dp),
-            color = Color(0xCC111820)
+            color = Color(0xCC111820),
+            modifier = Modifier
         ) {
             Text(
                 text = "Session replay",
@@ -753,8 +756,12 @@ private fun SessionPreviewTopBar(
             )
         }
 
+        Spacer(Modifier.weight(1f))
+
         Surface(
-            modifier = Modifier.clickable(
+            modifier = Modifier
+                .padding(horizontal = 16.dp)
+                .clickable(
                 interactionSource = remember { MutableInteractionSource() },
                 indication = null,
                 onClick = onHelp
