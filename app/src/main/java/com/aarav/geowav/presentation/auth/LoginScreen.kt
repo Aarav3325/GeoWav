@@ -39,6 +39,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
@@ -151,7 +152,8 @@ fun LoginScreen(
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(56.dp)
-                    .clickable {
+                    .alpha(if (uiState.isLoading) 0.64f else 1f)
+                    .clickable(enabled = !uiState.isLoading) {
                         activity?.let {
                             loginVM.signInWithGoogle(it)
                         }
@@ -205,6 +207,7 @@ fun LoginScreen(
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 },
+                enabled = !uiState.isLoading,
                 isError = uiState.emailError != null,
                 supportingText = {
                     if (uiState.emailError != null) {
@@ -242,6 +245,7 @@ fun LoginScreen(
             TextField(
                 value = uiState.password,
                 onValueChange = { loginVM.updatePassword(it) },
+                enabled = !uiState.isLoading,
                 visualTransformation = if (uiState.isPasswordVisible)
                     VisualTransformation.None
                 else
@@ -252,7 +256,9 @@ fun LoginScreen(
                     else
                         R.drawable.eye_closed
 
-                    IconButton(onClick = {
+                    IconButton(
+                        enabled = !uiState.isLoading,
+                        onClick = {
                         if (uiState.isPasswordVisible) {
                             loginVM.hidePassword()
                         } else {
@@ -332,24 +338,31 @@ fun LoginScreen(
                         uiState.email, uiState.password
                     )
                 },
+                enabled = !uiState.isLoading,
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(48.dp),
-                shape = RoundedCornerShape(18.dp),
+                    .height(52.dp),
+                shape = RoundedCornerShape(14.dp),
                 colors = ButtonDefaults.buttonColors(
-                    containerColor = MaterialTheme.colorScheme.primary,   // Vibrant pink/red (primary)
-                    contentColor = MaterialTheme.colorScheme.onPrimary,          // Text color
-                    disabledContainerColor = Color(0xFFFFC9D2), // Soft pink when disabled
-                    disabledContentColor = Color.White.copy(alpha = 0.6f)
+                    containerColor = MaterialTheme.colorScheme.primary,
+                    contentColor = MaterialTheme.colorScheme.onPrimary,
+                    disabledContainerColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.42f),
+                    disabledContentColor = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.72f)
                 )
             ) {
-                Text(
-                    text = "Login",
-                    fontFamily = manrope,
-                    color = MaterialTheme.colorScheme.onPrimary,
-                    fontWeight = FontWeight.SemiBold,
-                    fontSize = 16.sp
-                )
+                if (uiState.isLoading) {
+                    ContainedLoadingIndicator(
+                        modifier = Modifier.size(22.dp)
+                    )
+                } else {
+                    Text(
+                        text = "Log in",
+                        fontFamily = manrope,
+                        color = MaterialTheme.colorScheme.onPrimary,
+                        fontWeight = FontWeight.SemiBold,
+                        fontSize = 16.sp
+                    )
+                }
             }
 
             Spacer(modifier = Modifier.height(12.dp))
@@ -371,6 +384,7 @@ fun LoginScreen(
                 val context = LocalContext.current
 
                 TextButton(
+                    enabled = !uiState.isLoading,
                     onClick = {
                         navigateToSignUp()
                     }

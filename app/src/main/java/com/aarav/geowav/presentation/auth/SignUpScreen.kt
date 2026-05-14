@@ -39,6 +39,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
@@ -153,7 +154,8 @@ fun SignupScreen(
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(56.dp)
-                    .clickable {
+                    .alpha(if (uiState.isLoading) 0.64f else 1f)
+                    .clickable(enabled = !uiState.isLoading) {
                         activity?.let {
                             signUpVM.signInWithGoogle(it)
                         }
@@ -215,6 +217,7 @@ fun SignupScreen(
                         modifier = Modifier.size(24.dp)
                     )
                 },
+                enabled = !uiState.isLoading,
                 isError = uiState.usernameError != null,
                 supportingText = {
                     if (uiState.usernameError != null) {
@@ -261,6 +264,7 @@ fun SignupScreen(
                         modifier = Modifier.size(24.dp)
                     )
                 },
+                enabled = !uiState.isLoading,
                 isError = uiState.emailError != null,
                 supportingText = {
                     if (uiState.emailError != null) {
@@ -295,6 +299,7 @@ fun SignupScreen(
             TextField(
                 value = uiState.password,
                 onValueChange = { signUpVM.updatePassword(it) },
+                enabled = !uiState.isLoading,
                 visualTransformation = if (uiState.isPasswordVisible)
                     VisualTransformation.None
                 else
@@ -305,7 +310,9 @@ fun SignupScreen(
                     else
                         R.drawable.eye_closed
 
-                    IconButton(onClick = {
+                    IconButton(
+                        enabled = !uiState.isLoading,
+                        onClick = {
                         if (uiState.isPasswordVisible) {
                             signUpVM.hidePassword()
                         } else {
@@ -387,24 +394,31 @@ fun SignupScreen(
                         uiState.password
                     )
                 },
+                enabled = !uiState.isLoading,
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(48.dp),
-                shape = RoundedCornerShape(18.dp),
+                    .height(52.dp),
+                shape = RoundedCornerShape(14.dp),
                 colors = ButtonDefaults.buttonColors(
                     containerColor = MaterialTheme.colorScheme.primary,
                     contentColor = MaterialTheme.colorScheme.onPrimary,
-                    disabledContainerColor = MaterialTheme.colorScheme.primary,
-                    disabledContentColor = Color.White.copy(alpha = 0.6f)
+                    disabledContainerColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.42f),
+                    disabledContentColor = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.72f)
                 )
             ) {
-                Text(
-                    text = "Sign Up",
-                    fontFamily = manrope,
-                    color = MaterialTheme.colorScheme.onPrimary,
-                    fontWeight = FontWeight.SemiBold,
-                    fontSize = 16.sp
-                )
+                if (uiState.isLoading) {
+                    ContainedLoadingIndicator(
+                        modifier = Modifier.size(22.dp)
+                    )
+                } else {
+                    Text(
+                        text = "Create account",
+                        fontFamily = manrope,
+                        color = MaterialTheme.colorScheme.onPrimary,
+                        fontWeight = FontWeight.SemiBold,
+                        fontSize = 16.sp
+                    )
+                }
             }
 
             Spacer(modifier = Modifier.height(12.dp))
@@ -426,6 +440,7 @@ fun SignupScreen(
 
 
                 TextButton(
+                    enabled = !uiState.isLoading,
                     onClick = {
                         navigateToLogin()
                     }) {
