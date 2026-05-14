@@ -3,9 +3,16 @@ package com.aarav.geowav.presentation.timeline
 import android.graphics.Bitmap
 import android.graphics.Canvas
 import android.graphics.Paint
-import android.util.Log
+import android.graphics.Typeface
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.animateContentSize
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.slideOutVertically
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -19,28 +26,22 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ContainedLoadingIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
-import androidx.compose.material3.FloatingToolbarColors
 import androidx.compose.material3.HorizontalDivider
-import androidx.compose.material3.HorizontalFloatingToolbar
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.IconButtonDefaults
+import androidx.compose.material3.LinearProgressIndicator
+import androidx.compose.material3.LoadingIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Slider
-import androidx.compose.material3.SliderDefaults
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
-import androidx.compose.material3.TopAppBar
-import androidx.compose.material3.rememberSliderState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -53,17 +54,18 @@ import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.scale
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.compose.ui.zIndex
 import androidx.core.graphics.createBitmap
 import com.aarav.geowav.R
 import com.aarav.geowav.core.utils.FeatureAccess
@@ -79,13 +81,6 @@ import com.aarav.geowav.presentation.components.UpgradeBottomSheetContent
 import com.aarav.geowav.presentation.subscription.SubscriptionViewModel
 import com.aarav.geowav.presentation.theme.GeoWavTheme
 import com.aarav.geowav.presentation.theme.manrope
-import com.aarav.geowav.presentation.theme.onBackgroundDark
-import com.aarav.geowav.presentation.theme.onPrimaryLight
-import com.aarav.geowav.presentation.theme.outlineLight
-import com.aarav.geowav.presentation.theme.outlineVariantLight
-import com.aarav.geowav.presentation.theme.primaryLight
-import com.aarav.geowav.presentation.theme.surfaceContainerDark
-import com.aarav.geowav.presentation.theme.surfaceLight
 import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.model.BitmapDescriptor
 import com.google.android.gms.maps.model.BitmapDescriptorFactory
@@ -104,7 +99,6 @@ import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
-import kotlin.math.roundToInt
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3ExpressiveApi::class)
 @Composable
@@ -145,6 +139,15 @@ fun TimelineMapPreview(
     var showMapModeToast by remember {
         mutableStateOf(false)
     }
+    var showReplayHelp by remember {
+        mutableStateOf(false)
+    }
+    var showReplayHint by remember {
+        mutableStateOf(false)
+    }
+    var showManualMapHint by remember {
+        mutableStateOf(false)
+    }
 
     val movingMarkerState = remember {
         MarkerState()
@@ -157,10 +160,10 @@ fun TimelineMapPreview(
     }
 
     val startIcon = remember(mapLoaded) {
-        if (mapLoaded) timelineMarkerIcon(Color(0xFF515B92), true) else null
+        if (mapLoaded) timelineMarkerIcon(Color(0xFF8FD8EA), true) else null
     }
     val endIcon = remember(mapLoaded) {
-        if (mapLoaded) timelineMarkerIcon(Color(0xFF904A44), false) else null
+        if (mapLoaded) timelineMarkerIcon(Color(0xFFFFB4A9), false) else null
     }
     val movingIcon = remember(mapLoaded) {
         if (mapLoaded) movingPlaybackMarkerIcon() else null
@@ -211,6 +214,16 @@ fun TimelineMapPreview(
         }
     }
 
+    if (showReplayHelp) {
+        CustomBottomSheet(
+            onDismissRequest = { showReplayHelp = false }
+        ) {
+            ReplayHelpSheetContent(
+                onDismiss = { showReplayHelp = false }
+            )
+        }
+    }
+
 
     LaunchedEffect(sessionId) {
         viewModel.getSessionInfo(sessionId, userId)
@@ -232,6 +245,7 @@ fun TimelineMapPreview(
         }.collect { (isMoving, reason) ->
             if (isMoving && reason == CameraMoveStartedReason.GESTURE) {
                 followUser = false
+                showManualMapHint = true
             }
         }
     }
@@ -264,6 +278,13 @@ fun TimelineMapPreview(
         }
     }
 
+//    LaunchedEffect(showManualMapHint) {
+//        if (showManualMapHint) {
+//            delay(1600)
+//            showManualMapHint = false
+//        }
+//    }
+
 
     LaunchedEffect(currentSession?.id) {
         currentSession?.let {
@@ -293,27 +314,6 @@ fun TimelineMapPreview(
     }
 
     Scaffold(
-        topBar = {
-            TopAppBar(
-                title = {
-                    Text(
-                        text = "Session Preview",
-                        fontFamily = manrope,
-                        fontSize = 20.sp,
-                        fontWeight = FontWeight.Bold
-                    )
-                },
-                navigationIcon = {
-                    IconButton(onClick = back) {
-                        Icon(
-                            painter = painterResource(R.drawable.back),
-                            contentDescription = "back",
-                            modifier = Modifier.size(24.dp)
-                        )
-                    }
-                }
-            )
-        },
         contentWindowInsets = WindowInsets(0, 0, 0, 0)
     ) { padding ->
 //
@@ -325,22 +325,16 @@ fun TimelineMapPreview(
                 .padding(padding)
         ) {
 
-            if (!mapLoaded) {
-                ContainedLoadingIndicator(
-                    Modifier.align(Alignment.Center)
-                )
-            }
             GoogleMap(
                 modifier = Modifier
-                    .fillMaxSize()
-                    .clip(RoundedCornerShape(16.dp)),
+                    .fillMaxSize(),
                 cameraPositionState = cameraPositionState,
                 properties = MapProperties(
                     mapType = uiState.mapType
                 ),
                 uiSettings = MapUiSettings(
-                    zoomControlsEnabled = true,
-                    compassEnabled = true,
+                    zoomControlsEnabled = false,
+                    compassEnabled = false,
                     mapToolbarEnabled = false
                 ),
                 onMapLoaded = { mapLoaded = true }
@@ -381,21 +375,11 @@ fun TimelineMapPreview(
                     }
 
 
-                    if (animatedPath.isNotEmpty()) {
-                        Polyline(
-                            points = animatedPath.toList(),
-                            color = Color(0xFF0A6780),
-                            width = 10f
+                    if (finalSnappedPath.isNotEmpty()) {
+                        RoutePreviewPath(
+                            fullPath = finalSnappedPath,
+                            activePath = animatedPath.toList()
                         )
-                    } else {
-
-                        if (finalSnappedPath.isNotEmpty()) {
-                            Polyline(
-                                points = finalSnappedPath,
-                                color = Color(0xFF0A6780),
-                                width = 10f
-                            )
-                        }
                     }
 
 
@@ -415,322 +399,216 @@ fun TimelineMapPreview(
                 }
             }
 
+            val hasRecordedMovement = !userPaths.isNullOrEmpty()
+            val isPreparingRoute = mapLoaded && currentSession != null &&
+                    hasRecordedMovement && finalSnappedPath.isEmpty()
+            val hasNoMovementData = mapLoaded && currentSession != null && !hasRecordedMovement
+
+            when {
+                !mapLoaded -> {
+                    ReplayStatusOverlay(
+                        title = "Preparing replay",
+                        message = "Loading the map and route context",
+                        showLoader = true,
+                        modifier = Modifier.align(Alignment.Center)
+                    )
+                }
+
+                isPreparingRoute -> {
+                    ReplayStatusOverlay(
+                        title = "Refining route",
+                        message = "Preparing movement playback",
+                        showLoader = true,
+                        modifier = Modifier.align(Alignment.Center)
+                    )
+                }
+
+                hasNoMovementData -> {
+                    ReplayStatusOverlay(
+                        title = "No movement to replay",
+                        message = "This session does not include enough route data",
+                        showLoader = false,
+                        actionLabel = "View details",
+                        onAction = { showTray = true },
+                        modifier = Modifier.align(Alignment.Center)
+                    )
+                }
+            }
+
             val mapMode = when (uiState.mapType) {
                 com.google.maps.android.compose.MapType.NORMAL -> "Normal"
-                com.google.maps.android.compose.MapType.SATELLITE -> "Satellite"
-                com.google.maps.android.compose.MapType.TERRAIN -> "Terrain"
-                com.google.maps.android.compose.MapType.HYBRID -> "Hybrid"
+                com.google.maps.android.compose.MapType.HYBRID -> "Satellite"
                 else -> "Map"
             }
+
+            SessionPreviewTopBar(
+                onBack = back,
+                onHelp = { showReplayHelp = true },
+                modifier = Modifier
+                    .align(Alignment.TopStart)
+                    .statusBarsPadding()
+                    .padding(start = 16.dp, top = 10.dp)
+            )
 
             AnimatedVisibility(
                 showMapModeToast,
                 modifier = Modifier
-                    .align(Alignment.TopCenter)
-                    .padding(top = 16.dp)
+                    .align(Alignment.Center)
             ) {
                 Surface(
                     shape = RoundedCornerShape(24.dp),
-                    color = MaterialTheme.colorScheme.surfaceContainerLow
+                    color = Color(0xDD111820),
+                    shadowElevation = 8.dp
                 ) {
                     Text(
-                        text = "Switched to $mapMode mode",
-                        color = MaterialTheme.colorScheme.onSurface,
-                        fontSize = 14.sp,
+                        text = "$mapMode map",
+                        color = Color.White.copy(alpha = 0.86f),
+                        fontSize = 13.sp,
                         fontWeight = FontWeight.SemiBold,
                         fontFamily = manrope,
-                        modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp)
+                        modifier = Modifier.padding(horizontal = 13.dp, vertical = 7.dp)
                     )
                 }
             }
 
-            val speeds = listOf(2f, 5f, 8f)
+//            AnimatedVisibility(
+//                visible = showManualMapHint,
+//                modifier = Modifier
+//                    .align(Alignment.Center)
+//                    .offset(y = (-58).dp)
+//            ) {
+//                ReplayHintPill(
+//                    text = "Exploring manually / tap Follow to return"
+//                )
+//            }
 
-            val sliderState = rememberSliderState(
-                value = 0f,
-                valueRange = 0f..2f,
-                onValueChangeFinished = {
-                    Log.i("SLIDER", "value: change")
-                },
-                steps = 1
-            )
-
-            LaunchedEffect(sliderState.value) {
-
-                val index = sliderState.value.roundToInt()
-                val speed = speeds[index]
-
-                Log.i("SLIDER", "change to $speed")
-                viewModel.updateSpeed(speed)
+            LaunchedEffect(isPreparingRoute) {
+                if (!isPreparingRoute) {
+                    delay(1200)
+                    showReplayHint = true
+                    delay(4000)
+                    showReplayHint = false
+                }
             }
 
             AnimatedVisibility(
-                showPlaybackSpeedControls,
+                visible = showReplayHint,
                 modifier = Modifier
-                    .align(Alignment.BottomCenter)
-                    .padding(bottom = 116.dp, start = 16.dp, end = 16.dp)
+                    .align(Alignment.Center)
             ) {
-                Column {
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth(),
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.SpaceBetween
-                    ) {
-                        Speed.entries.forEach { speed ->
-
-                            Surface(
-                                modifier = Modifier
-                                    .height(26.dp)
-                                    .padding(horizontal = 4.dp),
-                                color = surfaceContainerDark,
-                                shape = RoundedCornerShape(6.dp)
-                            ) {
-                                Box(
-                                    contentAlignment = Alignment.Center,
-                                    modifier = Modifier.padding(horizontal = 10.dp, vertical = 3.dp)
-                                ) {
-                                    Text(
-                                        text = speed.label,
-                                        fontFamily = manrope,
-                                        fontSize = 12.sp,
-                                        fontWeight = FontWeight.Bold,
-                                        color = onBackgroundDark
-                                    )
-                                }
-                            }
-                        }
-                    }
-
-                    Spacer(Modifier.height(12.dp))
-
-                    Slider(
-                        modifier = Modifier
-                            .background(surfaceLight.copy(alpha = 0.85f), RoundedCornerShape(16.dp))
-                            .padding(8.dp),
-                        state = sliderState,
-                        thumb = {
-                            SliderDefaults.Thumb(
-                                interactionSource = remember { MutableInteractionSource() },
-                                colors = SliderDefaults.colors(
-                                    thumbColor = primaryLight
-                                )
-                            )
-                        },
-                        track = {
-                            SliderDefaults.Track(
-                                colors = SliderDefaults.colors(
-                                    thumbColor = primaryLight,
-                                    activeTrackColor = primaryLight,
-                                    inactiveTrackColor = outlineVariantLight,
-                                    activeTickColor = onPrimaryLight,
-                                    inactiveTickColor = outlineLight
-                                ),
-                                enabled = true,
-                                sliderState = sliderState
-                            )
-                        }
-                    )
-                }
+                ReplayHintPill(
+                    text = "New here? Tap Help to understand replay controls."
+                )
             }
 
-            HorizontalFloatingToolbar(
-                colors = FloatingToolbarColors(
-                    toolbarContainerColor = MaterialTheme.colorScheme.surfaceBright.copy(alpha = 0.85f),
-                    toolbarContentColor = MaterialTheme.colorScheme.onSurface,
-                    fabContentColor = MaterialTheme.colorScheme.onSurface,
-                    fabContainerColor = MaterialTheme.colorScheme.surfaceContainer
-                ),
+            PlaybackDock(
                 modifier = Modifier
                     .align(Alignment.BottomCenter)
                     .offset(y = (-32).dp)
-                    .zIndex(1f),
-                expanded = true,
-                content = {
-                    Row(
-                        modifier = Modifier.padding(horizontal = 4.dp),
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(6.dp)
+                    .padding(horizontal = 16.dp),
+                isPlaying = uiState.isPlaying,
+                isComplete = finalSnappedPath.size > 1 &&
+                        uiState.playbackIndex >= finalSnappedPath.lastIndex &&
+                        !uiState.isPlaying,
+                canUsePlayback = FeatureAccess.canUsePlayback(plan),
+                canControlSpeed = FeatureAccess.canControlSpeed(plan),
+                progress = if (finalSnappedPath.size > 1) {
+                    uiState.playbackIndex / (finalSnappedPath.lastIndex).toFloat()
+                } else 0f,
+                speedLabel = when (uiState.speed) {
+                    2f -> "0.5x"
+                    5f -> "1x"
+                    8f -> "2x"
+                    else -> "1x"
+                },
+                updateSpeed = {
+                    if (!FeatureAccess.canControlSpeed(plan)) {
+                        upgradeContext = UpgradeContext(
+                            upgradeTo = UserPlan.PREMIUM,
+                            reason = UpgradeReason.SpeedControl
+                        )
+                    } else {
+                        viewModel.updateSpeed(it)
+                    }
+                },
+                showTray = showTray,
+                mapMode = mapMode,
+                onPlayPause = {
+                    if (finalSnappedPath.size > 1 &&
+                        uiState.playbackIndex >= finalSnappedPath.lastIndex &&
+                        !uiState.isPlaying
                     ) {
+                        startLatLng?.let { viewModel.restartPlayback(it) }
+                    } else if (uiState.isPlaying) {
+                        viewModel.pausePlayback()
+                    } else {
+                        viewModel.startPlayback(plan)
+                    }
+                },
+                onRestart = {
+                    startLatLng?.let { viewModel.restartPlayback(it) }
+                },
+                onToggleTray = { showTray = !showTray },
+                onFitRoute = {
+                    currentSession?.let { session ->
+                        scope.launch {
+                            val boundsBuilder = LatLngBounds.builder()
+                                .include(LatLng(session.startLat, session.startLng))
+                                .include(LatLng(session.endLat, session.endLng))
 
-                        IconButton(
-                            modifier = Modifier.size(40.dp),
-                            colors = IconButtonDefaults.iconButtonColors(
-                                containerColor = when {
-                                    uiState.isPlaying ->
-                                        MaterialTheme.colorScheme.tertiaryContainer
+                            session.stayPoints.forEach {
+                                boundsBuilder.include(LatLng(it.lat, it.lng))
+                            }
 
-                                    !FeatureAccess.canUsePlayback(plan) ->
-                                        MaterialTheme.colorScheme.surfaceVariant // cleaner disabled look
-
-                                    else ->
-                                        MaterialTheme.colorScheme.surfaceContainer
-                                },
-
-                                contentColor = when {
-                                    !FeatureAccess.canUsePlayback(plan) ->
-                                        MaterialTheme.colorScheme.onSurface.copy(alpha = 0.4f)
-
-                                    else ->
-                                        MaterialTheme.colorScheme.onSurface
-                                }
-                            ),
-                            onClick = {
-                                if (uiState.isPlaying) {
-                                    viewModel.pausePlayback()
-                                } else {
-                                    viewModel.startPlayback(plan)
+                            if (uiState.isPlaying && lastPosition != null) {
+                                lastPosition?.let {
+                                    boundsBuilder.include(it)
                                 }
                             }
-                        ) {
-                            LockedIcon(
-                                isLocked = !FeatureAccess.canUsePlayback(plan),
-                                icon = painterResource(
-                                    if (uiState.isPlaying) R.drawable.pause else R.drawable.play_v2
-                                ),
-                                contentDescription = "play/pause"
+
+                            cameraPositionState.animate(
+                                CameraUpdateFactory.newLatLngBounds(
+                                    boundsBuilder.build(), 200
+                                )
                             )
-                        }
 
-                        IconButton(
-                            modifier = Modifier.size(40.dp),
-                            colors = IconButtonDefaults.iconButtonColors(
-                                containerColor = MaterialTheme.colorScheme.surfaceContainer,
-                                contentColor = MaterialTheme.colorScheme.onSurface
-                            ),
-                            onClick = {
-                                startLatLng?.let { viewModel.restartPlayback(it) }
-                            }
-                        ) {
-                            Icon(
-                                painter = painterResource(R.drawable.restart),
-                                contentDescription = "restart",
-                                modifier = Modifier.size(22.dp)
-                            )
-                        }
-
-                        IconButton(
-                            modifier = Modifier.size(40.dp),
-                            colors = IconButtonDefaults.iconButtonColors(
-                                containerColor = when {
-                                    !FeatureAccess.canControlSpeed(plan) ->
-                                        MaterialTheme.colorScheme.surfaceVariant
-
-                                    else ->
-                                        MaterialTheme.colorScheme.surfaceContainer
-                                },
-                                contentColor = when {
-                                    !FeatureAccess.canControlSpeed(plan) ->
-                                        MaterialTheme.colorScheme.onSurface.copy(alpha = 0.4f)
-
-                                    else ->
-                                        MaterialTheme.colorScheme.onSurface
-                                }
-                            ),
-                            onClick = {
-                                if (!FeatureAccess.canUsePlayback(plan)) {
-                                    upgradeContext = UpgradeContext(
-                                        upgradeTo = UserPlan.PREMIUM,
-                                        reason = UpgradeReason.SpeedControl
-                                    )
-                                } else {
-                                    showPlaybackSpeedControls = !showPlaybackSpeedControls
-                                }
-                            }
-                        ) {
-                            LockedIcon(
-                                isLocked = !FeatureAccess.canControlSpeed(plan),
-                                icon = painterResource(R.drawable.playback_speed),
-                                contentDescription = "speed"
-                            )
-                        }
-
-                        IconButton(
-                            modifier = Modifier.size(40.dp),
-                            colors = IconButtonDefaults.iconButtonColors(
-                                containerColor = if (showTray)
-                                    MaterialTheme.colorScheme.tertiaryContainer
-                                else MaterialTheme.colorScheme.surfaceContainer,
-                                contentColor = if (showTray)
-                                    MaterialTheme.colorScheme.onTertiaryContainer
-                                else MaterialTheme.colorScheme.onSurface
-                            ),
-                            onClick = { showTray = !showTray }
-                        ) {
-                            Icon(
-                                painter = painterResource(R.drawable.info),
-                                contentDescription = "Toggle Tray",
-                                modifier = Modifier.size(22.dp)
-                            )
-                        }
-
-                        IconButton(
-                            modifier = Modifier.size(40.dp),
-                            onClick = {
-                                currentSession?.let { session ->
-                                    scope.launch {
-                                        val boundsBuilder = LatLngBounds.builder()
-                                            .include(LatLng(session.startLat, session.startLng))
-                                            .include(LatLng(session.endLat, session.endLng))
-
-                                        session.stayPoints.forEach {
-                                            boundsBuilder.include(LatLng(it.lat, it.lng))
-                                        }
-
-                                        if (uiState.isPlaying && lastPosition != null) {
-                                            lastPosition?.let {
-                                                boundsBuilder.include(it)
-                                            }
-                                        }
-
-                                        cameraPositionState.animate(
-                                            CameraUpdateFactory.newLatLngBounds(
-                                                boundsBuilder.build(), 200
-                                            )
-                                        )
-
-                                        delay(1000)
-                                        followUser = true
-                                    }
-                                }
-                            },
-                            colors = IconButtonDefaults.iconButtonColors(
-                                containerColor = MaterialTheme.colorScheme.primary,
-                                contentColor = MaterialTheme.colorScheme.onPrimary
-                            )
-                        ) {
-                            Icon(
-                                painter = painterResource(R.drawable.gps),
-                                contentDescription = "Fit All",
-                                modifier = Modifier.size(22.dp)
-                            )
-                        }
-
-                        IconButton(
-                            modifier = Modifier.size(40.dp),
-                            onClick = {
-                                viewModel.toggleMapType()
-                                showMapModeToast = true
-                            },
-                            colors = IconButtonDefaults.iconButtonColors(
-                                containerColor = MaterialTheme.colorScheme.surfaceContainer,
-                                contentColor = MaterialTheme.colorScheme.onSurface
-                            )
-                        ) {
-                            Icon(
-                                painter = painterResource(R.drawable.map_trifold),
-                                contentDescription = mapMode,
-                                modifier = Modifier.size(22.dp)
-                            )
+                            delay(1000)
+                            followUser = true
                         }
                     }
+                },
+                onMapMode = {
+                    viewModel.toggleMapType()
+                    showMapModeToast = true
                 }
             )
 
             currentSession?.let { session ->
+                if (!showTray) {
+                    CollapsedSessionSummary(
+                        session = session,
+                        modifier = Modifier
+                            .align(Alignment.BottomCenter)
+                            .padding(bottom = 172.dp, start = 16.dp, end = 16.dp)
+                    )
+                }
+
                 AnimatedVisibility(
                     visible = showTray,
-                    modifier = Modifier.align(Alignment.TopCenter)
+                    enter = fadeIn(animationSpec = tween(220)) +
+                            slideInVertically(
+                                animationSpec = tween(260),
+                                initialOffsetY = { -it / 5 }
+                            ),
+                    exit = fadeOut(animationSpec = tween(160)) +
+                            slideOutVertically(
+                                animationSpec = tween(180),
+                                targetOffsetY = { -it / 6 }
+                            ),
+                    modifier = Modifier
+                        .align(Alignment.TopCenter)
+                        .statusBarsPadding()
+                        .padding(top = 62.dp)
                 ) {
                     SessionPreviewTray(
                         session = session,
@@ -743,6 +621,595 @@ fun TimelineMapPreview(
     }
 }
 
+
+@Composable
+@OptIn(ExperimentalMaterial3ExpressiveApi::class)
+private fun ReplayStatusOverlay(
+    title: String,
+    message: String,
+    showLoader: Boolean,
+    actionLabel: String? = null,
+    onAction: (() -> Unit)? = null,
+    modifier: Modifier = Modifier
+) {
+    Surface(
+        modifier = modifier.padding(horizontal = 32.dp),
+        shape = RoundedCornerShape(24.dp),
+        color = Color(0xEE111820),
+        shadowElevation = 10.dp
+    ) {
+        Column(
+            modifier = Modifier.padding(horizontal = 18.dp, vertical = 16.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            if (showLoader) {
+                LoadingIndicator(
+                    modifier = Modifier.size(34.dp)
+                )
+            }
+
+            Text(
+                text = title,
+                fontFamily = manrope,
+                fontSize = 15.sp,
+                fontWeight = FontWeight.SemiBold,
+                color = Color.White
+            )
+
+            Text(
+                text = message,
+                fontFamily = manrope,
+                fontSize = 12.sp,
+                color = Color.White.copy(alpha = 0.62f)
+            )
+
+            if (actionLabel != null && onAction != null) {
+                Surface(
+                    modifier = Modifier
+                        .padding(top = 4.dp)
+                        .clickable(
+                            interactionSource = remember { MutableInteractionSource() },
+                            indication = null,
+                            onClick = onAction
+                        ),
+                    shape = RoundedCornerShape(99.dp),
+                    color = Color.White.copy(alpha = 0.12f)
+                ) {
+                    Text(
+                        text = actionLabel,
+                        modifier = Modifier.padding(horizontal = 14.dp, vertical = 7.dp),
+                        fontFamily = manrope,
+                        fontSize = 13.sp,
+                        fontWeight = FontWeight.SemiBold,
+                        color = Color.White.copy(alpha = 0.9f)
+                    )
+                }
+            }
+        }
+    }
+}
+
+
+@Composable
+private fun ReplayHintPill(
+    text: String,
+    modifier: Modifier = Modifier
+) {
+    Surface(
+        modifier = modifier,
+        shape = RoundedCornerShape(99.dp),
+        color = Color(0xDD111820),
+        shadowElevation = 8.dp
+    ) {
+        Text(
+            text = text,
+            modifier = Modifier.padding(horizontal = 14.dp, vertical = 8.dp),
+            fontFamily = manrope,
+            fontSize = 12.sp,
+            fontWeight = FontWeight.SemiBold,
+            color = Color.White.copy(alpha = 0.86f)
+        )
+    }
+}
+
+
+@Composable
+private fun SessionPreviewTopBar(
+    onBack: () -> Unit,
+    onHelp: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    Row(
+        modifier = modifier,
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(10.dp)
+    ) {
+        IconButton(
+            modifier = Modifier.size(42.dp),
+            colors = IconButtonDefaults.iconButtonColors(
+                containerColor = Color(0xCC111820),
+                contentColor = Color.White.copy(alpha = 0.88f)
+            ),
+            onClick = onBack
+        ) {
+            Icon(
+                painter = painterResource(R.drawable.back),
+                contentDescription = "Back",
+                tint = Color.White.copy(alpha = 0.84f),
+                modifier = Modifier.size(21.dp).align(Alignment.CenterVertically)
+            )
+        }
+
+        Surface(
+            shape = RoundedCornerShape(99.dp),
+            color = Color(0xCC111820),
+            modifier = Modifier
+        ) {
+            Text(
+                text = "Session replay",
+                modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp),
+                fontFamily = manrope,
+                fontSize = 13.sp,
+                fontWeight = FontWeight.SemiBold,
+                color = Color.White.copy(alpha = 0.84f)
+            )
+        }
+
+        Spacer(Modifier.weight(1f))
+
+        Surface(
+            modifier = Modifier
+                .padding(horizontal = 16.dp)
+                .clickable(
+                interactionSource = remember { MutableInteractionSource() },
+                indication = null,
+                onClick = onHelp
+            ),
+            shape = RoundedCornerShape(99.dp),
+            color = Color(0xCC111820)
+        ) {
+            Text(
+                text = "Help",
+                modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp),
+                fontFamily = manrope,
+                fontSize = 13.sp,
+                fontWeight = FontWeight.SemiBold,
+                color = Color.White.copy(alpha = 0.84f)
+            )
+        }
+    }
+}
+
+
+@Composable
+private fun ReplayHelpSheetContent(
+    onDismiss: () -> Unit
+) {
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 20.dp, vertical = 18.dp),
+        verticalArrangement = Arrangement.spacedBy(16.dp)
+    ) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.Top,
+            horizontalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            Column(
+                modifier = Modifier.weight(1f),
+                verticalArrangement = Arrangement.spacedBy(4.dp)
+            ) {
+                Text(
+                    text = "How replay works",
+                    fontFamily = manrope,
+                    fontSize = 20.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onSurface
+                )
+
+                Text(
+                    text = "Use these controls to replay, inspect, and reframe the session.",
+                    fontFamily = manrope,
+                    fontSize = 13.sp,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+
+            IconButton(
+                modifier = Modifier.size(36.dp),
+                colors = IconButtonDefaults.iconButtonColors(
+                    containerColor = MaterialTheme.colorScheme.surfaceContainer,
+                    contentColor = MaterialTheme.colorScheme.onSurface
+                ),
+                onClick = onDismiss
+            ) {
+                Icon(
+                    painter = painterResource(R.drawable.clear),
+                    contentDescription = "Close help",
+                    modifier = Modifier.size(18.dp)
+                )
+            }
+        }
+
+        HorizontalDivider(
+            color = MaterialTheme.colorScheme.outlineVariant
+        )
+
+        Column(
+            verticalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            ReplayHelpRow(
+                icon = painterResource(R.drawable.play_v2),
+                title = "Play / Pause",
+                message = "Replay movement along the route, or pause the replay."
+            )
+            ReplayHelpRow(
+                icon = painterResource(R.drawable.restart),
+                title = "Restart",
+                message = "Start the replay again from the beginning."
+            )
+            ReplayHelpRow(
+                icon = painterResource(R.drawable.info),
+                title = "Details",
+                message = "Show or hide the session summary with start, end, and stops."
+            )
+            ReplayHelpRow(
+                icon = painterResource(R.drawable.gps),
+                title = "Follow route",
+                message = "Reframe the full journey and return the camera to the route."
+            )
+            ReplayHelpRow(
+                icon = painterResource(R.drawable.map_trifold),
+                title = "Map style",
+                message = "Switch between map views when the route needs more context."
+            )
+        }
+
+        Surface(
+            shape = RoundedCornerShape(18.dp),
+            color = MaterialTheme.colorScheme.surfaceContainer
+        ) {
+            Text(
+                text = "Tip: Drag or zoom the map anytime. Tap Follow to return to the route.",
+                modifier = Modifier.padding(horizontal = 14.dp, vertical = 11.dp),
+                fontFamily = manrope,
+                fontSize = 13.sp,
+                fontWeight = FontWeight.SemiBold,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+        }
+    }
+}
+
+@Composable
+private fun ReplayHelpRow(
+    icon: Painter,
+    title: String,
+    message: String
+) {
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(12.dp)
+    ) {
+        Surface(
+            modifier = Modifier.size(38.dp),
+            shape = CircleShape,
+            color = MaterialTheme.colorScheme.surfaceContainerHigh
+        ) {
+            Box(
+                contentAlignment = Alignment.Center
+            ) {
+                Icon(
+                    painter = icon,
+                    contentDescription = null,
+                    modifier = Modifier.size(20.dp),
+                    tint = MaterialTheme.colorScheme.onSurface
+                )
+            }
+        }
+
+        Column(
+            modifier = Modifier.weight(1f),
+            verticalArrangement = Arrangement.spacedBy(2.dp)
+        ) {
+            Text(
+                text = title,
+                fontFamily = manrope,
+                fontSize = 14.sp,
+                fontWeight = FontWeight.SemiBold,
+                color = MaterialTheme.colorScheme.onSurface
+            )
+
+            Text(
+                text = message,
+                fontFamily = manrope,
+                fontSize = 12.sp,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+        }
+    }
+}
+
+
+@Composable
+private fun CollapsedSessionSummary(
+    session: TimelineItem,
+    modifier: Modifier = Modifier
+) {
+    val durationMinutes = ((session.endTime - session.startTime) / (1000 * 60)).coerceAtLeast(0)
+    val durationText = if (durationMinutes < 60) {
+        "$durationMinutes min"
+    } else {
+        "${durationMinutes / 60}h ${durationMinutes % 60}m"
+    }
+    val stopText = when (session.stayPoints.size) {
+        0 -> "No stops"
+        1 -> "1 stop"
+        else -> "${session.stayPoints.size} stops"
+    }
+
+    Surface(
+        modifier = modifier,
+        shape = RoundedCornerShape(99.dp),
+        color = Color(0xDD111820),
+        shadowElevation = 8.dp
+    ) {
+        Text(
+            text = "$durationText journey / $stopText",
+            modifier = Modifier.padding(horizontal = 14.dp, vertical = 8.dp),
+            fontFamily = manrope,
+            fontSize = 12.sp,
+            fontWeight = FontWeight.SemiBold,
+            color = Color.White.copy(alpha = 0.86f),
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis
+        )
+    }
+}
+
+
+@Composable
+private fun RoutePreviewPath(
+    fullPath: List<LatLng>,
+    activePath: List<LatLng>
+) {
+    if (fullPath.size < 2) return
+
+    Polyline(
+        points = fullPath,
+        color = Color(0xFF071116).copy(alpha = 0.88f),
+        width = 13f
+    )
+
+    Polyline(
+        points = fullPath,
+        color = Color.White.copy(alpha = 0.78f),
+        width = 7f
+    )
+
+    if (activePath.size >= 2) {
+        Polyline(
+            points = activePath,
+            color = Color(0xFF071116).copy(alpha = 0.92f),
+            width = 15f
+        )
+
+        Polyline(
+            points = activePath,
+            color = Color(0xFF19C7E6),
+            width = 10f
+        )
+
+        Polyline(
+            points = activePath,
+            color = Color.White.copy(alpha = 0.92f),
+            width = 3.5f
+        )
+    }
+}
+
+@Composable
+private fun PlaybackDock(
+    isPlaying: Boolean,
+    isComplete: Boolean,
+    canUsePlayback: Boolean,
+    canControlSpeed: Boolean,
+    progress: Float,
+    speedLabel: String,
+    showTray: Boolean,
+    mapMode: String,
+    onPlayPause: () -> Unit,
+    onRestart: () -> Unit,
+    updateSpeed: (Float) -> Unit,
+    onToggleTray: () -> Unit,
+    onFitRoute: () -> Unit,
+    onMapMode: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+
+    Surface(
+        modifier = modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(28.dp),
+        color = Color(0xEE111820),
+        tonalElevation = 0.dp,
+        shadowElevation = 12.dp
+    ) {
+        Column(
+            modifier = Modifier.padding(horizontal = 14.dp, vertical = 12.dp),
+            verticalArrangement = Arrangement.spacedBy(10.dp)
+        ) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                Column(
+                    modifier = Modifier.weight(1f),
+                    verticalArrangement = Arrangement.spacedBy(5.dp)
+                ) {
+                    Text(
+                        text = when {
+                            isComplete -> "Replay complete"
+                            isPlaying -> "Replaying movement"
+                            else -> "Journey replay"
+                        },
+                        fontFamily = manrope,
+                        fontSize = 13.sp,
+                        fontWeight = FontWeight.SemiBold,
+                        color = Color.White
+                    )
+
+                    LinearProgressIndicator(
+                        progress = { progress.coerceIn(0f, 1f) },
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(4.dp)
+                            .clip(RoundedCornerShape(99.dp)),
+                        color = Color(0xFF8FD8EA),
+                        trackColor = Color.White.copy(alpha = 0.16f)
+                    )
+                }
+
+                Surface(
+                    shape = RoundedCornerShape(99.dp),
+                    color = Color.White.copy(alpha = 0.10f),
+                    modifier = Modifier
+                        .clickable(
+                            interactionSource = remember { MutableInteractionSource() },
+                            indication = null,
+                            onClick = {
+                                val nextSpeed = when (speedLabel) {
+                                    "0.5x" -> 5f
+                                    "1x" -> 8f
+                                    "2x" -> 2f
+                                    else -> 5f
+                                }
+
+                                updateSpeed(nextSpeed)
+                            }
+                        )
+                ) {
+                    Text(
+                        text = "Speed $speedLabel",
+                        modifier = Modifier.padding(horizontal = 10.dp, vertical = 5.dp),
+                        fontFamily = manrope,
+                        fontSize = 12.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = Color.White.copy(alpha = if (canControlSpeed) 0.90f else 0.45f)
+                    )
+                }
+            }
+
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                DockIconButton(
+                    onClick = onPlayPause,
+                    containerColor = if (isPlaying || isComplete) Color(0xFF8FD8EA) else Color.White,
+                    contentColor = Color(0xFF101820),
+                    size = 48.dp
+                ) {
+                    LockedIcon(
+                        isLocked = !canUsePlayback,
+                        icon = painterResource(
+                            when {
+                                isPlaying -> R.drawable.pause
+                                isComplete -> R.drawable.restart
+                                else -> R.drawable.play_v2
+                            }
+                        ),
+                        contentDescription = if (isComplete) "restart" else "play/pause",
+                        iconSize = 24.dp
+                    )
+                }
+
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    DockIconButton(onClick = onRestart) {
+                        Icon(
+                            painter = painterResource(R.drawable.restart),
+                            contentDescription = "restart",
+                            modifier = Modifier.size(21.dp)
+                        )
+                    }
+
+//                    DockIconButton(onClick = onSpeed) {
+//                        LockedIcon(
+//                            isLocked = !canControlSpeed,
+//                            icon = painterResource(R.drawable.playback_speed),
+//                            contentDescription = "speed",
+//                            iconSize = 21.dp
+//                        )
+//                    }
+
+                    DockIconButton(
+                        onClick = onToggleTray,
+                        containerColor = if (showTray) Color.White.copy(alpha = 0.22f) else Color.White.copy(alpha = 0.10f),
+                        contentColor = Color.White
+                    ) {
+                        Icon(
+                            painter = painterResource(R.drawable.info),
+                            contentDescription = "Toggle Tray",
+                            modifier = Modifier.size(21.dp)
+                        )
+                    }
+
+                    DockIconButton(
+                        onClick = onFitRoute,
+                        containerColor = Color(0xFF8FD8EA),
+                        contentColor = Color(0xFF101820)
+                    ) {
+                        Icon(
+                            painter = painterResource(R.drawable.gps),
+                            contentDescription = "Fit All",
+                            modifier = Modifier.size(21.dp)
+                        )
+                    }
+
+                    DockIconButton(onClick = onMapMode) {
+                        Icon(
+                            painter = painterResource(R.drawable.map_trifold),
+                            contentDescription = mapMode,
+                            modifier = Modifier.size(21.dp)
+                        )
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun DockIconButton(
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+    enabled: Boolean = true,
+    size: Dp = 40.dp,
+    containerColor: Color = Color.White.copy(alpha = 0.10f),
+    contentColor: Color = Color.White.copy(alpha = if (enabled) 0.92f else 0.42f),
+    content: @Composable () -> Unit
+) {
+    IconButton(
+        modifier = modifier.size(size),
+        enabled = enabled,
+        colors = IconButtonDefaults.iconButtonColors(
+            containerColor = containerColor,
+            contentColor = contentColor,
+            disabledContainerColor = Color.White.copy(alpha = 0.08f),
+            disabledContentColor = Color.White.copy(alpha = 0.42f)
+        ),
+        onClick = onClick
+    ) {
+        content()
+    }
+}
 
 @Composable
 private fun StayPointMarker(stay: StayPoint, icon: BitmapDescriptor?) {
@@ -802,119 +1269,177 @@ fun SessionPreviewTray(
         "${hours}h ${mins}m"
     }
 
-    Card(
+    val startLocation = remember(session.startAddress) {
+        compactTimelineLocation(session.startAddress)
+    }
+    val endLocation = remember(session.endAddress) {
+        compactTimelineLocation(session.endAddress)
+    }
+
+    val stayCount = session.stayPoints.size
+    val totalStayMins = session.stayPoints.sumOf { it.durationMillis } / 60_000
+    val totalStayText = if (totalStayMins < 60) "$totalStayMins min"
+    else "${totalStayMins / 60}h ${totalStayMins % 60}m"
+
+    var showFullAddress by remember {
+        mutableStateOf(false)
+    }
+
+    Surface(
         modifier = modifier
             .fillMaxWidth()
-            .padding(16.dp),
-        shape = RoundedCornerShape(24.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceBright.copy(0.95f)
-        ),
-        elevation = CardDefaults.cardElevation(8.dp)
+            .padding(16.dp)
+            .animateContentSize()
+            .clickable {
+                showFullAddress = !showFullAddress
+            },
+        shape = RoundedCornerShape(22.dp),
+        color = Color(0xEE111820),
+        shadowElevation = 0.dp
     ) {
         Column(
             modifier = Modifier
-                .background(MaterialTheme.colorScheme.surfaceBright.copy(0.95f))
+                .background(Color.Transparent)
                 .padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(16.dp)
+            verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
 
             Row(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween
+                horizontalArrangement = Arrangement.spacedBy(12.dp),
+                verticalAlignment = Alignment.Top
             ) {
 
-                Column {
+                Column(
+                    modifier = Modifier.weight(1f),
+                    verticalArrangement = Arrangement.spacedBy(3.dp)
+                ) {
                     Text(
                         text = session.name,
                         style = MaterialTheme.typography.titleMedium,
-                        fontFamily = manrope
+                        fontFamily = manrope,
+                        fontWeight = FontWeight.SemiBold,
+                        color = Color.White,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
                     )
 
                     Text(
-                        text = "Location session • $date • $durationText",
+                        text = "$date / $durationText journey",
                         style = MaterialTheme.typography.labelMedium,
                         fontFamily = manrope,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                        color = Color.White.copy(alpha = 0.62f),
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
                     )
                 }
 
-                TextButton(onClick = onClose) {
-                    Text(
-                        "Close",
-                        fontFamily = manrope
+                IconButton(
+                    modifier = Modifier.size(34.dp),
+                    colors = IconButtonDefaults.iconButtonColors(
+                        containerColor = Color.White.copy(alpha = 0.08f),
+                        contentColor = Color.White.copy(alpha = 0.78f)
+                    ),
+                    onClick = onClose
+                ) {
+                    Icon(
+                        painter = painterResource(R.drawable.clear),
+                        contentDescription = "Close",
+                        modifier = Modifier.size(18.dp)
                     )
                 }
             }
 
             HorizontalDivider(
-                color = MaterialTheme.colorScheme.outline
+                color = Color.White.copy(alpha = 0.10f)
             )
 
-            Column(
-                verticalArrangement = Arrangement.spacedBy(4.dp)
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(14.dp)
             ) {
-                Text(
-                    text = "Started at $startTime",
-                    style = MaterialTheme.typography.labelMedium,
-                    fontFamily = manrope,
-                    color = MaterialTheme.colorScheme.primary
+                SessionEndpointSummary(
+                    label = "Start",
+                    time = startTime,
+                    location = if(showFullAddress) session.startAddress else startLocation,
+                    showFullAddress = showFullAddress,
+                    accentColor = Color(0xFF8FD8EA),
+                    modifier = Modifier.weight(1f)
                 )
 
-                Text(
-                    text = session.startAddress,
-                    style = MaterialTheme.typography.bodyMedium,
-                    fontFamily = manrope,
-                )
-            }
-
-            Column(
-                verticalArrangement = Arrangement.spacedBy(4.dp)
-            ) {
-                Text(
-                    text = "Ended at $endTime",
-                    style = MaterialTheme.typography.labelMedium,
-                    fontFamily = manrope,
-                    color = MaterialTheme.colorScheme.secondary
-                )
-
-                Text(
-                    text = session.endAddress,
-                    style = MaterialTheme.typography.bodyMedium,
-                    fontFamily = manrope,
+                SessionEndpointSummary(
+                    label = "End",
+                    time = endTime,
+                    location = if(showFullAddress) session.endAddress else endLocation,
+                    showFullAddress = showFullAddress,
+                    accentColor = Color(0xFFFFB4A9),
+                    modifier = Modifier.weight(1f)
                 )
             }
 
 
-            if (session.stayPoints.isNotEmpty()) {
-                HorizontalDivider(
-                    color = MaterialTheme.colorScheme.outline
-                )
-
-                val stayCount = session.stayPoints.size
-                val totalStayMins = session.stayPoints.sumOf { it.durationMillis } / 60_000
-                val totalStayText = if (totalStayMins < 60) "$totalStayMins min"
-                else "${totalStayMins / 60}h ${totalStayMins % 60}m"
-
-                Column(
-                    verticalArrangement = Arrangement.spacedBy(4.dp)
+            if (stayCount > 0) {
+                Surface(
+                    shape = RoundedCornerShape(99.dp),
+                    color = Color.White.copy(alpha = 0.08f)
                 ) {
                     Text(
-                        text = "$stayCount Stay Point${if (stayCount > 1) "s" else ""}",
+                        text = "$stayCount stop${if (stayCount > 1) "s" else ""} / $totalStayText paused",
+                        modifier = Modifier.padding(horizontal = 11.dp, vertical = 6.dp),
                         style = MaterialTheme.typography.labelMedium,
                         fontFamily = manrope,
-                        color = Color(0xFFFF9800)
-                    )
-
-                    Text(
-                        text = "Total time stayed: $totalStayText",
-                        style = MaterialTheme.typography.bodyMedium,
-                        fontFamily = manrope,
+                        fontWeight = FontWeight.SemiBold,
+                        color = Color(0xFFFFD39B),
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
                     )
                 }
             }
         }
     }
+}
+
+@Composable
+private fun SessionEndpointSummary(
+    label: String,
+    time: String,
+    location: String,
+    accentColor: Color,
+    showFullAddress: Boolean,
+    modifier: Modifier = Modifier
+) {
+    Column(
+        modifier = modifier,
+        verticalArrangement = Arrangement.spacedBy(4.dp)
+    ) {
+        Text(
+            text = "$label / $time",
+            style = MaterialTheme.typography.labelMedium,
+            fontFamily = manrope,
+            fontWeight = FontWeight.SemiBold,
+            color = accentColor,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis
+        )
+
+        Text(
+            text = location,
+            style = MaterialTheme.typography.bodyMedium,
+            fontFamily = manrope,
+            color = Color.White.copy(alpha = 0.82f),
+            maxLines = if(showFullAddress) Int.MAX_VALUE else 1,
+            overflow = TextOverflow.Ellipsis
+        )
+    }
+}
+
+private fun compactTimelineLocation(address: String): String {
+    val parts = address
+        .split(",")
+        .map { it.trim() }
+        .filter { it.isNotEmpty() }
+
+    return parts.take(2).joinToString(", ").ifBlank { address }
 }
 
 @Composable
@@ -966,26 +1491,42 @@ fun createTimelineMarkerBitmap(
     isStart: Boolean
 ): Bitmap {
 
-    val size = 96
+    val size = 92
     val bitmap = createBitmap(size, size)
     val canvas = Canvas(bitmap)
     val paint = Paint(Paint.ANTI_ALIAS_FLAG)
 
+    val center = size / 2f
 
-    paint.color = color
-    paint.alpha = 60
-    canvas.drawCircle(size / 2f, size / 2f, size / 2.2f, paint)
-
-
-    paint.alpha = 255
-    paint.color = color
-    canvas.drawCircle(size / 2f, size / 2f, size / 3f, paint)
+    paint.style = Paint.Style.FILL
+    paint.color = android.graphics.Color.parseColor("#101820")
+    paint.alpha = 180
+    canvas.drawCircle(center, center, size / 2.55f, paint)
 
 
     paint.style = Paint.Style.STROKE
-    paint.strokeWidth = 6f
+    paint.strokeWidth = 7f
+    paint.color = color
+    paint.alpha = 255
+    canvas.drawCircle(center, center, size / 3.15f, paint)
+
+
+    paint.style = Paint.Style.FILL
     paint.color = android.graphics.Color.WHITE
-    canvas.drawCircle(size / 2f, size / 2f, size / 3f, paint)
+    paint.alpha = 245
+    canvas.drawCircle(center, center, size / 4.15f, paint)
+
+    paint.color = color
+    paint.alpha = 255
+    canvas.drawCircle(center, center, size / 9.5f, paint)
+
+    paint.color = android.graphics.Color.parseColor("#101820")
+    paint.textAlign = Paint.Align.CENTER
+    paint.typeface = Typeface.create(Typeface.DEFAULT, Typeface.BOLD)
+    paint.textSize = 22f
+    val label = if (isStart) "S" else "E"
+    val textCenterOffset = (paint.descent() + paint.ascent()) / 2f
+    canvas.drawText(label, center, center - textCenterOffset, paint)
 
     return bitmap
 }
@@ -1003,31 +1544,55 @@ fun timelineMarkerIcon(
 }
 
 fun replayStayPointMarkerIcon(): BitmapDescriptor {
-    val size = 72
+    val size = 78
     val bitmap = createBitmap(size, size)
     val canvas = Canvas(bitmap)
     val paint = Paint(Paint.ANTI_ALIAS_FLAG)
 
+    val center = size / 2f
 
-    paint.color = android.graphics.Color.parseColor("#FF9800")
-    paint.alpha = 60
-    canvas.drawCircle(size / 2f, size / 2f, size / 2.2f, paint)
-
-
-    paint.alpha = 255
-    paint.color = android.graphics.Color.parseColor("#FF9800")
-    canvas.drawCircle(size / 2f, size / 2f, size / 3f, paint)
+    paint.style = Paint.Style.FILL
+    paint.color = android.graphics.Color.parseColor("#101820")
+    paint.alpha = 150
+    canvas.drawCircle(center, center, size / 2.6f, paint)
 
 
     paint.style = Paint.Style.STROKE
-    paint.strokeWidth = 5f
-    paint.color = android.graphics.Color.WHITE
-    canvas.drawCircle(size / 2f, size / 2f, size / 3f, paint)
+    paint.strokeWidth = 6f
+    paint.color = android.graphics.Color.parseColor("#FFD39B")
+    paint.alpha = 245
+    canvas.drawCircle(center, center, size / 3.2f, paint)
 
 
     paint.style = Paint.Style.FILL
     paint.color = android.graphics.Color.WHITE
-    canvas.drawCircle(size / 2f, size / 2f, size / 8f, paint)
+    paint.alpha = 235
+    canvas.drawCircle(center, center, size / 4.35f, paint)
+
+
+    paint.color = android.graphics.Color.parseColor("#101820")
+    paint.alpha = 255
+    val barWidth = size / 13f
+    val barHeight = size / 4.8f
+    val gap = size / 16f
+    canvas.drawRoundRect(
+        center - gap - barWidth,
+        center - barHeight / 2f,
+        center - gap,
+        center + barHeight / 2f,
+        barWidth / 2f,
+        barWidth / 2f,
+        paint
+    )
+    canvas.drawRoundRect(
+        center + gap,
+        center - barHeight / 2f,
+        center + gap + barWidth,
+        center + barHeight / 2f,
+        barWidth / 2f,
+        barWidth / 2f,
+        paint
+    )
 
     return BitmapDescriptorFactory.fromBitmap(bitmap)
 }
@@ -1072,26 +1637,40 @@ fun interpolateLatLng(
 
 fun movingPlaybackMarkerIcon(): BitmapDescriptor {
 
-    val size = 56
+    val size = 96
     val bitmap = createBitmap(size, size)
     val canvas = Canvas(bitmap)
     val paint = Paint(Paint.ANTI_ALIAS_FLAG)
 
+    val center = size / 2f
 
-    paint.color = android.graphics.Color.parseColor("#2196F3")
-    paint.alpha = 80
-    canvas.drawCircle(size / 2f, size / 2f, size / 2.1f, paint)
-
-
-    paint.alpha = 255
-    paint.color = android.graphics.Color.parseColor("#2196F3")
-    canvas.drawCircle(size / 2f, size / 2f, size / 3f, paint)
-
+    paint.style = Paint.Style.FILL
+    paint.color = android.graphics.Color.parseColor("#071116")
+    paint.alpha = 185
+    canvas.drawCircle(center, center, size / 2.55f, paint)
 
     paint.style = Paint.Style.STROKE
-    paint.strokeWidth = 6f
+    paint.strokeWidth = 7f
     paint.color = android.graphics.Color.WHITE
-    canvas.drawCircle(size / 2f, size / 2f, size / 3f, paint)
+    paint.alpha = 245
+    canvas.drawCircle(center, center, size / 3.15f, paint)
+
+    paint.strokeWidth = 5f
+    paint.color = android.graphics.Color.parseColor("#19C7E6")
+    paint.alpha = 255
+    canvas.drawCircle(center, center, size / 3.75f, paint)
+
+    paint.style = Paint.Style.FILL
+    paint.alpha = 255
+    paint.color = android.graphics.Color.parseColor("#19C7E6")
+    canvas.drawCircle(center, center, size / 5.1f, paint)
+
+    paint.color = android.graphics.Color.WHITE
+    canvas.drawCircle(center, center, size / 11.5f, paint)
+
+    paint.color = android.graphics.Color.parseColor("#071116")
+    paint.alpha = 230
+    canvas.drawCircle(center, center, size / 20f, paint)
 
     return BitmapDescriptorFactory.fromBitmap(bitmap)
 }

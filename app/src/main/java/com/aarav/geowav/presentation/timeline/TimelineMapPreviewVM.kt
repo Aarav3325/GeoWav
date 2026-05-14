@@ -219,9 +219,7 @@ class TimelineMapPreviewVM @Inject constructor(
 
     fun toggleMapType() {
         val next = when (_uiState.value.mapType) {
-            MapType.NORMAL -> MapType.SATELLITE
-            MapType.SATELLITE -> MapType.TERRAIN
-            MapType.TERRAIN -> MapType.HYBRID
+            MapType.NORMAL -> MapType.HYBRID
             else -> MapType.NORMAL
         }
         _uiState.update { it.copy(mapType = next) }
