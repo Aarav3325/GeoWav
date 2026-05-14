@@ -1075,26 +1075,36 @@ fun interpolateLatLng(
 
 fun movingPlaybackMarkerIcon(): BitmapDescriptor {
 
-    val size = 56
+    val size = 72
     val bitmap = createBitmap(size, size)
     val canvas = Canvas(bitmap)
     val paint = Paint(Paint.ANTI_ALIAS_FLAG)
 
+    val center = size / 2f
 
-    paint.color = android.graphics.Color.parseColor("#2196F3")
-    paint.alpha = 80
-    canvas.drawCircle(size / 2f, size / 2f, size / 2.1f, paint)
-
-
-    paint.alpha = 255
-    paint.color = android.graphics.Color.parseColor("#2196F3")
-    canvas.drawCircle(size / 2f, size / 2f, size / 3f, paint)
-
+    paint.style = Paint.Style.FILL
+    paint.color = android.graphics.Color.parseColor("#8FD8EA")
+    paint.alpha = 42
+    canvas.drawCircle(center, center, size / 2.35f, paint)
 
     paint.style = Paint.Style.STROKE
-    paint.strokeWidth = 6f
+    paint.strokeWidth = 4f
     paint.color = android.graphics.Color.WHITE
-    canvas.drawCircle(size / 2f, size / 2f, size / 3f, paint)
+    paint.alpha = 170
+    canvas.drawCircle(center, center, size / 2.9f, paint)
+
+    paint.style = Paint.Style.FILL
+    paint.alpha = 255
+    paint.color = android.graphics.Color.parseColor("#102B35")
+    canvas.drawCircle(center, center, size / 4.2f, paint)
+
+    paint.strokeWidth = 5f
+    paint.color = android.graphics.Color.WHITE
+    canvas.drawCircle(center, center, size / 4.2f, paint)
+
+    paint.style = Paint.Style.FILL
+    paint.color = android.graphics.Color.parseColor("#8FD8EA")
+    canvas.drawCircle(center, center, size / 8.5f, paint)
 
     return BitmapDescriptorFactory.fromBitmap(bitmap)
 }
