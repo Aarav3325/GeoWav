@@ -646,27 +646,33 @@ private fun RoutePreviewPath(
 
     Polyline(
         points = fullPath,
-        color = Color(0xFF102B35).copy(alpha = 0.34f),
-        width = 9f
+        color = Color(0xFF071116).copy(alpha = 0.88f),
+        width = 13f
     )
 
     Polyline(
         points = fullPath,
-        color = Color.White.copy(alpha = 0.38f),
-        width = 4f
+        color = Color.White.copy(alpha = 0.78f),
+        width = 7f
     )
 
     if (activePath.size >= 2) {
         Polyline(
             points = activePath,
-            color = Color(0xFF8FD8EA),
-            width = 7f
+            color = Color(0xFF071116).copy(alpha = 0.92f),
+            width = 15f
         )
 
         Polyline(
             points = activePath,
-            color = Color.White.copy(alpha = 0.72f),
-            width = 2.5f
+            color = Color(0xFF19C7E6),
+            width = 10f
+        )
+
+        Polyline(
+            points = activePath,
+            color = Color.White.copy(alpha = 0.92f),
+            width = 3.5f
         )
     }
 }
@@ -1283,7 +1289,7 @@ fun interpolateLatLng(
 
 fun movingPlaybackMarkerIcon(): BitmapDescriptor {
 
-    val size = 72
+    val size = 96
     val bitmap = createBitmap(size, size)
     val canvas = Canvas(bitmap)
     val paint = Paint(Paint.ANTI_ALIAS_FLAG)
@@ -1291,28 +1297,32 @@ fun movingPlaybackMarkerIcon(): BitmapDescriptor {
     val center = size / 2f
 
     paint.style = Paint.Style.FILL
-    paint.color = android.graphics.Color.parseColor("#8FD8EA")
-    paint.alpha = 42
-    canvas.drawCircle(center, center, size / 2.35f, paint)
+    paint.color = android.graphics.Color.parseColor("#071116")
+    paint.alpha = 185
+    canvas.drawCircle(center, center, size / 2.55f, paint)
 
     paint.style = Paint.Style.STROKE
-    paint.strokeWidth = 4f
+    paint.strokeWidth = 7f
     paint.color = android.graphics.Color.WHITE
-    paint.alpha = 170
-    canvas.drawCircle(center, center, size / 2.9f, paint)
+    paint.alpha = 245
+    canvas.drawCircle(center, center, size / 3.15f, paint)
+
+    paint.strokeWidth = 5f
+    paint.color = android.graphics.Color.parseColor("#19C7E6")
+    paint.alpha = 255
+    canvas.drawCircle(center, center, size / 3.75f, paint)
 
     paint.style = Paint.Style.FILL
     paint.alpha = 255
-    paint.color = android.graphics.Color.parseColor("#102B35")
-    canvas.drawCircle(center, center, size / 4.2f, paint)
+    paint.color = android.graphics.Color.parseColor("#19C7E6")
+    canvas.drawCircle(center, center, size / 5.1f, paint)
 
-    paint.strokeWidth = 5f
     paint.color = android.graphics.Color.WHITE
-    canvas.drawCircle(center, center, size / 4.2f, paint)
+    canvas.drawCircle(center, center, size / 11.5f, paint)
 
-    paint.style = Paint.Style.FILL
-    paint.color = android.graphics.Color.parseColor("#8FD8EA")
-    canvas.drawCircle(center, center, size / 8.5f, paint)
+    paint.color = android.graphics.Color.parseColor("#071116")
+    paint.alpha = 230
+    canvas.drawCircle(center, center, size / 20f, paint)
 
     return BitmapDescriptorFactory.fromBitmap(bitmap)
 }
