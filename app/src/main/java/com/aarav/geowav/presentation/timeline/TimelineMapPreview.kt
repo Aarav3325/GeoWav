@@ -6,6 +6,7 @@ import android.graphics.Paint
 import android.util.Log
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -379,21 +380,11 @@ fun TimelineMapPreview(
                     }
 
 
-                    if (animatedPath.isNotEmpty()) {
-                        Polyline(
-                            points = animatedPath.toList(),
-                            color = Color(0xFF0A6780),
-                            width = 10f
+                    if (finalSnappedPath.isNotEmpty()) {
+                        RoutePreviewPath(
+                            fullPath = finalSnappedPath,
+                            activePath = animatedPath.toList()
                         )
-                    } else {
-
-                        if (finalSnappedPath.isNotEmpty()) {
-                            Polyline(
-                                points = finalSnappedPath,
-                                color = Color(0xFF0A6780),
-                                width = 10f
-                            )
-                        }
                     }
 
 
@@ -442,96 +433,6 @@ fun TimelineMapPreview(
                 }
             }
 
-            val speeds = listOf(2f, 5f, 8f)
-
-            val sliderState = rememberSliderState(
-                value = 0f,
-                valueRange = 0f..2f,
-                onValueChangeFinished = {
-                    Log.i("SLIDER", "value: change")
-                },
-                steps = 1
-            )
-
-            LaunchedEffect(sliderState.value) {
-
-                val index = sliderState.value.roundToInt()
-                val speed = speeds[index]
-
-                Log.i("SLIDER", "change to $speed")
-                viewModel.updateSpeed(speed)
-            }
-
-            AnimatedVisibility(
-                showPlaybackSpeedControls,
-                modifier = Modifier
-                    .align(Alignment.BottomCenter)
-                    .padding(bottom = 116.dp, start = 16.dp, end = 16.dp)
-            ) {
-                Column {
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth(),
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.SpaceBetween
-                    ) {
-                        Speed.entries.forEach { speed ->
-
-                            Surface(
-                                modifier = Modifier
-                                    .height(26.dp)
-                                    .padding(horizontal = 4.dp),
-                                color = surfaceContainerDark,
-                                shape = RoundedCornerShape(6.dp)
-                            ) {
-                                Box(
-                                    contentAlignment = Alignment.Center,
-                                    modifier = Modifier.padding(horizontal = 10.dp, vertical = 3.dp)
-                                ) {
-                                    Text(
-                                        text = speed.label,
-                                        fontFamily = manrope,
-                                        fontSize = 12.sp,
-                                        fontWeight = FontWeight.Bold,
-                                        color = onBackgroundDark
-                                    )
-                                }
-                            }
-                        }
-                    }
-
-                    Spacer(Modifier.height(12.dp))
-
-                    Slider(
-                        modifier = Modifier
-                            .background(surfaceLight.copy(alpha = 0.85f), RoundedCornerShape(16.dp))
-                            .padding(8.dp),
-                        state = sliderState,
-                        thumb = {
-                            SliderDefaults.Thumb(
-                                interactionSource = remember { MutableInteractionSource() },
-                                colors = SliderDefaults.colors(
-                                    thumbColor = primaryLight
-                                )
-                            )
-                        },
-                        track = {
-                            SliderDefaults.Track(
-                                colors = SliderDefaults.colors(
-                                    thumbColor = primaryLight,
-                                    activeTrackColor = primaryLight,
-                                    inactiveTrackColor = outlineVariantLight,
-                                    activeTickColor = onPrimaryLight,
-                                    inactiveTickColor = outlineLight
-                                ),
-                                enabled = true,
-                                sliderState = sliderState
-                            )
-                        }
-                    )
-                }
-            }
-
             PlaybackDock(
                 modifier = Modifier
                     .align(Alignment.BottomCenter)
@@ -549,6 +450,16 @@ fun TimelineMapPreview(
                     8f -> "2x"
                     else -> "1x"
                 },
+                updateSpeed = {
+                    if (!FeatureAccess.canControlSpeed(plan)) {
+                        upgradeContext = UpgradeContext(
+                            upgradeTo = UserPlan.PREMIUM,
+                            reason = UpgradeReason.SpeedControl
+                        )
+                    } else {
+                        viewModel.updateSpeed(it)
+                    }
+                },
                 showTray = showTray,
                 mapMode = mapMode,
                 onPlayPause = {
@@ -560,16 +471,6 @@ fun TimelineMapPreview(
                 },
                 onRestart = {
                     startLatLng?.let { viewModel.restartPlayback(it) }
-                },
-                onSpeed = {
-                    if (!FeatureAccess.canControlSpeed(plan)) {
-                        upgradeContext = UpgradeContext(
-                            upgradeTo = UserPlan.PREMIUM,
-                            reason = UpgradeReason.SpeedControl
-                        )
-                    } else {
-                        showPlaybackSpeedControls = !showPlaybackSpeedControls
-                    }
                 },
                 onToggleTray = { showTray = !showTray },
                 onFitRoute = {
@@ -624,6 +525,40 @@ fun TimelineMapPreview(
 
 
 @Composable
+private fun RoutePreviewPath(
+    fullPath: List<LatLng>,
+    activePath: List<LatLng>
+) {
+    if (fullPath.size < 2) return
+
+    Polyline(
+        points = fullPath,
+        color = Color(0xFF102B35).copy(alpha = 0.34f),
+        width = 9f
+    )
+
+    Polyline(
+        points = fullPath,
+        color = Color.White.copy(alpha = 0.38f),
+        width = 4f
+    )
+
+    if (activePath.size >= 2) {
+        Polyline(
+            points = activePath,
+            color = Color(0xFF8FD8EA),
+            width = 7f
+        )
+
+        Polyline(
+            points = activePath,
+            color = Color.White.copy(alpha = 0.72f),
+            width = 2.5f
+        )
+    }
+}
+
+@Composable
 private fun PlaybackDock(
     isPlaying: Boolean,
     canUsePlayback: Boolean,
@@ -634,12 +569,13 @@ private fun PlaybackDock(
     mapMode: String,
     onPlayPause: () -> Unit,
     onRestart: () -> Unit,
-    onSpeed: () -> Unit,
+    updateSpeed: (Float) -> Unit,
     onToggleTray: () -> Unit,
     onFitRoute: () -> Unit,
     onMapMode: () -> Unit,
     modifier: Modifier = Modifier
 ) {
+
     Surface(
         modifier = modifier.fillMaxWidth(),
         shape = RoundedCornerShape(28.dp),
@@ -681,7 +617,22 @@ private fun PlaybackDock(
 
                 Surface(
                     shape = RoundedCornerShape(99.dp),
-                    color = Color.White.copy(alpha = 0.10f)
+                    color = Color.White.copy(alpha = 0.10f),
+                    modifier = Modifier
+                        .clickable(
+                            interactionSource = remember { MutableInteractionSource() },
+                            indication = null,
+                            onClick = {
+                                val nextSpeed = when (speedLabel) {
+                                    "0.5x" -> 5f
+                                    "1x" -> 8f
+                                    "2x" -> 2f
+                                    else -> 5f
+                                }
+
+                                updateSpeed(nextSpeed)
+                            }
+                        )
                 ) {
                     Text(
                         text = speedLabel,
@@ -725,14 +676,14 @@ private fun PlaybackDock(
                         )
                     }
 
-                    DockIconButton(onClick = onSpeed) {
-                        LockedIcon(
-                            isLocked = !canControlSpeed,
-                            icon = painterResource(R.drawable.playback_speed),
-                            contentDescription = "speed",
-                            iconSize = 21.dp
-                        )
-                    }
+//                    DockIconButton(onClick = onSpeed) {
+//                        LockedIcon(
+//                            isLocked = !canControlSpeed,
+//                            icon = painterResource(R.drawable.playback_speed),
+//                            contentDescription = "speed",
+//                            iconSize = 21.dp
+//                        )
+//                    }
 
                     DockIconButton(
                         onClick = onToggleTray,
