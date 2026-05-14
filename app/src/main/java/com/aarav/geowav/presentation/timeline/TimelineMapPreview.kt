@@ -5,6 +5,11 @@ import android.graphics.Canvas
 import android.graphics.Paint
 import android.graphics.Typeface
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.slideOutVertically
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
@@ -518,8 +523,20 @@ fun TimelineMapPreview(
             currentSession?.let { session ->
                 AnimatedVisibility(
                     visible = showTray,
-                    modifier = Modifier.align(Alignment.TopCenter)
-                        .padding(top = 90.dp)
+                    enter = fadeIn(animationSpec = tween(220)) +
+                            slideInVertically(
+                                animationSpec = tween(260),
+                                initialOffsetY = { -it / 5 }
+                            ),
+                    exit = fadeOut(animationSpec = tween(160)) +
+                            slideOutVertically(
+                                animationSpec = tween(180),
+                                targetOffsetY = { -it / 6 }
+                            ),
+                    modifier = Modifier
+                        .align(Alignment.TopCenter)
+                        .statusBarsPadding()
+                        .padding(top = 62.dp)
                 ) {
                     SessionPreviewTray(
                         session = session,
