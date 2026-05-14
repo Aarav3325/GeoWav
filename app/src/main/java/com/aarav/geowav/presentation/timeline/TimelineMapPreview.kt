@@ -140,6 +140,12 @@ fun TimelineMapPreview(
     var showReplayHelp by remember {
         mutableStateOf(false)
     }
+    var showReplayHint by remember {
+        mutableStateOf(false)
+    }
+    var showManualMapHint by remember {
+        mutableStateOf(false)
+    }
 
     val movingMarkerState = remember {
         MarkerState()
@@ -237,6 +243,7 @@ fun TimelineMapPreview(
         }.collect { (isMoving, reason) ->
             if (isMoving && reason == CameraMoveStartedReason.GESTURE) {
                 followUser = false
+                showManualMapHint = true
             }
         }
     }
@@ -268,6 +275,13 @@ fun TimelineMapPreview(
             showMapModeToast = false
         }
     }
+
+//    LaunchedEffect(showManualMapHint) {
+//        if (showManualMapHint) {
+//            delay(1600)
+//            showManualMapHint = false
+//        }
+//    }
 
 
     LaunchedEffect(currentSession?.id) {
@@ -412,6 +426,8 @@ fun TimelineMapPreview(
                         title = "No movement to replay",
                         message = "This session does not include enough route data",
                         showLoader = false,
+                        actionLabel = "View details",
+                        onAction = { showTray = true },
                         modifier = Modifier.align(Alignment.Center)
                     )
                 }
@@ -451,6 +467,36 @@ fun TimelineMapPreview(
                         modifier = Modifier.padding(horizontal = 13.dp, vertical = 7.dp)
                     )
                 }
+            }
+
+//            AnimatedVisibility(
+//                visible = showManualMapHint,
+//                modifier = Modifier
+//                    .align(Alignment.Center)
+//                    .offset(y = (-58).dp)
+//            ) {
+//                ReplayHintPill(
+//                    text = "Exploring manually / tap Follow to return"
+//                )
+//            }
+
+            LaunchedEffect(isPreparingRoute) {
+                if (!isPreparingRoute) {
+                    delay(1200)
+                    showReplayHint = true
+                    delay(5000)
+                    showReplayHint = false
+                }
+            }
+
+            AnimatedVisibility(
+                visible = showReplayHint,
+                modifier = Modifier
+                    .align(Alignment.Center)
+            ) {
+                ReplayHintPill(
+                    text = "New here? Tap Help to understand replay controls."
+                )
             }
 
             PlaybackDock(
@@ -536,6 +582,15 @@ fun TimelineMapPreview(
             )
 
             currentSession?.let { session ->
+                if (!showTray) {
+                    CollapsedSessionSummary(
+                        session = session,
+                        modifier = Modifier
+                            .align(Alignment.BottomCenter)
+                            .padding(bottom = 172.dp, start = 16.dp, end = 16.dp)
+                    )
+                }
+
                 AnimatedVisibility(
                     visible = showTray,
                     enter = fadeIn(animationSpec = tween(220)) +
@@ -571,6 +626,8 @@ private fun ReplayStatusOverlay(
     title: String,
     message: String,
     showLoader: Boolean,
+    actionLabel: String? = null,
+    onAction: (() -> Unit)? = null,
     modifier: Modifier = Modifier
 ) {
     Surface(
@@ -604,7 +661,53 @@ private fun ReplayStatusOverlay(
                 fontSize = 12.sp,
                 color = Color.White.copy(alpha = 0.62f)
             )
+
+            if (actionLabel != null && onAction != null) {
+                Surface(
+                    modifier = Modifier
+                        .padding(top = 4.dp)
+                        .clickable(
+                            interactionSource = remember { MutableInteractionSource() },
+                            indication = null,
+                            onClick = onAction
+                        ),
+                    shape = RoundedCornerShape(99.dp),
+                    color = Color.White.copy(alpha = 0.12f)
+                ) {
+                    Text(
+                        text = actionLabel,
+                        modifier = Modifier.padding(horizontal = 14.dp, vertical = 7.dp),
+                        fontFamily = manrope,
+                        fontSize = 13.sp,
+                        fontWeight = FontWeight.SemiBold,
+                        color = Color.White.copy(alpha = 0.9f)
+                    )
+                }
+            }
         }
+    }
+}
+
+
+@Composable
+private fun ReplayHintPill(
+    text: String,
+    modifier: Modifier = Modifier
+) {
+    Surface(
+        modifier = modifier,
+        shape = RoundedCornerShape(99.dp),
+        color = Color(0xDD111820),
+        shadowElevation = 8.dp
+    ) {
+        Text(
+            text = text,
+            modifier = Modifier.padding(horizontal = 14.dp, vertical = 8.dp),
+            fontFamily = manrope,
+            fontSize = 12.sp,
+            fontWeight = FontWeight.SemiBold,
+            color = Color.White.copy(alpha = 0.86f)
+        )
     }
 }
 
@@ -747,8 +850,8 @@ private fun ReplayHelpSheetContent(
             )
             ReplayHelpRow(
                 icon = painterResource(R.drawable.gps),
-                title = "Fit route",
-                message = "Zoom out to see the full journey on the map."
+                title = "Follow route",
+                message = "Reframe the full journey and return the camera to the route."
             )
             ReplayHelpRow(
                 icon = painterResource(R.drawable.map_trifold),
@@ -762,7 +865,7 @@ private fun ReplayHelpSheetContent(
             color = MaterialTheme.colorScheme.surfaceContainer
         ) {
             Text(
-                text = "Tip: Drag or zoom the map anytime to explore manually.",
+                text = "Tip: Drag or zoom the map anytime. Tap Follow to return to the route.",
                 modifier = Modifier.padding(horizontal = 14.dp, vertical = 11.dp),
                 fontFamily = manrope,
                 fontSize = 13.sp,
@@ -820,6 +923,43 @@ private fun ReplayHelpRow(
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
         }
+    }
+}
+
+
+@Composable
+private fun CollapsedSessionSummary(
+    session: TimelineItem,
+    modifier: Modifier = Modifier
+) {
+    val durationMinutes = ((session.endTime - session.startTime) / (1000 * 60)).coerceAtLeast(0)
+    val durationText = if (durationMinutes < 60) {
+        "$durationMinutes min"
+    } else {
+        "${durationMinutes / 60}h ${durationMinutes % 60}m"
+    }
+    val stopText = when (session.stayPoints.size) {
+        0 -> "No stops"
+        1 -> "1 stop"
+        else -> "${session.stayPoints.size} stops"
+    }
+
+    Surface(
+        modifier = modifier,
+        shape = RoundedCornerShape(99.dp),
+        color = Color(0xDD111820),
+        shadowElevation = 8.dp
+    ) {
+        Text(
+            text = "$durationText journey / $stopText",
+            modifier = Modifier.padding(horizontal = 14.dp, vertical = 8.dp),
+            fontFamily = manrope,
+            fontSize = 12.sp,
+            fontWeight = FontWeight.SemiBold,
+            color = Color.White.copy(alpha = 0.86f),
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis
+        )
     }
 }
 
@@ -946,7 +1086,7 @@ private fun PlaybackDock(
                         )
                 ) {
                     Text(
-                        text = speedLabel,
+                        text = "Speed $speedLabel",
                         modifier = Modifier.padding(horizontal = 10.dp, vertical = 5.dp),
                         fontFamily = manrope,
                         fontSize = 12.sp,
