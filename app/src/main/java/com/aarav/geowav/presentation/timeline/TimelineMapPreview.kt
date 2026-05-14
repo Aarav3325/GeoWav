@@ -440,6 +440,9 @@ fun TimelineMapPreview(
                     .offset(y = (-32).dp)
                     .padding(horizontal = 16.dp),
                 isPlaying = uiState.isPlaying,
+                isComplete = finalSnappedPath.size > 1 &&
+                        uiState.playbackIndex >= finalSnappedPath.lastIndex &&
+                        !uiState.isPlaying,
                 canUsePlayback = FeatureAccess.canUsePlayback(plan),
                 canControlSpeed = FeatureAccess.canControlSpeed(plan),
                 progress = if (finalSnappedPath.size > 1) {
@@ -464,7 +467,12 @@ fun TimelineMapPreview(
                 showTray = showTray,
                 mapMode = mapMode,
                 onPlayPause = {
-                    if (uiState.isPlaying) {
+                    if (finalSnappedPath.size > 1 &&
+                        uiState.playbackIndex >= finalSnappedPath.lastIndex &&
+                        !uiState.isPlaying
+                    ) {
+                        startLatLng?.let { viewModel.restartPlayback(it) }
+                    } else if (uiState.isPlaying) {
                         viewModel.pausePlayback()
                     } else {
                         viewModel.startPlayback(plan)
@@ -650,6 +658,7 @@ private fun RoutePreviewPath(
 @Composable
 private fun PlaybackDock(
     isPlaying: Boolean,
+    isComplete: Boolean,
     canUsePlayback: Boolean,
     canControlSpeed: Boolean,
     progress: Float,
@@ -686,7 +695,11 @@ private fun PlaybackDock(
                     verticalArrangement = Arrangement.spacedBy(5.dp)
                 ) {
                     Text(
-                        text = if (isPlaying) "Replaying movement" else "Journey replay",
+                        text = when {
+                            isComplete -> "Replay complete"
+                            isPlaying -> "Replaying movement"
+                            else -> "Journey replay"
+                        },
                         fontFamily = manrope,
                         fontSize = 13.sp,
                         fontWeight = FontWeight.SemiBold,
@@ -741,14 +754,20 @@ private fun PlaybackDock(
             ) {
                 DockIconButton(
                     onClick = onPlayPause,
-                    containerColor = if (isPlaying) Color(0xFF8FD8EA) else Color.White,
+                    containerColor = if (isPlaying || isComplete) Color(0xFF8FD8EA) else Color.White,
                     contentColor = Color(0xFF101820),
                     size = 48.dp
                 ) {
                     LockedIcon(
                         isLocked = !canUsePlayback,
-                        icon = painterResource(if (isPlaying) R.drawable.pause else R.drawable.play_v2),
-                        contentDescription = "play/pause",
+                        icon = painterResource(
+                            when {
+                                isPlaying -> R.drawable.pause
+                                isComplete -> R.drawable.restart
+                                else -> R.drawable.play_v2
+                            }
+                        ),
+                        contentDescription = if (isComplete) "restart" else "play/pause",
                         iconSize = 24.dp
                     )
                 }
