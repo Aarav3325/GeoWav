@@ -150,26 +150,28 @@ fun MapScreen(
             )
         },
         floatingActionButton = {
-            FloatingActionButton(
-                shape = RoundedCornerShape(16.dp),
-                containerColor = MaterialTheme.colorScheme.primary,
-                contentColor = MaterialTheme.colorScheme.onPrimary,
-                onClick = {
-                    location?.let { (lat, lng) ->
-                        scope.launch {
-                            cameraPositionState.animate(
-                                CameraUpdateFactory.newLatLngZoom(LatLng(lat, lng), 16f)
-                            )
+            if(hasForegroundLocationPermission) {
+                FloatingActionButton(
+                    shape = RoundedCornerShape(16.dp),
+                    containerColor = MaterialTheme.colorScheme.primary,
+                    contentColor = MaterialTheme.colorScheme.onPrimary,
+                    onClick = {
+                        location?.let { (lat, lng) ->
+                            scope.launch {
+                                cameraPositionState.animate(
+                                    CameraUpdateFactory.newLatLngZoom(LatLng(lat, lng), 16f)
+                                )
+                            }
                         }
-                    }
-                },
-                modifier = Modifier
-            ) {
-                Image(
-                    painter = painterResource(id = R.drawable.gps),
-                    colorFilter = ColorFilter.tint(MaterialTheme.colorScheme.onPrimary),
-                    contentDescription = "My Location", modifier = Modifier.size(24.dp)
-                )
+                    },
+                    modifier = Modifier
+                ) {
+                    Image(
+                        painter = painterResource(id = R.drawable.gps),
+                        colorFilter = ColorFilter.tint(MaterialTheme.colorScheme.onPrimary),
+                        contentDescription = "My Location", modifier = Modifier.size(24.dp)
+                    )
+                }
             }
         }
     ) { innerPadding ->

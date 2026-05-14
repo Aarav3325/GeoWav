@@ -44,7 +44,9 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -53,7 +55,14 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.aarav.geowav.R
 import com.aarav.geowav.presentation.theme.manrope
+import com.aarav.geowav.presentation.theme.onBackgroundDark
+import com.aarav.geowav.presentation.theme.onBackgroundLight
 import com.aarav.geowav.presentation.theme.onPrimaryDark
+import com.aarav.geowav.presentation.theme.onSurfaceDark
+import com.aarav.geowav.presentation.theme.onSurfaceLight
+import com.aarav.geowav.presentation.theme.onSurfaceVariantDark
+import com.aarav.geowav.presentation.theme.onSurfaceVariantLight
+import com.aarav.geowav.presentation.theme.outlineVariantLight
 import com.aarav.geowav.presentation.theme.primaryDark
 import com.google.accompanist.permissions.ExperimentalPermissionsApi
 import com.google.accompanist.permissions.isGranted
@@ -93,110 +102,123 @@ fun OnboardingScreen(
         )
     }
 
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(MaterialTheme.colorScheme.background),
-        verticalArrangement = Arrangement.SpaceBetween
+    Box(
+        modifier = Modifier.fillMaxSize()
     ) {
-        HorizontalPager(
-            state = pagerState,
-            modifier = Modifier.weight(1f)
-        ) { page ->
-            OnboardingPageContent(index = page, page = pages[page])
-        }
+        Image(
+            painter = painterResource(R.drawable.onboard_bg_new),
+            contentScale = ContentScale.Crop,
+            contentDescription = "bg gradient",
+            modifier = Modifier.fillMaxSize()
+        )
 
         Column(
             modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 16.dp)
-                .padding(bottom = 36.dp),
-            horizontalAlignment = Alignment.CenterHorizontally
+                .fillMaxSize()
+                .background(Color.Transparent),
+//                .background(MaterialTheme.colorScheme.background),
+            verticalArrangement = Arrangement.SpaceBetween
         ) {
-            Row(
+            HorizontalPager(
+                state = pagerState,
+                modifier = Modifier.weight(1f)
+            ) { page ->
+                OnboardingPageContent(index = page, page = pages[page])
+            }
+
+            Column(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .wrapContentHeight(),
-                verticalAlignment = Alignment.CenterVertically
+                    .padding(horizontal = 16.dp)
+                    .padding(bottom = 36.dp),
+                horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                AnimatedVisibility(uiState.currentPage != pages.lastIndex) {
-                    TextButton(
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .wrapContentHeight(),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    AnimatedVisibility(uiState.currentPage != pages.lastIndex) {
+                        TextButton(
+                            onClick = {
+                                scope.launch {
+                                    pagerState.animateScrollToPage(
+                                        pages.lastIndex,
+                                        animationSpec = TweenSpec(durationMillis = 400)
+                                    )
+                                }
+                            },
+                            shape = RoundedCornerShape(12.dp),
+                            colors = ButtonDefaults.textButtonColors(
+                                contentColor = MaterialTheme.colorScheme.onBackground
+                            ),
+                            modifier = Modifier
+                                .wrapContentWidth()
+                                .height(48.dp)
+                        ) {
+                            Text(
+                                text = "Skip setup",
+                                fontSize = 14.sp,
+                                textAlign = TextAlign.Center,
+                                fontFamily = manrope,
+                                color = Color.White,
+                                fontWeight = FontWeight.SemiBold
+                            )
+                        }
+                    }
+
+                    AnimatedVisibility(
+                        modifier = Modifier.weight(1f),
+                        visible = uiState.currentPage != pages.lastIndex
+                    ) {
+                        DotsIndicator(
+                            modifier = Modifier.weight(1f),
+                            currentPage = pagerState.currentPage,
+                            totalDots = pages.size
+                        )
+                    }
+
+                    Spacer(modifier = Modifier.height(16.dp))
+
+                    FilledTonalButton(
                         onClick = {
-                            scope.launch {
-                                pagerState.animateScrollToPage(
-                                    pages.lastIndex,
-                                    animationSpec = TweenSpec(durationMillis = 400)
-                                )
+                            if (uiState.currentPage == pages.lastIndex) {
+                                onBoardVM.onContinueClicked()
+                            } else {
+                                scope.launch {
+                                    pagerState.animateScrollToPage(
+                                        pagerState.currentPage + 1,
+                                        animationSpec = TweenSpec(durationMillis = 350)
+                                    )
+                                }
                             }
                         },
-                        shape = RoundedCornerShape(12.dp),
-                        colors = ButtonDefaults.textButtonColors(
-                            contentColor = MaterialTheme.colorScheme.onBackground
+                        shape = RoundedCornerShape(18.dp),
+                        colors = ButtonDefaults.filledTonalButtonColors(
+                            containerColor = primaryDark,
+                            contentColor = onPrimaryDark
                         ),
-                        modifier = Modifier
-                            .wrapContentWidth()
-                            .height(48.dp)
+                        modifier = if (uiState.currentPage == pages.lastIndex) {
+                            Modifier
+                                .fillMaxWidth()
+                                .height(48.dp)
+                        } else {
+                            Modifier.height(48.dp)
+                        }
                     ) {
                         Text(
-                            text = "Skip setup",
+                            text = if (uiState.currentPage == pages.lastIndex) {
+                                "Set up access"
+                            } else {
+                                "Next"
+                            },
                             fontSize = 14.sp,
                             textAlign = TextAlign.Center,
                             fontFamily = manrope,
                             fontWeight = FontWeight.SemiBold
                         )
                     }
-                }
-
-                AnimatedVisibility(
-                    modifier = Modifier.weight(1f),
-                    visible = uiState.currentPage != pages.lastIndex
-                ) {
-                    DotsIndicator(
-                        modifier = Modifier.weight(1f),
-                        currentPage = pagerState.currentPage,
-                        totalDots = pages.size
-                    )
-                }
-
-                Spacer(modifier = Modifier.height(16.dp))
-
-                FilledTonalButton(
-                    onClick = {
-                        if (uiState.currentPage == pages.lastIndex) {
-                            onBoardVM.onContinueClicked()
-                        } else {
-                            scope.launch {
-                                pagerState.animateScrollToPage(
-                                    pagerState.currentPage + 1,
-                                    animationSpec = TweenSpec(durationMillis = 350)
-                                )
-                            }
-                        }
-                    },
-                    shape = RoundedCornerShape(18.dp),
-                    colors = ButtonDefaults.filledTonalButtonColors(
-                        containerColor = MaterialTheme.colorScheme.primary,
-                        contentColor = MaterialTheme.colorScheme.onPrimary
-                    ),
-                    modifier = if (uiState.currentPage == pages.lastIndex) {
-                        Modifier
-                            .fillMaxWidth()
-                            .height(48.dp)
-                    } else {
-                        Modifier.height(48.dp)
-                    }
-                ) {
-                    Text(
-                        text = if (uiState.currentPage == pages.lastIndex) {
-                            "Set up access"
-                        } else {
-                            "Next"
-                        },
-                        fontSize = 14.sp,
-                        textAlign = TextAlign.Center,
-                        fontFamily = manrope,
-                        fontWeight = FontWeight.SemiBold
-                    )
                 }
             }
         }
@@ -440,7 +462,7 @@ fun OnboardingPageContent(
             text = "GeoWav",
             fontSize = 34.sp,
             fontFamily = manrope,
-            color = MaterialTheme.colorScheme.onBackground,
+            color = onBackgroundLight,
             fontWeight = FontWeight.Bold
         )
 
@@ -473,7 +495,7 @@ fun OnboardingPageContent(
             text = page.title,
             fontFamily = manrope,
             fontSize = 20.sp,
-            color = MaterialTheme.colorScheme.onBackground,
+            color =onBackgroundLight,
             fontWeight = FontWeight.SemiBold,
             textAlign = TextAlign.Center
         )
@@ -486,7 +508,7 @@ fun OnboardingPageContent(
             fontSize = 14.sp,
             textAlign = TextAlign.Center,
             fontFamily = manrope,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            color = onSurfaceVariantLight,
             fontWeight = FontWeight.Normal,
             lineHeight = 20.sp
         )
@@ -526,8 +548,8 @@ fun DotsIndicator(
         repeat(totalDots) { index ->
             val width = if (index == currentPage) 25.dp else 8.dp
             val color =
-                if (index == currentPage) MaterialTheme.colorScheme.onBackground
-                else MaterialTheme.colorScheme.outlineVariant
+                if (index == currentPage) onBackgroundLight
+                else outlineVariantLight
             Box(
                 modifier = Modifier
                     .padding(4.dp)
