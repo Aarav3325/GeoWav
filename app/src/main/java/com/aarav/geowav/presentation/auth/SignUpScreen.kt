@@ -91,6 +91,7 @@ fun SignupScreen(
             .imePadding()
             .background(MaterialTheme.colorScheme.background)
     ) {
+        AuthSpatialBackground()
 
 
         Column(

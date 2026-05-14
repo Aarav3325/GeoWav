@@ -80,6 +80,7 @@ fun LoginScreen(
             .background(MaterialTheme.colorScheme.background)
 
     ) {
+        AuthSpatialBackground()
 
         LaunchedEffect(Unit) {
             loginVM.events.collect { event ->
