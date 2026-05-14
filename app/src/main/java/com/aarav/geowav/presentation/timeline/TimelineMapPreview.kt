@@ -1155,31 +1155,55 @@ fun timelineMarkerIcon(
 }
 
 fun replayStayPointMarkerIcon(): BitmapDescriptor {
-    val size = 72
+    val size = 78
     val bitmap = createBitmap(size, size)
     val canvas = Canvas(bitmap)
     val paint = Paint(Paint.ANTI_ALIAS_FLAG)
 
+    val center = size / 2f
 
-    paint.color = android.graphics.Color.parseColor("#FF9800")
-    paint.alpha = 60
-    canvas.drawCircle(size / 2f, size / 2f, size / 2.2f, paint)
-
-
-    paint.alpha = 255
-    paint.color = android.graphics.Color.parseColor("#FF9800")
-    canvas.drawCircle(size / 2f, size / 2f, size / 3f, paint)
+    paint.style = Paint.Style.FILL
+    paint.color = android.graphics.Color.parseColor("#101820")
+    paint.alpha = 150
+    canvas.drawCircle(center, center, size / 2.6f, paint)
 
 
     paint.style = Paint.Style.STROKE
-    paint.strokeWidth = 5f
-    paint.color = android.graphics.Color.WHITE
-    canvas.drawCircle(size / 2f, size / 2f, size / 3f, paint)
+    paint.strokeWidth = 6f
+    paint.color = android.graphics.Color.parseColor("#FFD39B")
+    paint.alpha = 245
+    canvas.drawCircle(center, center, size / 3.2f, paint)
 
 
     paint.style = Paint.Style.FILL
     paint.color = android.graphics.Color.WHITE
-    canvas.drawCircle(size / 2f, size / 2f, size / 8f, paint)
+    paint.alpha = 235
+    canvas.drawCircle(center, center, size / 4.35f, paint)
+
+
+    paint.color = android.graphics.Color.parseColor("#101820")
+    paint.alpha = 255
+    val barWidth = size / 13f
+    val barHeight = size / 4.8f
+    val gap = size / 16f
+    canvas.drawRoundRect(
+        center - gap - barWidth,
+        center - barHeight / 2f,
+        center - gap,
+        center + barHeight / 2f,
+        barWidth / 2f,
+        barWidth / 2f,
+        paint
+    )
+    canvas.drawRoundRect(
+        center + gap,
+        center - barHeight / 2f,
+        center + gap + barWidth,
+        center + barHeight / 2f,
+        barWidth / 2f,
+        barWidth / 2f,
+        paint
+    )
 
     return BitmapDescriptorFactory.fromBitmap(bitmap)
 }
