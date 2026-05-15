@@ -92,6 +92,7 @@ import com.aarav.geowav.data.model.CircleMember
 import com.aarav.geowav.presentation.components.CustomBottomSheetForObserve
 import com.aarav.geowav.presentation.observe.CollapsedViewerInfo
 import com.aarav.geowav.presentation.observe.CollapsedViewerTray
+import com.aarav.geowav.presentation.observe.CompactActionMenu
 import com.aarav.geowav.presentation.observe.ViewerInfoSheetContent
 import com.aarav.geowav.presentation.theme.manrope
 import com.aarav.geowav.presentation.theme.primaryLight
@@ -322,8 +323,7 @@ fun ObserveLiveLocationCard(
         GoogleMap(
             modifier = Modifier
                 .matchParentSize()
-                .shadow(4.dp, RoundedCornerShape(16.dp))
-                .clip(RoundedCornerShape(16.dp)),
+                .shadow(4.dp, RoundedCornerShape(16.dp)),
             cameraPositionState = cameraPositionState,
             onMapClick = {},
             onMapLongClick = {},
@@ -470,31 +470,67 @@ fun ObserveLiveLocationCard(
         }
 
         val mapMode = when (mapType) {
-            MapType.NORMAL -> "Normal"
-            MapType.SATELLITE -> "Satellite"
-            MapType.TERRAIN -> "Terrain"
-            MapType.HYBRID -> "Hybrid"
+            com.google.maps.android.compose.MapType.NORMAL -> "Normal"
+            com.google.maps.android.compose.MapType.HYBRID -> "Satellite"
             else -> "Map"
+        }
+
+        if(isFullScreen) {
+            CompactActionMenu(
+                resetCameraPosition = {
+                    if (emergencyLat != null && emergencyLng != null) {
+                        isUserPanning = false
+                        scope.launch {
+                            cameraPositionState.animate(
+                                CameraUpdateFactory.newLatLngZoom(
+                                    LatLng(emergencyLat, emergencyLng),
+                                    16f
+                                )
+                            )
+                        }
+                    } else if (visibleLatLngs.isNotEmpty()) {
+                        isUserPanning = false
+                        scope.launch {
+                            val bounds = LatLngBounds.builder().apply {
+                                visibleLatLngs.forEach { include(it) }
+                            }.build()
+                            cameraPositionState.animate(
+                                CameraUpdateFactory.newLatLngBounds(bounds, 80)
+                            )
+                        }
+                    }
+                },
+                changeMapType = {
+                    mapType = when (mapType) {
+                        MapType.NORMAL -> MapType.HYBRID
+                        else -> MapType.NORMAL
+                    }
+                    showMapModeToast = true
+                },
+                modifier = Modifier
+                    .align(Alignment.TopEnd)
+                    .padding(top = 98.dp)
+                    .padding(horizontal = 12.dp)
+            )
         }
 
         AnimatedVisibility(
             showMapModeToast,
             modifier = Modifier
-                .align(Alignment.BottomCenter)
-                .padding(bottom = 116.dp)
+                .align(Alignment.Center)
         ) {
-
             Surface(
                 shape = RoundedCornerShape(24.dp),
-                color = MaterialTheme.colorScheme.surfaceContainerLow
+                color = Color(0xDD111820),
+                shadowElevation = 8.dp
             ) {
                 Text(
-                    text = "Switched to $mapMode mode",
-                    color = MaterialTheme.colorScheme.onSurface,
-                    fontSize = 16.sp,
+                    text = "$mapMode map",
+                    color = Color.White.copy(alpha = 0.86f),
+                    fontSize = 13.sp,
                     fontWeight = FontWeight.SemiBold,
                     fontFamily = manrope,
-                    modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp)
+                    modifier = Modifier.padding(horizontal = 13.dp, vertical = 7.dp)
                 )
             }
         }
@@ -503,7 +539,7 @@ fun ObserveLiveLocationCard(
 
             showViewerInfoSheet ->
                 AnimatedVisibility(
-                    visible = isFullScreen && showViewerInfoSheet,
+                    visible = isFullScreen,
                     enter = fadeIn(
                         animationSpec = tween(220)
                     ) + slideInVertically(
@@ -539,7 +575,7 @@ fun ObserveLiveLocationCard(
 
             selectedUser != null ->
                 AnimatedVisibility(
-                    visible = isFullScreen && selectedUser != null,
+                    visible = isFullScreen,
                     enter = fadeIn(
                         animationSpec = tween(220)
                     ) + slideInVertically(

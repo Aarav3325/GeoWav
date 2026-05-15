@@ -2,11 +2,6 @@ package com.aarav.geowav.presentation.observe
 
 import android.util.Log
 import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.core.tween
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
-import androidx.compose.animation.slideInVertically
-import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -37,7 +32,6 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -47,7 +41,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.blur
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
@@ -65,10 +58,9 @@ import com.aarav.geowav.presentation.components.MyAlertDialog
 import com.aarav.geowav.presentation.home.HomeScreenVM
 import com.aarav.geowav.presentation.home.ObserveLiveLocationCard
 import com.aarav.geowav.presentation.theme.manrope
-import com.aarav.geowav.presentation.theme.onSurfaceDark
 import com.aarav.geowav.presentation.theme.onSurfaceLight
-import com.aarav.geowav.presentation.theme.surfaceContainerHighDark
 import com.aarav.geowav.presentation.theme.surfaceContainerHighLight
+import com.aarav.geowav.presentation.timeline.SessionPreviewTopBar
 
 
 @Preview(showBackground = true)
@@ -85,34 +77,7 @@ fun ObserveScreen(
 
     Log.i("OBSERVE", uiState.lovedOnes.toString())
     Scaffold(
-        topBar = {
-            TopAppBar(
-                title = {
-                    Text(
-                        text = "Observe Loved Ones",
-                        fontFamily = manrope,
-                        fontSize = 20.sp,
-                        fontWeight = FontWeight.Bold,
-                        modifier = Modifier
-                    )
-                },
-                navigationIcon = {
-                    IconButton(
-                        onClick = {
-                            back()
-                        }
-                    ) {
-                        Icon(
-                            painter = painterResource(R.drawable.back),
-                            contentDescription = null,
-                            modifier = Modifier.size(24.dp)
-                        )
-                    }
-                }
-            )
-        },
-        contentWindowInsets = WindowInsets(0, 0, 0, 0),
-        containerColor = MaterialTheme.colorScheme.background,
+        contentWindowInsets = WindowInsets(0, 0, 0, 0)
     ) {
 
 
@@ -178,6 +143,14 @@ fun ObserveScreen(
                 )
             }
 
+            SessionPreviewTopBar(
+                screenTitle = "Observe Loved Ones",
+                onBack = back,
+                modifier = Modifier
+                    .align(Alignment.TopStart)
+                    .statusBarsPadding()
+                    .padding(start = 16.dp, top = 10.dp)
+            )
 
 
         }
@@ -357,7 +330,7 @@ fun ViewerInfoRow(
 
         Spacer(Modifier.height(12.dp))
 
-        if(!isLast) {
+        if (!isLast) {
             HorizontalDivider(
                 Modifier
                     .background(Color.Transparent),
@@ -399,22 +372,21 @@ fun CollapsedViewerTray(
             .clickable {
                 showDetail()
             }
-            .padding(horizontal = 16.dp, vertical = 16.dp)
-            .padding(bottom = 16.dp),
+            .padding(horizontal = 16.dp, vertical = 16.dp),
         shape = RoundedCornerShape(28.dp),
         color = Color(0xEE111820)
     ) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(12.dp),
+                .padding(16.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
 
             Column(
                 modifier = Modifier
                     .weight(1f)
-                    .padding(horizontal = 12.dp)
+                    .padding(end = 12.dp)
             ) {
                 Text(
                     text = titleText,
@@ -464,22 +436,20 @@ fun CollapsedViewerInfo(
     Surface(
         modifier = modifier
             .fillMaxWidth()
-            .padding(horizontal = 16.dp, vertical = 16.dp)
-            .padding(bottom = 16.dp),
+            .padding(horizontal = 16.dp, vertical = 16.dp),
         shape = RoundedCornerShape(28.dp),
         color = Color(0xEE111820)
     ) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(12.dp),
+                .padding(16.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
 
             Column(
                 modifier = Modifier
                     .weight(1f)
-                    .padding(horizontal = 12.dp)
             ) {
                 Text(
                     text = memberName,
@@ -513,6 +483,55 @@ fun CollapsedViewerInfo(
                     painter = painterResource(R.drawable.clear),
                     contentDescription = "Close help",
                     modifier = Modifier.size(18.dp)
+                )
+            }
+        }
+    }
+}
+
+@Composable
+fun CompactActionMenu(
+    resetCameraPosition: () -> Unit,
+    changeMapType: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    Surface(
+        color = Color(0xCC111820),
+        shape = RoundedCornerShape(99.dp),
+        modifier = modifier
+    ) {
+        Column(
+            modifier = Modifier.padding(vertical = 8.dp)
+        ) {
+            IconButton(
+                modifier = Modifier.size(42.dp),
+                colors = IconButtonDefaults.iconButtonColors(
+                    contentColor = Color.White.copy(alpha = 0.88f)
+                ),
+                onClick = resetCameraPosition
+            ) {
+                Icon(
+                    painter = painterResource(R.drawable.gps),
+                    contentDescription = "reset camera position",
+                    tint = Color.White.copy(alpha = 0.84f),
+                    modifier = Modifier.size(21.dp)
+                )
+            }
+
+            IconButton(
+                modifier = Modifier.size(42.dp),
+                colors = IconButtonDefaults.iconButtonColors(
+                    contentColor = Color.White.copy(alpha = 0.88f)
+                ),
+                onClick = {
+                    changeMapType()
+                }
+            ) {
+                Icon(
+                    painter = painterResource(R.drawable.map_trifold),
+                    contentDescription = "map",
+                    tint = Color.White.copy(alpha = 0.84f),
+                    modifier = Modifier.size(21.dp)
                 )
             }
         }
