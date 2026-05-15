@@ -59,6 +59,8 @@ class SnapToRoadRepository @Inject constructor(
 
                 val data = response.body()?.snappedPoints ?: emptyList()
 
+                if(data.isEmpty()) return Resource.Error("This session does not include enough route data")
+
                 snapped.addAll(
                     if (index == 0) data
                     else data.drop(1) // remove overlap

@@ -50,6 +50,10 @@ class TimelineMapPreviewVM @Inject constructor(
     private val _uiState = MutableStateFlow(TimelinePreviewUiState())
     val uiState: StateFlow<TimelinePreviewUiState> = _uiState.asStateFlow()
 
+
+    private val _events = MutableSharedFlow<TimelineEvents>()
+    val events = _events.asSharedFlow()
+
     private var playbackJob: Job? = null
 
     private val _uiEvent = MutableSharedFlow<UpgradeEvents>()
@@ -88,6 +92,7 @@ class TimelineMapPreviewVM @Inject constructor(
                 }
 
                 is Resource.Error -> {
+                    _events.emit(TimelineEvents.NotEnoughData)
                     Log.e("SNAP", "error: ${result.message}")
                 }
 
@@ -254,3 +259,7 @@ data class TimelinePreviewUiState(
     val showUpgradeForStayPoints: Boolean = true
 )
 
+
+sealed class TimelineEvents {
+    object NotEnoughData: TimelineEvents()
+}

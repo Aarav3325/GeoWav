@@ -189,6 +189,27 @@ fun TimelineMapPreview(
 
     var upgradeContext by remember { mutableStateOf<UpgradeContext?>(null) }
 
+    var hasRecordedMovement by remember {
+        mutableStateOf(!userPaths.isNullOrEmpty())
+    }
+
+    var isPreparingRoute by remember {
+        mutableStateOf(mapLoaded && currentSession != null &&
+                hasRecordedMovement && finalSnappedPath.isEmpty())
+    }
+    var hasNoMovementData by remember {
+        mutableStateOf(mapLoaded && currentSession != null && !hasRecordedMovement)
+    }
+
+    LaunchedEffect(Unit) {
+        viewModel.events.collect { events ->
+            if(events is TimelineEvents.NotEnoughData) {
+                isPreparingRoute = false
+                hasNoMovementData = true
+            }
+        }
+    }
+
     LaunchedEffect(Unit) {
         viewModel.uiEvent.collect { event ->
             if (event is UpgradeEvents.ShowUpgrade) {
@@ -399,10 +420,6 @@ fun TimelineMapPreview(
                 }
             }
 
-            val hasRecordedMovement = !userPaths.isNullOrEmpty()
-            val isPreparingRoute = mapLoaded && currentSession != null &&
-                    hasRecordedMovement && finalSnappedPath.isEmpty()
-            val hasNoMovementData = mapLoaded && currentSession != null && !hasRecordedMovement
 
             when {
                 !mapLoaded -> {

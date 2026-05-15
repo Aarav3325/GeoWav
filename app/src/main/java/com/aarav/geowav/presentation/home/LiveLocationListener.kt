@@ -14,7 +14,9 @@ import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.infiniteRepeatable
 import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
@@ -27,6 +29,8 @@ import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
@@ -481,26 +485,28 @@ fun ObserveLiveLocationCard(
             ViewerTrayOverlay(
                 Modifier
                     .align(Alignment.TopCenter)
-                    .padding(vertical = 16.dp),
-                uiState.lovedOnes,
-                locations,
+                    .padding(top = 12.dp),
+                viewerList = uiState.lovedOnes,
+                locations = locations,
+                selectedUser = selectedUser,
                 onHideClick = {
                     selectedUser = null
                     onHideClick()
                 },
                 onUserClick = {
                     selectedUser = it
-                }
-            ) {
-                scope.launch {
-                    cameraPositionState.animate(
-                        CameraUpdateFactory.newLatLngZoom(
-                            it,
-                            16f
+                },
+                onClick = {
+                    scope.launch {
+                        cameraPositionState.animate(
+                            CameraUpdateFactory.newLatLngZoom(
+                                it,
+                                16f
+                            )
                         )
-                    )
+                    }
                 }
-            }
+            )
         }
 
         if (isFullScreen) {
@@ -866,62 +872,197 @@ fun RichTooltipExample(
 }
 
 
-@Preview(showBackground = true)
 @Composable
 fun ViewerTrayOverlay(
     modifier: Modifier = Modifier,
     viewerList: List<CircleMember>,
     locations: Map<String, ViewerLocationState>,
+    selectedUser: String?,
     onHideClick: () -> Unit,
     onUserClick: (String) -> Unit,
     onClick: (LatLng) -> Unit
 ) {
+
     val filtered = viewerList.filter {
-        it.id in locations.keys.toSet()
+        it.id in locations.keys
     }
 
-    Card(
-        shape = MaterialTheme.shapes.large,
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceBright.copy(0.85f)
-        ),
+    Surface(
         modifier = modifier
-            .padding(start = 16.dp, end = 16.dp)
             .fillMaxWidth()
+            .padding(horizontal = 12.dp),
+        shape = RoundedCornerShape(26.dp),
+        color = MaterialTheme.colorScheme.surface.copy(alpha = 0.76f),
     ) {
-        Box(
-            modifier = Modifier.fillMaxWidth()
+
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 10.dp, vertical = 10.dp),
+            verticalAlignment = Alignment.CenterVertically
         ) {
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(vertical = 8.dp, horizontal = 16.dp)
+
+            LazyRow(
+                modifier = Modifier.weight(1f),
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                verticalAlignment = Alignment.CenterVertically
             ) {
-                filtered.forEach { conn ->
-                    RichTooltipExample(
+
+                items(filtered, key = { it.id }) { conn ->
+
+                    val viewerState = locations[conn.id]
+
+                    val isSelected = selectedUser == conn.id
+
+                    val isEmergency =
+                        viewerState is ViewerLocationState.EmergencySharing
+
+                    CompactPresenceChip(
                         conn = conn,
-                        viewerState = locations[conn.id],
-                        onClick = onClick,
-                        onUserClick = onUserClick
+                        isSelected = isSelected,
+                        isEmergency = isEmergency,
+                        onClick = {
+                            onUserClick(conn.id)
+
+                            val location = when (viewerState) {
+                                is ViewerLocationState.NormalSharing ->
+                                    viewerState.location
+
+                                is ViewerLocationState.EmergencySharing ->
+                                    viewerState.location
+
+                                else -> null
+                            }
+
+                            location?.let {
+                                onClick(
+                                    LatLng(it.lat, it.lng)
+                                )
+                            }
+                        }
                     )
                 }
             }
 
-            TextButton(
+            Spacer(modifier = Modifier.width(8.dp))
+
+            IconButton(
                 onClick = onHideClick,
-                modifier = Modifier
-                    .padding(top = 68.dp)
-                    .align(Alignment.BottomEnd)
+                modifier = Modifier.size(34.dp)
             ) {
-                Text(
-                    "Hide Tray",
-                    fontFamily = manrope,
-                    color = MaterialTheme.colorScheme.primary,
-                    fontWeight = FontWeight.SemiBold,
-                    fontSize = 14.sp
+                Icon(
+                    painter = painterResource(R.drawable.clear),
+                    contentDescription = "Hide Tray",
+                    modifier = Modifier.size(18.dp),
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }
+        }
+    }
+}
+
+@Composable
+fun CompactPresenceChip(
+    conn: CircleMember,
+    isSelected: Boolean,
+    isEmergency: Boolean,
+    onClick: () -> Unit
+) {
+
+    val backgroundColor = when {
+        isSelected ->
+            MaterialTheme.colorScheme.primary.copy(alpha = 0.14f)
+
+        else ->
+            MaterialTheme.colorScheme.surfaceContainerHighest.copy(alpha = 0.55f)
+    }
+
+    val borderColor = when {
+        isEmergency ->
+            MaterialTheme.colorScheme.error.copy(alpha = 0.45f)
+
+        isSelected ->
+            MaterialTheme.colorScheme.primary.copy(alpha = 0.25f)
+
+        else ->
+            Color.Transparent
+    }
+
+    Surface(
+        onClick = onClick,
+        shape = RoundedCornerShape(22.dp),
+        color = backgroundColor,
+        border = BorderStroke(
+            width = 1.dp,
+            color = borderColor
+        )
+    ) {
+
+        Row(
+            modifier = Modifier.padding(
+                horizontal = 10.dp,
+                vertical = 8.dp
+            ),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+
+            Box {
+
+                Box(
+                    modifier = Modifier
+                        .size(38.dp)
+                        .clip(CircleShape)
+                        .background(
+                            Brush.radialGradient(
+                                listOf(
+                                    MaterialTheme.colorScheme.onPrimary,
+                                    MaterialTheme.colorScheme.inversePrimary
+                                )
+                            )
+                        ),
+                    contentAlignment = Alignment.Center
+                ) {
+
+                    Text(
+                        text = conn.profileName.take(1),
+                        fontFamily = manrope,
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 15.sp,
+                        color = MaterialTheme.colorScheme.onBackground
+                    )
+                }
+
+                Box(
+                    modifier = Modifier
+                        .align(Alignment.BottomEnd)
+                        .size(10.dp)
+                        .clip(CircleShape)
+                        .background(
+                            if (isEmergency)
+                                MaterialTheme.colorScheme.error
+                            else
+                                Color(0xFF34C759)
+                        )
+                        .border(
+                            2.dp,
+                            MaterialTheme.colorScheme.surface,
+                            CircleShape
+                        )
+                )
+            }
+
+            Text(
+                text = conn.alias ?: conn.profileName,
+                fontFamily = manrope,
+                fontWeight = if (isSelected)
+                    FontWeight.SemiBold
+                else
+                    FontWeight.Medium,
+                fontSize = 13.sp,
+                color = MaterialTheme.colorScheme.onSurface,
+                maxLines = 1
+            )
         }
     }
 }
