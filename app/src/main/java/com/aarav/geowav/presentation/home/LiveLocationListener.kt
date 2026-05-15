@@ -7,13 +7,16 @@ import android.graphics.Paint
 import android.net.Uri
 import android.util.Log
 import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.LinearOutSlowInEasing
 import androidx.compose.animation.core.RepeatMode
 import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.infiniteRepeatable
 import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -28,6 +31,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
@@ -55,9 +59,7 @@ import androidx.compose.material3.TooltipDefaults
 import androidx.compose.material3.rememberTooltipState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.State
 import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.mutableStateOf
@@ -87,9 +89,12 @@ import com.aarav.geowav.core.utils.UserColorMapper
 import com.aarav.geowav.core.utils.ViewerLocationState
 import com.aarav.geowav.core.utils.formatTime
 import com.aarav.geowav.data.model.CircleMember
+import com.aarav.geowav.presentation.components.CustomBottomSheetForObserve
+import com.aarav.geowav.presentation.observe.CollapsedViewerInfo
+import com.aarav.geowav.presentation.observe.CollapsedViewerTray
+import com.aarav.geowav.presentation.observe.ViewerInfoSheetContent
 import com.aarav.geowav.presentation.theme.manrope
 import com.aarav.geowav.presentation.theme.primaryLight
-import com.aarav.geowav.presentation.timeline.movingPlaybackMarkerIcon
 import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.model.BitmapDescriptor
 import com.google.android.gms.maps.model.BitmapDescriptorFactory
@@ -107,7 +112,6 @@ import com.google.maps.android.compose.Marker
 import com.google.maps.android.compose.MarkerState
 import com.google.maps.android.compose.Polyline
 import com.google.maps.android.compose.rememberCameraPositionState
-import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
@@ -134,6 +138,11 @@ fun ObserveLiveLocationCard(
     val markerStates = remember {
         mutableStateMapOf<String, MarkerState>()
     }
+
+    var showViewerInfoSheet by remember {
+        mutableStateOf(true)
+    }
+
 
     LaunchedEffect(showMapModeToast) {
         if (showMapModeToast) {
@@ -287,13 +296,22 @@ fun ObserveLiveLocationCard(
     }
 
 
-
     val scope = rememberCoroutineScope()
 
     var selectedUser by remember {
         mutableStateOf<String?>(null)
     }
 
+    val activeViewerIds = locations
+        .filterValues {
+            it is ViewerLocationState.NormalSharing ||
+                    it is ViewerLocationState.EmergencySharing
+        }
+        .keys
+
+    val viewers = uiState.lovedOnes.filter {
+        it.id in activeViewerIds
+    }
 
 
     Box(
@@ -481,33 +499,183 @@ fun ObserveLiveLocationCard(
             }
         }
 
-        AnimatedVisibility(isFullScreen && showTray) {
-            ViewerTrayOverlay(
-                Modifier
-                    .align(Alignment.TopCenter)
-                    .padding(top = 12.dp),
-                viewerList = uiState.lovedOnes,
-                locations = locations,
-                selectedUser = selectedUser,
-                onHideClick = {
-                    selectedUser = null
-                    onHideClick()
-                },
-                onUserClick = {
-                    selectedUser = it
-                },
-                onClick = {
-                    scope.launch {
-                        cameraPositionState.animate(
-                            CameraUpdateFactory.newLatLngZoom(
-                                it,
-                                16f
-                            )
-                        )
+        when {
+
+            showViewerInfoSheet ->
+                AnimatedVisibility(
+                    visible = isFullScreen && showViewerInfoSheet,
+                    enter = fadeIn(
+                        animationSpec = tween(220)
+                    ) + slideInVertically(
+                        animationSpec = tween(260),
+                        initialOffsetY = { -it / 5 }
+                    ),
+                    exit = fadeOut(
+                        animationSpec = tween(180)
+                    ) + slideOutVertically(
+                        animationSpec = tween(220),
+                        targetOffsetY = { -it / 6 }
+                    ),
+                    modifier = Modifier
+                        .align(Alignment.BottomCenter)
+                        .padding(bottom = 16.dp)
+                ) {
+
+                    CustomBottomSheetForObserve(
+                        onDismissRequest = {
+                            showViewerInfoSheet = false
+                        }
+                    ) {
+
+                        ViewerInfoSheetContent(
+                            viewers,
+                            locations
+                        ) {
+                            selectedUser = it
+                            showViewerInfoSheet = false
+                        }
                     }
                 }
+
+            selectedUser != null ->
+                AnimatedVisibility(
+                    visible = isFullScreen && selectedUser != null,
+                    enter = fadeIn(
+                        animationSpec = tween(220)
+                    ) + slideInVertically(
+                        animationSpec = tween(260),
+                        initialOffsetY = { -it / 5 }
+                    ),
+                    exit = fadeOut(
+                        animationSpec = tween(160)
+                    ) + slideOutVertically(
+                        animationSpec = tween(180),
+                        targetOffsetY = { -it / 6 }
+                    ),
+                    modifier = Modifier
+                        .statusBarsPadding()
+                        .align(Alignment.BottomCenter)
+                        .padding(bottom = 16.dp)
+                ) {
+
+                    val member =
+                        uiState.lovedOnes.firstOrNull {
+                            it.id == selectedUser
+                        }
+
+                    val location = when (val state = locations[selectedUser]) {
+
+                        is ViewerLocationState.NormalSharing ->
+                            state.location
+
+                        is ViewerLocationState.EmergencySharing ->
+                            state.location
+
+                        else -> null
+                    }
+
+                    CollapsedViewerInfo(
+                        memberName = member?.alias
+                            ?: member?.profileName
+                            ?: "Live User",
+
+                        lastTimestamp = location?.timestamp
+                            ?: System.currentTimeMillis(),
+
+                        onDismiss = {
+                            selectedUser = null
+                            showViewerInfoSheet = true
+                        }
+                    )
+                }
+
+            else -> CollapsedViewerTray(
+                viewerInfo = viewers,
+                showDetail = {
+                    showViewerInfoSheet = true
+                },
+                modifier = Modifier
+                    .align(Alignment.BottomCenter)
+                    .padding(bottom = 16.dp)
             )
         }
+
+//        AnimatedVisibility(isFullScreen && showTray) {
+//            ViewerInfoSheetContent(
+//                Modifier
+//                    .align(Alignment.TopCenter)
+//                    .padding(top = 12.dp),
+//                viewerList = uiState.lovedOnes,
+//                locations = locations,
+//                selectedUser = selectedUser,
+//                onHideClick = {
+//                    selectedUser = null
+//                    onHideClick()
+//                },
+//                onUserClick = {
+//                    selectedUser = it
+//                },
+//                onClick = {
+//                    scope.launch {
+//                        cameraPositionState.animate(
+//                            CameraUpdateFactory.newLatLngZoom(
+//                                it,
+//                                16f
+//                            )
+//                        )
+//                    }
+//                }
+//            )
+
+//            AnimatedVisibility(
+//                visible = showReplayHelp,
+//                enter = fadeIn(animationSpec = tween(220)) +
+//                        slideInVertically(
+//                            animationSpec = tween(260),
+//                            initialOffsetY = { -it / 2 }
+//                        ),
+//                exit = fadeOut(animationSpec = tween(160)) +
+//                        slideOutVertically(
+//                            animationSpec = tween(180),
+//                            targetOffsetY = { -it / 6 }
+//                        ),
+//                modifier = Modifier
+//                    .statusBarsPadding()
+//                    .padding(bottom = 24.dp)
+//            ) {
+//                CustomBottomSheetForObserve(
+//                    onDismissRequest = {
+//                        showReplayHelp = false
+//                    }
+//                ) {
+//                    ViewerInfoSheetContent()
+//                }
+//            }
+
+//            AnimatedVisibility(
+//                visible = !showReplayHelp,
+//                enter = fadeIn(animationSpec = tween(220)) +
+//                        slideInVertically(
+//                            animationSpec = tween(260),
+//                            initialOffsetY = { -it / 2 }
+//                        ),
+//                exit = fadeOut(animationSpec = tween(160)) +
+//                        slideOutVertically(
+//                            animationSpec = tween(180),
+//                            targetOffsetY = { -it / 6 }
+//                        ),
+//                modifier = Modifier.align(Alignment.BottomCenter)
+//            ) {
+//                CollapsedViewerInfo(
+//                    "Aarav",
+//                    System.currentTimeMillis(),
+//                    onDismiss = {
+//                        showReplayHelp = true
+//                    }
+//                )
+//            }
+
+//        }
 
         if (isFullScreen) {
             val liveCount = locations.count {
@@ -515,159 +683,159 @@ fun ObserveLiveLocationCard(
                         it.value is ViewerLocationState.EmergencySharing
             }
 
-            HorizontalFloatingToolbar(
-                colors = FloatingToolbarColors(
-                    toolbarContainerColor = MaterialTheme.colorScheme.surfaceBright.copy(alpha = 0.85f),
-                    toolbarContentColor = MaterialTheme.colorScheme.onSurface,
-                    fabContentColor = MaterialTheme.colorScheme.onSurface,
-                    fabContainerColor = MaterialTheme.colorScheme.surfaceContainer
-                ),
-                modifier = Modifier
-                    .align(Alignment.BottomCenter)
-                    .offset(y = (-32).dp)
-                    .zIndex(1f),
-                expanded = true,
-                leadingContent = {
-                    Row(
-                        modifier = Modifier.padding(horizontal = 4.dp),
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(6.dp)
-                    ) {
-
-                        Surface(
-                            shape = RoundedCornerShape(12.dp),
-                            color = if (isEmergencyActive)
-                                MaterialTheme.colorScheme.error.copy(alpha = 0.15f)
-                            else
-                                MaterialTheme.colorScheme.primary.copy(alpha = 0.15f)
-                        ) {
-                            Text(
-                                text = "$liveCount Live",
-                                fontFamily = manrope,
-                                fontWeight = FontWeight.SemiBold,
-                                fontSize = 13.sp,
-                                color = if (isEmergencyActive)
-                                    MaterialTheme.colorScheme.error
-                                else
-                                    MaterialTheme.colorScheme.primary,
-                                modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp)
-                            )
-                        }
-                    }
-                },
-                content = {
-
-                    FilledIconButton(
-                        modifier = Modifier.size(40.dp),
-                        onClick = {
-                            if (emergencyLat != null && emergencyLng != null) {
-                                isUserPanning = false
-                                scope.launch {
-                                    cameraPositionState.animate(
-                                        CameraUpdateFactory.newLatLngZoom(
-                                            LatLng(emergencyLat, emergencyLng),
-                                            16f
-                                        )
-                                    )
-                                }
-                            } else if (visibleLatLngs.isNotEmpty()) {
-                                isUserPanning = false
-                                scope.launch {
-                                    val bounds = LatLngBounds.builder().apply {
-                                        visibleLatLngs.forEach { include(it) }
-                                    }.build()
-                                    cameraPositionState.animate(
-                                        CameraUpdateFactory.newLatLngBounds(bounds, 80)
-                                    )
-                                }
-                            }
-                        },
-                        colors = IconButtonDefaults.filledIconButtonColors(
-                            containerColor = if (isEmergencyActive)
-                                MaterialTheme.colorScheme.error
-                            else
-                                MaterialTheme.colorScheme.primary,
-                            contentColor = if (isEmergencyActive)
-                                MaterialTheme.colorScheme.onError
-                            else
-                                MaterialTheme.colorScheme.onPrimary
-                        )
-                    ) {
-                        Icon(
-                            painter = painterResource(
-                                if (isEmergencyActive) R.drawable.emergency
-                                else R.drawable.gps
-                            ),
-                            contentDescription = if (isEmergencyActive)
-                                "Center on Emergency"
-                            else
-                                "Fit All Users",
-                            modifier = Modifier.size(22.dp)
-                        )
-                    }
-
-                    IconButton(
-                        modifier = Modifier.size(40.dp),
-                        onClick = {
-                            if (showTray) onHideClick() else onShowTray()
-                        }
-                    ) {
-                        Icon(
-                            painter = painterResource(R.drawable.tray),
-                            contentDescription = "Toggle Tray",
-                            modifier = Modifier.size(22.dp)
-                        )
-                    }
-
-                    IconButton(
-                        modifier = Modifier.size(40.dp),
-                        onClick = {
-                            if (visibleLatLngs.isNotEmpty()) {
-                                isUserPanning = false
-                                scope.launch {
-                                    val bounds = LatLngBounds.builder().apply {
-                                        visibleLatLngs.forEach { include(it) }
-                                    }.build()
-                                    cameraPositionState.animate(
-                                        CameraUpdateFactory.newLatLngBounds(bounds, 80)
-                                    )
-                                }
-                            }
-                        }
-                    ) {
-                        Icon(
-                            painter = painterResource(R.drawable.full_screen),
-                            contentDescription = "Fit All",
-                            modifier = Modifier.size(22.dp)
-                        )
-                    }
-
-                    IconButton(
-                        modifier = Modifier.size(40.dp),
-                        onClick = {
-                            mapType = when (mapType) {
-                                MapType.NORMAL -> MapType.SATELLITE
-                                MapType.SATELLITE -> MapType.TERRAIN
-                                MapType.TERRAIN -> MapType.HYBRID
-                                else -> MapType.NORMAL
-                            }
-                            showMapModeToast = true
-                        }
-                    ) {
-                        Icon(
-                            painter = painterResource(R.drawable.map_trifold),
-                            contentDescription = when (mapType) {
-                                MapType.NORMAL -> "Normal"
-                                MapType.SATELLITE -> "Satellite"
-                                MapType.TERRAIN -> "Terrain"
-                                MapType.HYBRID -> "Hybrid"
-                                else -> "Map"
-                            },
-                            modifier = Modifier.size(22.dp)
-                        )
-                    }
-                }
-            )
+//            HorizontalFloatingToolbar(
+//                colors = FloatingToolbarColors(
+//                    toolbarContainerColor = MaterialTheme.colorScheme.surfaceBright.copy(alpha = 0.85f),
+//                    toolbarContentColor = MaterialTheme.colorScheme.onSurface,
+//                    fabContentColor = MaterialTheme.colorScheme.onSurface,
+//                    fabContainerColor = MaterialTheme.colorScheme.surfaceContainer
+//                ),
+//                modifier = Modifier
+//                    .align(Alignment.BottomCenter)
+//                    .offset(y = (-32).dp)
+//                    .zIndex(1f),
+//                expanded = true,
+//                leadingContent = {
+//                    Row(
+//                        modifier = Modifier.padding(horizontal = 4.dp),
+//                        verticalAlignment = Alignment.CenterVertically,
+//                        horizontalArrangement = Arrangement.spacedBy(6.dp)
+//                    ) {
+//
+//                        Surface(
+//                            shape = RoundedCornerShape(12.dp),
+//                            color = if (isEmergencyActive)
+//                                MaterialTheme.colorScheme.error.copy(alpha = 0.15f)
+//                            else
+//                                MaterialTheme.colorScheme.primary.copy(alpha = 0.15f)
+//                        ) {
+//                            Text(
+//                                text = "$liveCount Live",
+//                                fontFamily = manrope,
+//                                fontWeight = FontWeight.SemiBold,
+//                                fontSize = 13.sp,
+//                                color = if (isEmergencyActive)
+//                                    MaterialTheme.colorScheme.error
+//                                else
+//                                    MaterialTheme.colorScheme.primary,
+//                                modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp)
+//                            )
+//                        }
+//                    }
+//                },
+//                content = {
+//
+//                    FilledIconButton(
+//                        modifier = Modifier.size(40.dp),
+//                        onClick = {
+//                            if (emergencyLat != null && emergencyLng != null) {
+//                                isUserPanning = false
+//                                scope.launch {
+//                                    cameraPositionState.animate(
+//                                        CameraUpdateFactory.newLatLngZoom(
+//                                            LatLng(emergencyLat, emergencyLng),
+//                                            16f
+//                                        )
+//                                    )
+//                                }
+//                            } else if (visibleLatLngs.isNotEmpty()) {
+//                                isUserPanning = false
+//                                scope.launch {
+//                                    val bounds = LatLngBounds.builder().apply {
+//                                        visibleLatLngs.forEach { include(it) }
+//                                    }.build()
+//                                    cameraPositionState.animate(
+//                                        CameraUpdateFactory.newLatLngBounds(bounds, 80)
+//                                    )
+//                                }
+//                            }
+//                        },
+//                        colors = IconButtonDefaults.filledIconButtonColors(
+//                            containerColor = if (isEmergencyActive)
+//                                MaterialTheme.colorScheme.error
+//                            else
+//                                MaterialTheme.colorScheme.primary,
+//                            contentColor = if (isEmergencyActive)
+//                                MaterialTheme.colorScheme.onError
+//                            else
+//                                MaterialTheme.colorScheme.onPrimary
+//                        )
+//                    ) {
+//                        Icon(
+//                            painter = painterResource(
+//                                if (isEmergencyActive) R.drawable.emergency
+//                                else R.drawable.gps
+//                            ),
+//                            contentDescription = if (isEmergencyActive)
+//                                "Center on Emergency"
+//                            else
+//                                "Fit All Users",
+//                            modifier = Modifier.size(22.dp)
+//                        )
+//                    }
+//
+//                    IconButton(
+//                        modifier = Modifier.size(40.dp),
+//                        onClick = {
+//                            if (showTray) onHideClick() else onShowTray()
+//                        }
+//                    ) {
+//                        Icon(
+//                            painter = painterResource(R.drawable.tray),
+//                            contentDescription = "Toggle Tray",
+//                            modifier = Modifier.size(22.dp)
+//                        )
+//                    }
+//
+//                    IconButton(
+//                        modifier = Modifier.size(40.dp),
+//                        onClick = {
+//                            if (visibleLatLngs.isNotEmpty()) {
+//                                isUserPanning = false
+//                                scope.launch {
+//                                    val bounds = LatLngBounds.builder().apply {
+//                                        visibleLatLngs.forEach { include(it) }
+//                                    }.build()
+//                                    cameraPositionState.animate(
+//                                        CameraUpdateFactory.newLatLngBounds(bounds, 80)
+//                                    )
+//                                }
+//                            }
+//                        }
+//                    ) {
+//                        Icon(
+//                            painter = painterResource(R.drawable.full_screen),
+//                            contentDescription = "Fit All",
+//                            modifier = Modifier.size(22.dp)
+//                        )
+//                    }
+//
+//                    IconButton(
+//                        modifier = Modifier.size(40.dp),
+//                        onClick = {
+//                            mapType = when (mapType) {
+//                                MapType.NORMAL -> MapType.SATELLITE
+//                                MapType.SATELLITE -> MapType.TERRAIN
+//                                MapType.TERRAIN -> MapType.HYBRID
+//                                else -> MapType.NORMAL
+//                            }
+//                            showMapModeToast = true
+//                        }
+//                    ) {
+//                        Icon(
+//                            painter = painterResource(R.drawable.map_trifold),
+//                            contentDescription = when (mapType) {
+//                                MapType.NORMAL -> "Normal"
+//                                MapType.SATELLITE -> "Satellite"
+//                                MapType.TERRAIN -> "Terrain"
+//                                MapType.HYBRID -> "Hybrid"
+//                                else -> "Map"
+//                            },
+//                            modifier = Modifier.size(22.dp)
+//                        )
+//                    }
+//                }
+//            )
         }
     }
 
