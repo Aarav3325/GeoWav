@@ -5,6 +5,7 @@ import android.content.Context
 import android.util.Patterns
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.aarav.geowav.data.authentication.AuthResult
 import com.aarav.geowav.data.authentication.GoogleSignInClient
 import com.aarav.geowav.domain.repository.PaymentRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -81,21 +82,24 @@ class SignUpVM @Inject constructor(
         viewModelScope.launch {
             val result = googleSignInClient.signIn(activity)
 
-            if (result) {
-                paymentRepository.syncEntitlements()
-            }
-
             _uiState.update { it.copy(isLoading = false) }
 
-            if (result) {
-                _events.send(SignUpEvent.NavigateToHome)
-            } else {
-                _events.send(SignUpEvent.ShowError("Login failed due to an internal server error."))
+            when (result) {
+                is AuthResult.Success -> {
+                    paymentRepository.syncEntitlements()
+                    _events.send(SignUpEvent.NavigateToHome)
+                }
+
+                is AuthResult.Failure -> {
+                    _events.send(SignUpEvent.ShowError(result.message))
+                }
             }
         }
     }
 
     fun signUpWithEmailAndPassword(name: String, email: String, password: String) {
+        if (_uiState.value.isLoading) return
+
         _uiState.update {
             it.copy(
                 isLoading = true
@@ -107,16 +111,17 @@ class SignUpVM @Inject constructor(
                 googleSignInClient.signUpUsingEmailAndPassword(name, email, password)
             }
 
-            if (result) {
-                paymentRepository.syncEntitlements()
-            }
-
             _uiState.update { it.copy(isLoading = false) }
 
-            if (result) {
-                _events.send(SignUpEvent.NavigateToHome)
-            } else {
-                _events.send(SignUpEvent.ShowError("Invalid email or password"))
+            when (result) {
+                is AuthResult.Success -> {
+                    paymentRepository.syncEntitlements()
+                    _events.send(SignUpEvent.NavigateToHome)
+                }
+
+                is AuthResult.Failure -> {
+                    _events.send(SignUpEvent.ShowError(result.message))
+                }
             }
         }
     }

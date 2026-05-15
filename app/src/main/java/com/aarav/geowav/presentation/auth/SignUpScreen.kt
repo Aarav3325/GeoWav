@@ -24,6 +24,7 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ContainedLoadingIndicator
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.Icon
@@ -32,7 +33,6 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TextField
-import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -40,6 +40,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
@@ -56,9 +57,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.compose.ui.window.Dialog
 import com.aarav.geowav.R
-import com.aarav.geowav.presentation.components.MyAlertDialog
 import com.aarav.geowav.presentation.theme.manrope
 
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
@@ -86,22 +85,13 @@ fun SignupScreen(
         }
     }
 
-    MyAlertDialog(
-        shouldShowDialog = uiState.showErrorDialog,
-        onDismissRequest = { signUpVM.clearError() },
-        title = "Error",
-        message = uiState.error ?: "An unknown error occurred",
-        confirmButtonText = "Dismiss"
-    ) {
-        signUpVM.clearError()
-    }
-
     Box(
         modifier = Modifier
             .fillMaxSize()
             .imePadding()
             .background(MaterialTheme.colorScheme.background)
     ) {
+        AuthSpatialBackground()
 
 
         Column(
@@ -124,22 +114,38 @@ fun SignupScreen(
             Spacer(modifier = Modifier.height(8.dp))
 
             Text(
-                text = "Create your GeoWav account",
-                fontSize = 16.sp,
+                text = "Create a calm space for trusted movement sharing.",
+                fontSize = 15.sp,
                 fontFamily = manrope,
                 fontWeight = FontWeight.Medium,
-                color = MaterialTheme.colorScheme.onBackground,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
                 textAlign = TextAlign.Center
             )
 
-            Spacer(modifier = Modifier.height(40.dp))
+            Spacer(modifier = Modifier.height(12.dp))
+
+            Text(
+                text = "GeoWav only shares location when you allow it.",
+                fontSize = 13.sp,
+                lineHeight = 18.sp,
+                fontFamily = manrope,
+                fontWeight = FontWeight.Normal,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                textAlign = TextAlign.Center,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 12.dp)
+            )
+
+            Spacer(modifier = Modifier.height(32.dp))
 
             // Google Signup
             Card(
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(56.dp)
-                    .clickable {
+                    .alpha(if (uiState.isLoading) 0.64f else 1f)
+                    .clickable(enabled = !uiState.isLoading) {
                         activity?.let {
                             signUpVM.signInWithGoogle(it)
                         }
@@ -175,13 +181,24 @@ fun SignupScreen(
             Spacer(modifier = Modifier.height(16.dp))
 
             Text(
-                text = "Or sign up with email",
+                text = "Or continue with email",
                 fontSize = 14.sp,
+                fontWeight = FontWeight.Medium,
                 fontFamily = manrope,
-                color = MaterialTheme.colorScheme.inverseSurface
+                color = MaterialTheme.colorScheme.onSurfaceVariant
             )
 
             Spacer(modifier = Modifier.height(16.dp))
+
+            AuthErrorMessage(
+                visible = uiState.showErrorDialog,
+                message = uiState.error ?: "An unknown error occurred",
+                onDismiss = { signUpVM.clearError() }
+            )
+
+            if (uiState.showErrorDialog) {
+                Spacer(modifier = Modifier.height(12.dp))
+            }
 
             TextField(
                 value = uiState.username,
@@ -190,7 +207,7 @@ fun SignupScreen(
                     Text(
                         "Name",
                         fontFamily = manrope,
-                        color = MaterialTheme.colorScheme.inverseSurface
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 },
                 leadingIcon = {
@@ -200,6 +217,7 @@ fun SignupScreen(
                         modifier = Modifier.size(24.dp)
                     )
                 },
+                enabled = !uiState.isLoading,
                 isError = uiState.usernameError != null,
                 supportingText = {
                     if (uiState.usernameError != null) {
@@ -223,15 +241,7 @@ fun SignupScreen(
                 ),
                 modifier = Modifier.fillMaxWidth(),
                 singleLine = true,
-                colors = TextFieldDefaults.colors(
-                    focusedContainerColor = MaterialTheme.colorScheme.surfaceContainer,
-                    unfocusedContainerColor = MaterialTheme.colorScheme.surfaceContainer,
-                    focusedIndicatorColor = MaterialTheme.colorScheme.primary,
-                    unfocusedIndicatorColor = Color.Transparent,
-                    focusedLabelColor = MaterialTheme.colorScheme.primary,
-                    unfocusedLabelColor = Color.DarkGray,
-                    cursorColor = MaterialTheme.colorScheme.primary
-                ),
+                colors = authTextFieldColors(),
                 shape = RoundedCornerShape(12.dp)
             )
 
@@ -244,7 +254,7 @@ fun SignupScreen(
                     Text(
                         "Email",
                         fontFamily = manrope,
-                        color = MaterialTheme.colorScheme.inverseSurface
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 },
                 leadingIcon = {
@@ -254,6 +264,7 @@ fun SignupScreen(
                         modifier = Modifier.size(24.dp)
                     )
                 },
+                enabled = !uiState.isLoading,
                 isError = uiState.emailError != null,
                 supportingText = {
                     if (uiState.emailError != null) {
@@ -279,15 +290,7 @@ fun SignupScreen(
                     .fillMaxWidth()
                     .focusRequester(emailFocusRequester),
                 singleLine = true,
-                colors = TextFieldDefaults.colors(
-                    focusedContainerColor = MaterialTheme.colorScheme.surfaceContainer,
-                    unfocusedContainerColor = MaterialTheme.colorScheme.surfaceContainer,
-                    focusedIndicatorColor = MaterialTheme.colorScheme.primary,
-                    unfocusedIndicatorColor = Color.Transparent,
-                    focusedLabelColor = MaterialTheme.colorScheme.primary,
-                    unfocusedLabelColor = Color.DarkGray,
-                    cursorColor = MaterialTheme.colorScheme.primary
-                ),
+                colors = authTextFieldColors(),
                 shape = RoundedCornerShape(12.dp)
             )
 
@@ -296,6 +299,7 @@ fun SignupScreen(
             TextField(
                 value = uiState.password,
                 onValueChange = { signUpVM.updatePassword(it) },
+                enabled = !uiState.isLoading,
                 visualTransformation = if (uiState.isPasswordVisible)
                     VisualTransformation.None
                 else
@@ -306,7 +310,9 @@ fun SignupScreen(
                     else
                         R.drawable.eye_closed
 
-                    IconButton(onClick = {
+                    IconButton(
+                        enabled = !uiState.isLoading,
+                        onClick = {
                         if (uiState.isPasswordVisible) {
                             signUpVM.hidePassword()
                         } else {
@@ -329,7 +335,7 @@ fun SignupScreen(
                     Text(
                         "Password",
                         fontFamily = manrope,
-                        color = MaterialTheme.colorScheme.inverseSurface
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 },
                 leadingIcon = {
@@ -371,15 +377,7 @@ fun SignupScreen(
                         )
                     }
                 ),
-                colors = TextFieldDefaults.colors(
-                    focusedContainerColor = MaterialTheme.colorScheme.surfaceContainer,
-                    unfocusedContainerColor = MaterialTheme.colorScheme.surfaceContainer,
-                    focusedIndicatorColor = MaterialTheme.colorScheme.primary,
-                    unfocusedIndicatorColor = Color.Transparent,
-                    focusedLabelColor = MaterialTheme.colorScheme.primary,
-                    unfocusedLabelColor = Color.DarkGray,
-                    cursorColor = MaterialTheme.colorScheme.primary
-                ),
+                colors = authTextFieldColors(),
                 shape = RoundedCornerShape(12.dp)
             )
 
@@ -396,25 +394,37 @@ fun SignupScreen(
                         uiState.password
                     )
                 },
+                enabled = !uiState.isLoading,
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(48.dp),
-                shape = RoundedCornerShape(18.dp),
+                    .height(52.dp),
+                shape = RoundedCornerShape(14.dp),
                 colors = ButtonDefaults.buttonColors(
                     containerColor = MaterialTheme.colorScheme.primary,
                     contentColor = MaterialTheme.colorScheme.onPrimary,
-                    disabledContainerColor = MaterialTheme.colorScheme.primary,
-                    disabledContentColor = Color.White.copy(alpha = 0.6f)
+                    disabledContainerColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.42f),
+                    disabledContentColor = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.72f)
                 )
             ) {
-                Text(
-                    text = "Sign Up",
-                    fontFamily = manrope,
-                    color = MaterialTheme.colorScheme.onPrimary,
-                    fontWeight = FontWeight.SemiBold,
-                    fontSize = 16.sp
-                )
+                if (uiState.isLoading) {
+                    CircularProgressIndicator(
+                        modifier = Modifier.size(32.dp)
+                    )
+                } else {
+                    Text(
+                        text = "Create account",
+                        fontFamily = manrope,
+                        color = MaterialTheme.colorScheme.onPrimary,
+                        fontWeight = FontWeight.SemiBold,
+                        fontSize = 16.sp
+                    )
+                }
             }
+
+            AuthLoadingNote(
+                visible = uiState.isLoading,
+                text = "Creating your account securely..."
+            )
 
             Spacer(modifier = Modifier.height(12.dp))
 
@@ -435,6 +445,7 @@ fun SignupScreen(
 
 
                 TextButton(
+                    enabled = !uiState.isLoading,
                     onClick = {
                         navigateToLogin()
                     }) {
@@ -448,18 +459,6 @@ fun SignupScreen(
 
             }
 
-        }
-
-
-        if (uiState.isLoading) {
-            Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .background(Color.Black.copy(alpha = 0.3f)),
-                contentAlignment = Alignment.Center
-            ) {
-                ContainedLoadingIndicator()
-            }
         }
     }
 }

@@ -24,6 +24,7 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ContainedLoadingIndicator
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.Icon
@@ -32,7 +33,6 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TextField
-import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -40,6 +40,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
@@ -56,9 +57,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.compose.ui.window.Dialog
 import com.aarav.geowav.R
-import com.aarav.geowav.presentation.components.MyAlertDialog
 import com.aarav.geowav.presentation.theme.manrope
 
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
@@ -81,6 +80,7 @@ fun LoginScreen(
             .background(MaterialTheme.colorScheme.background)
 
     ) {
+        AuthSpatialBackground()
 
         LaunchedEffect(Unit) {
             loginVM.events.collect { event ->
@@ -89,16 +89,6 @@ fun LoginScreen(
                     is LoginEvent.ShowError -> loginVM.showError(event.message)
                 }
             }
-        }
-
-        MyAlertDialog(
-            shouldShowDialog = uiState.showErrorDialog,
-            onDismissRequest = { loginVM.clearError() },
-            title = "Error",
-            message = uiState.error ?: "An unknown error occurred",
-            confirmButtonText = "Dismiss"
-        ) {
-            loginVM.clearError()
         }
 
         Column(
@@ -122,22 +112,38 @@ fun LoginScreen(
             Spacer(modifier = Modifier.height(8.dp))
 
             Text(
-                text = "Stay synced with your circle",
-                fontSize = 16.sp,
+                text = "Sign in to keep trusted movement sharing within reach.",
+                fontSize = 15.sp,
                 fontFamily = manrope,
                 fontWeight = FontWeight.Medium,
-                color = MaterialTheme.colorScheme.onBackground,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
                 textAlign = TextAlign.Center
             )
 
-            Spacer(modifier = Modifier.height(40.dp))
+            Spacer(modifier = Modifier.height(12.dp))
+
+            Text(
+                text = "Your location stays private until you choose to share it.",
+                fontSize = 13.sp,
+                lineHeight = 18.sp,
+                fontFamily = manrope,
+                fontWeight = FontWeight.Normal,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                textAlign = TextAlign.Center,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 12.dp)
+            )
+
+            Spacer(modifier = Modifier.height(32.dp))
 
             // Google Login Button
             Card(
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(56.dp)
-                    .clickable {
+                    .alpha(if (uiState.isLoading) 0.64f else 1f)
+                    .clickable(enabled = !uiState.isLoading) {
                         activity?.let {
                             loginVM.signInWithGoogle(it)
                         }
@@ -173,13 +179,24 @@ fun LoginScreen(
 
 
             Text(
-                text = "Or login with email",
+                text = "Or continue with email",
                 fontSize = 14.sp,
+                fontWeight = FontWeight.Medium,
                 fontFamily = manrope,
-                color = MaterialTheme.colorScheme.inverseSurface
+                color = MaterialTheme.colorScheme.onSurfaceVariant
             )
 
             Spacer(modifier = Modifier.height(16.dp))
+
+            AuthErrorMessage(
+                visible = uiState.showErrorDialog,
+                message = uiState.error ?: "An unknown error occurred",
+                onDismiss = { loginVM.clearError() }
+            )
+
+            if (uiState.showErrorDialog) {
+                Spacer(modifier = Modifier.height(12.dp))
+            }
 
 
             TextField(
@@ -187,9 +204,10 @@ fun LoginScreen(
                     Text(
                         "Email",
                         fontFamily = manrope,
-                        color = MaterialTheme.colorScheme.inverseSurface
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 },
+                enabled = !uiState.isLoading,
                 isError = uiState.emailError != null,
                 supportingText = {
                     if (uiState.emailError != null) {
@@ -219,15 +237,7 @@ fun LoginScreen(
                         contentDescription = "email icon",
                         modifier = Modifier.size(24.dp)
                     )
-                }, colors = TextFieldDefaults.colors(
-                    focusedContainerColor = MaterialTheme.colorScheme.surfaceContainer,
-                    unfocusedContainerColor = MaterialTheme.colorScheme.surfaceContainer,
-                    focusedIndicatorColor = MaterialTheme.colorScheme.primary,
-                    unfocusedIndicatorColor = Color.Transparent,
-                    focusedLabelColor = MaterialTheme.colorScheme.primary,
-                    unfocusedLabelColor = Color.DarkGray,
-                    cursorColor = MaterialTheme.colorScheme.primary
-                ), shape = RoundedCornerShape(12.dp)
+                }, colors = authTextFieldColors(), shape = RoundedCornerShape(12.dp)
             )
 
             Spacer(modifier = Modifier.height(12.dp))
@@ -235,6 +245,7 @@ fun LoginScreen(
             TextField(
                 value = uiState.password,
                 onValueChange = { loginVM.updatePassword(it) },
+                enabled = !uiState.isLoading,
                 visualTransformation = if (uiState.isPasswordVisible)
                     VisualTransformation.None
                 else
@@ -245,7 +256,9 @@ fun LoginScreen(
                     else
                         R.drawable.eye_closed
 
-                    IconButton(onClick = {
+                    IconButton(
+                        enabled = !uiState.isLoading,
+                        onClick = {
                         if (uiState.isPasswordVisible) {
                             loginVM.hidePassword()
                         } else {
@@ -268,7 +281,7 @@ fun LoginScreen(
                     Text(
                         "Password",
                         fontFamily = manrope,
-                        color = MaterialTheme.colorScheme.inverseSurface
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 },
                 isError = uiState.passwordError != null,
@@ -309,15 +322,7 @@ fun LoginScreen(
                     )
                 },
                 singleLine = true,
-                colors = TextFieldDefaults.colors(
-                    focusedContainerColor = MaterialTheme.colorScheme.surfaceContainer,
-                    unfocusedContainerColor = MaterialTheme.colorScheme.surfaceContainer,
-                    focusedIndicatorColor = MaterialTheme.colorScheme.primary,
-                    unfocusedIndicatorColor = Color.Transparent,
-                    focusedLabelColor = MaterialTheme.colorScheme.primary,
-                    unfocusedLabelColor = Color.DarkGray,
-                    cursorColor = MaterialTheme.colorScheme.primary
-                ),
+                colors = authTextFieldColors(),
                 shape = RoundedCornerShape(12.dp)
             )
 
@@ -333,25 +338,37 @@ fun LoginScreen(
                         uiState.email, uiState.password
                     )
                 },
+                enabled = !uiState.isLoading,
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(48.dp),
-                shape = RoundedCornerShape(18.dp),
+                    .height(52.dp),
+                shape = RoundedCornerShape(14.dp),
                 colors = ButtonDefaults.buttonColors(
-                    containerColor = MaterialTheme.colorScheme.primary,   // Vibrant pink/red (primary)
-                    contentColor = MaterialTheme.colorScheme.onPrimary,          // Text color
-                    disabledContainerColor = Color(0xFFFFC9D2), // Soft pink when disabled
-                    disabledContentColor = Color.White.copy(alpha = 0.6f)
+                    containerColor = MaterialTheme.colorScheme.primary,
+                    contentColor = MaterialTheme.colorScheme.onPrimary,
+                    disabledContainerColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.42f),
+                    disabledContentColor = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.72f)
                 )
             ) {
-                Text(
-                    text = "Login",
-                    fontFamily = manrope,
-                    color = MaterialTheme.colorScheme.onPrimary,
-                    fontWeight = FontWeight.SemiBold,
-                    fontSize = 16.sp
-                )
+                if (uiState.isLoading) {
+                    CircularProgressIndicator(
+                        modifier = Modifier.size(32.dp)
+                    )
+                } else {
+                    Text(
+                        text = "Log in",
+                        fontFamily = manrope,
+                        color = MaterialTheme.colorScheme.onPrimary,
+                        fontWeight = FontWeight.SemiBold,
+                        fontSize = 16.sp
+                    )
+                }
             }
+
+            AuthLoadingNote(
+                visible = uiState.isLoading,
+                text = "Checking your sign-in securely..."
+            )
 
             Spacer(modifier = Modifier.height(12.dp))
 
@@ -372,6 +389,7 @@ fun LoginScreen(
                 val context = LocalContext.current
 
                 TextButton(
+                    enabled = !uiState.isLoading,
                     onClick = {
                         navigateToSignUp()
                     }
@@ -383,18 +401,6 @@ fun LoginScreen(
                         fontFamily = manrope
                     )
                 }
-            }
-        }
-
-
-        if (uiState.isLoading) {
-            Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .background(Color.Black.copy(alpha = 0.3f)),
-                contentAlignment = Alignment.Center
-            ) {
-                ContainedLoadingIndicator()
             }
         }
     }
