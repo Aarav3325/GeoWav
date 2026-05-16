@@ -161,8 +161,13 @@ fun ObserveScreen(
 fun ViewerInfoSheetContent(
     viewerList: List<CircleMember>,
     locations: Map<String, ViewerLocationState>,
-    onClick: (String) -> Unit
+    onClick: (String) -> Unit,
+    selectedUserLocationState: ViewerLocationState? = null,
+    selectedUserDetails: CircleMember? = null
 ) {
+
+    val isSelected = selectedUserDetails != null
+            && selectedUserLocationState != null
 
     val titleText = when {
         viewerList.isEmpty() ->
@@ -179,32 +184,58 @@ fun ViewerInfoSheetContent(
             "${viewerList[0].profileName}, ${viewerList[1].profileName} + ${viewerList.size - 2}"
     }
 
-    LazyColumn(
-        modifier = Modifier.wrapContentHeight(),
-        contentPadding = PaddingValues(bottom = 100.dp),
-        verticalArrangement = Arrangement.spacedBy(12.dp),
-    ) {
-        item {
-            Text(
-                "$titleText is sharing",
-                color = Color.White,
-                fontFamily = manrope,
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.SemiBold,
-                modifier = Modifier.padding(horizontal = 12.dp, vertical = 4.dp)
-            )
-        }
+    AnimatedVisibility(!isSelected) {
+        LazyColumn(
+            modifier = Modifier.wrapContentHeight(),
+            contentPadding = PaddingValues(bottom = 100.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp),
+        ) {
+            item {
+                Text(
+                    "$titleText is sharing",
+                    color = Color.White,
+                    fontFamily = manrope,
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.SemiBold,
+                    modifier = Modifier.padding(horizontal = 12.dp, vertical = 4.dp)
+                )
+            }
 
-        items(viewerList) { viewer ->
-            val state = locations[viewer.id] is ViewerLocationState.EmergencySharing
-            val index = viewerList.indexOf(viewer)
-            val isLast = index == viewerList.size - 1
+            items(viewerList) { viewer ->
+                val state = locations[viewer.id] is ViewerLocationState.EmergencySharing
+                val index = viewerList.indexOf(viewer)
+                val isLast = index == viewerList.size - 1
+                ViewerInfoRow(
+                    isLast,
+                    viewer,
+                    state,
+                    locations[viewer.id],
+                    onClick
+                )
+            }
+        }
+    }
+
+    AnimatedVisibility(isSelected) {
+        val state = selectedUserLocationState is ViewerLocationState.EmergencySharing
+        Column {
             ViewerInfoRow(
-                isLast,
-                viewer,
+                false,
+                selectedUserDetails!!,
                 state,
-                locations[viewer.id],
-                onClick
+                selectedUserLocationState
+            ) {
+                onClick(it)
+            }
+
+            Text(
+                "Sheet test",
+                style = MaterialTheme.typography.labelMedium,
+                color = Color.White
+            )
+
+            Spacer(
+                Modifier.height(300.dp)
             )
         }
     }
@@ -501,7 +532,7 @@ fun CompactActionMenu(
         modifier = modifier
     ) {
         Column(
-            modifier = Modifier.padding(vertical = 8.dp)
+            modifier = Modifier.padding(vertical = 4.dp)
         ) {
             IconButton(
                 modifier = Modifier.size(42.dp),

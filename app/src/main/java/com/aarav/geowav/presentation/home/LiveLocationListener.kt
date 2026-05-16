@@ -563,13 +563,20 @@ fun ObserveLiveLocationCard(
                         }
                     ) {
 
+                        val selectedUserDetails =
+                            uiState.lovedOnes.firstOrNull {
+                                it.id == selectedUser
+                            }
+
                         ViewerInfoSheetContent(
                             viewers,
-                            locations
-                        ) {
-                            selectedUser = it
-                            showViewerInfoSheet = false
-                        }
+                            locations,
+                            onClick = {
+                                selectedUser = it
+                            },
+                            selectedUserLocationState = locations[selectedUser],
+                            selectedUserDetails = selectedUserDetails
+                        )
                     }
                 }
 
@@ -1193,13 +1200,16 @@ fun CompactPresenceChip(
     }
 
     Surface(
-        onClick = onClick,
         shape = RoundedCornerShape(22.dp),
         color = backgroundColor,
         border = BorderStroke(
             width = 1.dp,
             color = borderColor
-        )
+        ),
+        modifier = Modifier.clip(RoundedCornerShape(22.dp))
+            .clickable {
+                onClick()
+            }
     ) {
 
         Row(

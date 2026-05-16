@@ -247,8 +247,6 @@ fun CustomBottomSheetForObserve(
 
     val expandedState = sheetState.targetValue
 
-
-
     val backgroundColor = when {
         expandedState.name == "PartiallyExpanded" -> Color(0xEE111820)
         expandedState.name == "Expanded" -> surfaceContainerDark
