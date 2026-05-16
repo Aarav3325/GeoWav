@@ -265,6 +265,7 @@ fun GeoWavTheme(
 
     MaterialExpressiveTheme(
         colorScheme = colorScheme,
+        typography = AppTypography,
         content = content
     )
 

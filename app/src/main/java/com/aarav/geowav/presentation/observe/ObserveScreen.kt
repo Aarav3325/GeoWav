@@ -58,7 +58,9 @@ import com.aarav.geowav.presentation.components.MyAlertDialog
 import com.aarav.geowav.presentation.home.HomeScreenVM
 import com.aarav.geowav.presentation.home.ObserveLiveLocationCard
 import com.aarav.geowav.presentation.theme.manrope
+import com.aarav.geowav.presentation.theme.onSurfaceDark
 import com.aarav.geowav.presentation.theme.onSurfaceLight
+import com.aarav.geowav.presentation.theme.surfaceContainerHighDark
 import com.aarav.geowav.presentation.theme.surfaceContainerHighLight
 import com.aarav.geowav.presentation.timeline.SessionPreviewTopBar
 
@@ -218,26 +220,7 @@ fun ViewerInfoSheetContent(
 
     AnimatedVisibility(isSelected) {
         val state = selectedUserLocationState is ViewerLocationState.EmergencySharing
-        Column {
-            ViewerInfoRow(
-                false,
-                selectedUserDetails!!,
-                state,
-                selectedUserLocationState
-            ) {
-                onClick(it)
-            }
 
-            Text(
-                "Sheet test",
-                style = MaterialTheme.typography.labelMedium,
-                color = Color.White
-            )
-
-            Spacer(
-                Modifier.height(300.dp)
-            )
-        }
     }
 }
 
@@ -564,6 +547,138 @@ fun CompactActionMenu(
                     tint = Color.White.copy(alpha = 0.84f),
                     modifier = Modifier.size(21.dp)
                 )
+            }
+        }
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+fun ViewerDetailContent() {
+    Column(
+        modifier = Modifier
+            .background(Color(0xCC111820))
+            .fillMaxWidth()
+            .padding(16.dp)
+    ) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text(
+                "Askhat",
+                color = Color.White,
+                style = MaterialTheme.typography.titleLarge,
+                fontWeight = FontWeight.W900
+            )
+
+            IconButton(
+                onClick = {},
+                colors = IconButtonDefaults.iconButtonColors(
+                    containerColor = surfaceContainerHighDark,
+                    contentColor = onSurfaceDark
+                ),
+            ) {
+                Icon(
+                    painter = painterResource(R.drawable.clear),
+                    contentDescription = null
+                )
+            }
+        }
+
+        Text(
+            "Live",
+            color = Color.Green,
+            style = MaterialTheme.typography.titleMedium,
+        )
+
+        Spacer(Modifier.height(16.dp))
+
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            Surface(
+                modifier = Modifier.height(108.dp).weight(1f),
+                shape = RoundedCornerShape(22.dp),
+                color = Color(0xCC111820).copy(0.25f)
+            ) {
+                Box(
+                    modifier = Modifier.fillMaxWidth(),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Column(
+                        modifier = Modifier.fillMaxWidth()
+                            .padding(12.dp)
+                            .padding(start = 4.dp),
+                        verticalArrangement = Arrangement.spacedBy(12.dp),
+                        horizontalAlignment = Alignment.Start
+                    ) {
+
+                        Box(
+                            modifier = Modifier.size(32.dp)
+                                .clip(CircleShape)
+                                .background(Color(0xFFd7d978)),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Icon(
+                                painter = painterResource(R.drawable.ruler),
+                                contentDescription = "ruler",
+                                modifier = Modifier.size(32.dp)
+                                    .padding(6.dp),
+                                tint = Color.White
+                            )
+                        }
+
+                        Text(
+                            "Askhat is 160 km away from you",
+                            color = Color.White.copy(alpha = 0.84f),
+                            style = MaterialTheme.typography.bodySmall
+                        )
+                    }
+                }
+            }
+
+            Surface(
+                modifier = Modifier.height(108.dp).weight(1f),
+                shape = RoundedCornerShape(22.dp),
+                color = Color(0xCC111820).copy(0.25f)
+            ) {
+                Box(
+                    modifier = Modifier.fillMaxWidth(),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Column(
+                        modifier = Modifier.fillMaxWidth()
+                            .padding(12.dp)
+                            .padding(start = 4.dp),
+                        verticalArrangement = Arrangement.spacedBy(12.dp),
+                        horizontalAlignment = Alignment.Start
+                    ) {
+                        Box(
+                            modifier = Modifier.size(32.dp)
+                                .clip(CircleShape)
+                                .background(Color(0xFF5b95e1)),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Icon(
+                                painter = painterResource(R.drawable.arrow_bend_direction),
+                                contentDescription = "ruler",
+                                modifier = Modifier.size(32.dp)
+                                    .padding(6.dp),
+                                tint = Color.White
+                            )
+                        }
+
+                        Text(
+                            "Directions",
+                            color = Color.White.copy(alpha = 0.84f),
+                            style = MaterialTheme.typography.bodyLarge,
+                            fontWeight = FontWeight.W800
+                        )
+                    }
+                }
             }
         }
     }
