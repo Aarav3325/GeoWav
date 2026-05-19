@@ -365,7 +365,7 @@ fun GeoWavHomeScreen(
                             Column(
                                 modifier = Modifier
                                     .fillMaxWidth()
-                                    .padding(top = 16.dp)
+                                    .padding(top = 14.dp)
                             ) {
 
                                 val viewers = uiState.lovedOnes.filter {
@@ -383,7 +383,7 @@ fun GeoWavHomeScreen(
                                     onShowTray = {},
                                     navigateToObserve,
                                     Modifier
-                                        .height(220.dp)
+                                        .height(190.dp)
                                 )
                             }
                         }

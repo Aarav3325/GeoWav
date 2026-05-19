@@ -1424,34 +1424,37 @@ fun ViewerCardHome(
     }
 
     Card(
-        shape = MaterialTheme.shapes.large,
+        shape = RoundedCornerShape(14.dp),
+        border = BorderStroke(
+            1.dp,
+            MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.24f)
+        ),
         colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.tertiaryContainer
+            containerColor = MaterialTheme.colorScheme.surfaceContainerHigh
         ),
         modifier = Modifier
             .fillMaxWidth()
-            .padding(bottom = 16.dp)
+            .padding(bottom = 8.dp)
     ) {
         Row(
             verticalAlignment = Alignment.CenterVertically,
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = 16.dp, vertical = 8.dp)
+                .padding(horizontal = 12.dp, vertical = 9.dp)
         ) {
             Surface(
-                color = Color.White,
+                color = MaterialTheme.colorScheme.tertiary.copy(alpha = 0.12f),
                 shape = CircleShape,
-                shadowElevation = 2.dp
             ) {
                 Icon(
                     painter = painterResource(R.drawable.new_logo),
                     contentDescription = null,
-                    tint = primaryLight,
-                    modifier = Modifier.size(32.dp)
+                    tint = MaterialTheme.colorScheme.tertiary,
+                    modifier = Modifier.size(30.dp)
                 )
             }
 
-            Spacer(Modifier.width(12.dp))
+            Spacer(Modifier.width(10.dp))
 
 
             Column(
@@ -1459,9 +1462,18 @@ fun ViewerCardHome(
                 //verticalArrangement = Arrangement.spacedBy(4.dp),
             ) {
                 Text(
-                    "Currently watching $text", fontWeight = FontWeight.SemiBold,
+                    "$text sharing live",
+                    fontWeight = FontWeight.SemiBold,
                     fontFamily = manrope,
-                    fontSize = 14.sp,
+                    fontSize = 13.sp,
+                    color = MaterialTheme.colorScheme.onSurface
+                )
+                Text(
+                    "Live location preview",
+                    fontWeight = FontWeight.Medium,
+                    fontFamily = manrope,
+                    fontSize = 11.sp,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }
 
@@ -1469,22 +1481,34 @@ fun ViewerCardHome(
             Spacer(Modifier.width(6.dp))
 
 
+            TextButton(onClick = navigateToObserve) {
+                Text(
+                    "Open",
+                    fontFamily = manrope,
+                    fontWeight = FontWeight.Medium,
+                    fontSize = 12.sp,
+                    color = MaterialTheme.colorScheme.secondary
+                )
+            }
+
+            Spacer(Modifier.width(4.dp))
+
             val infiniteTransition = rememberInfiniteTransition()
 
             val scale by infiniteTransition.animateFloat(
                 initialValue = 1f,
-                targetValue = 2f,
+                targetValue = 1.5f,
                 animationSpec = infiniteRepeatable(
-                    animation = tween(1000),
+                    animation = tween(1600),
                     repeatMode = RepeatMode.Restart
                 )
             )
 
             val alpha by infiniteTransition.animateFloat(
-                initialValue = 0.9f,
+                initialValue = 0.45f,
                 targetValue = 0f,
                 animationSpec = infiniteRepeatable(
-                    animation = tween(1000),
+                    animation = tween(1600),
                     repeatMode = RepeatMode.Restart
                 )
             )
@@ -1496,7 +1520,7 @@ fun ViewerCardHome(
                         scaleY = scale
                         this.alpha = alpha
                     }
-                    .background(MaterialTheme.colorScheme.error, CircleShape)
+                    .background(MaterialTheme.colorScheme.tertiary, CircleShape)
             )
         }
     }
