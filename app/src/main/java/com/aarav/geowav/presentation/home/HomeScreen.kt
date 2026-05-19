@@ -7,6 +7,7 @@ import android.annotation.SuppressLint
 
 import android.app.Activity
 import android.util.Log
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.EaseInOut
@@ -117,6 +118,10 @@ fun GeoWavHomeScreen(
 
     val uiState by homeScreenVM.uiState.collectAsState()
     val locations by homeScreenVM.locations.collectAsState()
+    val activeSharingCount = locations.count { (_, state) ->
+        state is ViewerLocationState.NormalSharing ||
+                state is ViewerLocationState.EmergencySharing
+    }
 
     val plan by subscriptionViewModel.userPlan.collectAsState()
 
@@ -298,7 +303,7 @@ fun GeoWavHomeScreen(
                             contentScale = ContentScale.FillBounds,
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .height(250.dp)
+                                .height(220.dp)
                         )
 
 
@@ -323,6 +328,7 @@ fun GeoWavHomeScreen(
                             avatar = uiState.userAvatar,
                             currentUser = uiState.currentUser,
                             userName = uiState.username,
+                            activeSharingCount = activeSharingCount,
                             modifier = Modifier
                                 .align(Alignment.Center)
                                 .padding(top = 92.dp),
@@ -359,7 +365,7 @@ fun GeoWavHomeScreen(
                             Column(
                                 modifier = Modifier
                                     .fillMaxWidth()
-                                    .padding(top = 16.dp)
+                                    .padding(top = 14.dp)
                             ) {
 
                                 val viewers = uiState.lovedOnes.filter {
@@ -377,7 +383,7 @@ fun GeoWavHomeScreen(
                                     onShowTray = {},
                                     navigateToObserve,
                                     Modifier
-                                        .height(220.dp)
+                                        .height(190.dp)
                                 )
                             }
                         }
@@ -385,7 +391,7 @@ fun GeoWavHomeScreen(
 
 
                         ConnectionsList(
-                            title = "Your Circle",
+                            title = "People",
                             connections = uiState.lovedOnes,
                             locationStates = locations,
                             onManage = navigateToCircle,
@@ -408,26 +414,28 @@ fun GeoWavHomeScreen(
 
                         Row(
                             modifier = Modifier
-                                .padding(top = 8.dp)
+                                .padding(top = 10.dp)
                                 .fillMaxWidth(),
                             verticalAlignment = Alignment.CenterVertically,
                             horizontalArrangement = Arrangement.SpaceBetween
                         ) {
                             Text(
-                                "Your Activity",
+                                "Movement",
                                 color = MaterialTheme.colorScheme.onBackground,
                                 style = MaterialTheme.typography.titleMedium.copy(
                                     fontFamily = manrope,
+                                    fontWeight = FontWeight.SemiBold
                                 ),
-                                fontSize = 16.sp,
+                                fontSize = 15.sp,
                             )
 
                             TextButton(onClick = navigateToActivity) {
                                 Text(
-                                    "View All",
-                                    fontSize = 16.sp,
+                                    "History",
+                                    fontSize = 13.sp,
                                     color = MaterialTheme.colorScheme.secondary,
-                                    fontFamily = manrope
+                                    fontFamily = manrope,
+                                    fontWeight = FontWeight.Medium
                                 )
                             }
                         }
@@ -435,35 +443,7 @@ fun GeoWavHomeScreen(
                         RecentAlertsList(uiState.alertsList.take(5), isDarkThemeEnabled)
 
 
-                        Column(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(vertical = 24.dp),
-                            horizontalAlignment = Alignment.CenterHorizontally,
-                            verticalArrangement = Arrangement.spacedBy(12.dp)
-                        ) {
-                            Surface(
-                                color = Color(0xFFBAC3FF),
-                                shape = CircleShape
-                            ) {
-                                Icon(
-                                    painter = painterResource(R.drawable.new_logo),
-                                    contentDescription = "logo",
-                                    tint = Color(0xFF222C61),
-                                    modifier = Modifier.size(56.dp),
-                                )
-                            }
-
-                            Text(
-                                text = "GeoWav",
-                                color = MaterialTheme.colorScheme.onBackground,
-                                fontSize = 24.sp,
-                                fontFamily = manrope,
-                                fontWeight = FontWeight.Bold
-                            )
-
-
-                        }
+                        Spacer(modifier = Modifier.height(28.dp))
                     }
                 }
             }
@@ -636,16 +616,17 @@ fun ConnectionsList(
                     fontWeight = FontWeight.SemiBold,
                     fontFamily = manrope
                 ),
-                fontSize = 16.sp,
+                fontSize = 15.sp,
                 modifier = Modifier.weight(1.0f)
             )
 
             TextButton(onClick = onManage) {
                 Text(
                     "Manage",
-                    fontSize = 16.sp,
+                    fontSize = 13.sp,
                     color = MaterialTheme.colorScheme.secondary,
-                    fontFamily = manrope
+                    fontFamily = manrope,
+                    fontWeight = FontWeight.Medium
                 )
             }
         }
@@ -699,6 +680,13 @@ fun ConnectionsList(
     }
 }
 
+private data class ConnectionStatusDetails(
+    val label: String,
+    val detail: String,
+    val color: Color,
+    val isSharing: Boolean
+)
+
 @Composable
 fun ConnectionStatusCard(
     member: CircleMember,
@@ -728,27 +716,59 @@ fun ConnectionStatusCard(
         }
     }
 
-    val (statusText, statusColor, isSharing) = when (locationState) {
+    val status = when (locationState) {
         is ViewerLocationState.EmergencySharing ->
-            Triple("Emergency", MaterialTheme.colorScheme.error, true)
+            ConnectionStatusDetails(
+                label = "Emergency",
+                detail = "Live emergency sharing",
+                color = MaterialTheme.colorScheme.error,
+                isSharing = true
+            )
 
         is ViewerLocationState.NormalSharing ->
-            Triple("Live", MaterialTheme.colorScheme.primary, true)
+            ConnectionStatusDetails(
+                label = "Live now",
+                detail = "Location is updating",
+                color = MaterialTheme.colorScheme.primary,
+                isSharing = true
+            )
 
         else ->
-            Triple("Not Sharing", MaterialTheme.colorScheme.outline, false)
+            ConnectionStatusDetails(
+                label = "Quiet",
+                detail = "Not sharing right now",
+                color = MaterialTheme.colorScheme.outline,
+                isSharing = false
+            )
     }
+
+    val statusText = status.label
+    val statusDetail = status.detail
+    val statusColor = status.color
+    val isSharing = status.isSharing
 
     Card(
         modifier = Modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceContainer
+        border = BorderStroke(
+            1.dp,
+            if (emergencyState != null) {
+                statusColor.copy(alpha = 0.42f)
+            } else {
+                MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.22f)
+            }
         ),
-        shape = RoundedCornerShape(16.dp)
+        colors = CardDefaults.cardColors(
+            containerColor = if (emergencyState != null) {
+                MaterialTheme.colorScheme.errorContainer.copy(alpha = 0.18f)
+            } else {
+                MaterialTheme.colorScheme.surfaceContainer
+            }
+        ),
+        shape = RoundedCornerShape(14.dp)
     ) {
 
         Column(
-            modifier = Modifier.padding(12.dp)
+            modifier = Modifier.padding(horizontal = 12.dp, vertical = 11.dp)
         ) {
 
             Row(
@@ -768,7 +788,7 @@ fun ConnectionStatusCard(
                         painter = painterResource(R.drawable.new_logo),
                         contentDescription = null,
                         tint = statusColor,
-                        modifier = Modifier.size(36.dp)
+                        modifier = Modifier.size(34.dp)
                     )
                 }
 
@@ -788,39 +808,36 @@ fun ConnectionStatusCard(
                     Spacer(Modifier.height(0.dp))
 
                     Text(
-                        text = statusText,
+                        text = statusDetail,
                         fontFamily = manrope,
                         fontSize = 12.sp,
                         fontWeight = FontWeight.Medium,
-                        color = statusColor
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 }
 
-                // Status label on right
-                if (isSharingActive != null || emergencyState != null) {
-                    Surface(
-                        shape = RoundedCornerShape(25),
-                        color = statusColor.copy(alpha = 0.12f)
-                    ) {
-                        Text(
-                            text = statusText,
-                            modifier = Modifier.padding(
-                                horizontal = 12.dp,
-                                vertical = 4.dp
-                            ),
-                            fontFamily = manrope,
-                            fontSize = 12.sp,
-                            fontWeight = FontWeight.SemiBold,
-                            color = statusColor
-                        )
-                    }
+                Surface(
+                    shape = RoundedCornerShape(25),
+                    color = statusColor.copy(alpha = if (emergencyState != null) 0.18f else 0.10f)
+                ) {
+                    Text(
+                        text = statusText,
+                        modifier = Modifier.padding(
+                            horizontal = 10.dp,
+                            vertical = 4.dp
+                        ),
+                        fontFamily = manrope,
+                        fontSize = 11.sp,
+                        fontWeight = FontWeight.SemiBold,
+                        color = statusColor
+                    )
                 }
 
                 Spacer(Modifier.width(10.dp))
 
                 Surface(
                     shape = CircleShape,
-                    color = MaterialTheme.colorScheme.tertiary,
+                    color = MaterialTheme.colorScheme.surfaceContainerHigh,
                     modifier = Modifier
                         .clip(CircleShape)
                         .clickable {
@@ -831,7 +848,7 @@ fun ConnectionStatusCard(
                     Icon(
                         painter = painterResource(R.drawable.timeline),
                         contentDescription = "View Timeline",
-                        tint = MaterialTheme.colorScheme.onTertiary,
+                        tint = MaterialTheme.colorScheme.tertiary,
                         modifier = Modifier
                             .size(24.dp)
                             .padding(6.dp)
@@ -918,7 +935,7 @@ fun ActiveZonesSection(
     onViewAllClick: () -> Unit
 ) {
     Column(
-        modifier = Modifier.padding(vertical = 0.dp)
+        modifier = Modifier.padding(top = 2.dp)
     ) {
 
         Row(
@@ -927,11 +944,12 @@ fun ActiveZonesSection(
             verticalAlignment = Alignment.CenterVertically
         ) {
             Text(
-                "Active Places",
-                fontSize = 16.sp,
+                "Places",
+                fontSize = 15.sp,
                 color = MaterialTheme.colorScheme.onBackground,
                 style = MaterialTheme.typography.titleMedium.copy(
-                    fontFamily = manrope
+                    fontFamily = manrope,
+                    fontWeight = FontWeight.SemiBold
                 )
             )
 
@@ -939,10 +957,11 @@ fun ActiveZonesSection(
                 onViewAllClick()
             }) {
                 Text(
-                    "View All",
-                    fontSize = 16.sp,
+                    "View",
+                    fontSize = 13.sp,
                     color = MaterialTheme.colorScheme.secondary,
-                    fontFamily = manrope
+                    fontFamily = manrope,
+                    fontWeight = FontWeight.Medium
                 )
             }
         }
@@ -959,23 +978,42 @@ fun ActiveZonesSection(
                 Column(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(bottom = 16.dp),
+                        .padding(top = 2.dp, bottom = 18.dp),
                     horizontalAlignment = Alignment.CenterHorizontally,
-                    verticalArrangement = Arrangement.spacedBy(4.dp)
+                    verticalArrangement = Arrangement.spacedBy(6.dp)
                 ) {
-                    Image(
-                        painter = painterResource(R.drawable.navigation_arrow),
-                        contentDescription = "empty icon",
-                        modifier = Modifier.size(24.dp),
-                        colorFilter = ColorFilter.tint(MaterialTheme.colorScheme.secondary)
+                    Surface(
+                        color = MaterialTheme.colorScheme.secondary.copy(alpha = 0.10f),
+                        contentColor = MaterialTheme.colorScheme.secondary,
+                        shape = CircleShape
+                    ) {
+                        Image(
+                            painter = painterResource(R.drawable.navigation_arrow),
+                            contentDescription = "empty icon",
+                            modifier = Modifier
+                                .size(34.dp)
+                                .padding(8.dp),
+                            colorFilter = ColorFilter.tint(MaterialTheme.colorScheme.secondary)
+                        )
+                    }
+
+                    Text(
+                        "No active places yet",
+                        style = MaterialTheme.typography.bodySmall.copy(
+                            color = MaterialTheme.colorScheme.onBackground,
+                            fontFamily = manrope,
+                            fontWeight = FontWeight.SemiBold
+                        ),
+                        fontSize = 13.sp
                     )
 
                     Text(
-                        "No places are added yet",
-                        style = MaterialTheme.typography.bodyMedium.copy(
-                            color = MaterialTheme.colorScheme.onBackground,
+                        "Add a place to start getting calm arrival and exit awareness.",
+                        style = MaterialTheme.typography.bodySmall.copy(
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
                             fontFamily = manrope
-                        )
+                        ),
+                        fontSize = 12.sp
                     )
                 }
             }
@@ -985,83 +1023,87 @@ fun ActiveZonesSection(
 
 @Composable
 fun ZoneCard(zone: Place, onClick: () -> Unit) {
-
     Card(
-        modifier = Modifier
-            .fillMaxWidth(),
+        modifier = Modifier.fillMaxWidth(),
+        border = BorderStroke(
+            1.dp,
+            MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.22f)
+        ),
         colors = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.surfaceContainer
         ),
-        shape = RoundedCornerShape(16.dp)
+        shape = RoundedCornerShape(14.dp),
+        onClick = onClick
     ) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = 12.dp, vertical = 12.dp),
-            verticalAlignment = Alignment.CenterVertically,
+                .padding(horizontal = 12.dp, vertical = 11.dp),
+            verticalAlignment = Alignment.CenterVertically
         ) {
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                modifier = Modifier.fillMaxWidth()
+            Box(
+                modifier = Modifier
+                    .size(40.dp)
+                    .clip(RoundedCornerShape(10.dp))
+                    .background(MaterialTheme.colorScheme.secondary.copy(alpha = 0.10f)),
+                contentAlignment = Alignment.Center
             ) {
-                Box(
-                    modifier = Modifier
-                        .size(44.dp)
-                        .clip(RoundedCornerShape(10.dp))
-                        .background(MaterialTheme.colorScheme.outline.copy(alpha = 0.12f)),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Icon(
-                        painter = painterResource(R.drawable.map_pin),
-                        contentDescription = "zone",
-                        modifier = Modifier.size(24.dp),
-                        tint = MaterialTheme.colorScheme.onSurface
-                    )
-                }
-                Spacer(modifier = Modifier.width(12.dp))
-                Column(
-                    modifier = Modifier.weight(1f),
-                    verticalArrangement = Arrangement.spacedBy(4.dp)
-                ) {
-                    Text(
-                        zone.customName.ifEmpty {
-                            zone.placeName
-                        },
-                        fontSize = 14.sp,
-                        color = MaterialTheme.colorScheme.onSurface,
-                        style = MaterialTheme.typography.bodyMedium.copy(
-                            fontWeight = FontWeight.SemiBold,
-                            fontFamily = manrope,
-                            lineHeight = 17.sp
-                        )
-                    )
-
-                    Text(
-                        "${zone.radius.toInt()}m • Enter/Exit Trigger",
-                        style = MaterialTheme.typography.bodySmall.copy(
-                            color = MaterialTheme.colorScheme.secondary,
-                            fontFamily = manrope
-                        ),
-                        fontWeight = FontWeight.SemiBold,
-                        fontSize = 12.sp
-                    )
-                }
-                Spacer(Modifier.width(6.dp))
-
-                TextButton(onClick = { }) {
-                    Text(
-                        "Active",
-                        fontSize = 14.sp,
-                        fontFamily = manrope,
-                        fontWeight = FontWeight.SemiBold,
-                        color = MaterialTheme.colorScheme.tertiary
-                    )
-                }
+                Icon(
+                    painter = painterResource(R.drawable.map_pin),
+                    contentDescription = "zone",
+                    modifier = Modifier.size(22.dp),
+                    tint = MaterialTheme.colorScheme.secondary
+                )
             }
 
+            Spacer(modifier = Modifier.width(12.dp))
+
+            Column(
+                modifier = Modifier.weight(1f),
+                verticalArrangement = Arrangement.spacedBy(4.dp)
+            ) {
+                Text(
+                    zone.customName.ifEmpty { zone.placeName },
+                    fontSize = 14.sp,
+                    color = MaterialTheme.colorScheme.onSurface,
+                    style = MaterialTheme.typography.bodyMedium.copy(
+                        fontWeight = FontWeight.SemiBold,
+                        fontFamily = manrope,
+                        lineHeight = 17.sp
+                    )
+                )
+
+                Text(
+                    "${zone.radius.toInt()}m awareness radius",
+                    style = MaterialTheme.typography.bodySmall.copy(
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        fontFamily = manrope
+                    ),
+                    fontWeight = FontWeight.Medium,
+                    fontSize = 12.sp
+                )
+            }
+
+            Spacer(Modifier.width(6.dp))
+
+            Surface(
+                color = MaterialTheme.colorScheme.tertiary.copy(alpha = 0.10f),
+                contentColor = MaterialTheme.colorScheme.tertiary,
+                shape = RoundedCornerShape(50)
+            ) {
+                Text(
+                    "Active",
+                    modifier = Modifier.padding(horizontal = 9.dp, vertical = 4.dp),
+                    fontSize = 11.sp,
+                    fontFamily = manrope,
+                    fontWeight = FontWeight.SemiBold,
+                    color = MaterialTheme.colorScheme.tertiary
+                )
+            }
         }
     }
 }
+
 
 @Composable
 fun QuickActionsRow(onAddZone: () -> Unit) {
@@ -1082,34 +1124,34 @@ fun QuickActionButton(
 
     FilledTonalButton(
         colors = ButtonDefaults.buttonColors(
-            containerColor = MaterialTheme.colorScheme.surfaceContainer
+            containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
+            contentColor = MaterialTheme.colorScheme.onSurface
         ),
-        elevation = ButtonDefaults.elevatedButtonElevation(2.dp),
+        shape = RoundedCornerShape(14.dp),
         modifier = Modifier
             .fillMaxWidth()
-            .wrapContentHeight(),
+            .height(48.dp),
         onClick = onClick
     ) {
-        Column(
-            modifier = Modifier
-                .fillMaxSize(),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.Center
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.Center
         ) {
             Image(
                 painter = painterResource(icon),
                 contentDescription = label,
-                colorFilter = ColorFilter.tint(MaterialTheme.colorScheme.onSurface),
-                modifier = Modifier.size(28.dp)
+                colorFilter = ColorFilter.tint(MaterialTheme.colorScheme.primary),
+                modifier = Modifier.size(20.dp)
             )
-            Spacer(modifier = Modifier.height(4.dp))
+            Spacer(modifier = Modifier.width(8.dp))
             Text(
                 label,
                 style = MaterialTheme.typography.bodyMedium.copy(
                     fontFamily = manrope,
-                    color = MaterialTheme.colorScheme.onSurface
+                    color = MaterialTheme.colorScheme.onSurface,
+                    fontWeight = FontWeight.SemiBold
                 ),
-                fontSize = 14.sp
+                fontSize = 13.sp
             )
         }
     }
@@ -1130,25 +1172,44 @@ fun RecentAlertsList(
     ) {
         if (alerts.isEmpty()) {
             Column(
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(top = 2.dp, bottom = 12.dp),
                 horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.Center
+                verticalArrangement = Arrangement.spacedBy(6.dp)
             ) {
-                Image(
-                    painter = painterResource(R.drawable.link_break),
-                    contentDescription = "break",
-                    modifier = Modifier.size(24.dp),
-                    colorFilter = ColorFilter.tint(MaterialTheme.colorScheme.secondary)
-                )
-
-                Spacer(modifier = Modifier.height(6.dp))
+                Surface(
+                    color = MaterialTheme.colorScheme.tertiary.copy(alpha = 0.10f),
+                    contentColor = MaterialTheme.colorScheme.tertiary,
+                    shape = CircleShape
+                ) {
+                    Image(
+                        painter = painterResource(R.drawable.link_break),
+                        contentDescription = "break",
+                        modifier = Modifier
+                            .size(34.dp)
+                            .padding(8.dp),
+                        colorFilter = ColorFilter.tint(MaterialTheme.colorScheme.tertiary)
+                    )
+                }
 
                 Text(
-                    "No recent alerts. You’re all clear!",
-                    style = MaterialTheme.typography.bodyMedium.copy(
+                    "No movement events today",
+                    style = MaterialTheme.typography.bodySmall.copy(
                         color = MaterialTheme.colorScheme.onBackground,
+                        fontFamily = manrope,
+                        fontWeight = FontWeight.SemiBold
+                    ),
+                    fontSize = 13.sp
+                )
+
+                Text(
+                    "GeoWav will surface arrivals and exits when something changes.",
+                    style = MaterialTheme.typography.bodySmall.copy(
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
                         fontFamily = manrope
-                    )
+                    ),
+                    fontSize = 12.sp
                 )
             }
         } else {
@@ -1164,57 +1225,62 @@ fun AlertItem(alert: com.aarav.geowav.data.model.GeoAlert, isDarkThemeEnabled: B
 
     val isEnter = alert.type.equals("ENTER", true)
     val relativeTime = buildRelativeSubtitle(type, alert.readableTime)
+    val accentColor = if (isEnter) {
+        MaterialTheme.colorScheme.tertiary
+    } else {
+        MaterialTheme.colorScheme.error
+    }
+    val containerColor = if (isDarkThemeEnabled) {
+        MaterialTheme.colorScheme.surfaceContainerHigh.copy(alpha = 0.72f)
+    } else {
+        MaterialTheme.colorScheme.surfaceContainerLowest
+    }
+    val eventLabel = if (isEnter) "Reached" else "Left"
 
-
-    val boxColor = Color(0xFFEDEDED)
-    val iconColor = Color(0xFF4A4A4A)
 
     Card(
-        shape = RoundedCornerShape(16.dp),
+        shape = RoundedCornerShape(14.dp),
         modifier = Modifier
             .fillMaxWidth()
             .padding(vertical = 0.dp),
+        border = BorderStroke(
+            1.dp,
+            MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.26f)
+        ),
         colors = CardDefaults.cardColors(
-            containerColor = if (isDarkThemeEnabled) {
-                if (isEnter) Color(0xFF00513f) else Color(0xFF723339)
-            } else {
-                if (isEnter) Color(0xFFa3f2d6) else Color(0xFFffdadb)
-            },
-            contentColor =
-                if (isDarkThemeEnabled) {
-                    if (isEnter) Color(0XFFa3f2d6) else Color(0xFFffdadb)
-                } else {
-                    if (isEnter) Color(0xFF00513f) else Color(0xFF723339)
-                }
+            containerColor = containerColor,
+            contentColor = MaterialTheme.colorScheme.onSurface
         )
     ) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(12.dp),
+                .padding(horizontal = 12.dp, vertical = 10.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
             Box(
                 modifier = Modifier
-                    .size(44.dp)
-                    .clip(RoundedCornerShape(8.dp))
-                    .background(
-                        boxColor
-                    ),
+                    .size(40.dp)
+                    .clip(RoundedCornerShape(10.dp))
+                    .background(accentColor.copy(alpha = 0.12f)),
                 contentAlignment = Alignment.Center
             ) {
                 Icon(
                     painter = painterResource(R.drawable.map_pin),
                     contentDescription = null,
-                    modifier = Modifier.size(24.dp),
-                    tint = iconColor
+                    modifier = Modifier.size(22.dp),
+                    tint = accentColor
                 )
             }
             Spacer(modifier = Modifier.width(12.dp))
-            Column(modifier = Modifier.weight(1f)) {
+            Column(
+                modifier = Modifier.weight(1f),
+                verticalArrangement = Arrangement.spacedBy(3.dp)
+            ) {
                 Text(
                     alert.title,
                     fontSize = 14.sp,
+                    color = MaterialTheme.colorScheme.onSurface,
                     style = MaterialTheme.typography.bodyMedium.copy(
                         fontWeight = FontWeight.SemiBold,
                         fontFamily = manrope
@@ -1223,16 +1289,37 @@ fun AlertItem(alert: com.aarav.geowav.data.model.GeoAlert, isDarkThemeEnabled: B
                 Text(
                     relativeTime,
                     fontSize = 12.sp,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                     style = MaterialTheme.typography.bodySmall.copy(fontFamily = manrope),
                     maxLines = 2
                 )
             }
-            Text(
-                alert.time,
-                fontFamily = manrope,
-                fontWeight = FontWeight.SemiBold,
-                fontSize = 14.sp
-            )
+            Column(
+                horizontalAlignment = Alignment.End,
+                verticalArrangement = Arrangement.spacedBy(4.dp)
+            ) {
+                Surface(
+                    color = accentColor.copy(alpha = 0.10f),
+                    contentColor = accentColor,
+                    shape = RoundedCornerShape(50)
+                ) {
+                    Text(
+                        eventLabel,
+                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp),
+                        fontFamily = manrope,
+                        fontWeight = FontWeight.SemiBold,
+                        fontSize = 11.sp
+                    )
+                }
+
+                Text(
+                    alert.time,
+                    color = MaterialTheme.colorScheme.outline,
+                    fontFamily = manrope,
+                    fontWeight = FontWeight.SemiBold,
+                    fontSize = 12.sp
+                )
+            }
         }
     }
 }
@@ -1244,6 +1331,7 @@ fun ProfileCard(
     avatar: String?,
     currentUser: User?,
     userName: String?,
+    activeSharingCount: Int,
     modifier: Modifier = Modifier,
     isDarkThemeEnabled: Boolean
 ) {
@@ -1265,11 +1353,14 @@ fun ProfileCard(
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Column {
+            Column(
+                modifier = Modifier.weight(1f),
+                verticalArrangement = Arrangement.spacedBy(4.dp)
+            ) {
                 Text(
                     text = "Welcome,",
                     fontFamily = manrope,
-                    fontSize = 18.sp,
+                    fontSize = 14.sp,
                     color = Color.Black,
                     fontWeight = FontWeight.SemiBold,
                     modifier = Modifier
@@ -1278,11 +1369,24 @@ fun ProfileCard(
                 Text(
                     text = userName ?: "",
                     fontFamily = manrope,
-                    fontSize = 32.sp,
+                    fontSize = 28.sp,
                     color = Color.Black,
                     maxLines = 1,
                     fontWeight = FontWeight.Bold,
                     modifier = Modifier
+                )
+
+                Text(
+                    text = when (activeSharingCount) {
+                        0 -> "All quiet right now"
+                        1 -> "1 person sharing live"
+                        else -> "$activeSharingCount people sharing live"
+                    },
+                    fontFamily = manrope,
+                    fontSize = 13.sp,
+                    color = Color.Black.copy(alpha = 0.68f),
+                    fontWeight = FontWeight.Medium,
+                    maxLines = 1
                 )
             }
 
@@ -1305,21 +1409,21 @@ fun ProfileCard(
                     shape = CircleShape,
                     color = Color.White,
                     modifier = Modifier
-                        .size(84.dp)
+                        .size(72.dp)
                         .clip(CircleShape)
                 ) {
                     Box(
                         modifier = Modifier
                             .clip(CircleShape)
                             .background(Color.White)
-                            .size(84.dp),
+                            .size(72.dp),
                         contentAlignment = Alignment.Center
                     ) {
                         if (!imageUrl.isNullOrBlank()) {
                             AvatarImage(
                                 avatarUrl = imageUrl,
                                 isUploading = false,
-                                modifier = Modifier.size(84.dp)
+                                modifier = Modifier.size(72.dp)
                             )
                         } else {
 //
@@ -1328,7 +1432,7 @@ fun ProfileCard(
                             Text(
                                 text = currentUser?.username?.take(1) ?: "",
                                 color = Color.Black,
-                                fontSize = 42.sp,
+                                fontSize = 36.sp,
                                 fontWeight = FontWeight.SemiBold,
                                 modifier = Modifier
 
