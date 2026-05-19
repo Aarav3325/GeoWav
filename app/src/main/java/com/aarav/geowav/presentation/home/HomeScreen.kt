@@ -118,6 +118,10 @@ fun GeoWavHomeScreen(
 
     val uiState by homeScreenVM.uiState.collectAsState()
     val locations by homeScreenVM.locations.collectAsState()
+    val activeSharingCount = locations.count { (_, state) ->
+        state is ViewerLocationState.NormalSharing ||
+                state is ViewerLocationState.EmergencySharing
+    }
 
     val plan by subscriptionViewModel.userPlan.collectAsState()
 
@@ -299,7 +303,7 @@ fun GeoWavHomeScreen(
                             contentScale = ContentScale.FillBounds,
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .height(250.dp)
+                                .height(220.dp)
                         )
 
 
@@ -324,9 +328,10 @@ fun GeoWavHomeScreen(
                             avatar = uiState.userAvatar,
                             currentUser = uiState.currentUser,
                             userName = uiState.username,
+                            activeSharingCount = activeSharingCount,
                             modifier = Modifier
                                 .align(Alignment.Center)
-                                .padding(top = 92.dp),
+                                .padding(top = 76.dp),
                             isDarkThemeEnabled = isDarkThemeEnabled
                         )
                     }
@@ -960,23 +965,42 @@ fun ActiveZonesSection(
                 Column(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(bottom = 16.dp),
+                        .padding(top = 2.dp, bottom = 18.dp),
                     horizontalAlignment = Alignment.CenterHorizontally,
-                    verticalArrangement = Arrangement.spacedBy(4.dp)
+                    verticalArrangement = Arrangement.spacedBy(6.dp)
                 ) {
-                    Image(
-                        painter = painterResource(R.drawable.navigation_arrow),
-                        contentDescription = "empty icon",
-                        modifier = Modifier.size(24.dp),
-                        colorFilter = ColorFilter.tint(MaterialTheme.colorScheme.secondary)
+                    Surface(
+                        color = MaterialTheme.colorScheme.secondary.copy(alpha = 0.10f),
+                        contentColor = MaterialTheme.colorScheme.secondary,
+                        shape = CircleShape
+                    ) {
+                        Image(
+                            painter = painterResource(R.drawable.navigation_arrow),
+                            contentDescription = "empty icon",
+                            modifier = Modifier
+                                .size(34.dp)
+                                .padding(8.dp),
+                            colorFilter = ColorFilter.tint(MaterialTheme.colorScheme.secondary)
+                        )
+                    }
+
+                    Text(
+                        "No active places yet",
+                        style = MaterialTheme.typography.bodySmall.copy(
+                            color = MaterialTheme.colorScheme.onBackground,
+                            fontFamily = manrope,
+                            fontWeight = FontWeight.SemiBold
+                        ),
+                        fontSize = 13.sp
                     )
 
                     Text(
-                        "No places are added yet",
-                        style = MaterialTheme.typography.bodyMedium.copy(
-                            color = MaterialTheme.colorScheme.onBackground,
+                        "Add a place to start getting calm arrival and exit awareness.",
+                        style = MaterialTheme.typography.bodySmall.copy(
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
                             fontFamily = manrope
-                        )
+                        ),
+                        fontSize = 12.sp
                     )
                 }
             }
@@ -1083,34 +1107,34 @@ fun QuickActionButton(
 
     FilledTonalButton(
         colors = ButtonDefaults.buttonColors(
-            containerColor = MaterialTheme.colorScheme.surfaceContainer
+            containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
+            contentColor = MaterialTheme.colorScheme.onSurface
         ),
-        elevation = ButtonDefaults.elevatedButtonElevation(2.dp),
+        shape = RoundedCornerShape(14.dp),
         modifier = Modifier
             .fillMaxWidth()
-            .wrapContentHeight(),
+            .height(48.dp),
         onClick = onClick
     ) {
-        Column(
-            modifier = Modifier
-                .fillMaxSize(),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.Center
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.Center
         ) {
             Image(
                 painter = painterResource(icon),
                 contentDescription = label,
-                colorFilter = ColorFilter.tint(MaterialTheme.colorScheme.onSurface),
-                modifier = Modifier.size(28.dp)
+                colorFilter = ColorFilter.tint(MaterialTheme.colorScheme.primary),
+                modifier = Modifier.size(20.dp)
             )
-            Spacer(modifier = Modifier.height(4.dp))
+            Spacer(modifier = Modifier.width(8.dp))
             Text(
                 label,
                 style = MaterialTheme.typography.bodyMedium.copy(
                     fontFamily = manrope,
-                    color = MaterialTheme.colorScheme.onSurface
+                    color = MaterialTheme.colorScheme.onSurface,
+                    fontWeight = FontWeight.SemiBold
                 ),
-                fontSize = 14.sp
+                fontSize = 13.sp
             )
         }
     }
@@ -1131,25 +1155,44 @@ fun RecentAlertsList(
     ) {
         if (alerts.isEmpty()) {
             Column(
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(top = 2.dp, bottom = 12.dp),
                 horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.Center
+                verticalArrangement = Arrangement.spacedBy(6.dp)
             ) {
-                Image(
-                    painter = painterResource(R.drawable.link_break),
-                    contentDescription = "break",
-                    modifier = Modifier.size(24.dp),
-                    colorFilter = ColorFilter.tint(MaterialTheme.colorScheme.secondary)
-                )
-
-                Spacer(modifier = Modifier.height(6.dp))
+                Surface(
+                    color = MaterialTheme.colorScheme.tertiary.copy(alpha = 0.10f),
+                    contentColor = MaterialTheme.colorScheme.tertiary,
+                    shape = CircleShape
+                ) {
+                    Image(
+                        painter = painterResource(R.drawable.link_break),
+                        contentDescription = "break",
+                        modifier = Modifier
+                            .size(34.dp)
+                            .padding(8.dp),
+                        colorFilter = ColorFilter.tint(MaterialTheme.colorScheme.tertiary)
+                    )
+                }
 
                 Text(
-                    "No recent alerts. You’re all clear!",
-                    style = MaterialTheme.typography.bodyMedium.copy(
+                    "No movement events today",
+                    style = MaterialTheme.typography.bodySmall.copy(
                         color = MaterialTheme.colorScheme.onBackground,
+                        fontFamily = manrope,
+                        fontWeight = FontWeight.SemiBold
+                    ),
+                    fontSize = 13.sp
+                )
+
+                Text(
+                    "GeoWav will surface arrivals and exits when something changes.",
+                    style = MaterialTheme.typography.bodySmall.copy(
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
                         fontFamily = manrope
-                    )
+                    ),
+                    fontSize = 12.sp
                 )
             }
         } else {
@@ -1271,6 +1314,7 @@ fun ProfileCard(
     avatar: String?,
     currentUser: User?,
     userName: String?,
+    activeSharingCount: Int,
     modifier: Modifier = Modifier,
     isDarkThemeEnabled: Boolean
 ) {
@@ -1292,11 +1336,14 @@ fun ProfileCard(
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Column {
+            Column(
+                modifier = Modifier.weight(1f),
+                verticalArrangement = Arrangement.spacedBy(4.dp)
+            ) {
                 Text(
                     text = "Welcome,",
                     fontFamily = manrope,
-                    fontSize = 18.sp,
+                    fontSize = 14.sp,
                     color = Color.Black,
                     fontWeight = FontWeight.SemiBold,
                     modifier = Modifier
@@ -1305,11 +1352,24 @@ fun ProfileCard(
                 Text(
                     text = userName ?: "",
                     fontFamily = manrope,
-                    fontSize = 32.sp,
+                    fontSize = 28.sp,
                     color = Color.Black,
                     maxLines = 1,
                     fontWeight = FontWeight.Bold,
                     modifier = Modifier
+                )
+
+                Text(
+                    text = when (activeSharingCount) {
+                        0 -> "All quiet right now"
+                        1 -> "1 person sharing live"
+                        else -> "$activeSharingCount people sharing live"
+                    },
+                    fontFamily = manrope,
+                    fontSize = 13.sp,
+                    color = Color.Black.copy(alpha = 0.68f),
+                    fontWeight = FontWeight.Medium,
+                    maxLines = 1
                 )
             }
 
@@ -1332,21 +1392,21 @@ fun ProfileCard(
                     shape = CircleShape,
                     color = Color.White,
                     modifier = Modifier
-                        .size(84.dp)
+                        .size(72.dp)
                         .clip(CircleShape)
                 ) {
                     Box(
                         modifier = Modifier
                             .clip(CircleShape)
                             .background(Color.White)
-                            .size(84.dp),
+                            .size(72.dp),
                         contentAlignment = Alignment.Center
                     ) {
                         if (!imageUrl.isNullOrBlank()) {
                             AvatarImage(
                                 avatarUrl = imageUrl,
                                 isUploading = false,
-                                modifier = Modifier.size(84.dp)
+                                modifier = Modifier.size(72.dp)
                             )
                         } else {
 //
@@ -1355,7 +1415,7 @@ fun ProfileCard(
                             Text(
                                 text = currentUser?.username?.take(1) ?: "",
                                 color = Color.Black,
-                                fontSize = 42.sp,
+                                fontSize = 36.sp,
                                 fontWeight = FontWeight.SemiBold,
                                 modifier = Modifier
 
