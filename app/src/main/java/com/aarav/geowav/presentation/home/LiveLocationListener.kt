@@ -129,7 +129,8 @@ fun ObserveLiveLocationCard(
     onHideClick: () -> Unit,
     onShowTray: () -> Unit = {},
     navigateToObserve: () -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    userLocation: Pair<Double, Double>? = null
 ) {
     var isUserPanning by remember { mutableStateOf(false) }
 
@@ -584,6 +585,7 @@ fun ObserveLiveLocationCard(
                                 },
                                 selectedUserLocationState = locations[selectedUser],
                                 selectedUserDetails = selectedUserDetails,
+                                userLocation = userLocation,
                                 onDismiss = {
                                     showViewerInfoSheet = false
                                     selectedUser = null

@@ -83,6 +83,7 @@ import androidx.core.net.toUri
 @Composable
 fun ObserveScreen(
     viewModel: HomeScreenVM,
+    userLocation: Pair<Double, Double>?,
     back: () -> Unit
 ) {
 
@@ -153,7 +154,8 @@ fun ObserveScreen(
                         showTray = true
                     },
                     navigateToObserve = {},
-                    Modifier.fillMaxSize()
+                    Modifier.fillMaxSize(),
+                    userLocation = userLocation
                 )
             }
 
@@ -178,6 +180,7 @@ fun ViewerInfoSheetContent(
     onClick: (String) -> Unit,
     selectedUserLocationState: ViewerLocationState? = null,
     selectedUserDetails: CircleMember? = null,
+    userLocation: Pair<Double, Double>? = null,
     onDismiss: () -> Unit
 ) {
 
@@ -284,6 +287,7 @@ fun ViewerInfoSheetContent(
             modifier = Modifier.padding(horizontal = 12.dp),
             viewer = selectedUserDetails,
             locationState = selectedUserLocationState,
+            userLocation = userLocation,
             onDismiss = onDismiss
         )
     }
@@ -679,21 +683,23 @@ fun ViewerDetailContent(
     modifier: Modifier = Modifier,
     viewer: CircleMember?,
     locationState: ViewerLocationState?,
+    userLocation: Pair<Double, Double>? = null,
     onDismiss: () -> Unit
 ) {
     val isEmergency = locationState is ViewerLocationState.EmergencySharing
 
     val context = LocalContext.current
 
-    var prevCoordinates by remember {
-        mutableStateOf<LatLng?>(null)
-    }
-
     var distanceBetween by remember {
         mutableStateOf<String?>(null)
     }
 
-    LaunchedEffect(locationState) {
+    LaunchedEffect(locationState, userLocation) {
+
+        if (userLocation == null) {
+            distanceBetween = null
+            return@LaunchedEffect
+        }
 
         val current = when (locationState) {
             is ViewerLocationState.NormalSharing -> locationState.location
@@ -702,22 +708,19 @@ fun ViewerDetailContent(
         }
 
         current?.let {
+            val memberLatLng = current.toLatLng()
+            val viewerLatLng = LatLng(userLocation.first, userLocation.second)
 
-            prevCoordinates?.let { prev ->
+            val distance = SphericalUtil.computeDistanceBetween(
+                viewerLatLng,
+                memberLatLng
+            )
 
-                val distance = SphericalUtil.computeDistanceBetween(
-                    prev,
-                    LatLng(23.044934, 72.507972)
-                )
-
-                distanceBetween = if (distance >= 1000) {
-                    "${(distance / 1000).toInt()} km"
-                } else {
-                    "${distance.toInt()} m"
-                }
+            distanceBetween = if (distance >= 1000) {
+                "${(distance / 1000).toInt()} km"
+            } else {
+                "${distance.toInt()} m"
             }
-
-            prevCoordinates = current.toLatLng()
         }
     }
 
