@@ -384,6 +384,8 @@ fun ObserveLiveLocationCard(
 
             val liveStays by viewModel.liveStayPoints.collectAsState()
 
+            val stayIcon = remember { stayPointMarkerIcon() }
+
             liveStays.forEach { (_, stayPoints) ->
                 stayPoints.forEach { stay ->
                     val stayPos = LatLng(stay.lat, stay.lng)
@@ -397,7 +399,7 @@ fun ObserveLiveLocationCard(
                         title = durationText,
                         snippet = "Stay Point",
                         anchor = Offset(0.5f, 0.5f),
-                        icon = stayPointMarkerIcon()
+                        icon = stayIcon
                     )
                 }
             }
@@ -1529,9 +1531,13 @@ fun UserMarker(
 
     val isEmergency = state is ViewerLocationState.EmergencySharing
 
+    val cachedIcon = remember(isEmergency, baseColor) {
+        markerIcon(isEmergency, baseColor)
+    }
+
     Marker(
         state = markerState,
-        icon = if (isEmergency) markerIcon(true, baseColor) else markerIcon(false, baseColor),
+        icon = cachedIcon,
         anchor = Offset(0.5f, 0.5f),
         zIndex = if (isEmergency) 2f else 1f
     )
