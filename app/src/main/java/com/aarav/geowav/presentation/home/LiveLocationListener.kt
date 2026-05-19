@@ -576,7 +576,11 @@ fun ObserveLiveLocationCard(
                                     selectedUser = it
                                 },
                                 selectedUserLocationState = locations[selectedUser],
-                                selectedUserDetails = selectedUserDetails
+                                selectedUserDetails = selectedUserDetails,
+                                onDismiss = {
+                                    showViewerInfoSheet = false
+                                    selectedUser = null
+                                }
                             )
                         }
                     )

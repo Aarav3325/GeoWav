@@ -1,5 +1,7 @@
 package com.aarav.geowav.presentation.observe
 
+import android.content.Intent
+import android.net.Uri
 import android.util.Log
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.animateContentSize
@@ -50,6 +52,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
@@ -60,6 +63,7 @@ import com.aarav.geowav.R
 import com.aarav.geowav.core.utils.ViewerLocationState
 import com.aarav.geowav.core.utils.formatTime
 import com.aarav.geowav.data.model.CircleMember
+import com.aarav.geowav.data.model.toLatLng
 import com.aarav.geowav.presentation.components.MyAlertDialog
 import com.aarav.geowav.presentation.home.HomeScreenVM
 import com.aarav.geowav.presentation.home.ObserveLiveLocationCard
@@ -69,6 +73,9 @@ import com.aarav.geowav.presentation.theme.onSurfaceLight
 import com.aarav.geowav.presentation.theme.surfaceContainerHighDark
 import com.aarav.geowav.presentation.theme.surfaceContainerHighLight
 import com.aarav.geowav.presentation.timeline.SessionPreviewTopBar
+import com.google.android.gms.maps.model.LatLng
+import com.google.maps.android.SphericalUtil
+import androidx.core.net.toUri
 
 
 @Preview(showBackground = true)
@@ -171,7 +178,8 @@ fun ViewerInfoSheetContent(
     locations: Map<String, ViewerLocationState>,
     onClick: (String) -> Unit,
     selectedUserLocationState: ViewerLocationState? = null,
-    selectedUserDetails: CircleMember? = null
+    selectedUserDetails: CircleMember? = null,
+    onDismiss: () -> Unit
 ) {
 
     val isSelected = selectedUserDetails != null
@@ -217,8 +225,9 @@ fun ViewerInfoSheetContent(
         )
     ) {
         LazyColumn(
-            modifier = Modifier.wrapContentHeight().
-                    animateContentSize(),
+            modifier = Modifier
+                .wrapContentHeight()
+                .animateContentSize(),
             contentPadding = PaddingValues(bottom = 100.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp),
         ) {
@@ -272,9 +281,11 @@ fun ViewerInfoSheetContent(
             targetOffsetX = { it / 18 }
         )
     ) {
-        val state = selectedUserLocationState is ViewerLocationState.EmergencySharing
         ViewerDetailContent(
-            modifier = Modifier.padding(horizontal = 12.dp)
+            modifier = Modifier.padding(horizontal = 12.dp),
+            viewer = selectedUserDetails,
+            locationState = selectedUserLocationState,
+            onDismiss = onDismiss
         )
     }
 }
@@ -666,8 +677,51 @@ fun CompactActionMenu(
 @Preview(showBackground = true)
 @Composable
 fun ViewerDetailContent(
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    viewer: CircleMember?,
+    locationState: ViewerLocationState?,
+    onDismiss: () -> Unit
 ) {
+    val isEmergency = locationState is ViewerLocationState.EmergencySharing
+
+    val context = LocalContext.current
+
+    var prevCoordinates by remember {
+        mutableStateOf<LatLng?>(null)
+    }
+
+    var distanceBetween by remember {
+        mutableStateOf<String?>(null)
+    }
+
+    LaunchedEffect(locationState) {
+
+        val current = when (locationState) {
+            is ViewerLocationState.NormalSharing -> locationState.location
+            is ViewerLocationState.EmergencySharing -> locationState.location
+            else -> null
+        }
+
+        current?.let {
+
+            prevCoordinates?.let { prev ->
+
+                val distance = SphericalUtil.computeDistanceBetween(
+                    prev,
+                    LatLng(23.044934, 72.507972)
+                )
+
+                distanceBetween = if (distance >= 1000) {
+                    "${(distance / 1000).toInt()} km"
+                } else {
+                    "${distance.toInt()} m"
+                }
+            }
+
+            prevCoordinates = current.toLatLng()
+        }
+    }
+
     Column(
         modifier = modifier
             .fillMaxWidth()
@@ -678,14 +732,14 @@ fun ViewerDetailContent(
             verticalAlignment = Alignment.CenterVertically
         ) {
             Text(
-                "Askhat",
+                viewer?.alias ?: viewer?.profileName ?: "",
                 color = Color.White,
                 style = MaterialTheme.typography.titleLarge,
                 fontWeight = FontWeight.W900
             )
 
             IconButton(
-                onClick = {},
+                onClick = onDismiss,
                 colors = IconButtonDefaults.iconButtonColors(
                     containerColor = surfaceContainerHighDark,
                     contentColor = onSurfaceDark
@@ -699,8 +753,8 @@ fun ViewerDetailContent(
         }
 
         Text(
-            "Live",
-            color = Color.Green,
+            if (isEmergency) "Emergency" else "Live",
+            color = if (isEmergency) MaterialTheme.colorScheme.error else Color(0xFF34C759),
             style = MaterialTheme.typography.titleMedium,
         )
 
@@ -715,7 +769,7 @@ fun ViewerDetailContent(
                     .height(108.dp)
                     .weight(1f),
                 shape = RoundedCornerShape(22.dp),
-                color = Color(0xCC111820).copy(0.25f)
+                color = surfaceContainerHighDark
             ) {
                 Box(
                     modifier = Modifier.fillMaxWidth(),
@@ -747,11 +801,13 @@ fun ViewerDetailContent(
                             )
                         }
 
-                        Text(
-                            "Askhat is 160 km away from you",
-                            color = Color.White.copy(alpha = 0.84f),
-                            style = MaterialTheme.typography.bodySmall
-                        )
+                        distanceBetween?.let {
+                            Text(
+                                "${viewer?.alias ?: viewer?.profileName ?: ""} is $it away from you",
+                                color = Color.White.copy(alpha = 0.84f),
+                                style = MaterialTheme.typography.bodySmall
+                            )
+                        }
                     }
                 }
             }
@@ -759,9 +815,25 @@ fun ViewerDetailContent(
             Surface(
                 modifier = Modifier
                     .height(108.dp)
-                    .weight(1f),
+                    .weight(1f)
+                    .clip(RoundedCornerShape(22.dp))
+                    .clickable {
+                        val current = when (locationState) {
+                            is ViewerLocationState.NormalSharing -> locationState.location
+                            is ViewerLocationState.EmergencySharing -> locationState.location
+                            else -> null
+                        }
+
+
+                        current?.let {
+                            val uri = "google.navigation:q=${it.lat},${it.lng}".toUri()
+                            val intent = Intent(Intent.ACTION_VIEW, uri)
+                            intent.setPackage("com.google.android.apps.maps")
+                            context.startActivity(intent)
+                        }
+                    },
                 shape = RoundedCornerShape(22.dp),
-                color = Color(0xCC111820).copy(0.25f)
+                color = surfaceContainerHighDark
             ) {
                 Box(
                     modifier = Modifier.fillMaxWidth(),
