@@ -1522,9 +1522,28 @@ fun UserMarker(
 
     val target = LatLng(location.lat, location.lng)
 
-    // Only update automatically if not selected
-    if (!isSelected) {
+     if (!isSelected) {
         LaunchedEffect(target) {
+            val start = markerState.position
+
+            if (start.latitude == 0.0 && start.longitude == 0.0) {
+                markerState.position = target
+                return@LaunchedEffect
+            }
+
+            val steps = 45
+            val stepDelay = 16L 
+
+            for (i in 1..steps) {
+                val t = i.toFloat() / steps
+                val eased = 1f - (1f - t).let { it * it * it }
+
+                markerState.position = LatLng(
+                    start.latitude + (target.latitude - start.latitude) * eased,
+                    start.longitude + (target.longitude - start.longitude) * eased
+                )
+                delay(stepDelay)
+            }
             markerState.position = target
         }
     }
