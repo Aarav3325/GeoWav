@@ -91,6 +91,7 @@ import com.aarav.geowav.core.utils.formatTime
 import com.aarav.geowav.data.model.CircleMember
 import com.aarav.geowav.presentation.components.CustomBottomSheetForObserve
 import com.aarav.geowav.presentation.observe.CollapsedViewerInfo
+import com.aarav.geowav.presentation.observe.CollapsedViewerInfoV2
 import com.aarav.geowav.presentation.observe.CollapsedViewerTray
 import com.aarav.geowav.presentation.observe.CompactActionMenu
 import com.aarav.geowav.presentation.observe.ViewerInfoSheetContent
@@ -560,24 +561,25 @@ fun ObserveLiveLocationCard(
                     CustomBottomSheetForObserve(
                         onDismissRequest = {
                             showViewerInfoSheet = false
+                        },
+                        content = {
+
+                            val selectedUserDetails =
+                                uiState.lovedOnes.firstOrNull {
+                                    it.id == selectedUser
+                                }
+
+                            ViewerInfoSheetContent(
+                                viewers,
+                                locations,
+                                onClick = {
+                                    selectedUser = it
+                                },
+                                selectedUserLocationState = locations[selectedUser],
+                                selectedUserDetails = selectedUserDetails
+                            )
                         }
-                    ) {
-
-                        val selectedUserDetails =
-                            uiState.lovedOnes.firstOrNull {
-                                it.id == selectedUser
-                            }
-
-                        ViewerInfoSheetContent(
-                            viewers,
-                            locations,
-                            onClick = {
-                                selectedUser = it
-                            },
-                            selectedUserLocationState = locations[selectedUser],
-                            selectedUserDetails = selectedUserDetails
-                        )
-                    }
+                    )
                 }
 
             selectedUser != null ->

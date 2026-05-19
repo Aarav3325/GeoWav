@@ -2,6 +2,12 @@ package com.aarav.geowav.presentation.observe
 
 import android.util.Log
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.animateContentSize
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInHorizontally
+import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -186,9 +192,33 @@ fun ViewerInfoSheetContent(
             "${viewerList[0].profileName}, ${viewerList[1].profileName} + ${viewerList.size - 2}"
     }
 
-    AnimatedVisibility(!isSelected) {
+    AnimatedVisibility(
+        !isSelected,
+        enter = fadeIn(
+            animationSpec = tween(
+                durationMillis = 260
+            )
+        ) + slideInHorizontally(
+            animationSpec = tween(
+                durationMillis = 320
+            ),
+            initialOffsetX = { -it / 12 }
+        ),
+
+        exit = fadeOut(
+            animationSpec = tween(
+                durationMillis = 180
+            )
+        ) + slideOutHorizontally(
+            animationSpec = tween(
+                durationMillis = 240
+            ),
+            targetOffsetX = { -it / 18 }
+        )
+    ) {
         LazyColumn(
-            modifier = Modifier.wrapContentHeight(),
+            modifier = Modifier.wrapContentHeight().
+                    animateContentSize(),
             contentPadding = PaddingValues(bottom = 100.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp),
         ) {
@@ -218,9 +248,34 @@ fun ViewerInfoSheetContent(
         }
     }
 
-    AnimatedVisibility(isSelected) {
-        val state = selectedUserLocationState is ViewerLocationState.EmergencySharing
+    AnimatedVisibility(
+        isSelected,
+        enter = fadeIn(
+            animationSpec = tween(
+                durationMillis = 280
+            )
+        ) + slideInHorizontally(
+            animationSpec = tween(
+                durationMillis = 340
+            ),
+            initialOffsetX = { it / 14 }
+        ),
 
+        exit = fadeOut(
+            animationSpec = tween(
+                durationMillis = 180
+            )
+        ) + slideOutHorizontally(
+            animationSpec = tween(
+                durationMillis = 240
+            ),
+            targetOffsetX = { it / 18 }
+        )
+    ) {
+        val state = selectedUserLocationState is ViewerLocationState.EmergencySharing
+        ViewerDetailContent(
+            modifier = Modifier.padding(horizontal = 12.dp)
+        )
     }
 }
 
@@ -504,6 +559,62 @@ fun CollapsedViewerInfo(
 }
 
 @Composable
+fun CollapsedViewerInfoV2(
+    memberName: String,
+    lastTimestamp: Long,
+    onDismiss: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    Row(
+        modifier = modifier
+            .fillMaxWidth()
+            .padding(16.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+
+        Column(
+            modifier = Modifier
+                .weight(1f)
+        ) {
+            Text(
+                text = memberName,
+                style = MaterialTheme.typography.titleMedium,
+                fontFamily = manrope,
+                fontWeight = FontWeight.SemiBold,
+                color = Color.White,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis
+            )
+
+            Text(
+                text = "Last Updated: ${formatTime(lastTimestamp)}",
+                style = MaterialTheme.typography.labelMedium,
+                fontFamily = manrope,
+                color = Color.White.copy(alpha = 0.62f),
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis
+            )
+
+        }
+
+        IconButton(
+            modifier = Modifier.size(36.dp),
+            colors = IconButtonDefaults.iconButtonColors(
+                containerColor = MaterialTheme.colorScheme.surfaceContainer,
+                contentColor = MaterialTheme.colorScheme.onSurface
+            ), onClick = onDismiss
+        ) {
+            Icon(
+                painter = painterResource(R.drawable.clear),
+                contentDescription = "Close help",
+                modifier = Modifier.size(18.dp)
+            )
+        }
+    }
+
+}
+
+@Composable
 fun CompactActionMenu(
     resetCameraPosition: () -> Unit,
     changeMapType: () -> Unit,
@@ -554,12 +665,12 @@ fun CompactActionMenu(
 
 @Preview(showBackground = true)
 @Composable
-fun ViewerDetailContent() {
+fun ViewerDetailContent(
+    modifier: Modifier = Modifier
+) {
     Column(
-        modifier = Modifier
-            .background(Color(0xCC111820))
+        modifier = modifier
             .fillMaxWidth()
-            .padding(16.dp)
     ) {
         Row(
             modifier = Modifier.fillMaxWidth(),
@@ -600,7 +711,9 @@ fun ViewerDetailContent() {
             horizontalArrangement = Arrangement.spacedBy(8.dp)
         ) {
             Surface(
-                modifier = Modifier.height(108.dp).weight(1f),
+                modifier = Modifier
+                    .height(108.dp)
+                    .weight(1f),
                 shape = RoundedCornerShape(22.dp),
                 color = Color(0xCC111820).copy(0.25f)
             ) {
@@ -609,7 +722,8 @@ fun ViewerDetailContent() {
                     contentAlignment = Alignment.Center
                 ) {
                     Column(
-                        modifier = Modifier.fillMaxWidth()
+                        modifier = Modifier
+                            .fillMaxWidth()
                             .padding(12.dp)
                             .padding(start = 4.dp),
                         verticalArrangement = Arrangement.spacedBy(12.dp),
@@ -617,7 +731,8 @@ fun ViewerDetailContent() {
                     ) {
 
                         Box(
-                            modifier = Modifier.size(32.dp)
+                            modifier = Modifier
+                                .size(32.dp)
                                 .clip(CircleShape)
                                 .background(Color(0xFFd7d978)),
                             contentAlignment = Alignment.Center
@@ -625,7 +740,8 @@ fun ViewerDetailContent() {
                             Icon(
                                 painter = painterResource(R.drawable.ruler),
                                 contentDescription = "ruler",
-                                modifier = Modifier.size(32.dp)
+                                modifier = Modifier
+                                    .size(32.dp)
                                     .padding(6.dp),
                                 tint = Color.White
                             )
@@ -641,7 +757,9 @@ fun ViewerDetailContent() {
             }
 
             Surface(
-                modifier = Modifier.height(108.dp).weight(1f),
+                modifier = Modifier
+                    .height(108.dp)
+                    .weight(1f),
                 shape = RoundedCornerShape(22.dp),
                 color = Color(0xCC111820).copy(0.25f)
             ) {
@@ -650,14 +768,16 @@ fun ViewerDetailContent() {
                     contentAlignment = Alignment.Center
                 ) {
                     Column(
-                        modifier = Modifier.fillMaxWidth()
+                        modifier = Modifier
+                            .fillMaxWidth()
                             .padding(12.dp)
                             .padding(start = 4.dp),
                         verticalArrangement = Arrangement.spacedBy(12.dp),
                         horizontalAlignment = Alignment.Start
                     ) {
                         Box(
-                            modifier = Modifier.size(32.dp)
+                            modifier = Modifier
+                                .size(32.dp)
                                 .clip(CircleShape)
                                 .background(Color(0xFF5b95e1)),
                             contentAlignment = Alignment.Center
@@ -665,7 +785,8 @@ fun ViewerDetailContent() {
                             Icon(
                                 painter = painterResource(R.drawable.arrow_bend_direction),
                                 contentDescription = "ruler",
-                                modifier = Modifier.size(32.dp)
+                                modifier = Modifier
+                                    .size(32.dp)
                                     .padding(6.dp),
                                 tint = Color.White
                             )
@@ -675,7 +796,7 @@ fun ViewerDetailContent() {
                             "Directions",
                             color = Color.White.copy(alpha = 0.84f),
                             style = MaterialTheme.typography.bodyLarge,
-                            fontWeight = FontWeight.W800
+                            fontWeight = FontWeight.W700
                         )
                     }
                 }

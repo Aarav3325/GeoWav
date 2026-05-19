@@ -1,6 +1,11 @@
 package com.aarav.geowav.presentation.components
 
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -239,7 +244,7 @@ fun CustomBottomSheet(
 @Composable
 fun CustomBottomSheetForObserve(
     onDismissRequest: () -> Unit,
-    content: @Composable ColumnScope.() -> Unit
+    content: @Composable ColumnScope.() -> Unit,
 ) {
     val sheetState = rememberModalBottomSheetState(
         skipPartiallyExpanded = false
@@ -247,29 +252,48 @@ fun CustomBottomSheetForObserve(
 
     val expandedState = sheetState.targetValue
 
-    val backgroundColor = when {
-        expandedState.name == "PartiallyExpanded" -> Color(0xEE111820)
-        expandedState.name == "Expanded" -> surfaceContainerDark
-        else -> Color.Transparent
+    val expanded = when {
+        expandedState.name == "PartiallyExpanded" -> false
+        expandedState.name == "Expanded" -> true
+        expandedState.name == "Hidden" -> false
+        else -> false
     }
-
-    val height = when {
-        expandedState.name == "PartiallyExpanded" -> Modifier.wrapContentHeight()
-        expandedState.name == "Expanded" -> Modifier.fillMaxHeight()
-        else -> Modifier.wrapContentHeight()
-    }
+//
+//    val height = when {
+//        expandedState.name == "PartiallyExpanded" -> Modifier.wrapContentHeight()
+//        expandedState.name == "Expanded" -> Modifier.fillMaxHeight()
+//        else -> Modifier.wrapContentHeight()
+//    }
 
 
 
     ModalBottomSheet(
-        containerColor = backgroundColor,
+        containerColor = Color(0xEE111820),
         shape = RoundedCornerShape(28.dp),
         sheetState = sheetState,
-        modifier = Modifier.wrapContentHeight().padding(8.dp)
+        modifier = Modifier
+            .wrapContentHeight()
+            .padding(8.dp)
             .padding(bottom = 24.dp),
         onDismissRequest = onDismissRequest
     ) {
-        content()
+        AnimatedVisibility(
+            visible = expanded,
+            enter = fadeIn(
+                animationSpec = tween(240)
+            ) + slideInVertically(
+                animationSpec = tween(300),
+                initialOffsetY = { it / 8 }
+            ),
+            exit = fadeOut(
+                animationSpec = tween(180)
+            ) + slideOutVertically(
+                animationSpec = tween(240),
+                targetOffsetY = { it / 10 }
+            )
+        ) {
+            content()
+        }
     }
 }
 
@@ -821,7 +845,9 @@ fun UpgradeConfirmBottomSheet(
             )
         ) {
             Box(
-                modifier = Modifier.fillMaxWidth().padding(16.dp)
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(16.dp)
             ) {
                 Column(
                     modifier = Modifier.fillMaxWidth(),
@@ -855,7 +881,8 @@ fun UpgradeConfirmBottomSheet(
                     painter = painterResource(badge),
                     contentDescription = "badge",
                     tint = Color.Unspecified,
-                    modifier = Modifier.size(48.dp)
+                    modifier = Modifier
+                        .size(48.dp)
                         .align(Alignment.CenterEnd)
                 )
             }
