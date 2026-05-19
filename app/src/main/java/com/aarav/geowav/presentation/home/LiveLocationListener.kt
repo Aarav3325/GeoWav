@@ -4,8 +4,13 @@ import android.content.Intent
 import android.graphics.Bitmap
 import android.graphics.Canvas
 import android.graphics.Paint
+import android.graphics.Path
+import android.graphics.Rect
+import android.graphics.RectF
+import android.graphics.Typeface
 import android.net.Uri
 import android.util.Log
+import androidx.core.graphics.drawable.toBitmap
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.LinearOutSlowInEasing
 import androidx.compose.animation.core.RepeatMode
@@ -97,6 +102,9 @@ import com.aarav.geowav.presentation.observe.CompactActionMenu
 import com.aarav.geowav.presentation.observe.ViewerInfoSheetContent
 import com.aarav.geowav.presentation.theme.manrope
 import com.aarav.geowav.presentation.theme.primaryLight
+import coil.imageLoader
+import coil.request.ImageRequest
+import coil.request.SuccessResult
 import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.model.BitmapDescriptor
 import com.google.android.gms.maps.model.BitmapDescriptorFactory
@@ -218,7 +226,7 @@ fun ObserveLiveLocationCard(
         MapProperties(mapType = mapType)
     }
 
-    val initialCameraPosition = remember(locations) {
+    val initialCameraPosition = remember {
         val emergency = locations.values
             .firstOrNull { it is ViewerLocationState.EmergencySharing }
                 as? ViewerLocationState.EmergencySharing
@@ -229,10 +237,25 @@ fun ObserveLiveLocationCard(
                 16f
             )
         } else {
-            CameraPosition.fromLatLngZoom(
-                LatLng(47.6677146, -122.3470447),
-                5f
-            )
+            val firstLocation = locations.values.firstNotNullOfOrNull {
+                when (it) {
+                    is ViewerLocationState.NormalSharing -> it.location
+                    is ViewerLocationState.EmergencySharing -> it.location
+                    else -> null
+                }
+            }
+
+            if (firstLocation != null) {
+                CameraPosition.fromLatLngZoom(
+                    LatLng(firstLocation.lat, firstLocation.lng),
+                    14f
+                )
+            } else {
+                CameraPosition.fromLatLngZoom(
+                    LatLng(0.0, 0.0),
+                    2f
+                )
+            }
         }
     }
 
@@ -294,6 +317,9 @@ fun ObserveLiveLocationCard(
         }.collect { (isMoving, reason) ->
             if (isMoving && reason == CameraMoveStartedReason.GESTURE) {
                 isUserPanning = true
+            } else if (!isMoving && isUserPanning) {
+                delay(5000)
+                isUserPanning = false
             }
         }
     }
@@ -346,13 +372,18 @@ fun ObserveLiveLocationCard(
                 val markerState = markerStates.getOrPut(userId) {
                     MarkerState()
                 }
+                val viewer = uiState.lovedOnes.firstOrNull { it.id == userId }
 
                 UserMarker(
                     userId = userId,
                     markerState = markerState,
                     state = state,
                     baseColor = baseColor,
-                    isSelected = selectedUser == userId
+                    isSelected = selectedUser == userId,
+                    avatarUrl = viewer?.avatarUrl,
+                    displayName = viewer?.alias?.takeIf { it.isNotBlank() }
+                        ?: viewer?.profileName
+                        ?: userId
                 )
             }
 
@@ -1434,45 +1465,112 @@ fun EmergencyRipple(
 }
 
 
-fun createUserMarkerBitmap(
+fun createAvatarMarkerBitmap(
+    avatarBitmap: Bitmap?,
+    displayName: String,
     isEmergency: Boolean,
+    isSelected: Boolean,
     baseColor: Int
 ): Bitmap {
-    val size = 96
+    val size = 136
     val bitmap = Bitmap.createBitmap(size, size, Bitmap.Config.ARGB_8888)
     val canvas = Canvas(bitmap)
-
     val paint = Paint(Paint.ANTI_ALIAS_FLAG)
+    val center = size / 2f
+    val avatarRadius = 44f
+    val avatarBounds = RectF(
+        center - avatarRadius,
+        center - avatarRadius,
+        center + avatarRadius,
+        center + avatarRadius
+    )
 
-    // Emergency glow
-    if (isEmergency) {
-        paint.color = android.graphics.Color.RED
-
-        paint.alpha = 60
-        canvas.drawCircle(size / 2f, size / 2f, size / 2.2f, paint)
+    if (isEmergency || isSelected) {
+        paint.style = Paint.Style.STROKE
+        paint.strokeWidth = 9f
+        paint.color = if (isEmergency) android.graphics.Color.RED else baseColor
+        paint.alpha = if (isEmergency) 170 else 130
+        canvas.drawCircle(center, center, avatarRadius + 14f, paint)
     }
 
-    // Main dot
-    paint.alpha = 255
-    paint.color = if (isEmergency) android.graphics.Color.RED else baseColor
-    canvas.drawCircle(size / 2f, size / 2f, size / 4f, paint)
+    if (isEmergency) {
+        paint.style = Paint.Style.FILL
+        paint.color = android.graphics.Color.RED
+        paint.alpha = 45
+        canvas.drawCircle(center, center, avatarRadius + 24f, paint)
+    }
 
-    // White border
+    paint.alpha = 255
+    paint.style = Paint.Style.FILL
+
+    if (avatarBitmap != null) {
+        val clipPath = Path().apply {
+            addOval(avatarBounds, Path.Direction.CW)
+        }
+        val source = centerCropSourceRect(avatarBitmap)
+
+        canvas.save()
+        canvas.clipPath(clipPath)
+        canvas.drawBitmap(avatarBitmap, source, avatarBounds, paint)
+        canvas.restore()
+    } else {
+        paint.color = if (isEmergency) android.graphics.Color.RED else baseColor
+        canvas.drawCircle(center, center, avatarRadius, paint)
+
+        val initial = displayName
+            .trim()
+            .firstOrNull()
+            ?.uppercaseChar()
+            ?.toString()
+            ?: "?"
+
+        paint.color = android.graphics.Color.WHITE
+        paint.textAlign = Paint.Align.CENTER
+        paint.textSize = 40f
+        paint.typeface = Typeface.create(Typeface.DEFAULT, Typeface.BOLD)
+
+        val textCenterOffset = (paint.descent() + paint.ascent()) / 2f
+        canvas.drawText(initial, center, center - textCenterOffset, paint)
+    }
+
     paint.style = Paint.Style.STROKE
-    paint.strokeWidth = 4f
+    paint.strokeWidth = 6f
     paint.color = android.graphics.Color.WHITE
-    canvas.drawCircle(size / 2f, size / 2f, size / 4f, paint)
+    paint.alpha = 255
+    canvas.drawCircle(center, center, avatarRadius, paint)
 
     return bitmap
 }
 
 fun markerIcon(
     isEmergency: Boolean,
-    baseColor: Int
+    isSelected: Boolean,
+    baseColor: Int,
+    avatarBitmap: Bitmap?,
+    displayName: String
 ): BitmapDescriptor {
     return BitmapDescriptorFactory.fromBitmap(
-        createUserMarkerBitmap(isEmergency, baseColor)
+        createAvatarMarkerBitmap(
+            avatarBitmap = avatarBitmap,
+            displayName = displayName,
+            isEmergency = isEmergency,
+            isSelected = isSelected,
+            baseColor = baseColor
+        )
     )
+}
+
+private fun centerCropSourceRect(bitmap: Bitmap): Rect {
+    val width = bitmap.width
+    val height = bitmap.height
+
+    return if (width > height) {
+        val horizontalInset = (width - height) / 2
+        Rect(horizontalInset, 0, horizontalInset + height, height)
+    } else {
+        val verticalInset = (height - width) / 2
+        Rect(0, verticalInset, width, verticalInset + width)
+    }
 }
 
 /**
@@ -1515,10 +1613,35 @@ fun UserMarker(
     markerState: MarkerState,
     state: ViewerLocationState,
     baseColor: Int,
-    isSelected: Boolean
+    isSelected: Boolean,
+    avatarUrl: String?,
+    displayName: String
 ) {
     if (state is ViewerLocationState.Blocked) return
 
+    val context = LocalContext.current
+    var avatarBitmap by remember(userId) {
+        mutableStateOf<Bitmap?>(null)
+    }
+
+    LaunchedEffect(avatarUrl) {
+        avatarBitmap = null
+
+        val url = avatarUrl?.takeIf { it.isNotBlank() } ?: return@LaunchedEffect
+        val request = ImageRequest.Builder(context)
+            .data(url)
+            .allowHardware(false)
+            .build()
+
+        avatarBitmap = try {
+            val result = context.imageLoader.execute(request)
+            (result as? SuccessResult)
+                ?.drawable
+                ?.toBitmap()
+        } catch (e: Exception) {
+            null
+        }
+    }
 
     val location = when (state) {
         is ViewerLocationState.NormalSharing -> state.location
@@ -1556,8 +1679,20 @@ fun UserMarker(
 
     val isEmergency = state is ViewerLocationState.EmergencySharing
 
-    val cachedIcon = remember(isEmergency, baseColor) {
-        markerIcon(isEmergency, baseColor)
+    val cachedIcon = remember(
+        isEmergency,
+        isSelected,
+        baseColor,
+        avatarBitmap,
+        displayName
+    ) {
+        markerIcon(
+            isEmergency = isEmergency,
+            isSelected = isSelected,
+            baseColor = baseColor,
+            avatarBitmap = avatarBitmap,
+            displayName = displayName
+        )
     }
 
     Marker(

@@ -22,6 +22,7 @@ class CircleRepositoryImpl
 ) : CircleRepository {
 
     private val rootRef = firebaseDatabase.reference
+    private val usersRef = firebaseDatabase.getReference("users")
 
     override suspend fun findUserByEmail(email: String): String? {
         val emailKey = encodeEmail(email)
@@ -45,20 +46,30 @@ class CircleRepositoryImpl
     ): Resource<Unit> {
         return try {
             val timestamp = System.currentTimeMillis()
+            val senderAvatarUrl = getUserAvatarUrl(senderUid)
+            val receiverAvatarUrl = getUserAvatarUrl(receiverUid)
+
+            val invitePayload = mutableMapOf<String, Any>(
+                "status" to "pending",
+                "email" to senderEmail,
+                "senderProfileName" to senderProfileName,
+                "sentAt" to timestamp
+            ).apply {
+                senderAvatarUrl?.let { put("avatarUrl", it) }
+            }
+
+            val circlePayload = mutableMapOf<String, Any>(
+                "email" to receiverEmail,
+                "status" to "pending",
+                "alias" to alias,
+                "addedAt" to timestamp
+            ).apply {
+                receiverAvatarUrl?.let { put("avatarUrl", it) }
+            }
 
             val updates = mapOf(
-                "circle_requests/$receiverUid/$senderUid" to mapOf(
-                    "status" to "pending",
-                    "email" to senderEmail,
-                    "senderProfileName" to senderProfileName,
-                    "sentAt" to timestamp
-                ),
-                "circle/$senderUid/$receiverUid" to mapOf(
-                    "email" to receiverEmail,
-                    "status" to "pending",
-                    "alias" to alias,
-                    "addedAt" to timestamp
-                )
+                "circle_requests/$receiverUid/$senderUid" to invitePayload,
+                "circle/$senderUid/$receiverUid" to circlePayload
             )
 
             rootRef.updateChildren(updates).await()
@@ -81,16 +92,20 @@ class CircleRepositoryImpl
     ): Resource<Unit> {
         return try {
             val timestamp = System.currentTimeMillis()
+            val senderAvatarUrl = getUserAvatarUrl(senderUid)
+            val receiverAvatarUrl = getUserAvatarUrl(receiverUid)
 
             val updates = mapOf(
                 "circle/$senderUid/$receiverUid/status" to "accepted",
                 "circle/$senderUid/$receiverUid/profileName" to receiverProfileName,
                 "circle/$senderUid/$receiverUid/addedAt" to timestamp,
+                "circle/$senderUid/$receiverUid/avatarUrl" to receiverAvatarUrl,
 
                 "circle/$receiverUid/$senderUid/status" to "accepted",
                 "circle/$receiverUid/$senderUid/email" to senderEmail,
                 "circle/$receiverUid/$senderUid/profileName" to senderProfileName,
                 "circle/$receiverUid/$senderUid/addedAt" to timestamp,
+                "circle/$receiverUid/$senderUid/avatarUrl" to senderAvatarUrl,
 
                 "circle_requests/$receiverUid/$senderUid" to null
             )
@@ -138,16 +153,21 @@ class CircleRepositoryImpl
             val lovedOnes = snapshot.children.mapNotNull { child ->
                 val status = child.child("status").getValue(String::class.java)
                 if (status == "accepted") {
+                    val memberId = child.key ?: return@mapNotNull null
+                    val avatarUrl = child.child("avatarUrl").getValue(String::class.java)
+                        ?: child.child("avatar").getValue(String::class.java)
+                        ?: getUserAvatarUrl(memberId)
 
                     CircleMember(
-                        id = child.key!!,
+                        id = memberId,
                         profileName = child.child("profileName")
                             .getValue(String::class.java) ?: "Unknown",
                         alias = child.child("alias").getValue(String::class.java),
                         selected = false,
                         receiverEmail = child.child("email").getValue(String::class.java)
                             ?: "",
-                        addedAt = child.child("addedAt").getValue(Long::class.java) ?: 0L
+                        addedAt = child.child("addedAt").getValue(Long::class.java) ?: 0L,
+                        avatarUrl = avatarUrl
                     )
                 } else null
             }
@@ -212,6 +232,20 @@ class CircleRepositoryImpl
             Resource.Success(Unit)
         } catch (e: Exception) {
             Resource.Error("Failed to delete circle member")
+        }
+    }
+
+    private suspend fun getUserAvatarUrl(userId: String): String? {
+        return try {
+            usersRef.child(userId)
+                .child("avatar")
+                .get()
+                .await()
+                .getValue(String::class.java)
+                ?.takeIf { it.isNotBlank() }
+        } catch (e: Exception) {
+            Log.w("CircleRepository", "Failed to load avatar for $userId", e)
+            null
         }
     }
 

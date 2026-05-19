@@ -64,6 +64,7 @@ import com.aarav.geowav.core.utils.ViewerLocationState
 import com.aarav.geowav.core.utils.formatTime
 import com.aarav.geowav.data.model.CircleMember
 import com.aarav.geowav.data.model.toLatLng
+import com.aarav.geowav.presentation.components.AvatarImage
 import com.aarav.geowav.presentation.components.MyAlertDialog
 import com.aarav.geowav.presentation.home.HomeScreenVM
 import com.aarav.geowav.presentation.home.ObserveLiveLocationCard
@@ -303,6 +304,8 @@ fun ViewerInfoRow(
     onClick: (String) -> Unit
 ) {
 
+    val displayName = conn.alias?.takeIf { it.isNotBlank() } ?: conn.profileName
+    val avatarUrl = conn.avatarUrl?.takeIf { it.isNotBlank() }
     val location = when (viewerState) {
         is ViewerLocationState.NormalSharing -> viewerState.location
         is ViewerLocationState.EmergencySharing -> viewerState.location
@@ -329,26 +332,41 @@ fun ViewerInfoRow(
 
                 Box(
                     modifier = Modifier
-                        .size(48.dp)
                         .clip(CircleShape)
-                        .background(
-                            Brush.radialGradient(
-                                listOf(
-                                    MaterialTheme.colorScheme.onPrimary,
-                                    MaterialTheme.colorScheme.inversePrimary
-                                )
-                            )
-                        ),
+                        .size(48.dp),
                     contentAlignment = Alignment.Center
                 ) {
-
-                    Text(
-                        text = conn.alias?.take(1) ?: conn.profileName.take(1),
-                        fontFamily = manrope,
-                        fontWeight = FontWeight.Bold,
-                        fontSize = 22.sp,
-                        color = MaterialTheme.colorScheme.onSurface
-                    )
+                    if (avatarUrl != null) {
+                        AvatarImage(
+                            avatarUrl = avatarUrl,
+                            isUploading = false,
+                            modifier = Modifier
+                                .matchParentSize()
+                                .clip(CircleShape)
+                        )
+                    } else {
+                        Box(
+                            modifier = Modifier
+                                .matchParentSize()
+                                .background(
+                                    Brush.radialGradient(
+                                        listOf(
+                                            MaterialTheme.colorScheme.onPrimary,
+                                            MaterialTheme.colorScheme.inversePrimary
+                                        )
+                                    )
+                                ),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Text(
+                                text = displayName.take(1),
+                                fontFamily = manrope,
+                                fontWeight = FontWeight.Bold,
+                                fontSize = 22.sp,
+                                color = MaterialTheme.colorScheme.onSurface
+                            )
+                        }
+                    }
                 }
 
                 Box(
@@ -376,7 +394,7 @@ fun ViewerInfoRow(
                     .padding(horizontal = 12.dp)
             ) {
                 Text(
-                    text = conn.alias ?: conn.profileName,
+                    text = displayName,
                     style = MaterialTheme.typography.titleMedium,
                     fontFamily = manrope,
                     fontWeight = FontWeight.SemiBold,
