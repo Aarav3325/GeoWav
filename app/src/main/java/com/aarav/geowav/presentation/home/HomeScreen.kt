@@ -7,6 +7,7 @@ import android.annotation.SuppressLint
 
 import android.app.Activity
 import android.util.Log
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.EaseInOut
@@ -1164,57 +1165,62 @@ fun AlertItem(alert: com.aarav.geowav.data.model.GeoAlert, isDarkThemeEnabled: B
 
     val isEnter = alert.type.equals("ENTER", true)
     val relativeTime = buildRelativeSubtitle(type, alert.readableTime)
+    val accentColor = if (isEnter) {
+        MaterialTheme.colorScheme.tertiary
+    } else {
+        MaterialTheme.colorScheme.error
+    }
+    val containerColor = if (isDarkThemeEnabled) {
+        MaterialTheme.colorScheme.surfaceContainerHigh.copy(alpha = 0.72f)
+    } else {
+        MaterialTheme.colorScheme.surfaceContainerLowest
+    }
+    val eventLabel = if (isEnter) "Reached" else "Left"
 
-
-    val boxColor = Color(0xFFEDEDED)
-    val iconColor = Color(0xFF4A4A4A)
 
     Card(
-        shape = RoundedCornerShape(16.dp),
+        shape = RoundedCornerShape(14.dp),
         modifier = Modifier
             .fillMaxWidth()
             .padding(vertical = 0.dp),
+        border = BorderStroke(
+            1.dp,
+            MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.26f)
+        ),
         colors = CardDefaults.cardColors(
-            containerColor = if (isDarkThemeEnabled) {
-                if (isEnter) Color(0xFF00513f) else Color(0xFF723339)
-            } else {
-                if (isEnter) Color(0xFFa3f2d6) else Color(0xFFffdadb)
-            },
-            contentColor =
-                if (isDarkThemeEnabled) {
-                    if (isEnter) Color(0XFFa3f2d6) else Color(0xFFffdadb)
-                } else {
-                    if (isEnter) Color(0xFF00513f) else Color(0xFF723339)
-                }
+            containerColor = containerColor,
+            contentColor = MaterialTheme.colorScheme.onSurface
         )
     ) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(12.dp),
+                .padding(horizontal = 12.dp, vertical = 10.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
             Box(
                 modifier = Modifier
-                    .size(44.dp)
-                    .clip(RoundedCornerShape(8.dp))
-                    .background(
-                        boxColor
-                    ),
+                    .size(40.dp)
+                    .clip(RoundedCornerShape(10.dp))
+                    .background(accentColor.copy(alpha = 0.12f)),
                 contentAlignment = Alignment.Center
             ) {
                 Icon(
                     painter = painterResource(R.drawable.map_pin),
                     contentDescription = null,
-                    modifier = Modifier.size(24.dp),
-                    tint = iconColor
+                    modifier = Modifier.size(22.dp),
+                    tint = accentColor
                 )
             }
             Spacer(modifier = Modifier.width(12.dp))
-            Column(modifier = Modifier.weight(1f)) {
+            Column(
+                modifier = Modifier.weight(1f),
+                verticalArrangement = Arrangement.spacedBy(3.dp)
+            ) {
                 Text(
                     alert.title,
                     fontSize = 14.sp,
+                    color = MaterialTheme.colorScheme.onSurface,
                     style = MaterialTheme.typography.bodyMedium.copy(
                         fontWeight = FontWeight.SemiBold,
                         fontFamily = manrope
@@ -1223,16 +1229,37 @@ fun AlertItem(alert: com.aarav.geowav.data.model.GeoAlert, isDarkThemeEnabled: B
                 Text(
                     relativeTime,
                     fontSize = 12.sp,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                     style = MaterialTheme.typography.bodySmall.copy(fontFamily = manrope),
                     maxLines = 2
                 )
             }
-            Text(
-                alert.time,
-                fontFamily = manrope,
-                fontWeight = FontWeight.SemiBold,
-                fontSize = 14.sp
-            )
+            Column(
+                horizontalAlignment = Alignment.End,
+                verticalArrangement = Arrangement.spacedBy(4.dp)
+            ) {
+                Surface(
+                    color = accentColor.copy(alpha = 0.10f),
+                    contentColor = accentColor,
+                    shape = RoundedCornerShape(50)
+                ) {
+                    Text(
+                        eventLabel,
+                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp),
+                        fontFamily = manrope,
+                        fontWeight = FontWeight.SemiBold,
+                        fontSize = 11.sp
+                    )
+                }
+
+                Text(
+                    alert.time,
+                    color = MaterialTheme.colorScheme.outline,
+                    fontFamily = manrope,
+                    fontWeight = FontWeight.SemiBold,
+                    fontSize = 12.sp
+                )
+            }
         }
     }
 }
