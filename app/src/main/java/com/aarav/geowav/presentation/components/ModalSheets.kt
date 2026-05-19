@@ -1,6 +1,7 @@
 package com.aarav.geowav.presentation.components
 
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.CubicBezierEasing
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
@@ -81,6 +82,9 @@ import com.google.android.libraries.places.api.model.Place
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
+
+private val ObserveSheetEnterEasing = CubicBezierEasing(0.2f, 0f, 0f, 1f)
+private val ObserveSheetExitEasing = CubicBezierEasing(0.4f, 0f, 1f, 1f)
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Preview(showBackground = true)
@@ -280,16 +284,28 @@ fun CustomBottomSheetForObserve(
         AnimatedVisibility(
             visible = expanded,
             enter = fadeIn(
-                animationSpec = tween(240)
+                animationSpec = tween(
+                    durationMillis = 220,
+                    easing = ObserveSheetEnterEasing
+                )
             ) + slideInVertically(
-                animationSpec = tween(300),
-                initialOffsetY = { it / 8 }
+                animationSpec = tween(
+                    durationMillis = 280,
+                    easing = ObserveSheetEnterEasing
+                ),
+                initialOffsetY = { it / 14 }
             ),
             exit = fadeOut(
-                animationSpec = tween(180)
+                animationSpec = tween(
+                    durationMillis = 150,
+                    easing = ObserveSheetExitEasing
+                )
             ) + slideOutVertically(
-                animationSpec = tween(240),
-                targetOffsetY = { it / 10 }
+                animationSpec = tween(
+                    durationMillis = 190,
+                    easing = ObserveSheetExitEasing
+                ),
+                targetOffsetY = { it / 16 }
             )
         ) {
             content()

@@ -5,11 +5,12 @@ import android.net.Uri
 import android.util.Log
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.animateContentSize
+import androidx.compose.animation.core.CubicBezierEasing
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
-import androidx.compose.animation.slideInHorizontally
-import androidx.compose.animation.slideOutHorizontally
+import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -78,6 +79,9 @@ import com.google.android.gms.maps.model.LatLng
 import com.google.maps.android.SphericalUtil
 import androidx.core.net.toUri
 
+private val SpatialEnterEasing = CubicBezierEasing(0.2f, 0f, 0f, 1f)
+private val SpatialExitEasing = CubicBezierEasing(0.4f, 0f, 1f, 1f)
+
 
 @Preview(showBackground = true)
 @OptIn(ExperimentalMaterial3Api::class)
@@ -144,7 +148,21 @@ fun ObserveScreen(
                 .padding(it)
         ) {
 
-            AnimatedVisibility(hasAnyLiveSharing) {
+            AnimatedVisibility(
+                visible = hasAnyLiveSharing,
+                enter = fadeIn(
+                    animationSpec = tween(
+                        durationMillis = 240,
+                        easing = SpatialEnterEasing
+                    )
+                ),
+                exit = fadeOut(
+                    animationSpec = tween(
+                        durationMillis = 180,
+                        easing = SpatialExitEasing
+                    )
+                )
+            ) {
                 ObserveLiveLocationCard(
                     viewModel, uiState, true,
                     showTray,
@@ -207,30 +225,39 @@ fun ViewerInfoSheetContent(
         !isSelected,
         enter = fadeIn(
             animationSpec = tween(
-                durationMillis = 260
+                durationMillis = 220,
+                easing = SpatialEnterEasing
             )
-        ) + slideInHorizontally(
+        ) + slideInVertically(
             animationSpec = tween(
-                durationMillis = 320
+                durationMillis = 280,
+                easing = SpatialEnterEasing
             ),
-            initialOffsetX = { -it / 12 }
+            initialOffsetY = { it / 18 }
         ),
 
         exit = fadeOut(
             animationSpec = tween(
-                durationMillis = 180
+                durationMillis = 150,
+                easing = SpatialExitEasing
             )
-        ) + slideOutHorizontally(
+        ) + slideOutVertically(
             animationSpec = tween(
-                durationMillis = 240
+                durationMillis = 190,
+                easing = SpatialExitEasing
             ),
-            targetOffsetX = { -it / 18 }
+            targetOffsetY = { -it / 24 }
         )
     ) {
         LazyColumn(
             modifier = Modifier
                 .wrapContentHeight()
-                .animateContentSize(),
+                .animateContentSize(
+                    animationSpec = tween(
+                        durationMillis = 260,
+                        easing = SpatialEnterEasing
+                    )
+                ),
             contentPadding = PaddingValues(bottom = 100.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp),
         ) {
@@ -264,24 +291,28 @@ fun ViewerInfoSheetContent(
         isSelected,
         enter = fadeIn(
             animationSpec = tween(
-                durationMillis = 280
+                durationMillis = 230,
+                easing = SpatialEnterEasing
             )
-        ) + slideInHorizontally(
+        ) + slideInVertically(
             animationSpec = tween(
-                durationMillis = 340
+                durationMillis = 290,
+                easing = SpatialEnterEasing
             ),
-            initialOffsetX = { it / 14 }
+            initialOffsetY = { it / 20 }
         ),
 
         exit = fadeOut(
             animationSpec = tween(
-                durationMillis = 180
+                durationMillis = 150,
+                easing = SpatialExitEasing
             )
-        ) + slideOutHorizontally(
+        ) + slideOutVertically(
             animationSpec = tween(
-                durationMillis = 240
+                durationMillis = 190,
+                easing = SpatialExitEasing
             ),
-            targetOffsetX = { it / 18 }
+            targetOffsetY = { it / 24 }
         )
     ) {
         ViewerDetailContent(

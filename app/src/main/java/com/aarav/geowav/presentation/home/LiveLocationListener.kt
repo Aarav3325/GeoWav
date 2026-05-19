@@ -12,6 +12,7 @@ import android.net.Uri
 import android.util.Log
 import androidx.core.graphics.drawable.toBitmap
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.CubicBezierEasing
 import androidx.compose.animation.core.LinearOutSlowInEasing
 import androidx.compose.animation.core.RepeatMode
 import androidx.compose.animation.core.animateFloat
@@ -124,6 +125,11 @@ import com.google.maps.android.compose.Polyline
 import com.google.maps.android.compose.rememberCameraPositionState
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+
+private val SpatialEnterEasing = CubicBezierEasing(0.2f, 0f, 0f, 1f)
+private val SpatialExitEasing = CubicBezierEasing(0.4f, 0f, 1f, 1f)
+private const val CameraFollowDurationMs = 850
+private const val CameraRecenterDurationMs = 700
 
 
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
@@ -276,7 +282,8 @@ fun ObserveLiveLocationCard(
         }.build()
 
         cameraPositionState.animate(
-            CameraUpdateFactory.newLatLngBounds(bounds, 80)
+            CameraUpdateFactory.newLatLngBounds(bounds, 80),
+            CameraFollowDurationMs
         )
     }
 
@@ -304,7 +311,8 @@ fun ObserveLiveLocationCard(
                 CameraUpdateFactory.newLatLngZoom(
                     LatLng(emergencyLat, emergencyLng),
                     16f
-                )
+                ),
+                CameraFollowDurationMs
             )
         }
     }
@@ -497,6 +505,24 @@ fun ObserveLiveLocationCard(
 
         }
 
+        LaunchedEffect(selectedUser, locations[selectedUser], mapLoaded, isUserPanning) {
+            if (!mapLoaded || selectedUser == null || isUserPanning) return@LaunchedEffect
+
+            val location = when (val state = locations[selectedUser]) {
+                is ViewerLocationState.NormalSharing -> state.location
+                is ViewerLocationState.EmergencySharing -> state.location
+                else -> null
+            } ?: return@LaunchedEffect
+
+            cameraPositionState.animate(
+                CameraUpdateFactory.newLatLngZoom(
+                    LatLng(location.lat, location.lng),
+                    16f
+                ),
+                CameraFollowDurationMs
+            )
+        }
+
 
         if (!isFullScreen) {
             FullScreenIcon(
@@ -525,7 +551,8 @@ fun ObserveLiveLocationCard(
                                 CameraUpdateFactory.newLatLngZoom(
                                     LatLng(emergencyLat, emergencyLng),
                                     16f
-                                )
+                                ),
+                                CameraRecenterDurationMs
                             )
                         }
                     } else if (visibleLatLngs.isNotEmpty()) {
@@ -535,7 +562,8 @@ fun ObserveLiveLocationCard(
                                 visibleLatLngs.forEach { include(it) }
                             }.build()
                             cameraPositionState.animate(
-                                CameraUpdateFactory.newLatLngBounds(bounds, 80)
+                                CameraUpdateFactory.newLatLngBounds(bounds, 80),
+                                CameraRecenterDurationMs
                             )
                         }
                     }
@@ -556,6 +584,30 @@ fun ObserveLiveLocationCard(
 
         AnimatedVisibility(
             showMapModeToast,
+            enter = fadeIn(
+                animationSpec = tween(
+                    durationMillis = 180,
+                    easing = SpatialEnterEasing
+                )
+            ) + slideInVertically(
+                animationSpec = tween(
+                    durationMillis = 220,
+                    easing = SpatialEnterEasing
+                ),
+                initialOffsetY = { it / 10 }
+            ),
+            exit = fadeOut(
+                animationSpec = tween(
+                    durationMillis = 150,
+                    easing = SpatialExitEasing
+                )
+            ) + slideOutVertically(
+                animationSpec = tween(
+                    durationMillis = 180,
+                    easing = SpatialExitEasing
+                ),
+                targetOffsetY = { it / 12 }
+            ),
             modifier = Modifier
                 .align(Alignment.Center)
         ) {
@@ -581,16 +633,28 @@ fun ObserveLiveLocationCard(
                 AnimatedVisibility(
                     visible = isFullScreen,
                     enter = fadeIn(
-                        animationSpec = tween(220)
+                        animationSpec = tween(
+                            durationMillis = 260,
+                            easing = SpatialEnterEasing
+                        )
                     ) + slideInVertically(
-                        animationSpec = tween(260),
-                        initialOffsetY = { -it / 5 }
+                        animationSpec = tween(
+                            durationMillis = 320,
+                            easing = SpatialEnterEasing
+                        ),
+                        initialOffsetY = { it / 12 }
                     ),
                     exit = fadeOut(
-                        animationSpec = tween(180)
+                        animationSpec = tween(
+                            durationMillis = 170,
+                            easing = SpatialExitEasing
+                        )
                     ) + slideOutVertically(
-                        animationSpec = tween(220),
-                        targetOffsetY = { -it / 6 }
+                        animationSpec = tween(
+                            durationMillis = 210,
+                            easing = SpatialExitEasing
+                        ),
+                        targetOffsetY = { it / 14 }
                     ),
                     modifier = Modifier
                         .align(Alignment.BottomCenter)
@@ -630,16 +694,28 @@ fun ObserveLiveLocationCard(
                 AnimatedVisibility(
                     visible = isFullScreen,
                     enter = fadeIn(
-                        animationSpec = tween(220)
+                        animationSpec = tween(
+                            durationMillis = 240,
+                            easing = SpatialEnterEasing
+                        )
                     ) + slideInVertically(
-                        animationSpec = tween(260),
-                        initialOffsetY = { -it / 5 }
+                        animationSpec = tween(
+                            durationMillis = 300,
+                            easing = SpatialEnterEasing
+                        ),
+                        initialOffsetY = { it / 14 }
                     ),
                     exit = fadeOut(
-                        animationSpec = tween(160)
+                        animationSpec = tween(
+                            durationMillis = 150,
+                            easing = SpatialExitEasing
+                        )
                     ) + slideOutVertically(
-                        animationSpec = tween(180),
-                        targetOffsetY = { -it / 6 }
+                        animationSpec = tween(
+                            durationMillis = 190,
+                            easing = SpatialExitEasing
+                        ),
+                        targetOffsetY = { it / 16 }
                     ),
                     modifier = Modifier
                         .statusBarsPadding()
