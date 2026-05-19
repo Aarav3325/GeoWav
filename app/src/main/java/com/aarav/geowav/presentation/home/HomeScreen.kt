@@ -331,7 +331,7 @@ fun GeoWavHomeScreen(
                             activeSharingCount = activeSharingCount,
                             modifier = Modifier
                                 .align(Alignment.Center)
-                                .padding(top = 76.dp),
+                                .padding(top = 92.dp),
                             isDarkThemeEnabled = isDarkThemeEnabled
                         )
                     }
@@ -443,35 +443,7 @@ fun GeoWavHomeScreen(
                         RecentAlertsList(uiState.alertsList.take(5), isDarkThemeEnabled)
 
 
-                        Column(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(vertical = 24.dp),
-                            horizontalAlignment = Alignment.CenterHorizontally,
-                            verticalArrangement = Arrangement.spacedBy(12.dp)
-                        ) {
-                            Surface(
-                                color = Color(0xFFBAC3FF),
-                                shape = CircleShape
-                            ) {
-                                Icon(
-                                    painter = painterResource(R.drawable.new_logo),
-                                    contentDescription = "logo",
-                                    tint = Color(0xFF222C61),
-                                    modifier = Modifier.size(56.dp),
-                                )
-                            }
-
-                            Text(
-                                text = "GeoWav",
-                                color = MaterialTheme.colorScheme.onBackground,
-                                fontSize = 24.sp,
-                                fontFamily = manrope,
-                                fontWeight = FontWeight.Bold
-                            )
-
-
-                        }
+                        Spacer(modifier = Modifier.height(28.dp))
                     }
                 }
             }
@@ -1051,83 +1023,87 @@ fun ActiveZonesSection(
 
 @Composable
 fun ZoneCard(zone: Place, onClick: () -> Unit) {
-
     Card(
-        modifier = Modifier
-            .fillMaxWidth(),
+        modifier = Modifier.fillMaxWidth(),
+        border = BorderStroke(
+            1.dp,
+            MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.22f)
+        ),
         colors = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.surfaceContainer
         ),
-        shape = RoundedCornerShape(16.dp)
+        shape = RoundedCornerShape(14.dp),
+        onClick = onClick
     ) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = 12.dp, vertical = 12.dp),
-            verticalAlignment = Alignment.CenterVertically,
+                .padding(horizontal = 12.dp, vertical = 11.dp),
+            verticalAlignment = Alignment.CenterVertically
         ) {
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                modifier = Modifier.fillMaxWidth()
+            Box(
+                modifier = Modifier
+                    .size(40.dp)
+                    .clip(RoundedCornerShape(10.dp))
+                    .background(MaterialTheme.colorScheme.secondary.copy(alpha = 0.10f)),
+                contentAlignment = Alignment.Center
             ) {
-                Box(
-                    modifier = Modifier
-                        .size(44.dp)
-                        .clip(RoundedCornerShape(10.dp))
-                        .background(MaterialTheme.colorScheme.outline.copy(alpha = 0.12f)),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Icon(
-                        painter = painterResource(R.drawable.map_pin),
-                        contentDescription = "zone",
-                        modifier = Modifier.size(24.dp),
-                        tint = MaterialTheme.colorScheme.onSurface
-                    )
-                }
-                Spacer(modifier = Modifier.width(12.dp))
-                Column(
-                    modifier = Modifier.weight(1f),
-                    verticalArrangement = Arrangement.spacedBy(4.dp)
-                ) {
-                    Text(
-                        zone.customName.ifEmpty {
-                            zone.placeName
-                        },
-                        fontSize = 14.sp,
-                        color = MaterialTheme.colorScheme.onSurface,
-                        style = MaterialTheme.typography.bodyMedium.copy(
-                            fontWeight = FontWeight.SemiBold,
-                            fontFamily = manrope,
-                            lineHeight = 17.sp
-                        )
-                    )
-
-                    Text(
-                        "${zone.radius.toInt()}m • Enter/Exit Trigger",
-                        style = MaterialTheme.typography.bodySmall.copy(
-                            color = MaterialTheme.colorScheme.secondary,
-                            fontFamily = manrope
-                        ),
-                        fontWeight = FontWeight.SemiBold,
-                        fontSize = 12.sp
-                    )
-                }
-                Spacer(Modifier.width(6.dp))
-
-                TextButton(onClick = { }) {
-                    Text(
-                        "Active",
-                        fontSize = 14.sp,
-                        fontFamily = manrope,
-                        fontWeight = FontWeight.SemiBold,
-                        color = MaterialTheme.colorScheme.tertiary
-                    )
-                }
+                Icon(
+                    painter = painterResource(R.drawable.map_pin),
+                    contentDescription = "zone",
+                    modifier = Modifier.size(22.dp),
+                    tint = MaterialTheme.colorScheme.secondary
+                )
             }
 
+            Spacer(modifier = Modifier.width(12.dp))
+
+            Column(
+                modifier = Modifier.weight(1f),
+                verticalArrangement = Arrangement.spacedBy(4.dp)
+            ) {
+                Text(
+                    zone.customName.ifEmpty { zone.placeName },
+                    fontSize = 14.sp,
+                    color = MaterialTheme.colorScheme.onSurface,
+                    style = MaterialTheme.typography.bodyMedium.copy(
+                        fontWeight = FontWeight.SemiBold,
+                        fontFamily = manrope,
+                        lineHeight = 17.sp
+                    )
+                )
+
+                Text(
+                    "${zone.radius.toInt()}m awareness radius",
+                    style = MaterialTheme.typography.bodySmall.copy(
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        fontFamily = manrope
+                    ),
+                    fontWeight = FontWeight.Medium,
+                    fontSize = 12.sp
+                )
+            }
+
+            Spacer(Modifier.width(6.dp))
+
+            Surface(
+                color = MaterialTheme.colorScheme.tertiary.copy(alpha = 0.10f),
+                contentColor = MaterialTheme.colorScheme.tertiary,
+                shape = RoundedCornerShape(50)
+            ) {
+                Text(
+                    "Active",
+                    modifier = Modifier.padding(horizontal = 9.dp, vertical = 4.dp),
+                    fontSize = 11.sp,
+                    fontFamily = manrope,
+                    fontWeight = FontWeight.SemiBold,
+                    color = MaterialTheme.colorScheme.tertiary
+                )
+            }
         }
     }
 }
+
 
 @Composable
 fun QuickActionsRow(onAddZone: () -> Unit) {
