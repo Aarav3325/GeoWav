@@ -391,7 +391,7 @@ fun GeoWavHomeScreen(
 
 
                         ConnectionsList(
-                            title = "Your Circle",
+                            title = "People",
                             connections = uiState.lovedOnes,
                             locationStates = locations,
                             onManage = navigateToCircle,
@@ -414,26 +414,28 @@ fun GeoWavHomeScreen(
 
                         Row(
                             modifier = Modifier
-                                .padding(top = 8.dp)
+                                .padding(top = 10.dp)
                                 .fillMaxWidth(),
                             verticalAlignment = Alignment.CenterVertically,
                             horizontalArrangement = Arrangement.SpaceBetween
                         ) {
                             Text(
-                                "Your Activity",
+                                "Movement",
                                 color = MaterialTheme.colorScheme.onBackground,
                                 style = MaterialTheme.typography.titleMedium.copy(
                                     fontFamily = manrope,
+                                    fontWeight = FontWeight.SemiBold
                                 ),
-                                fontSize = 16.sp,
+                                fontSize = 15.sp,
                             )
 
                             TextButton(onClick = navigateToActivity) {
                                 Text(
-                                    "View All",
-                                    fontSize = 16.sp,
+                                    "History",
+                                    fontSize = 13.sp,
                                     color = MaterialTheme.colorScheme.secondary,
-                                    fontFamily = manrope
+                                    fontFamily = manrope,
+                                    fontWeight = FontWeight.Medium
                                 )
                             }
                         }
@@ -642,16 +644,17 @@ fun ConnectionsList(
                     fontWeight = FontWeight.SemiBold,
                     fontFamily = manrope
                 ),
-                fontSize = 16.sp,
+                fontSize = 15.sp,
                 modifier = Modifier.weight(1.0f)
             )
 
             TextButton(onClick = onManage) {
                 Text(
                     "Manage",
-                    fontSize = 16.sp,
+                    fontSize = 13.sp,
                     color = MaterialTheme.colorScheme.secondary,
-                    fontFamily = manrope
+                    fontFamily = manrope,
+                    fontWeight = FontWeight.Medium
                 )
             }
         }
@@ -705,6 +708,13 @@ fun ConnectionsList(
     }
 }
 
+private data class ConnectionStatusDetails(
+    val label: String,
+    val detail: String,
+    val color: Color,
+    val isSharing: Boolean
+)
+
 @Composable
 fun ConnectionStatusCard(
     member: CircleMember,
@@ -734,27 +744,59 @@ fun ConnectionStatusCard(
         }
     }
 
-    val (statusText, statusColor, isSharing) = when (locationState) {
+    val status = when (locationState) {
         is ViewerLocationState.EmergencySharing ->
-            Triple("Emergency", MaterialTheme.colorScheme.error, true)
+            ConnectionStatusDetails(
+                label = "Emergency",
+                detail = "Live emergency sharing",
+                color = MaterialTheme.colorScheme.error,
+                isSharing = true
+            )
 
         is ViewerLocationState.NormalSharing ->
-            Triple("Live", MaterialTheme.colorScheme.primary, true)
+            ConnectionStatusDetails(
+                label = "Live now",
+                detail = "Location is updating",
+                color = MaterialTheme.colorScheme.primary,
+                isSharing = true
+            )
 
         else ->
-            Triple("Not Sharing", MaterialTheme.colorScheme.outline, false)
+            ConnectionStatusDetails(
+                label = "Quiet",
+                detail = "Not sharing right now",
+                color = MaterialTheme.colorScheme.outline,
+                isSharing = false
+            )
     }
+
+    val statusText = status.label
+    val statusDetail = status.detail
+    val statusColor = status.color
+    val isSharing = status.isSharing
 
     Card(
         modifier = Modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceContainer
+        border = BorderStroke(
+            1.dp,
+            if (emergencyState != null) {
+                statusColor.copy(alpha = 0.42f)
+            } else {
+                MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.22f)
+            }
         ),
-        shape = RoundedCornerShape(16.dp)
+        colors = CardDefaults.cardColors(
+            containerColor = if (emergencyState != null) {
+                MaterialTheme.colorScheme.errorContainer.copy(alpha = 0.18f)
+            } else {
+                MaterialTheme.colorScheme.surfaceContainer
+            }
+        ),
+        shape = RoundedCornerShape(14.dp)
     ) {
 
         Column(
-            modifier = Modifier.padding(12.dp)
+            modifier = Modifier.padding(horizontal = 12.dp, vertical = 11.dp)
         ) {
 
             Row(
@@ -774,7 +816,7 @@ fun ConnectionStatusCard(
                         painter = painterResource(R.drawable.new_logo),
                         contentDescription = null,
                         tint = statusColor,
-                        modifier = Modifier.size(36.dp)
+                        modifier = Modifier.size(34.dp)
                     )
                 }
 
@@ -794,39 +836,36 @@ fun ConnectionStatusCard(
                     Spacer(Modifier.height(0.dp))
 
                     Text(
-                        text = statusText,
+                        text = statusDetail,
                         fontFamily = manrope,
                         fontSize = 12.sp,
                         fontWeight = FontWeight.Medium,
-                        color = statusColor
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 }
 
-                // Status label on right
-                if (isSharingActive != null || emergencyState != null) {
-                    Surface(
-                        shape = RoundedCornerShape(25),
-                        color = statusColor.copy(alpha = 0.12f)
-                    ) {
-                        Text(
-                            text = statusText,
-                            modifier = Modifier.padding(
-                                horizontal = 12.dp,
-                                vertical = 4.dp
-                            ),
-                            fontFamily = manrope,
-                            fontSize = 12.sp,
-                            fontWeight = FontWeight.SemiBold,
-                            color = statusColor
-                        )
-                    }
+                Surface(
+                    shape = RoundedCornerShape(25),
+                    color = statusColor.copy(alpha = if (emergencyState != null) 0.18f else 0.10f)
+                ) {
+                    Text(
+                        text = statusText,
+                        modifier = Modifier.padding(
+                            horizontal = 10.dp,
+                            vertical = 4.dp
+                        ),
+                        fontFamily = manrope,
+                        fontSize = 11.sp,
+                        fontWeight = FontWeight.SemiBold,
+                        color = statusColor
+                    )
                 }
 
                 Spacer(Modifier.width(10.dp))
 
                 Surface(
                     shape = CircleShape,
-                    color = MaterialTheme.colorScheme.tertiary,
+                    color = MaterialTheme.colorScheme.surfaceContainerHigh,
                     modifier = Modifier
                         .clip(CircleShape)
                         .clickable {
@@ -837,7 +876,7 @@ fun ConnectionStatusCard(
                     Icon(
                         painter = painterResource(R.drawable.timeline),
                         contentDescription = "View Timeline",
-                        tint = MaterialTheme.colorScheme.onTertiary,
+                        tint = MaterialTheme.colorScheme.tertiary,
                         modifier = Modifier
                             .size(24.dp)
                             .padding(6.dp)
@@ -924,7 +963,7 @@ fun ActiveZonesSection(
     onViewAllClick: () -> Unit
 ) {
     Column(
-        modifier = Modifier.padding(vertical = 0.dp)
+        modifier = Modifier.padding(top = 2.dp)
     ) {
 
         Row(
@@ -933,11 +972,12 @@ fun ActiveZonesSection(
             verticalAlignment = Alignment.CenterVertically
         ) {
             Text(
-                "Active Places",
-                fontSize = 16.sp,
+                "Places",
+                fontSize = 15.sp,
                 color = MaterialTheme.colorScheme.onBackground,
                 style = MaterialTheme.typography.titleMedium.copy(
-                    fontFamily = manrope
+                    fontFamily = manrope,
+                    fontWeight = FontWeight.SemiBold
                 )
             )
 
@@ -945,10 +985,11 @@ fun ActiveZonesSection(
                 onViewAllClick()
             }) {
                 Text(
-                    "View All",
-                    fontSize = 16.sp,
+                    "View",
+                    fontSize = 13.sp,
                     color = MaterialTheme.colorScheme.secondary,
-                    fontFamily = manrope
+                    fontFamily = manrope,
+                    fontWeight = FontWeight.Medium
                 )
             }
         }
