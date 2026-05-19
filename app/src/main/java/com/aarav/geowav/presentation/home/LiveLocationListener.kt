@@ -186,10 +186,16 @@ fun ObserveLiveLocationCard(
 
 
 
-    LaunchedEffect(visibleLatLngs, mapLoaded) {
-        if (!mapLoaded) return@LaunchedEffect
+    val activeSharerIds = remember(locations) {
+        locations.filterValues {
+            it is ViewerLocationState.NormalSharing ||
+                    it is ViewerLocationState.EmergencySharing
+        }.keys
+    }
 
-        if (visibleLatLngs.isEmpty()) return@LaunchedEffect
+    LaunchedEffect(activeSharerIds, mapLoaded) {
+        if (!mapLoaded) return@LaunchedEffect
+        if (activeSharerIds.isEmpty()) return@LaunchedEffect
 
         viewModel.fetchViewerInfo()
     }
@@ -234,7 +240,7 @@ fun ObserveLiveLocationCard(
         position = initialCameraPosition
     }
 
-    LaunchedEffect(visibleLatLngs, mapLoaded, emergencyUser) {
+    LaunchedEffect(activeSharerIds, mapLoaded, emergencyUser) {
 
         if (!mapLoaded) return@LaunchedEffect
         if (visibleLatLngs.isEmpty()) return@LaunchedEffect
@@ -357,7 +363,6 @@ fun ObserveLiveLocationCard(
 
                 if (path.points.size > 1 && state != null && selectedUser == userId) {
 
-                    Log.i("POLYLINE", "size: ${path.points.size}")
                     val isEmergency =
                         state is ViewerLocationState.EmergencySharing
 
@@ -1045,7 +1050,6 @@ fun RichTooltipExample(
                 interactionSource = remember { MutableInteractionSource() }
             ) {
                 onUserClick(conn.id)
-                Log.i("POLYLINE", "select")
                 scope.launch {
                     tooltipState.show()
                 }

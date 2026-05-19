@@ -90,7 +90,6 @@ fun ObserveScreen(
     val locations by viewModel.locations.collectAsState()
 
 
-    Log.i("OBSERVE", uiState.lovedOnes.toString())
     Scaffold(
         contentWindowInsets = WindowInsets(0, 0, 0, 0)
     ) {
