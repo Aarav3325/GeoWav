@@ -30,8 +30,10 @@ class ViewerLocationRepositoryImpl
 
         var isEmergencyActive = false
         var emergencyEndsAt: Long? = null
+        var latestLocationSnapshot: DataSnapshot? = null
 
         fun parseAndEmit(snapshot: DataSnapshot) {
+            latestLocationSnapshot = snapshot
 
             val active = snapshot.child("active")
                 .getValue(Boolean::class.java) == true
@@ -44,12 +46,14 @@ class ViewerLocationRepositoryImpl
             val sharedWith = snapshot.child("sharedWith")
                 .children.mapNotNull { it.getValue(String::class.java) }
 
+            val canViewLocation = sharedWith.contains(viewerId) || isEmergencyActive
+
             if (!active ||
                 lat == null ||
                 lng == null ||
                 timestamp == null ||
                 startedAt == null ||
-                !sharedWith.contains(viewerId)
+                !canViewLocation
             ) {
                 trySend(ViewerLocationState.Blocked)
                 return
@@ -125,6 +129,8 @@ class ViewerLocationRepositoryImpl
                     isEmergencyActive = false
                     emergencyEndsAt = null
                 }
+
+                latestLocationSnapshot?.let { parseAndEmit(it) }
             }
 
             override fun onCancelled(error: DatabaseError) {

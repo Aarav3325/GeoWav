@@ -189,6 +189,27 @@ fun TimelineMapPreview(
 
     var upgradeContext by remember { mutableStateOf<UpgradeContext?>(null) }
 
+    var hasRecordedMovement by remember {
+        mutableStateOf(!userPaths.isNullOrEmpty())
+    }
+
+    var isPreparingRoute by remember {
+        mutableStateOf(mapLoaded && currentSession != null &&
+                hasRecordedMovement && finalSnappedPath.isEmpty())
+    }
+    var hasNoMovementData by remember {
+        mutableStateOf(mapLoaded && currentSession != null && !hasRecordedMovement)
+    }
+
+    LaunchedEffect(Unit) {
+        viewModel.events.collect { events ->
+            if(events is TimelineEvents.NotEnoughData) {
+                isPreparingRoute = false
+                hasNoMovementData = true
+            }
+        }
+    }
+
     LaunchedEffect(Unit) {
         viewModel.uiEvent.collect { event ->
             if (event is UpgradeEvents.ShowUpgrade) {
@@ -399,10 +420,6 @@ fun TimelineMapPreview(
                 }
             }
 
-            val hasRecordedMovement = !userPaths.isNullOrEmpty()
-            val isPreparingRoute = mapLoaded && currentSession != null &&
-                    hasRecordedMovement && finalSnappedPath.isEmpty()
-            val hasNoMovementData = mapLoaded && currentSession != null && !hasRecordedMovement
 
             when {
                 !mapLoaded -> {
@@ -442,8 +459,10 @@ fun TimelineMapPreview(
             }
 
             SessionPreviewTopBar(
+                screenTitle = "Session replay",
                 onBack = back,
-                onHelp = { showReplayHelp = true },
+                actionLabel = "Help",
+                onAction = { showReplayHelp = true },
                 modifier = Modifier
                     .align(Alignment.TopStart)
                     .statusBarsPadding()
@@ -715,9 +734,11 @@ private fun ReplayHintPill(
 
 
 @Composable
-private fun SessionPreviewTopBar(
+fun SessionPreviewTopBar(
+    screenTitle: String,
+    actionLabel: String? = null,
     onBack: () -> Unit,
-    onHelp: () -> Unit,
+    onAction: (() -> Unit)? = null,
     modifier: Modifier = Modifier
 ) {
     Row(
@@ -747,7 +768,7 @@ private fun SessionPreviewTopBar(
             modifier = Modifier
         ) {
             Text(
-                text = "Session replay",
+                text = screenTitle,
                 modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp),
                 fontFamily = manrope,
                 fontSize = 13.sp,
@@ -756,27 +777,29 @@ private fun SessionPreviewTopBar(
             )
         }
 
-        Spacer(Modifier.weight(1f))
+        if(actionLabel != null && onAction != null) {
+            Spacer(Modifier.weight(1f))
 
-        Surface(
-            modifier = Modifier
-                .padding(horizontal = 16.dp)
-                .clickable(
-                interactionSource = remember { MutableInteractionSource() },
-                indication = null,
-                onClick = onHelp
-            ),
-            shape = RoundedCornerShape(99.dp),
-            color = Color(0xCC111820)
-        ) {
-            Text(
-                text = "Help",
-                modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp),
-                fontFamily = manrope,
-                fontSize = 13.sp,
-                fontWeight = FontWeight.SemiBold,
-                color = Color.White.copy(alpha = 0.84f)
-            )
+            Surface(
+                modifier = Modifier
+                    .padding(horizontal = 16.dp)
+                    .clickable(
+                        interactionSource = remember { MutableInteractionSource() },
+                        indication = null,
+                        onClick = onAction
+                    ),
+                shape = RoundedCornerShape(99.dp),
+                color = Color(0xCC111820)
+            ) {
+                Text(
+                    text = actionLabel,
+                    modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp),
+                    fontFamily = manrope,
+                    fontSize = 13.sp,
+                    fontWeight = FontWeight.SemiBold,
+                    color = Color.White.copy(alpha = 0.84f)
+                )
+            }
         }
     }
 }

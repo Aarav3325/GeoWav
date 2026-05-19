@@ -4,17 +4,28 @@ import android.content.Intent
 import android.graphics.Bitmap
 import android.graphics.Canvas
 import android.graphics.Paint
+import android.graphics.Path
+import android.graphics.Rect
+import android.graphics.RectF
+import android.graphics.Typeface
 import android.net.Uri
 import android.util.Log
+import androidx.core.graphics.drawable.toBitmap
 import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.CubicBezierEasing
 import androidx.compose.animation.core.LinearOutSlowInEasing
 import androidx.compose.animation.core.RepeatMode
 import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.infiniteRepeatable
 import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.slideOutVertically
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
@@ -26,7 +37,10 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
@@ -51,9 +65,7 @@ import androidx.compose.material3.TooltipDefaults
 import androidx.compose.material3.rememberTooltipState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.State
 import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.mutableStateOf
@@ -83,9 +95,17 @@ import com.aarav.geowav.core.utils.UserColorMapper
 import com.aarav.geowav.core.utils.ViewerLocationState
 import com.aarav.geowav.core.utils.formatTime
 import com.aarav.geowav.data.model.CircleMember
+import com.aarav.geowav.presentation.components.CustomBottomSheetForObserve
+import com.aarav.geowav.presentation.observe.CollapsedViewerInfo
+import com.aarav.geowav.presentation.observe.CollapsedViewerInfoV2
+import com.aarav.geowav.presentation.observe.CollapsedViewerTray
+import com.aarav.geowav.presentation.observe.CompactActionMenu
+import com.aarav.geowav.presentation.observe.ViewerInfoSheetContent
 import com.aarav.geowav.presentation.theme.manrope
 import com.aarav.geowav.presentation.theme.primaryLight
-import com.aarav.geowav.presentation.timeline.movingPlaybackMarkerIcon
+import coil.imageLoader
+import coil.request.ImageRequest
+import coil.request.SuccessResult
 import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.model.BitmapDescriptor
 import com.google.android.gms.maps.model.BitmapDescriptorFactory
@@ -103,9 +123,13 @@ import com.google.maps.android.compose.Marker
 import com.google.maps.android.compose.MarkerState
 import com.google.maps.android.compose.Polyline
 import com.google.maps.android.compose.rememberCameraPositionState
-import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+
+private val SpatialEnterEasing = CubicBezierEasing(0.2f, 0f, 0f, 1f)
+private val SpatialExitEasing = CubicBezierEasing(0.4f, 0f, 1f, 1f)
+private const val CameraFollowDurationMs = 850
+private const val CameraRecenterDurationMs = 700
 
 
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
@@ -119,7 +143,8 @@ fun ObserveLiveLocationCard(
     onHideClick: () -> Unit,
     onShowTray: () -> Unit = {},
     navigateToObserve: () -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    userLocation: Pair<Double, Double>? = null
 ) {
     var isUserPanning by remember { mutableStateOf(false) }
 
@@ -130,6 +155,11 @@ fun ObserveLiveLocationCard(
     val markerStates = remember {
         mutableStateMapOf<String, MarkerState>()
     }
+
+    var showViewerInfoSheet by remember {
+        mutableStateOf(true)
+    }
+
 
     LaunchedEffect(showMapModeToast) {
         if (showMapModeToast) {
@@ -171,10 +201,16 @@ fun ObserveLiveLocationCard(
 
 
 
-    LaunchedEffect(visibleLatLngs, mapLoaded) {
-        if (!mapLoaded) return@LaunchedEffect
+    val activeSharerIds = remember(locations) {
+        locations.filterValues {
+            it is ViewerLocationState.NormalSharing ||
+                    it is ViewerLocationState.EmergencySharing
+        }.keys
+    }
 
-        if (visibleLatLngs.isEmpty()) return@LaunchedEffect
+    LaunchedEffect(activeSharerIds, mapLoaded) {
+        if (!mapLoaded) return@LaunchedEffect
+        if (activeSharerIds.isEmpty()) return@LaunchedEffect
 
         viewModel.fetchViewerInfo()
     }
@@ -196,7 +232,7 @@ fun ObserveLiveLocationCard(
         MapProperties(mapType = mapType)
     }
 
-    val initialCameraPosition = remember(locations) {
+    val initialCameraPosition = remember {
         val emergency = locations.values
             .firstOrNull { it is ViewerLocationState.EmergencySharing }
                 as? ViewerLocationState.EmergencySharing
@@ -207,10 +243,25 @@ fun ObserveLiveLocationCard(
                 16f
             )
         } else {
-            CameraPosition.fromLatLngZoom(
-                LatLng(47.6677146, -122.3470447),
-                5f
-            )
+            val firstLocation = locations.values.firstNotNullOfOrNull {
+                when (it) {
+                    is ViewerLocationState.NormalSharing -> it.location
+                    is ViewerLocationState.EmergencySharing -> it.location
+                    else -> null
+                }
+            }
+
+            if (firstLocation != null) {
+                CameraPosition.fromLatLngZoom(
+                    LatLng(firstLocation.lat, firstLocation.lng),
+                    14f
+                )
+            } else {
+                CameraPosition.fromLatLngZoom(
+                    LatLng(0.0, 0.0),
+                    2f
+                )
+            }
         }
     }
 
@@ -219,7 +270,7 @@ fun ObserveLiveLocationCard(
         position = initialCameraPosition
     }
 
-    LaunchedEffect(visibleLatLngs, mapLoaded, emergencyUser) {
+    LaunchedEffect(activeSharerIds, mapLoaded, emergencyUser) {
 
         if (!mapLoaded) return@LaunchedEffect
         if (visibleLatLngs.isEmpty()) return@LaunchedEffect
@@ -231,7 +282,8 @@ fun ObserveLiveLocationCard(
         }.build()
 
         cameraPositionState.animate(
-            CameraUpdateFactory.newLatLngBounds(bounds, 80)
+            CameraUpdateFactory.newLatLngBounds(bounds, 80),
+            CameraFollowDurationMs
         )
     }
 
@@ -259,7 +311,8 @@ fun ObserveLiveLocationCard(
                 CameraUpdateFactory.newLatLngZoom(
                     LatLng(emergencyLat, emergencyLng),
                     16f
-                )
+                ),
+                CameraFollowDurationMs
             )
         }
     }
@@ -272,6 +325,9 @@ fun ObserveLiveLocationCard(
         }.collect { (isMoving, reason) ->
             if (isMoving && reason == CameraMoveStartedReason.GESTURE) {
                 isUserPanning = true
+            } else if (!isMoving && isUserPanning) {
+                delay(5000)
+                isUserPanning = false
             }
         }
     }
@@ -283,13 +339,22 @@ fun ObserveLiveLocationCard(
     }
 
 
-
     val scope = rememberCoroutineScope()
 
     var selectedUser by remember {
         mutableStateOf<String?>(null)
     }
 
+    val activeViewerIds = locations
+        .filterValues {
+            it is ViewerLocationState.NormalSharing ||
+                    it is ViewerLocationState.EmergencySharing
+        }
+        .keys
+
+    val viewers = uiState.lovedOnes.filter {
+        it.id in activeViewerIds
+    }
 
 
     Box(
@@ -300,8 +365,7 @@ fun ObserveLiveLocationCard(
         GoogleMap(
             modifier = Modifier
                 .matchParentSize()
-                .shadow(4.dp, RoundedCornerShape(16.dp))
-                .clip(RoundedCornerShape(16.dp)),
+                .shadow(4.dp, RoundedCornerShape(16.dp)),
             cameraPositionState = cameraPositionState,
             onMapClick = {},
             onMapLongClick = {},
@@ -316,13 +380,18 @@ fun ObserveLiveLocationCard(
                 val markerState = markerStates.getOrPut(userId) {
                     MarkerState()
                 }
+                val viewer = uiState.lovedOnes.firstOrNull { it.id == userId }
 
                 UserMarker(
                     userId = userId,
                     markerState = markerState,
                     state = state,
                     baseColor = baseColor,
-                    isSelected = selectedUser == userId
+                    isSelected = selectedUser == userId,
+                    avatarUrl = viewer?.avatarUrl,
+                    displayName = viewer?.alias?.takeIf { it.isNotBlank() }
+                        ?: viewer?.profileName
+                        ?: userId
                 )
             }
 
@@ -334,7 +403,6 @@ fun ObserveLiveLocationCard(
 
                 if (path.points.size > 1 && state != null && selectedUser == userId) {
 
-                    Log.i("POLYLINE", "size: ${path.points.size}")
                     val isEmergency =
                         state is ViewerLocationState.EmergencySharing
 
@@ -361,6 +429,8 @@ fun ObserveLiveLocationCard(
 
             val liveStays by viewModel.liveStayPoints.collectAsState()
 
+            val stayIcon = remember { stayPointMarkerIcon() }
+
             liveStays.forEach { (_, stayPoints) ->
                 stayPoints.forEach { stay ->
                     val stayPos = LatLng(stay.lat, stay.lng)
@@ -374,7 +444,7 @@ fun ObserveLiveLocationCard(
                         title = durationText,
                         snippet = "Stay Point",
                         anchor = Offset(0.5f, 0.5f),
-                        icon = stayPointMarkerIcon()
+                        icon = stayIcon
                     )
                 }
             }
@@ -435,6 +505,24 @@ fun ObserveLiveLocationCard(
 
         }
 
+        LaunchedEffect(selectedUser, locations[selectedUser], mapLoaded, isUserPanning) {
+            if (!mapLoaded || selectedUser == null || isUserPanning) return@LaunchedEffect
+
+            val location = when (val state = locations[selectedUser]) {
+                is ViewerLocationState.NormalSharing -> state.location
+                is ViewerLocationState.EmergencySharing -> state.location
+                else -> null
+            } ?: return@LaunchedEffect
+
+            cameraPositionState.animate(
+                CameraUpdateFactory.newLatLngZoom(
+                    LatLng(location.lat, location.lng),
+                    16f
+                ),
+                CameraFollowDurationMs
+            )
+        }
+
 
         if (!isFullScreen) {
             FullScreenIcon(
@@ -448,60 +536,311 @@ fun ObserveLiveLocationCard(
         }
 
         val mapMode = when (mapType) {
-            MapType.NORMAL -> "Normal"
-            MapType.SATELLITE -> "Satellite"
-            MapType.TERRAIN -> "Terrain"
-            MapType.HYBRID -> "Hybrid"
+            com.google.maps.android.compose.MapType.NORMAL -> "Normal"
+            com.google.maps.android.compose.MapType.HYBRID -> "Satellite"
             else -> "Map"
+        }
+
+        if(isFullScreen) {
+            CompactActionMenu(
+                resetCameraPosition = {
+                    if (emergencyLat != null && emergencyLng != null) {
+                        isUserPanning = false
+                        scope.launch {
+                            cameraPositionState.animate(
+                                CameraUpdateFactory.newLatLngZoom(
+                                    LatLng(emergencyLat, emergencyLng),
+                                    16f
+                                ),
+                                CameraRecenterDurationMs
+                            )
+                        }
+                    } else if (visibleLatLngs.isNotEmpty()) {
+                        isUserPanning = false
+                        scope.launch {
+                            val bounds = LatLngBounds.builder().apply {
+                                visibleLatLngs.forEach { include(it) }
+                            }.build()
+                            cameraPositionState.animate(
+                                CameraUpdateFactory.newLatLngBounds(bounds, 80),
+                                CameraRecenterDurationMs
+                            )
+                        }
+                    }
+                },
+                changeMapType = {
+                    mapType = when (mapType) {
+                        MapType.NORMAL -> MapType.HYBRID
+                        else -> MapType.NORMAL
+                    }
+                    showMapModeToast = true
+                },
+                modifier = Modifier
+                    .align(Alignment.TopEnd)
+                    .padding(top = 98.dp)
+                    .padding(horizontal = 12.dp)
+            )
         }
 
         AnimatedVisibility(
             showMapModeToast,
+            enter = fadeIn(
+                animationSpec = tween(
+                    durationMillis = 180,
+                    easing = SpatialEnterEasing
+                )
+            ) + slideInVertically(
+                animationSpec = tween(
+                    durationMillis = 220,
+                    easing = SpatialEnterEasing
+                ),
+                initialOffsetY = { it / 10 }
+            ),
+            exit = fadeOut(
+                animationSpec = tween(
+                    durationMillis = 150,
+                    easing = SpatialExitEasing
+                )
+            ) + slideOutVertically(
+                animationSpec = tween(
+                    durationMillis = 180,
+                    easing = SpatialExitEasing
+                ),
+                targetOffsetY = { it / 12 }
+            ),
             modifier = Modifier
-                .align(Alignment.BottomCenter)
-                .padding(bottom = 116.dp)
+                .align(Alignment.Center)
         ) {
-
             Surface(
                 shape = RoundedCornerShape(24.dp),
-                color = MaterialTheme.colorScheme.surfaceContainerLow
+                color = Color(0xDD111820),
+                shadowElevation = 8.dp
             ) {
                 Text(
-                    text = "Switched to $mapMode mode",
-                    color = MaterialTheme.colorScheme.onSurface,
-                    fontSize = 16.sp,
+                    text = "$mapMode map",
+                    color = Color.White.copy(alpha = 0.86f),
+                    fontSize = 13.sp,
                     fontWeight = FontWeight.SemiBold,
                     fontFamily = manrope,
-                    modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp)
+                    modifier = Modifier.padding(horizontal = 13.dp, vertical = 7.dp)
                 )
             }
         }
 
-        AnimatedVisibility(isFullScreen && showTray) {
-            ViewerTrayOverlay(
-                Modifier
-                    .align(Alignment.TopCenter)
-                    .padding(vertical = 16.dp),
-                uiState.lovedOnes,
-                locations,
-                onHideClick = {
-                    selectedUser = null
-                    onHideClick()
-                },
-                onUserClick = {
-                    selectedUser = it
-                }
-            ) {
-                scope.launch {
-                    cameraPositionState.animate(
-                        CameraUpdateFactory.newLatLngZoom(
-                            it,
-                            16f
+        when {
+
+            showViewerInfoSheet ->
+                AnimatedVisibility(
+                    visible = isFullScreen,
+                    enter = fadeIn(
+                        animationSpec = tween(
+                            durationMillis = 260,
+                            easing = SpatialEnterEasing
                         )
+                    ) + slideInVertically(
+                        animationSpec = tween(
+                            durationMillis = 320,
+                            easing = SpatialEnterEasing
+                        ),
+                        initialOffsetY = { it / 12 }
+                    ),
+                    exit = fadeOut(
+                        animationSpec = tween(
+                            durationMillis = 170,
+                            easing = SpatialExitEasing
+                        )
+                    ) + slideOutVertically(
+                        animationSpec = tween(
+                            durationMillis = 210,
+                            easing = SpatialExitEasing
+                        ),
+                        targetOffsetY = { it / 14 }
+                    ),
+                    modifier = Modifier
+                        .align(Alignment.BottomCenter)
+                        .padding(bottom = 16.dp)
+                ) {
+
+                    CustomBottomSheetForObserve(
+                        onDismissRequest = {
+                            showViewerInfoSheet = false
+                        },
+                        content = {
+
+                            val selectedUserDetails =
+                                uiState.lovedOnes.firstOrNull {
+                                    it.id == selectedUser
+                                }
+
+                            ViewerInfoSheetContent(
+                                viewers,
+                                locations,
+                                onClick = {
+                                    selectedUser = it
+                                },
+                                selectedUserLocationState = locations[selectedUser],
+                                selectedUserDetails = selectedUserDetails,
+                                userLocation = userLocation,
+                                onDismiss = {
+                                    showViewerInfoSheet = false
+                                    selectedUser = null
+                                }
+                            )
+                        }
                     )
                 }
-            }
+
+            selectedUser != null ->
+                AnimatedVisibility(
+                    visible = isFullScreen,
+                    enter = fadeIn(
+                        animationSpec = tween(
+                            durationMillis = 240,
+                            easing = SpatialEnterEasing
+                        )
+                    ) + slideInVertically(
+                        animationSpec = tween(
+                            durationMillis = 300,
+                            easing = SpatialEnterEasing
+                        ),
+                        initialOffsetY = { it / 14 }
+                    ),
+                    exit = fadeOut(
+                        animationSpec = tween(
+                            durationMillis = 150,
+                            easing = SpatialExitEasing
+                        )
+                    ) + slideOutVertically(
+                        animationSpec = tween(
+                            durationMillis = 190,
+                            easing = SpatialExitEasing
+                        ),
+                        targetOffsetY = { it / 16 }
+                    ),
+                    modifier = Modifier
+                        .statusBarsPadding()
+                        .align(Alignment.BottomCenter)
+                        .padding(bottom = 16.dp)
+                ) {
+
+                    val member =
+                        uiState.lovedOnes.firstOrNull {
+                            it.id == selectedUser
+                        }
+
+                    val location = when (val state = locations[selectedUser]) {
+
+                        is ViewerLocationState.NormalSharing ->
+                            state.location
+
+                        is ViewerLocationState.EmergencySharing ->
+                            state.location
+
+                        else -> null
+                    }
+
+                    CollapsedViewerInfo(
+                        memberName = member?.alias
+                            ?: member?.profileName
+                            ?: "Live User",
+
+                        lastTimestamp = location?.timestamp
+                            ?: System.currentTimeMillis(),
+
+                        onDismiss = {
+                            selectedUser = null
+                            showViewerInfoSheet = true
+                        }
+                    )
+                }
+
+            else -> CollapsedViewerTray(
+                viewerInfo = viewers,
+                showDetail = {
+                    showViewerInfoSheet = true
+                },
+                modifier = Modifier
+                    .align(Alignment.BottomCenter)
+                    .padding(bottom = 16.dp)
+            )
         }
+
+//        AnimatedVisibility(isFullScreen && showTray) {
+//            ViewerInfoSheetContent(
+//                Modifier
+//                    .align(Alignment.TopCenter)
+//                    .padding(top = 12.dp),
+//                viewerList = uiState.lovedOnes,
+//                locations = locations,
+//                selectedUser = selectedUser,
+//                onHideClick = {
+//                    selectedUser = null
+//                    onHideClick()
+//                },
+//                onUserClick = {
+//                    selectedUser = it
+//                },
+//                onClick = {
+//                    scope.launch {
+//                        cameraPositionState.animate(
+//                            CameraUpdateFactory.newLatLngZoom(
+//                                it,
+//                                16f
+//                            )
+//                        )
+//                    }
+//                }
+//            )
+
+//            AnimatedVisibility(
+//                visible = showReplayHelp,
+//                enter = fadeIn(animationSpec = tween(220)) +
+//                        slideInVertically(
+//                            animationSpec = tween(260),
+//                            initialOffsetY = { -it / 2 }
+//                        ),
+//                exit = fadeOut(animationSpec = tween(160)) +
+//                        slideOutVertically(
+//                            animationSpec = tween(180),
+//                            targetOffsetY = { -it / 6 }
+//                        ),
+//                modifier = Modifier
+//                    .statusBarsPadding()
+//                    .padding(bottom = 24.dp)
+//            ) {
+//                CustomBottomSheetForObserve(
+//                    onDismissRequest = {
+//                        showReplayHelp = false
+//                    }
+//                ) {
+//                    ViewerInfoSheetContent()
+//                }
+//            }
+
+//            AnimatedVisibility(
+//                visible = !showReplayHelp,
+//                enter = fadeIn(animationSpec = tween(220)) +
+//                        slideInVertically(
+//                            animationSpec = tween(260),
+//                            initialOffsetY = { -it / 2 }
+//                        ),
+//                exit = fadeOut(animationSpec = tween(160)) +
+//                        slideOutVertically(
+//                            animationSpec = tween(180),
+//                            targetOffsetY = { -it / 6 }
+//                        ),
+//                modifier = Modifier.align(Alignment.BottomCenter)
+//            ) {
+//                CollapsedViewerInfo(
+//                    "Aarav",
+//                    System.currentTimeMillis(),
+//                    onDismiss = {
+//                        showReplayHelp = true
+//                    }
+//                )
+//            }
+
+//        }
 
         if (isFullScreen) {
             val liveCount = locations.count {
@@ -509,159 +848,159 @@ fun ObserveLiveLocationCard(
                         it.value is ViewerLocationState.EmergencySharing
             }
 
-            HorizontalFloatingToolbar(
-                colors = FloatingToolbarColors(
-                    toolbarContainerColor = MaterialTheme.colorScheme.surfaceBright.copy(alpha = 0.85f),
-                    toolbarContentColor = MaterialTheme.colorScheme.onSurface,
-                    fabContentColor = MaterialTheme.colorScheme.onSurface,
-                    fabContainerColor = MaterialTheme.colorScheme.surfaceContainer
-                ),
-                modifier = Modifier
-                    .align(Alignment.BottomCenter)
-                    .offset(y = (-32).dp)
-                    .zIndex(1f),
-                expanded = true,
-                leadingContent = {
-                    Row(
-                        modifier = Modifier.padding(horizontal = 4.dp),
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(6.dp)
-                    ) {
-
-                        Surface(
-                            shape = RoundedCornerShape(12.dp),
-                            color = if (isEmergencyActive)
-                                MaterialTheme.colorScheme.error.copy(alpha = 0.15f)
-                            else
-                                MaterialTheme.colorScheme.primary.copy(alpha = 0.15f)
-                        ) {
-                            Text(
-                                text = "$liveCount Live",
-                                fontFamily = manrope,
-                                fontWeight = FontWeight.SemiBold,
-                                fontSize = 13.sp,
-                                color = if (isEmergencyActive)
-                                    MaterialTheme.colorScheme.error
-                                else
-                                    MaterialTheme.colorScheme.primary,
-                                modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp)
-                            )
-                        }
-                    }
-                },
-                content = {
-
-                    FilledIconButton(
-                        modifier = Modifier.size(40.dp),
-                        onClick = {
-                            if (emergencyLat != null && emergencyLng != null) {
-                                isUserPanning = false
-                                scope.launch {
-                                    cameraPositionState.animate(
-                                        CameraUpdateFactory.newLatLngZoom(
-                                            LatLng(emergencyLat, emergencyLng),
-                                            16f
-                                        )
-                                    )
-                                }
-                            } else if (visibleLatLngs.isNotEmpty()) {
-                                isUserPanning = false
-                                scope.launch {
-                                    val bounds = LatLngBounds.builder().apply {
-                                        visibleLatLngs.forEach { include(it) }
-                                    }.build()
-                                    cameraPositionState.animate(
-                                        CameraUpdateFactory.newLatLngBounds(bounds, 80)
-                                    )
-                                }
-                            }
-                        },
-                        colors = IconButtonDefaults.filledIconButtonColors(
-                            containerColor = if (isEmergencyActive)
-                                MaterialTheme.colorScheme.error
-                            else
-                                MaterialTheme.colorScheme.primary,
-                            contentColor = if (isEmergencyActive)
-                                MaterialTheme.colorScheme.onError
-                            else
-                                MaterialTheme.colorScheme.onPrimary
-                        )
-                    ) {
-                        Icon(
-                            painter = painterResource(
-                                if (isEmergencyActive) R.drawable.emergency
-                                else R.drawable.gps
-                            ),
-                            contentDescription = if (isEmergencyActive)
-                                "Center on Emergency"
-                            else
-                                "Fit All Users",
-                            modifier = Modifier.size(22.dp)
-                        )
-                    }
-
-                    IconButton(
-                        modifier = Modifier.size(40.dp),
-                        onClick = {
-                            if (showTray) onHideClick() else onShowTray()
-                        }
-                    ) {
-                        Icon(
-                            painter = painterResource(R.drawable.tray),
-                            contentDescription = "Toggle Tray",
-                            modifier = Modifier.size(22.dp)
-                        )
-                    }
-
-                    IconButton(
-                        modifier = Modifier.size(40.dp),
-                        onClick = {
-                            if (visibleLatLngs.isNotEmpty()) {
-                                isUserPanning = false
-                                scope.launch {
-                                    val bounds = LatLngBounds.builder().apply {
-                                        visibleLatLngs.forEach { include(it) }
-                                    }.build()
-                                    cameraPositionState.animate(
-                                        CameraUpdateFactory.newLatLngBounds(bounds, 80)
-                                    )
-                                }
-                            }
-                        }
-                    ) {
-                        Icon(
-                            painter = painterResource(R.drawable.full_screen),
-                            contentDescription = "Fit All",
-                            modifier = Modifier.size(22.dp)
-                        )
-                    }
-
-                    IconButton(
-                        modifier = Modifier.size(40.dp),
-                        onClick = {
-                            mapType = when (mapType) {
-                                MapType.NORMAL -> MapType.SATELLITE
-                                MapType.SATELLITE -> MapType.TERRAIN
-                                MapType.TERRAIN -> MapType.HYBRID
-                                else -> MapType.NORMAL
-                            }
-                            showMapModeToast = true
-                        }
-                    ) {
-                        Icon(
-                            painter = painterResource(R.drawable.map_trifold),
-                            contentDescription = when (mapType) {
-                                MapType.NORMAL -> "Normal"
-                                MapType.SATELLITE -> "Satellite"
-                                MapType.TERRAIN -> "Terrain"
-                                MapType.HYBRID -> "Hybrid"
-                                else -> "Map"
-                            },
-                            modifier = Modifier.size(22.dp)
-                        )
-                    }
-                }
-            )
+//            HorizontalFloatingToolbar(
+//                colors = FloatingToolbarColors(
+//                    toolbarContainerColor = MaterialTheme.colorScheme.surfaceBright.copy(alpha = 0.85f),
+//                    toolbarContentColor = MaterialTheme.colorScheme.onSurface,
+//                    fabContentColor = MaterialTheme.colorScheme.onSurface,
+//                    fabContainerColor = MaterialTheme.colorScheme.surfaceContainer
+//                ),
+//                modifier = Modifier
+//                    .align(Alignment.BottomCenter)
+//                    .offset(y = (-32).dp)
+//                    .zIndex(1f),
+//                expanded = true,
+//                leadingContent = {
+//                    Row(
+//                        modifier = Modifier.padding(horizontal = 4.dp),
+//                        verticalAlignment = Alignment.CenterVertically,
+//                        horizontalArrangement = Arrangement.spacedBy(6.dp)
+//                    ) {
+//
+//                        Surface(
+//                            shape = RoundedCornerShape(12.dp),
+//                            color = if (isEmergencyActive)
+//                                MaterialTheme.colorScheme.error.copy(alpha = 0.15f)
+//                            else
+//                                MaterialTheme.colorScheme.primary.copy(alpha = 0.15f)
+//                        ) {
+//                            Text(
+//                                text = "$liveCount Live",
+//                                fontFamily = manrope,
+//                                fontWeight = FontWeight.SemiBold,
+//                                fontSize = 13.sp,
+//                                color = if (isEmergencyActive)
+//                                    MaterialTheme.colorScheme.error
+//                                else
+//                                    MaterialTheme.colorScheme.primary,
+//                                modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp)
+//                            )
+//                        }
+//                    }
+//                },
+//                content = {
+//
+//                    FilledIconButton(
+//                        modifier = Modifier.size(40.dp),
+//                        onClick = {
+//                            if (emergencyLat != null && emergencyLng != null) {
+//                                isUserPanning = false
+//                                scope.launch {
+//                                    cameraPositionState.animate(
+//                                        CameraUpdateFactory.newLatLngZoom(
+//                                            LatLng(emergencyLat, emergencyLng),
+//                                            16f
+//                                        )
+//                                    )
+//                                }
+//                            } else if (visibleLatLngs.isNotEmpty()) {
+//                                isUserPanning = false
+//                                scope.launch {
+//                                    val bounds = LatLngBounds.builder().apply {
+//                                        visibleLatLngs.forEach { include(it) }
+//                                    }.build()
+//                                    cameraPositionState.animate(
+//                                        CameraUpdateFactory.newLatLngBounds(bounds, 80)
+//                                    )
+//                                }
+//                            }
+//                        },
+//                        colors = IconButtonDefaults.filledIconButtonColors(
+//                            containerColor = if (isEmergencyActive)
+//                                MaterialTheme.colorScheme.error
+//                            else
+//                                MaterialTheme.colorScheme.primary,
+//                            contentColor = if (isEmergencyActive)
+//                                MaterialTheme.colorScheme.onError
+//                            else
+//                                MaterialTheme.colorScheme.onPrimary
+//                        )
+//                    ) {
+//                        Icon(
+//                            painter = painterResource(
+//                                if (isEmergencyActive) R.drawable.emergency
+//                                else R.drawable.gps
+//                            ),
+//                            contentDescription = if (isEmergencyActive)
+//                                "Center on Emergency"
+//                            else
+//                                "Fit All Users",
+//                            modifier = Modifier.size(22.dp)
+//                        )
+//                    }
+//
+//                    IconButton(
+//                        modifier = Modifier.size(40.dp),
+//                        onClick = {
+//                            if (showTray) onHideClick() else onShowTray()
+//                        }
+//                    ) {
+//                        Icon(
+//                            painter = painterResource(R.drawable.tray),
+//                            contentDescription = "Toggle Tray",
+//                            modifier = Modifier.size(22.dp)
+//                        )
+//                    }
+//
+//                    IconButton(
+//                        modifier = Modifier.size(40.dp),
+//                        onClick = {
+//                            if (visibleLatLngs.isNotEmpty()) {
+//                                isUserPanning = false
+//                                scope.launch {
+//                                    val bounds = LatLngBounds.builder().apply {
+//                                        visibleLatLngs.forEach { include(it) }
+//                                    }.build()
+//                                    cameraPositionState.animate(
+//                                        CameraUpdateFactory.newLatLngBounds(bounds, 80)
+//                                    )
+//                                }
+//                            }
+//                        }
+//                    ) {
+//                        Icon(
+//                            painter = painterResource(R.drawable.full_screen),
+//                            contentDescription = "Fit All",
+//                            modifier = Modifier.size(22.dp)
+//                        )
+//                    }
+//
+//                    IconButton(
+//                        modifier = Modifier.size(40.dp),
+//                        onClick = {
+//                            mapType = when (mapType) {
+//                                MapType.NORMAL -> MapType.SATELLITE
+//                                MapType.SATELLITE -> MapType.TERRAIN
+//                                MapType.TERRAIN -> MapType.HYBRID
+//                                else -> MapType.NORMAL
+//                            }
+//                            showMapModeToast = true
+//                        }
+//                    ) {
+//                        Icon(
+//                            painter = painterResource(R.drawable.map_trifold),
+//                            contentDescription = when (mapType) {
+//                                MapType.NORMAL -> "Normal"
+//                                MapType.SATELLITE -> "Satellite"
+//                                MapType.TERRAIN -> "Terrain"
+//                                MapType.HYBRID -> "Hybrid"
+//                                else -> "Map"
+//                            },
+//                            modifier = Modifier.size(22.dp)
+//                        )
+//                    }
+//                }
+//            )
         }
     }
 
@@ -820,7 +1159,6 @@ fun RichTooltipExample(
                 interactionSource = remember { MutableInteractionSource() }
             ) {
                 onUserClick(conn.id)
-                Log.i("POLYLINE", "select")
                 scope.launch {
                     tooltipState.show()
                 }
@@ -866,62 +1204,200 @@ fun RichTooltipExample(
 }
 
 
-@Preview(showBackground = true)
 @Composable
 fun ViewerTrayOverlay(
     modifier: Modifier = Modifier,
     viewerList: List<CircleMember>,
     locations: Map<String, ViewerLocationState>,
+    selectedUser: String?,
     onHideClick: () -> Unit,
     onUserClick: (String) -> Unit,
     onClick: (LatLng) -> Unit
 ) {
+
     val filtered = viewerList.filter {
-        it.id in locations.keys.toSet()
+        it.id in locations.keys
     }
 
-    Card(
-        shape = MaterialTheme.shapes.large,
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceBright.copy(0.85f)
-        ),
+    Surface(
         modifier = modifier
-            .padding(start = 16.dp, end = 16.dp)
             .fillMaxWidth()
+            .padding(horizontal = 12.dp),
+        shape = RoundedCornerShape(26.dp),
+        color = MaterialTheme.colorScheme.surface.copy(alpha = 0.76f),
     ) {
-        Box(
-            modifier = Modifier.fillMaxWidth()
+
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 10.dp, vertical = 10.dp),
+            verticalAlignment = Alignment.CenterVertically
         ) {
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(vertical = 8.dp, horizontal = 16.dp)
+
+            LazyRow(
+                modifier = Modifier.weight(1f),
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                verticalAlignment = Alignment.CenterVertically
             ) {
-                filtered.forEach { conn ->
-                    RichTooltipExample(
+
+                items(filtered, key = { it.id }) { conn ->
+
+                    val viewerState = locations[conn.id]
+
+                    val isSelected = selectedUser == conn.id
+
+                    val isEmergency =
+                        viewerState is ViewerLocationState.EmergencySharing
+
+                    CompactPresenceChip(
                         conn = conn,
-                        viewerState = locations[conn.id],
-                        onClick = onClick,
-                        onUserClick = onUserClick
+                        isSelected = isSelected,
+                        isEmergency = isEmergency,
+                        onClick = {
+                            onUserClick(conn.id)
+
+                            val location = when (viewerState) {
+                                is ViewerLocationState.NormalSharing ->
+                                    viewerState.location
+
+                                is ViewerLocationState.EmergencySharing ->
+                                    viewerState.location
+
+                                else -> null
+                            }
+
+                            location?.let {
+                                onClick(
+                                    LatLng(it.lat, it.lng)
+                                )
+                            }
+                        }
                     )
                 }
             }
 
-            TextButton(
+            Spacer(modifier = Modifier.width(8.dp))
+
+            IconButton(
                 onClick = onHideClick,
-                modifier = Modifier
-                    .padding(top = 68.dp)
-                    .align(Alignment.BottomEnd)
+                modifier = Modifier.size(34.dp)
             ) {
-                Text(
-                    "Hide Tray",
-                    fontFamily = manrope,
-                    color = MaterialTheme.colorScheme.primary,
-                    fontWeight = FontWeight.SemiBold,
-                    fontSize = 14.sp
+                Icon(
+                    painter = painterResource(R.drawable.clear),
+                    contentDescription = "Hide Tray",
+                    modifier = Modifier.size(18.dp),
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }
+        }
+    }
+}
+
+@Composable
+fun CompactPresenceChip(
+    conn: CircleMember,
+    isSelected: Boolean,
+    isEmergency: Boolean,
+    onClick: () -> Unit
+) {
+
+    val backgroundColor = when {
+        isSelected ->
+            MaterialTheme.colorScheme.primary.copy(alpha = 0.14f)
+
+        else ->
+            MaterialTheme.colorScheme.surfaceContainerHighest.copy(alpha = 0.55f)
+    }
+
+    val borderColor = when {
+        isEmergency ->
+            MaterialTheme.colorScheme.error.copy(alpha = 0.45f)
+
+        isSelected ->
+            MaterialTheme.colorScheme.primary.copy(alpha = 0.25f)
+
+        else ->
+            Color.Transparent
+    }
+
+    Surface(
+        shape = RoundedCornerShape(22.dp),
+        color = backgroundColor,
+        border = BorderStroke(
+            width = 1.dp,
+            color = borderColor
+        ),
+        modifier = Modifier.clip(RoundedCornerShape(22.dp))
+            .clickable {
+                onClick()
+            }
+    ) {
+
+        Row(
+            modifier = Modifier.padding(
+                horizontal = 10.dp,
+                vertical = 8.dp
+            ),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+
+            Box {
+
+                Box(
+                    modifier = Modifier
+                        .size(38.dp)
+                        .clip(CircleShape)
+                        .background(
+                            Brush.radialGradient(
+                                listOf(
+                                    MaterialTheme.colorScheme.onPrimary,
+                                    MaterialTheme.colorScheme.inversePrimary
+                                )
+                            )
+                        ),
+                    contentAlignment = Alignment.Center
+                ) {
+
+                    Text(
+                        text = conn.profileName.take(1),
+                        fontFamily = manrope,
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 15.sp,
+                        color = MaterialTheme.colorScheme.onBackground
+                    )
+                }
+
+                Box(
+                    modifier = Modifier
+                        .align(Alignment.BottomEnd)
+                        .size(10.dp)
+                        .clip(CircleShape)
+                        .background(
+                            if (isEmergency)
+                                MaterialTheme.colorScheme.error
+                            else
+                                Color(0xFF34C759)
+                        )
+                        .border(
+                            2.dp,
+                            MaterialTheme.colorScheme.surface,
+                            CircleShape
+                        )
+                )
+            }
+
+            Text(
+                text = conn.alias ?: conn.profileName,
+                fontFamily = manrope,
+                fontWeight = if (isSelected)
+                    FontWeight.SemiBold
+                else
+                    FontWeight.Medium,
+                fontSize = 13.sp,
+                color = MaterialTheme.colorScheme.onSurface,
+                maxLines = 1
+            )
         }
     }
 }
@@ -1065,45 +1541,112 @@ fun EmergencyRipple(
 }
 
 
-fun createUserMarkerBitmap(
+fun createAvatarMarkerBitmap(
+    avatarBitmap: Bitmap?,
+    displayName: String,
     isEmergency: Boolean,
+    isSelected: Boolean,
     baseColor: Int
 ): Bitmap {
-    val size = 96
+    val size = 136
     val bitmap = Bitmap.createBitmap(size, size, Bitmap.Config.ARGB_8888)
     val canvas = Canvas(bitmap)
-
     val paint = Paint(Paint.ANTI_ALIAS_FLAG)
+    val center = size / 2f
+    val avatarRadius = 44f
+    val avatarBounds = RectF(
+        center - avatarRadius,
+        center - avatarRadius,
+        center + avatarRadius,
+        center + avatarRadius
+    )
 
-    // Emergency glow
-    if (isEmergency) {
-        paint.color = android.graphics.Color.RED
-
-        paint.alpha = 60
-        canvas.drawCircle(size / 2f, size / 2f, size / 2.2f, paint)
+    if (isEmergency || isSelected) {
+        paint.style = Paint.Style.STROKE
+        paint.strokeWidth = 9f
+        paint.color = if (isEmergency) android.graphics.Color.RED else baseColor
+        paint.alpha = if (isEmergency) 170 else 130
+        canvas.drawCircle(center, center, avatarRadius + 14f, paint)
     }
 
-    // Main dot
-    paint.alpha = 255
-    paint.color = if (isEmergency) android.graphics.Color.RED else baseColor
-    canvas.drawCircle(size / 2f, size / 2f, size / 4f, paint)
+    if (isEmergency) {
+        paint.style = Paint.Style.FILL
+        paint.color = android.graphics.Color.RED
+        paint.alpha = 45
+        canvas.drawCircle(center, center, avatarRadius + 24f, paint)
+    }
 
-    // White border
+    paint.alpha = 255
+    paint.style = Paint.Style.FILL
+
+    if (avatarBitmap != null) {
+        val clipPath = Path().apply {
+            addOval(avatarBounds, Path.Direction.CW)
+        }
+        val source = centerCropSourceRect(avatarBitmap)
+
+        canvas.save()
+        canvas.clipPath(clipPath)
+        canvas.drawBitmap(avatarBitmap, source, avatarBounds, paint)
+        canvas.restore()
+    } else {
+        paint.color = if (isEmergency) android.graphics.Color.RED else baseColor
+        canvas.drawCircle(center, center, avatarRadius, paint)
+
+        val initial = displayName
+            .trim()
+            .firstOrNull()
+            ?.uppercaseChar()
+            ?.toString()
+            ?: "?"
+
+        paint.color = android.graphics.Color.WHITE
+        paint.textAlign = Paint.Align.CENTER
+        paint.textSize = 40f
+        paint.typeface = Typeface.create(Typeface.DEFAULT, Typeface.BOLD)
+
+        val textCenterOffset = (paint.descent() + paint.ascent()) / 2f
+        canvas.drawText(initial, center, center - textCenterOffset, paint)
+    }
+
     paint.style = Paint.Style.STROKE
-    paint.strokeWidth = 4f
+    paint.strokeWidth = 6f
     paint.color = android.graphics.Color.WHITE
-    canvas.drawCircle(size / 2f, size / 2f, size / 4f, paint)
+    paint.alpha = 255
+    canvas.drawCircle(center, center, avatarRadius, paint)
 
     return bitmap
 }
 
 fun markerIcon(
     isEmergency: Boolean,
-    baseColor: Int
+    isSelected: Boolean,
+    baseColor: Int,
+    avatarBitmap: Bitmap?,
+    displayName: String
 ): BitmapDescriptor {
     return BitmapDescriptorFactory.fromBitmap(
-        createUserMarkerBitmap(isEmergency, baseColor)
+        createAvatarMarkerBitmap(
+            avatarBitmap = avatarBitmap,
+            displayName = displayName,
+            isEmergency = isEmergency,
+            isSelected = isSelected,
+            baseColor = baseColor
+        )
     )
+}
+
+private fun centerCropSourceRect(bitmap: Bitmap): Rect {
+    val width = bitmap.width
+    val height = bitmap.height
+
+    return if (width > height) {
+        val horizontalInset = (width - height) / 2
+        Rect(horizontalInset, 0, horizontalInset + height, height)
+    } else {
+        val verticalInset = (height - width) / 2
+        Rect(0, verticalInset, width, verticalInset + width)
+    }
 }
 
 /**
@@ -1146,10 +1689,35 @@ fun UserMarker(
     markerState: MarkerState,
     state: ViewerLocationState,
     baseColor: Int,
-    isSelected: Boolean
+    isSelected: Boolean,
+    avatarUrl: String?,
+    displayName: String
 ) {
     if (state is ViewerLocationState.Blocked) return
 
+    val context = LocalContext.current
+    var avatarBitmap by remember(userId) {
+        mutableStateOf<Bitmap?>(null)
+    }
+
+    LaunchedEffect(avatarUrl) {
+        avatarBitmap = null
+
+        val url = avatarUrl?.takeIf { it.isNotBlank() } ?: return@LaunchedEffect
+        val request = ImageRequest.Builder(context)
+            .data(url)
+            .allowHardware(false)
+            .build()
+
+        avatarBitmap = try {
+            val result = context.imageLoader.execute(request)
+            (result as? SuccessResult)
+                ?.drawable
+                ?.toBitmap()
+        } catch (e: Exception) {
+            null
+        }
+    }
 
     val location = when (state) {
         is ViewerLocationState.NormalSharing -> state.location
@@ -1159,18 +1727,53 @@ fun UserMarker(
 
     val target = LatLng(location.lat, location.lng)
 
-    // Only update automatically if not selected
-    if (!isSelected) {
+     if (!isSelected) {
         LaunchedEffect(target) {
+            val start = markerState.position
+
+            if (start.latitude == 0.0 && start.longitude == 0.0) {
+                markerState.position = target
+                return@LaunchedEffect
+            }
+
+            val steps = 45
+            val stepDelay = 16L 
+
+            for (i in 1..steps) {
+                val t = i.toFloat() / steps
+                val eased = 1f - (1f - t).let { it * it * it }
+
+                markerState.position = LatLng(
+                    start.latitude + (target.latitude - start.latitude) * eased,
+                    start.longitude + (target.longitude - start.longitude) * eased
+                )
+                delay(stepDelay)
+            }
             markerState.position = target
         }
     }
 
     val isEmergency = state is ViewerLocationState.EmergencySharing
 
+    val cachedIcon = remember(
+        isEmergency,
+        isSelected,
+        baseColor,
+        avatarBitmap,
+        displayName
+    ) {
+        markerIcon(
+            isEmergency = isEmergency,
+            isSelected = isSelected,
+            baseColor = baseColor,
+            avatarBitmap = avatarBitmap,
+            displayName = displayName
+        )
+    }
+
     Marker(
         state = markerState,
-        icon = if (isEmergency) markerIcon(true, baseColor) else markerIcon(false, baseColor),
+        icon = cachedIcon,
         anchor = Offset(0.5f, 0.5f),
         zIndex = if (isEmergency) 2f else 1f
     )

@@ -1,6 +1,6 @@
 package com.aarav.geowav.presentation.observe
 
-import android.util.Log
+
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.aarav.geowav.core.utils.Resource
@@ -40,7 +40,6 @@ class ObserveViewModel
     private val observerJobs = mutableMapOf<String, Job>()
 
     fun loadLovedOnes() {
-        Log.i("Circle", "list: called")
         if (viewerId.isEmpty()) return
 
         viewModelScope.launch {
@@ -51,8 +50,6 @@ class ObserveViewModel
             ) {
                 is Resource.Success -> {
                     _uiState.update {
-
-                        Log.i("Circle", "list: ${result.data}")
                         it.copy(
                             lovedOnes = result.data ?: emptyList(),
                         )
@@ -69,8 +66,6 @@ class ObserveViewModel
 
         val lovedOnes = _uiState.value.lovedOnes
 
-        Log.i("OBSERVE", "user: ${lovedOnes}")
-
         lovedOnes.forEach {
             val userId = it.id
 
@@ -81,8 +76,6 @@ class ObserveViewModel
                 viewerLocationRepository.observeUserLocation(userId, viewerId)
                     .collect { viewerState ->
                         _uiState.update { state ->
-
-                            Log.i("OBSERVE", "user: ${userId}")
                             state.copy(
                                 locations = state.locations + (userId to viewerState)
                             )

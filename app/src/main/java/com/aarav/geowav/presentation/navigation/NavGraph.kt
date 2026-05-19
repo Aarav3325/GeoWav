@@ -164,7 +164,8 @@ fun NavGraph(
 
             AddObserveScreen(
                 navHostController,
-                this
+                this,
+                location
             )
         }
 
@@ -477,6 +478,7 @@ fun AddLocationSharingScreen(
 fun AddObserveScreen(
     navController: NavController,
     navGraphBuilder: NavGraphBuilder,
+    location: Pair<Double, Double>?,
 ) {
     navGraphBuilder.composable(
         route = NavRoute.ObserveUsers.path
@@ -491,6 +493,7 @@ fun AddObserveScreen(
 
         ObserveScreen(
             viewModel = sharedVM,
+            userLocation = location,
             back = {
                 navController.popBackStack()
             }
