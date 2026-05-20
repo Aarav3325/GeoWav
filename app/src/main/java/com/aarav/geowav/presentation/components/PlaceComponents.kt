@@ -100,29 +100,6 @@ fun GeofencePlaceCard(
                         .padding(horizontal = 12.dp)
                         .weight(1f)
                 )
-
-                Spacer(modifier = Modifier.weight(0.1f))
-
-
-                Surface(
-                    modifier = Modifier
-                        .size(36.dp)
-                        .clickable {
-                            onDeleteClick(place)
-                        },
-                    color = MaterialTheme.colorScheme.surfaceVariant,
-                    shape = CircleShape,
-                ) {
-                    Image(
-                        painter = painterResource(id = R.drawable.trash),
-                        contentDescription = "Delete Place",
-                        modifier = Modifier
-                            .size(24.dp)
-                            .padding(6.dp),
-                        colorFilter = ColorFilter.tint(MaterialTheme.colorScheme.onSurfaceVariant)
-                    )
-                }
-
             }
 
             Spacer(Modifier.height(12.dp))
@@ -142,12 +119,13 @@ fun GeofencePlaceCard(
                     fontFamily = manrope,
                 )
 
+                Spacer(modifier = Modifier.height(8.dp))
+
                 Row(
                     horizontalArrangement = Arrangement.spacedBy(6.dp)
                 ) {
-
                     AssistChip(
-                        onClick = { onEditRadiusClick(place) },
+                        onClick = { },
                         colors = AssistChipDefaults.assistChipColors(
                             containerColor = MaterialTheme.colorScheme.surfaceVariant
                         ),
@@ -164,6 +142,40 @@ fun GeofencePlaceCard(
                 }
             }
 
+            Spacer(modifier = Modifier.height(12.dp))
+
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.End,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                androidx.compose.material3.TextButton(
+                    onClick = { onDeleteClick(place) }
+                ) {
+                    Text(
+                        text = "Remove",
+                        fontFamily = manrope,
+                        fontWeight = FontWeight.SemiBold,
+                        color = MaterialTheme.colorScheme.error
+                    )
+                }
+                
+                Spacer(modifier = Modifier.width(8.dp))
+                
+                androidx.compose.material3.Button(
+                    onClick = { onEditRadiusClick(place) },
+                    colors = androidx.compose.material3.ButtonDefaults.buttonColors(
+                        containerColor = MaterialTheme.colorScheme.primaryContainer,
+                        contentColor = MaterialTheme.colorScheme.onPrimaryContainer
+                    )
+                ) {
+                    Text(
+                        text = "Edit Zone",
+                        fontFamily = manrope,
+                        fontWeight = FontWeight.SemiBold
+                    )
+                }
+            }
         }
     }
 }
