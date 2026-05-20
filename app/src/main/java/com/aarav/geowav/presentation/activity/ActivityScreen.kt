@@ -6,22 +6,18 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ContainedLoadingIndicator
 import androidx.compose.material3.DatePickerDialog
 import androidx.compose.material3.DateRangePicker
@@ -44,12 +40,10 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.aarav.geowav.R
@@ -59,11 +53,10 @@ import com.aarav.geowav.core.utils.toLocalDateInIndia
 import com.aarav.geowav.data.model.UpgradeContext
 import com.aarav.geowav.data.model.UpgradeReason
 import com.aarav.geowav.data.model.UserPlan
-import com.aarav.geowav.presentation.components.MyAlertDialog
 import com.aarav.geowav.presentation.components.CustomBottomSheet
+import com.aarav.geowav.presentation.components.MyAlertDialog
 import com.aarav.geowav.presentation.components.UpgradeBottomSheetContent
 import com.aarav.geowav.presentation.home.AlertItem
-import com.aarav.geowav.presentation.home.buildRelativeSubtitle
 import com.aarav.geowav.presentation.subscription.SubscriptionViewModel
 import com.aarav.geowav.presentation.theme.manrope
 import java.time.LocalDate
@@ -129,14 +122,23 @@ fun ActivityScreen(
             .background(MaterialTheme.colorScheme.background)
 
     ) {
-        Text(
-            text = "Activity",
-            fontSize = 20.sp,
-            fontFamily = manrope,
-            fontWeight = FontWeight.Bold,
-            color = MaterialTheme.colorScheme.onBackground,
+        Column(
             modifier = Modifier.padding(top = 54.dp, start = 12.dp, end = 12.dp)
-        )
+        ) {
+            Text(
+                text = "Activity",
+                fontSize = 20.sp,
+                fontFamily = manrope,
+                fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.onBackground
+            )
+            Text(
+                text = "Your movement history",
+                fontSize = 13.sp,
+                fontFamily = manrope,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+        }
 
         FilterRow(
             isShowingTimeline = false,
@@ -266,15 +268,15 @@ fun ActivityContent(
                 ) {
                     Image(
                         painter = painterResource(R.drawable.link_break),
-                        contentDescription = "break",
+                        contentDescription = "No activity",
                         modifier = Modifier.size(48.dp),
                         colorFilter = ColorFilter.tint(MaterialTheme.colorScheme.primary)
                     )
 
-                    Spacer(modifier = Modifier.height(6.dp))
+                    Spacer(modifier = Modifier.height(12.dp))
 
                     Text(
-                        text = "No activity found",
+                        text = "No activity yet",
                         fontFamily = manrope,
                         style = MaterialTheme.typography.bodyLarge.copy(
                             fontWeight = FontWeight.SemiBold
@@ -282,7 +284,7 @@ fun ActivityContent(
                         color = MaterialTheme.colorScheme.onBackground
                     )
                     Text(
-                        text = "Try changing the date range to see previous logs.",
+                        text = "It's quiet right now. Your movement history will appear here.",
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
@@ -359,7 +361,7 @@ fun FilterRow(
 
         item {
             LogFilterChip(
-                "7 days",
+                "Past week",
                 selectedFilter == ActivityFilter.Last7Days,
                 !isPro
             ) {
@@ -375,7 +377,7 @@ fun FilterRow(
 
         item {
             LogFilterChip(
-                "Select Range",
+                "Custom dates",
                 selectedFilter is ActivityFilter.Between,
                 !isPro
             ) {
@@ -439,146 +441,4 @@ fun LogFilterChip(
         ),
         elevation = null
     )
-}
-
-@Composable
-fun NewLog(
-    isDarkThemeEnabled: Boolean,
-    alert: com.aarav.geowav.data.model.GeoAlert, modifier: Modifier = Modifier
-) {
-    val isEnter = alert.type.equals("enter", ignoreCase = true)
-    val type = if (alert.type.equals("ENTER", ignoreCase = true)) "enter" else "exit"
-
-
-    val relativeTime = buildRelativeSubtitle(type, alert.readableTime)
-
-    val containerColor = if (isDarkThemeEnabled) {
-        if (isEnter) Color(0xFF00513f) else Color(0xFF723339)
-    } else {
-        if (isEnter) Color(0xFFa3f2d6) else Color(0xFFffdadb)
-    }
-
-    val contentColor = if (isDarkThemeEnabled) {
-        if (isEnter) Color(0XFFa3f2d6) else Color(0xFFffdadb)
-    } else {
-        if (isEnter) Color(0xFF00513f) else Color(0xFF723339)
-    }
-
-    val boxColor = Color(0xFFEDEDED)
-    val iconColor = Color(0xFF4A4A4A)
-
-    Card(
-        shape = RoundedCornerShape(16.dp),
-        modifier = modifier
-            .fillMaxWidth()
-            .padding(horizontal = 12.dp, vertical = 0.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = containerColor, contentColor = contentColor
-        )
-    ) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(12.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Box(
-                modifier = Modifier
-                    .size(44.dp)
-                    .clip(RoundedCornerShape(12.dp))
-                    .background(boxColor),
-                contentAlignment = Alignment.Center
-            ) {
-                Icon(
-                    painter = painterResource(R.drawable.map_pin),
-                    contentDescription = null,
-                    modifier = Modifier.size(24.dp),
-                    tint = iconColor
-                )
-            }
-
-            Spacer(modifier = Modifier.width(12.dp))
-
-            Column(
-                modifier = Modifier.weight(1f)
-            ) {
-                Text(
-                    text = alert.title,
-                    fontSize = 14.sp,
-                    style = MaterialTheme.typography.bodyMedium.copy(
-                        fontWeight = FontWeight.SemiBold, fontFamily = manrope
-                    ),
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis
-                )
-
-                Spacer(modifier = Modifier.height(2.dp))
-                Text(
-                    text = relativeTime,
-                    fontSize = 12.sp,
-                    style = MaterialTheme.typography.bodySmall.copy(
-                        fontFamily = manrope
-                    ),
-                    maxLines = 2,
-                    overflow = TextOverflow.Ellipsis
-                )
-
-                Spacer(modifier = Modifier.height(6.dp))
-
-                Row(
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Text(
-                        text = "Trigger:",
-                        fontSize = 11.sp,
-                        style = MaterialTheme.typography.labelSmall.copy(
-                            fontFamily = manrope, fontWeight = FontWeight.Medium
-                        )
-                    )
-
-                    Spacer(modifier = Modifier.width(8.dp))
-
-                    TypeChip(isEnter = isEnter)
-
-                }
-            }
-
-            Spacer(modifier = Modifier.width(8.dp))
-
-            Column(
-                horizontalAlignment = Alignment.End, verticalArrangement = Arrangement.Center
-            ) {
-                Text(
-                    text = alert.time,
-                    fontFamily = manrope,
-                    fontWeight = FontWeight.SemiBold,
-                    fontSize = 13.sp,
-                    maxLines = 1
-                )
-            }
-        }
-    }
-}
-
-@Composable
-private fun TypeChip(isEnter: Boolean) {
-    val label = if (isEnter) "ENTERED" else "LEFT"
-    val bg = Color(0xFFEDEDED)
-
-    val textColor = Color(0xFF4A4A4A)
-
-    Box(
-        modifier = Modifier
-            .clip(RoundedCornerShape(4.dp))
-            .background(bg)
-            .padding(horizontal = 8.dp, vertical = 0.dp), contentAlignment = Alignment.Center
-    ) {
-        Text(
-            text = label,
-            fontSize = 10.sp,
-            color = textColor,
-            fontWeight = FontWeight.SemiBold,
-            fontFamily = manrope
-        )
-    }
 }
