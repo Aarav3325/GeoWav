@@ -45,6 +45,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
@@ -327,17 +328,17 @@ fun TimelineItem(
     Card(
         modifier = modifier
             .fillMaxWidth()
-            .padding(horizontal = 12.dp, vertical = 8.dp),
+            .padding(horizontal = 12.dp, vertical = 6.dp),
         shape = RoundedCornerShape(20.dp),
         colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceContainerHigh
+            containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f)
         ),
-        elevation = CardDefaults.cardElevation(2.dp)
+        elevation = CardDefaults.cardElevation(0.dp)
     ) {
         Column(
             modifier = Modifier
-                .padding(18.dp),
-            verticalArrangement = Arrangement.spacedBy(14.dp)
+                .padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
 
             Row(
@@ -357,7 +358,7 @@ fun TimelineItem(
                     )
 
                     Text(
-                        text = "Location session • $date • $durationText",
+                        text = "$durationText session • $date",
                         style = MaterialTheme.typography.labelMedium,
                         fontFamily = manrope,
                         color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f),
@@ -379,7 +380,7 @@ fun TimelineItem(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Text(
-                        text = "View on map",
+                        text = "Replay",
                         style = MaterialTheme.typography.labelLarge,
                         fontFamily = manrope,
                         color = MaterialTheme.colorScheme.primary
@@ -475,8 +476,8 @@ fun TimelineItem(
                         Text(
                             text = item.endAddress ?: "Unknown location",
                             style = MaterialTheme.typography.bodyMedium,
-//                            maxLines = 2,
-//                            overflow = TextOverflow.Ellipsis,
+                            maxLines = 2,
+                            overflow = TextOverflow.Ellipsis,
                             fontFamily = manrope
                         )
                     }
@@ -553,7 +554,7 @@ fun TimelineEmptyState(
         Spacer(Modifier.height(20.dp))
 
         Text(
-            text = "No timeline history yet",
+            text = "No sessions yet",
             style = MaterialTheme.typography.titleMedium,
             fontFamily = manrope,
             fontWeight = FontWeight.SemiBold
@@ -562,7 +563,7 @@ fun TimelineEmptyState(
         Spacer(Modifier.height(8.dp))
 
         Text(
-            text = "Sessions will appear here once location sharing happens.",
+            text = "It's quiet right now. Your movement sessions will appear here as you travel.",
             style = MaterialTheme.typography.bodyMedium,
             fontFamily = manrope,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
@@ -571,42 +572,43 @@ fun TimelineEmptyState(
     }
 }
 
-@OptIn(ExperimentalMaterial3ExpressiveApi::class)
-@Preview(showBackground = true)
 @Composable
 fun ButtonGroupTimeline(
     selected: TimelineOptions,
     name: String,
     onClick: (TimelineOptions) -> Unit
 ) {
-
     Row(
-        Modifier.padding(horizontal = 12.dp, vertical = 8.dp),
-        horizontalArrangement = Arrangement.spacedBy(ButtonGroupDefaults.ConnectedSpaceBetween),
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 12.dp, vertical = 8.dp)
+            .clip(RoundedCornerShape(100.dp))
+            .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.4f))
+            .padding(4.dp),
+        horizontalArrangement = Arrangement.spacedBy(4.dp)
     ) {
-        TimelineOptions.entries.forEach { timelineOptions ->
-            ToggleButton(
-                checked = timelineOptions == selected,
-                onCheckedChange = {
-                    onClick(timelineOptions)
-                },
-                colors = ToggleButtonDefaults.toggleButtonColors(
-                    checkedContentColor = MaterialTheme.colorScheme.onPrimary,
-                    checkedContainerColor = MaterialTheme.colorScheme.primary,
-                    contentColor = MaterialTheme.colorScheme.onPrimaryContainer,
-                    containerColor = MaterialTheme.colorScheme.primaryContainer
-                ),
-                modifier = Modifier.weight(1f)
-            ) {
+        TimelineOptions.entries.forEach { option ->
+            val finalName = name.split(" ").first()
+            val label = if (option == TimelineOptions.MY_TIMELINE) "My Timeline" else "$finalName's Timeline"
+            val isSelected = option == selected
 
-                val finalName = name.split(" ").first()
+            Box(
+                modifier = Modifier
+                    .weight(1f)
+                    .clip(RoundedCornerShape(100.dp))
+                    .background(if (isSelected) MaterialTheme.colorScheme.primary else Color.Transparent)
+                    .clickable { onClick(option) }
+                    .padding(vertical = 10.dp),
+                contentAlignment = Alignment.Center
+            ) {
                 Text(
-                    if (timelineOptions == TimelineOptions.MY_TIMELINE) "My Timeline" else "$finalName's Timeline",
+                    text = label,
                     fontFamily = manrope,
                     fontSize = 14.sp,
+                    fontWeight = if (isSelected) FontWeight.SemiBold else FontWeight.Medium,
+                    color = if (isSelected) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurfaceVariant,
                     maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
-                    fontWeight = FontWeight.SemiBold
+                    overflow = TextOverflow.Ellipsis
                 )
             }
         }

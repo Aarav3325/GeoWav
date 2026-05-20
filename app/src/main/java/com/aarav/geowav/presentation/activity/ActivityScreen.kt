@@ -152,7 +152,9 @@ fun ActivityScreen(
             },
             onSetRangeClick = {
                 activityViewModel.showDatePicker()
-            })
+            },
+            modifier = Modifier.padding(top = 8.dp)
+            )
 
         ActivityContent(isDarkThemeEnabled, uiState)
 
@@ -296,7 +298,7 @@ fun ActivityContent(
                     modifier = Modifier
                         .padding(top = 12.dp)
                         .fillMaxSize(),
-                    verticalArrangement = Arrangement.spacedBy(9.dp)
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
                     items(uiState.alerts) { alert ->
                         AlertItem(alert, isDarkThemeEnabled, Modifier.padding(horizontal = 12.dp))
@@ -319,7 +321,8 @@ fun FilterRow(
     selectedFilter: ActivityFilter,
     onFilterSelected: (ActivityFilter) -> Unit,
     onSetRangeClick: () -> Unit,
-    onUpgradeRequired: (UpgradeReason) -> Unit
+    onUpgradeRequired: (UpgradeReason) -> Unit,
+    modifier: Modifier = Modifier
 ) {
     val isPremiumOrAbove =
         userPlan == UserPlan.PREMIUM || userPlan == UserPlan.PRO
@@ -328,9 +331,8 @@ fun FilterRow(
 
     LazyRow(
         contentPadding = PaddingValues(horizontal = 12.dp),
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(start = 0.dp, top = 16.dp, bottom = 8.dp),
+        modifier = modifier
+            .fillMaxWidth(),
         horizontalArrangement = Arrangement.spacedBy(8.dp),
     ) {
         item {
