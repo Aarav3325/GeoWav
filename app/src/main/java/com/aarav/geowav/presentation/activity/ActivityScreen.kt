@@ -62,6 +62,7 @@ import com.aarav.geowav.data.model.UserPlan
 import com.aarav.geowav.presentation.components.MyAlertDialog
 import com.aarav.geowav.presentation.components.CustomBottomSheet
 import com.aarav.geowav.presentation.components.UpgradeBottomSheetContent
+import com.aarav.geowav.presentation.home.AlertItem
 import com.aarav.geowav.presentation.home.buildRelativeSubtitle
 import com.aarav.geowav.presentation.subscription.SubscriptionViewModel
 import com.aarav.geowav.presentation.theme.manrope
@@ -289,7 +290,6 @@ fun ActivityContent(
             }
 
             else -> {
-                // Success state – show list
                 LazyColumn(
                     modifier = Modifier
                         .padding(top = 12.dp)
@@ -297,7 +297,7 @@ fun ActivityContent(
                     verticalArrangement = Arrangement.spacedBy(9.dp)
                 ) {
                     items(uiState.alerts) { alert ->
-                        NewLog(isDarkThemeEnabled, alert)
+                        AlertItem(alert, isDarkThemeEnabled, Modifier.padding(horizontal = 12.dp))
                     }
 
                     item {
@@ -328,8 +328,8 @@ fun FilterRow(
         contentPadding = PaddingValues(horizontal = 12.dp),
         modifier = Modifier
             .fillMaxWidth()
-            .padding(start = 0.dp, top = 8.dp),
-        horizontalArrangement = Arrangement.spacedBy(4.dp),
+            .padding(start = 0.dp, top = 16.dp, bottom = 8.dp),
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
     ) {
         item {
             LogFilterChip(
@@ -427,17 +427,17 @@ fun LogFilterChip(
                 )
             }
         },
-        shape = RoundedCornerShape(10.dp),
+        shape = RoundedCornerShape(100.dp),
         colors = FilterChipDefaults.filterChipColors(
             selectedContainerColor = MaterialTheme.colorScheme.primary,
             selectedLabelColor = MaterialTheme.colorScheme.onPrimary,
-            containerColor = MaterialTheme.colorScheme.primaryContainer,
-            labelColor = MaterialTheme.colorScheme.onPrimaryContainer,
-            disabledContainerColor = MaterialTheme.colorScheme.surfaceVariant,
+            containerColor = Color.Transparent,
+            labelColor = MaterialTheme.colorScheme.onSurfaceVariant,
+            disabledContainerColor = Color.Transparent,
             disabledLabelColor = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f),
             disabledLeadingIconColor = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f)
         ),
-        elevation = FilterChipDefaults.filterChipElevation(2.dp)
+        elevation = null
     )
 }
 

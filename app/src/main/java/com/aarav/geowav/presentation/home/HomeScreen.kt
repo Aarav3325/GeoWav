@@ -1221,7 +1221,7 @@ fun RecentAlertsList(
 }
 
 @Composable
-fun AlertItem(alert: com.aarav.geowav.data.model.GeoAlert, isDarkThemeEnabled: Boolean) {
+fun AlertItem(alert: com.aarav.geowav.data.model.GeoAlert, isDarkThemeEnabled: Boolean, modifier: Modifier = Modifier) {
 
     val type = if (alert.type.equals("ENTER", ignoreCase = true)) "enter" else "exit"
 
@@ -1242,7 +1242,7 @@ fun AlertItem(alert: com.aarav.geowav.data.model.GeoAlert, isDarkThemeEnabled: B
 
     Card(
         shape = RoundedCornerShape(14.dp),
-        modifier = Modifier
+        modifier = modifier
             .fillMaxWidth()
             .padding(vertical = 0.dp),
         border = BorderStroke(
