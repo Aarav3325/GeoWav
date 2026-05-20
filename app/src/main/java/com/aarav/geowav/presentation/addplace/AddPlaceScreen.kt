@@ -268,7 +268,7 @@ fun AddPlaceScreen(
                         ) {
                             Text(
                                 text = "Add to My Places",
-                                style = MaterialTheme.typography.titleMedium,
+                                style = MaterialTheme.typography.titleSmall,
                                 color = MaterialTheme.colorScheme.onPrimary,
                                 fontFamily = manrope,
                                 fontSize = 18.sp,

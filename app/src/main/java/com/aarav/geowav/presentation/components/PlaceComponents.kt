@@ -3,6 +3,7 @@ package com.aarav.geowav.presentation.components
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -111,33 +112,33 @@ fun GeofencePlaceCard(
 
                 Text(
                     text = place.address.toString(),
-                    color = MaterialTheme.colorScheme.onSurface,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                     maxLines = 2,
                     overflow = TextOverflow.Ellipsis,
                     fontSize = 14.sp,
-                    fontWeight = FontWeight.SemiBold,
+                    fontWeight = FontWeight.Medium,
                     fontFamily = manrope,
                 )
 
                 Spacer(modifier = Modifier.height(8.dp))
 
                 Row(
-                    horizontalArrangement = Arrangement.spacedBy(6.dp)
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(4.dp),
+                    modifier = Modifier.padding(top = 2.dp)
                 ) {
-                    AssistChip(
-                        onClick = { },
-                        colors = AssistChipDefaults.assistChipColors(
-                            containerColor = MaterialTheme.colorScheme.surfaceVariant
-                        ),
-                        label = {
-                            Text(
-                                text = "${place.radius.roundToInt()}m Awareness Radius",
-                                fontSize = 12.sp,
-                                fontWeight = FontWeight.Medium,
-                                fontFamily = manrope,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant
-                            )
-                        }
+                    Icon(
+                        painter = painterResource(id = R.drawable.map_trifold),
+                        contentDescription = null,
+                        modifier = Modifier.size(16.dp),
+                        tint = MaterialTheme.colorScheme.primary
+                    )
+                    Text(
+                        text = "${place.radius.roundToInt()}m Awareness Radius",
+                        fontSize = 13.sp,
+                        fontWeight = FontWeight.SemiBold,
+                        fontFamily = manrope,
+                        color = MaterialTheme.colorScheme.primary
                     )
                 }
             }
@@ -250,7 +251,7 @@ fun SearchItem(prediction: AutocompletePrediction, onClick: () -> Unit) {
 
 @Composable
 fun PlaceTextField(
-    labelText: String,
+    labelText: String? = null,
     placeHolder: String,
     infoText: String,
     name: String,
@@ -278,10 +279,12 @@ fun PlaceTextField(
             onValueChange = onValueChange,
             singleLine = true,
             label = {
-                Text(
-                    text = labelText,
-                    fontFamily = manrope
-                )
+                labelText?.let {
+                    Text(
+                        text = labelText,
+                        fontFamily = manrope,
+                    )
+                }
             },
             placeholder = {
                 Text(
@@ -322,7 +325,8 @@ fun RadiusChipGroup(
         )
 
         Row(
-            modifier = Modifier.fillMaxWidth(),
+            modifier = Modifier
+                .fillMaxWidth(),
             horizontalArrangement = Arrangement.spacedBy(10.dp)
         ) {
             chips.forEach { radius ->

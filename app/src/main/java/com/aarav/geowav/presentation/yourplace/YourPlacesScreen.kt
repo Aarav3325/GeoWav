@@ -6,6 +6,7 @@ import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
@@ -57,6 +58,9 @@ import com.aarav.geowav.presentation.components.UpgradeBottomSheetContent
 import com.aarav.geowav.presentation.components.RadiusChipGroup
 import androidx.compose.material3.Button
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.material3.ExtendedFloatingActionButton
+import androidx.compose.material3.HorizontalDivider
+import com.aarav.geowav.presentation.components.PlaceTextField
 import com.aarav.geowav.presentation.subscription.SubscriptionViewModel
 import com.aarav.geowav.presentation.theme.manrope
 
@@ -91,7 +95,7 @@ fun YourPlacesScreen(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(horizontal = 16.dp),
-                verticalArrangement = Arrangement.spacedBy(16.dp)
+                verticalArrangement = Arrangement.spacedBy(24.dp)
             ) {
                 Text(
                     text = "Edit Place",
@@ -101,31 +105,58 @@ fun YourPlacesScreen(
                     fontWeight = FontWeight.Bold
                 )
 
-                com.aarav.geowav.presentation.components.PlaceTextField(
-                    labelText = "Place Name",
-                    placeHolder = "e.g., Home, Work, Gym",
-                    infoText = "Name",
-                    name = placeName,
-                    onValueChange = { placeName = it }
-                )
+                Column(
+                    verticalArrangement = Arrangement.spacedBy(16.dp),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .background(
+                            MaterialTheme.colorScheme.surfaceContainerHigh,
+                            RoundedCornerShape(20.dp)
+                        )
+                        .padding(16.dp)
+                ) {
+                    PlaceTextField(
+                        placeHolder = "e.g., Home, Work, Gym",
+                        infoText = "Name",
+                        name = placeName,
+                        onValueChange = { placeName = it }
+                    )
 
-                RadiusChipGroup(
-                    chips = listOf(200f, 300f, 400f, 500f),
-                    selectedRadius = selectedRadius,
-                    onRadiusSelected = { selectedRadius = it }
-                )
+                    HorizontalDivider(
+                        modifier = Modifier.padding(vertical = 4.dp),
+                        color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f)
+                    )
+
+                    RadiusChipGroup(
+                        chips = listOf(200f, 300f, 400f, 500f),
+                        selectedRadius = selectedRadius,
+                        onRadiusSelected = { selectedRadius = it }
+                    )
+                }
 
                 Button(
                     onClick = {
                         yourPlacesVM.updatePlaceDetails(place, placeName.trim(), selectedRadius)
                         placeToEdit = null
                     },
-                    modifier = Modifier.fillMaxWidth()
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(54.dp),
+                    shape = RoundedCornerShape(16.dp),
+                    colors = androidx.compose.material3.ButtonDefaults.buttonColors(
+                        containerColor = MaterialTheme.colorScheme.primary,
+                        contentColor = MaterialTheme.colorScheme.onPrimary
+                    )
                 ) {
-                    Text("Save Changes", fontFamily = manrope)
+                    Text(
+                        text = "Save Changes", 
+                        fontFamily = manrope,
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 16.sp
+                    )
                 }
                 
-                Spacer(modifier = Modifier.height(32.dp))
+                Spacer(modifier = Modifier.height(24.dp))
             }
         }
     }
@@ -173,11 +204,11 @@ fun YourPlacesScreen(
 
             Text(
                 text = "Your Places",
-                fontSize = 20.sp,
+                fontSize = 28.sp,
                 fontFamily = manrope,
-                fontWeight = FontWeight.Bold,
+                fontWeight = FontWeight.ExtraBold,
                 color = MaterialTheme.colorScheme.onBackground,
-                modifier = Modifier.padding(top = 54.dp, start = 12.dp, end = 12.dp)
+                modifier = Modifier.padding(top = 56.dp, start = 16.dp, end = 16.dp, bottom = 4.dp)
             )
 
             PlacesUsageCard(
@@ -239,7 +270,8 @@ fun YourPlacesScreen(
             LazyColumn(
                 modifier = Modifier
                     .fillMaxSize()
-                    .padding(top = 8.dp, bottom = 12.dp)
+                    .padding(top = 8.dp),
+                contentPadding = PaddingValues(bottom = 88.dp)
             ) {
                 items(uiState.placesList) { place ->
                     GeofencePlaceCard(
@@ -278,7 +310,7 @@ fun AddLocationFAB(
 ) {
     val isLimitReached = places.size >= FeatureAccess.maxSavedPlaces(userPlan)
 
-    FloatingActionButton(
+    ExtendedFloatingActionButton(
         modifier = modifier,
         shape = RoundedCornerShape(16.dp),
         containerColor = MaterialTheme.colorScheme.primaryContainer,
@@ -290,14 +322,23 @@ fun AddLocationFAB(
             } else {
                 onPlaceLimitReached(userPlan)
             }
+        },
+        icon = {
+            Icon(
+                painter = painterResource(R.drawable.add),
+                contentDescription = "add location",
+            )
+        },
+        text = {
+            Text(
+                text = "New Place",
+                fontFamily = manrope,
+                fontWeight = FontWeight.Bold
+            )
         }
-    ) {
-        Icon(
-            painter = painterResource(R.drawable.add),
-            contentDescription = "add location",
-        )
-    }
+    )
 }
+
 @Composable
 fun PlacesUsageCard(
     current: Int,
@@ -317,9 +358,9 @@ fun PlacesUsageCard(
     }
 
     val usageText = if (isUnlimited)
-        "$current places"
+        "$current active places"
     else
-        "$current / $max places used"
+        "$current of $max active places"
 
     val cardBg = if (isLimitReached)
         MaterialTheme.colorScheme.errorContainer
