@@ -2,7 +2,6 @@ package com.aarav.geowav.presentation.addplace
 
 import android.widget.Toast
 import androidx.compose.foundation.Image
-import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -431,12 +430,7 @@ fun AddPlaceScreen(
                     GoogleMap(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .border(
-                                1.dp,
-                                MaterialTheme.colorScheme.outline,
-                                RoundedCornerShape(16.dp)
-                            )
-                            .height(220.dp)
+                            .height(260.dp)
                             .clip(RoundedCornerShape(16.dp)),
                         cameraPositionState = cameraPositionState,
                         uiSettings = MapUiSettings(
@@ -452,45 +446,36 @@ fun AddPlaceScreen(
                             zoomGesturesEnabled = false
                         )
                     ) {
-
                         if (latlng.latitude != 0.0 && latlng.longitude != 0.0) {
                             Marker(
-                                state = MarkerState(
-                                    latlng,
-//                            LatLng(
-//                            selectedPlace?.location?.latitude ?: 0.0,
-//                            selectedPlace?.location?.longitude ?: 0.0
-//                        )
-                                ),
+                                state = MarkerState(latlng),
                                 title = selectedPlace?.displayName ?: ""
                             )
-                            
+
                             com.google.maps.android.compose.Circle(
                                 center = latlng,
                                 radius = uiState.selectedRadius.toDouble(),
-                                fillColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.2f),
-                                strokeColor = MaterialTheme.colorScheme.primary,
-                                strokeWidth = 2f
+                                fillColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.15f),
+                                strokeColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.6f),
+                                strokeWidth = 1.5f
                             )
                         }
-
                     }
 
                     Surface(
                         modifier = Modifier
                             .align(Alignment.TopStart)
-                            .padding(12.dp),
-                        shape = RoundedCornerShape(8.dp),
-                        color = MaterialTheme.colorScheme.secondaryContainer
+                            .padding(10.dp),
+                        shape = RoundedCornerShape(6.dp),
+                        color = MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.85f)
                     ) {
                         Text(
-                            text = "Preview",
-                            style = MaterialTheme.typography.titleMedium,
+                            text = "Awareness zone",
                             color = MaterialTheme.colorScheme.onSecondaryContainer,
                             fontFamily = manrope,
-                            fontSize = 16.sp,
-                            modifier = Modifier.padding(horizontal = 12.dp, vertical = 4.dp),
-                            fontWeight = FontWeight.SemiBold
+                            fontSize = 12.sp,
+                            modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp),
+                            fontWeight = FontWeight.Normal
                         )
                     }
                 }
