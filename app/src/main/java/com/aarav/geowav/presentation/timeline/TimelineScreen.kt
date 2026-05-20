@@ -31,6 +31,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.ToggleButton
 import androidx.compose.material3.ToggleButtonDefaults
@@ -401,86 +402,79 @@ fun TimelineItem(
             HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
 
             Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(IntrinsicSize.Min)
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(14.dp),
+                verticalAlignment = Alignment.Top
             ) {
-
-                // Timeline indicator
                 Column(
-                    modifier = Modifier
-                        .padding(top = 6.dp),
-                    horizontalAlignment = Alignment.CenterHorizontally
+                    modifier = Modifier.weight(1f),
+                    verticalArrangement = Arrangement.spacedBy(4.dp)
                 ) {
-
-                    Box(
-                        Modifier
-                            .size(8.dp)
-                            .background(
-                                MaterialTheme.colorScheme.primary,
-                                CircleShape
-                            )
+                    Text(
+                        text = "Start / $startTime",
+                        style = MaterialTheme.typography.labelMedium,
+                        fontFamily = manrope,
+                        fontWeight = FontWeight.SemiBold,
+                        color = MaterialTheme.colorScheme.primary,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
                     )
 
-                    Box(
-                        Modifier
-                            .width(2.dp)
-                            .height(56.dp)
-                            .background(
-                                MaterialTheme.colorScheme.primary.copy(alpha = 0.3f)
-                            )
-                    )
-
-                    Box(
-                        Modifier
-                            .size(8.dp)
-                            .background(
-                                MaterialTheme.colorScheme.secondary,
-                                CircleShape
-                            )
+                    Text(
+                        text = item.startAddress ?: "Unknown location",
+                        style = MaterialTheme.typography.bodyMedium,
+                        fontFamily = manrope,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        maxLines = 2,
+                        overflow = TextOverflow.Ellipsis
                     )
                 }
 
-                Spacer(Modifier.width(14.dp))
-
                 Column(
-                    verticalArrangement = Arrangement.spacedBy(10.dp),
-                    modifier = Modifier.weight(1f)
+                    modifier = Modifier.weight(1f),
+                    verticalArrangement = Arrangement.spacedBy(4.dp)
                 ) {
+                    Text(
+                        text = "End / $endTime",
+                        style = MaterialTheme.typography.labelMedium,
+                        fontFamily = manrope,
+                        fontWeight = FontWeight.SemiBold,
+                        color = MaterialTheme.colorScheme.secondary,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
+                    )
 
-                    Column {
-                        Text(
-                            text = "Started at $startTime",
-                            style = MaterialTheme.typography.labelMedium,
-                            fontFamily = manrope,
-                            color = MaterialTheme.colorScheme.primary
-                        )
+                    Text(
+                        text = item.endAddress ?: "Unknown location",
+                        style = MaterialTheme.typography.bodyMedium,
+                        fontFamily = manrope,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        maxLines = 2,
+                        overflow = TextOverflow.Ellipsis
+                    )
+                }
+            }
 
-                        Text(
-                            text = item.startAddress ?: "Unknown location",
-                            style = MaterialTheme.typography.bodyMedium,
-                            maxLines = 2,
-                            overflow = TextOverflow.Ellipsis,
-                            fontFamily = manrope
-                        )
-                    }
-
-                    Column {
-                        Text(
-                            text = "Ended at $endTime",
-                            style = MaterialTheme.typography.labelMedium,
-                            fontFamily = manrope,
-                            color = MaterialTheme.colorScheme.secondary
-                        )
-
-                        Text(
-                            text = item.endAddress ?: "Unknown location",
-                            style = MaterialTheme.typography.bodyMedium,
-                            maxLines = 2,
-                            overflow = TextOverflow.Ellipsis,
-                            fontFamily = manrope
-                        )
-                    }
+            val stayCount = item.stayPoints.size
+            if (stayCount > 0) {
+                val totalStayMins = item.stayPoints.sumOf { it.durationMillis } / 60_000
+                val totalStayText = if (totalStayMins < 60) "$totalStayMins min"
+                else "${totalStayMins / 60}h ${totalStayMins % 60}m"
+                
+                Surface(
+                    shape = RoundedCornerShape(99.dp),
+                    color = MaterialTheme.colorScheme.tertiaryContainer.copy(alpha = 0.6f)
+                ) {
+                    Text(
+                        text = "$stayCount stop${if (stayCount > 1) "s" else ""} / $totalStayText paused",
+                        modifier = Modifier.padding(horizontal = 10.dp, vertical = 5.dp),
+                        style = MaterialTheme.typography.labelMedium,
+                        fontFamily = manrope,
+                        fontWeight = FontWeight.SemiBold,
+                        color = MaterialTheme.colorScheme.onTertiaryContainer,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
+                    )
                 }
             }
         }
