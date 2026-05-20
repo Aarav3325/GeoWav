@@ -1,6 +1,5 @@
 package com.aarav.geowav.presentation.addplace
 
-import android.util.Log
 import android.widget.Toast
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.border
@@ -49,7 +48,6 @@ import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -59,7 +57,6 @@ import com.aarav.geowav.data.model.Place
 import com.aarav.geowav.data.model.UpgradeContext
 import com.aarav.geowav.data.model.UpgradeEvents
 import com.aarav.geowav.presentation.components.CustomBottomSheet
-import com.aarav.geowav.presentation.components.CustomChip
 import com.aarav.geowav.presentation.components.MyAlertDialog
 import com.aarav.geowav.presentation.components.PermissionRequiredContent
 import com.aarav.geowav.presentation.components.PlaceTextField
@@ -129,7 +126,7 @@ fun AddPlaceScreen(
                     navigateToYourPlaces()
                     Toast.makeText(
                         context,
-                        "$placeName added to geofence",
+                        "$placeName added to your places",
                         Toast.LENGTH_LONG
                     ).show()
                 }
@@ -195,9 +192,11 @@ fun AddPlaceScreen(
             TopAppBar(
                 title = {
                     Text(
-                        text = "Add Place",
+                        text = selectedPlace?.displayName ?: "New Place",
                         fontWeight = FontWeight.Normal,
-                        fontFamily = manrope
+                        fontFamily = manrope,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
                     )
                 },
                 navigationIcon = {
@@ -269,7 +268,7 @@ fun AddPlaceScreen(
                             shape = RoundedCornerShape(10.dp)
                         ) {
                             Text(
-                                text = "Save Place",
+                                text = "Add to My Places",
                                 style = MaterialTheme.typography.titleMedium,
                                 color = MaterialTheme.colorScheme.onPrimary,
                                 fontFamily = manrope,
@@ -325,70 +324,61 @@ fun AddPlaceScreen(
                         contentColor = MaterialTheme.colorScheme.onSurface
                     )
                 ) {
-                    Column(
+                    Row(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(16.dp),
-                        horizontalAlignment = Alignment.CenterHorizontally,
-                        verticalArrangement = Arrangement.spacedBy(8.dp)
+                            .padding(horizontal = 16.dp, vertical = 14.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(14.dp)
                     ) {
                         Surface(
                             shape = CircleShape,
                             color = MaterialTheme.colorScheme.secondaryContainer,
-                            modifier = Modifier.size(72.dp)
+                            modifier = Modifier.size(40.dp)
                         ) {
                             Image(
                                 painter = painterResource(R.drawable.map_pin_area),
                                 contentDescription = "map pin",
-                                modifier = Modifier.padding(12.dp),
+                                modifier = Modifier.padding(8.dp),
                                 colorFilter = ColorFilter.tint(MaterialTheme.colorScheme.onSecondaryContainer)
                             )
                         }
 
                         selectedPlace?.let { place ->
-                            Text(
-                                text = place.displayName ?: "Place Name Unavailable",
-                                color = MaterialTheme.colorScheme.onSurface,
-                                fontSize = 16.sp,
-                                maxLines = 2,
-                                overflow = TextOverflow.Ellipsis,
-                                textAlign = TextAlign.Center,
-                                fontFamily = manrope,
-                                fontWeight = FontWeight.Bold,
-                            )
+                            Column(
+                                verticalArrangement = Arrangement.spacedBy(2.dp)
+                            ) {
+                                Text(
+                                    text = place.displayName ?: "Place Name Unavailable",
+                                    color = MaterialTheme.colorScheme.onSurface,
+                                    fontSize = 15.sp,
+                                    maxLines = 1,
+                                    overflow = TextOverflow.Ellipsis,
+                                    fontFamily = manrope,
+                                    fontWeight = FontWeight.SemiBold,
+                                )
 
-                            Text(
-                                text = place.shortFormattedAddress ?: "Address Unavailable",
-                                color = MaterialTheme.colorScheme.onSurface,
-                                maxLines = 3,
-                                overflow = TextOverflow.Ellipsis,
-                                fontSize = 14.sp,
-                                textAlign = TextAlign.Center,
-                                fontWeight = FontWeight.SemiBold,
-                                fontFamily = manrope,
-                            )
-
-                            Text(
-                                text = "Lat: ${
-                                    place.location?.latitude?.toString()?.take(7)
-                                }, Lng: ${place.location?.longitude?.toString()?.take(7)}",
-                                color = MaterialTheme.colorScheme.onSurface,
-                                fontSize = 12.sp,
-                                fontWeight = FontWeight.W500,
-                                fontFamily = manrope,
-                            )
-
+                                Text(
+                                    text = place.shortFormattedAddress ?: "Address Unavailable",
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                    maxLines = 1,
+                                    overflow = TextOverflow.Ellipsis,
+                                    fontSize = 13.sp,
+                                    fontWeight = FontWeight.Normal,
+                                    fontFamily = manrope,
+                                )
+                            }
                         }
-
                     }
                 }
+
 
                 Spacer(modifier = Modifier.height(16.dp))
 
                 PlaceTextField(
-                    labelText = "Custom name",
-                    placeHolder = "Enter name",
-                    infoText = "Customize this place",
+                    labelText = "What do you call this place?",
+                    placeHolder = "e.g. Home, Office, Rohan's House",
+                    infoText = "Used in arrival and leaving alerts",
                     name = placeName,
                     onValueChange = { place ->
                         placeName = place
@@ -397,34 +387,30 @@ fun AddPlaceScreen(
 
                 Spacer(modifier = Modifier.height(16.dp))
 
-                RadiusChipGroup(
-                    chips = uiState.chips,
-                    selectedRadius = uiState.selectedRadius
-                ) { radius ->
-                    placeViewModel.onRadiusChange(radius)
-
-                    Log.i("MYTAG", "Selected Radius : ${uiState.selectedRadius}")
-                }
-
-                Spacer(modifier = Modifier.height(0.dp))
-
-                Row(
+                Column(
                     modifier = Modifier.fillMaxWidth(),
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(10.dp)
+                    verticalArrangement = Arrangement.spacedBy(6.dp)
                 ) {
                     Text(
-                        text = "Trigger Type : ",
-                        style = MaterialTheme.typography.titleMedium,
+                        text = "Awareness radius",
                         color = MaterialTheme.colorScheme.onSurface,
+                        fontSize = 14.sp,
+                        fontWeight = FontWeight.SemiBold,
                         fontFamily = manrope,
-                        fontSize = 16.sp,
-                        fontWeight = FontWeight.SemiBold
                     )
-
-                    CustomChip("ENTRY")
-
-                    CustomChip("EXIT")
+                    Text(
+                        text = "How far from this place triggers an alert",
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        fontSize = 12.sp,
+                        fontWeight = FontWeight.Normal,
+                        fontFamily = manrope,
+                    )
+                    RadiusChipGroup(
+                        chips = uiState.chips,
+                        selectedRadius = uiState.selectedRadius
+                    ) { radius ->
+                        placeViewModel.onRadiusChange(radius)
+                    }
                 }
 
 
