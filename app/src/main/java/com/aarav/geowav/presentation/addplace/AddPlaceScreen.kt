@@ -23,7 +23,7 @@ import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ContainedLoadingIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
-import androidx.compose.material3.FilledTonalButton
+import androidx.compose.material3.Button
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -100,7 +100,7 @@ fun AddPlaceScreen(
     val selectedPlace = uiState.selectedPlace
 
     var placeName by remember {
-        mutableStateOf(selectedPlace?.displayName ?: "")
+        mutableStateOf(extractShortPlaceName(selectedPlace?.displayName))
     }
 
     val context = LocalContext.current
@@ -152,7 +152,7 @@ fun AddPlaceScreen(
 
     LaunchedEffect(selectedPlace) {
         selectedPlace?.displayName?.let {
-            placeName = it
+            placeName = extractShortPlaceName(it)
         }
     }
 
@@ -178,8 +178,8 @@ fun AddPlaceScreen(
         onDismissRequest = {
             placeViewModel.clearError()
         },
-        title = "Unable To Fetch",
-        message = uiState.error ?: "Unable to fetch place details",
+        title = "Couldn't load this place",
+        message = uiState.error ?: "Check your connection and try again",
         confirmButtonText = "Dismiss"
     ) {
         placeViewModel.clearError()
@@ -236,7 +236,7 @@ fun AddPlaceScreen(
                             bottom = 28.dp
                         )
                     ) {
-                        FilledTonalButton(
+                        Button(
                             onClick = {
 
                                 val finalPlace = Place(
@@ -421,7 +421,7 @@ fun AddPlaceScreen(
                     cameraPositionState.position = CameraPosition.fromLatLngZoom(latlng, 16f)
                 }
 
-                Spacer(modifier = Modifier.height(12.dp))
+                Spacer(modifier = Modifier.height(16.dp))
 
 
                 Box(
@@ -430,7 +430,7 @@ fun AddPlaceScreen(
                     GoogleMap(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .height(260.dp)
+                            .height(380.dp)
                             .clip(RoundedCornerShape(16.dp)),
                         cameraPositionState = cameraPositionState,
                         uiSettings = MapUiSettings(
@@ -487,4 +487,14 @@ fun AddPlaceScreen(
 fun getFormattedDate(): String {
     val formatter = SimpleDateFormat("dd MMM yyyy", Locale.getDefault())
     return formatter.format(Date())
+}
+
+fun extractShortPlaceName(displayName: String?): String {
+    if (displayName.isNullOrBlank()) return ""
+    val delimiters = listOf(" - ", ", ", " (")
+    val firstIndex = delimiters
+        .mapNotNull { delimiter -> displayName.indexOf(delimiter).takeIf { it >= 0 } }
+        .minOrNull()
+    return if (firstIndex != null) displayName.substring(0, firstIndex).trim()
+    else displayName.trim()
 }
