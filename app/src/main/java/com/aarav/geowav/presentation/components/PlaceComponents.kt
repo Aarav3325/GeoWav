@@ -49,7 +49,7 @@ import kotlin.math.roundToInt
 fun GeofencePlaceCard(
     place: Place,
     onDeleteClick: (Place) -> Unit,
-    onEditRadiusClick: (Place) -> Unit = {}
+    onEditClick: (Place) -> Unit = {}
 ) {
     Card(
         modifier = Modifier
@@ -131,7 +131,7 @@ fun GeofencePlaceCard(
                         ),
                         label = {
                             Text(
-                                text = "${place.radius.roundToInt()}m Awareness Zone",
+                                text = "${place.radius.roundToInt()}m Awareness Radius",
                                 fontSize = 12.sp,
                                 fontWeight = FontWeight.Medium,
                                 fontFamily = manrope,
@@ -163,14 +163,14 @@ fun GeofencePlaceCard(
                 Spacer(modifier = Modifier.width(8.dp))
                 
                 androidx.compose.material3.Button(
-                    onClick = { onEditRadiusClick(place) },
+                    onClick = { onEditClick(place) },
                     colors = androidx.compose.material3.ButtonDefaults.buttonColors(
                         containerColor = MaterialTheme.colorScheme.primaryContainer,
                         contentColor = MaterialTheme.colorScheme.onPrimaryContainer
                     )
                 ) {
                     Text(
-                        text = "Edit Zone",
+                        text = "Edit Place",
                         fontFamily = manrope,
                         fontWeight = FontWeight.SemiBold
                     )

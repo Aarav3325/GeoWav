@@ -76,15 +76,17 @@ fun YourPlacesScreen(
 
 
     var upgradeContext by remember { mutableStateOf<UpgradeContext?>(null) }
-    var placeToEditRadius by remember { mutableStateOf<Place?>(null) }
+    var placeToEdit by remember { mutableStateOf<Place?>(null) }
 
-    placeToEditRadius?.let { place ->
+    placeToEdit?.let { place ->
         CustomBottomSheet(
             onDismissRequest = {
-                placeToEditRadius = null
+                placeToEdit = null
             }
         ) {
             var selectedRadius by remember { mutableStateOf(place.radius) }
+            var placeName by remember { mutableStateOf(place.customName.ifBlank { place.placeName }) }
+
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -92,11 +94,19 @@ fun YourPlacesScreen(
                 verticalArrangement = Arrangement.spacedBy(16.dp)
             ) {
                 Text(
-                    text = "Edit Radius",
+                    text = "Edit Place",
                     style = MaterialTheme.typography.titleLarge,
                     color = MaterialTheme.colorScheme.onSurface,
                     fontFamily = manrope,
                     fontWeight = FontWeight.Bold
+                )
+
+                com.aarav.geowav.presentation.components.PlaceTextField(
+                    labelText = "Place Name",
+                    placeHolder = "e.g., Home, Work, Gym",
+                    infoText = "Name",
+                    name = placeName,
+                    onValueChange = { placeName = it }
                 )
 
                 RadiusChipGroup(
@@ -107,8 +117,8 @@ fun YourPlacesScreen(
 
                 Button(
                     onClick = {
-                        yourPlacesVM.updatePlaceRadius(place, selectedRadius)
-                        placeToEditRadius = null
+                        yourPlacesVM.updatePlaceDetails(place, placeName.trim(), selectedRadius)
+                        placeToEdit = null
                     },
                     modifier = Modifier.fillMaxWidth()
                 ) {
@@ -237,8 +247,8 @@ fun YourPlacesScreen(
                         onDeleteClick = {
                             yourPlacesVM.deletePlace(place)
                         },
-                        onEditRadiusClick = {
-                            placeToEditRadius = place
+                        onEditClick = {
+                            placeToEdit = place
                         }
                     )
                 }
