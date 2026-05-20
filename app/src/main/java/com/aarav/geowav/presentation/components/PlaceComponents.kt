@@ -3,6 +3,7 @@ package com.aarav.geowav.presentation.components
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -49,7 +50,7 @@ import kotlin.math.roundToInt
 fun GeofencePlaceCard(
     place: Place,
     onDeleteClick: (Place) -> Unit,
-    onEditRadiusClick: (Place) -> Unit = {}
+    onEditClick: (Place) -> Unit = {}
 ) {
     Card(
         modifier = Modifier
@@ -100,29 +101,6 @@ fun GeofencePlaceCard(
                         .padding(horizontal = 12.dp)
                         .weight(1f)
                 )
-
-                Spacer(modifier = Modifier.weight(0.1f))
-
-
-                Surface(
-                    modifier = Modifier
-                        .size(36.dp)
-                        .clickable {
-                            onDeleteClick(place)
-                        },
-                    color = MaterialTheme.colorScheme.errorContainer,
-                    shape = CircleShape,
-                ) {
-                    Image(
-                        painter = painterResource(id = R.drawable.trash),
-                        contentDescription = "navigation arrow",
-                        modifier = Modifier
-                            .size(24.dp)
-                            .padding(6.dp),
-                        colorFilter = ColorFilter.tint(MaterialTheme.colorScheme.onErrorContainer)
-                    )
-                }
-
             }
 
             Spacer(Modifier.height(12.dp))
@@ -134,109 +112,70 @@ fun GeofencePlaceCard(
 
                 Text(
                     text = place.address.toString(),
-                    color = MaterialTheme.colorScheme.onSurface,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                     maxLines = 2,
                     overflow = TextOverflow.Ellipsis,
                     fontSize = 14.sp,
-                    fontWeight = FontWeight.SemiBold,
+                    fontWeight = FontWeight.Medium,
                     fontFamily = manrope,
                 )
 
+                Spacer(modifier = Modifier.height(8.dp))
+
                 Row(
-                    horizontalArrangement = Arrangement.spacedBy(6.dp)
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(4.dp),
+                    modifier = Modifier.padding(top = 2.dp)
                 ) {
-
-                    AssistChip(
-                        onClick = { onEditRadiusClick(place) },
-                        colors = AssistChipDefaults.assistChipColors(
-                            containerColor = MaterialTheme.colorScheme.surfaceVariant
-                        ),
-                        label = {
-                            Text(
-                                text = "${place.radius} m",
-                                fontSize = 12.sp,
-                                fontWeight = FontWeight.Normal,
-                                fontFamily = manrope,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant
-                            )
-                        }
+                    Icon(
+                        painter = painterResource(id = R.drawable.map_trifold),
+                        contentDescription = null,
+                        modifier = Modifier.size(16.dp),
+                        tint = MaterialTheme.colorScheme.primary
                     )
-
-                    AssistChip(
-                        onClick = {},
-                        colors = AssistChipDefaults.assistChipColors(
-                            containerColor = MaterialTheme.colorScheme.surfaceVariant
-                        ),
-                        label = {
-                            Text(
-                                text = "Lat: ${place.latitude.toString().take(7)}",
-                                fontSize = 12.sp,
-                                fontWeight = FontWeight.Normal,
-                                fontFamily = manrope,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant
-                            )
-                        }
-                    )
-
-                    AssistChip(
-                        onClick = {},
-                        colors = AssistChipDefaults.assistChipColors(
-                            containerColor = MaterialTheme.colorScheme.surfaceVariant
-                        ),
-                        label = {
-                            Text(
-                                text = "Lng: ${place.longitude.toString().take(7)}",
-                                fontSize = 12.sp,
-                                fontWeight = FontWeight.Normal,
-                                fontFamily = manrope,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant
-                            )
-                        }
+                    Text(
+                        text = "${place.radius.roundToInt()}m Awareness Radius",
+                        fontSize = 13.sp,
+                        fontWeight = FontWeight.SemiBold,
+                        fontFamily = manrope,
+                        color = MaterialTheme.colorScheme.primary
                     )
                 }
-
-                AssistChip(
-                    onClick = {},
-                    colors = AssistChipDefaults.assistChipColors(
-                        containerColor = MaterialTheme.colorScheme.tertiaryContainer
-                    ),
-                    label = {
-                        Text(
-                            text = "Added on: " + place.addedOn,
-                            fontSize = 12.sp,
-                            fontWeight = FontWeight.W600,
-                            fontFamily = manrope,
-                            color = MaterialTheme.colorScheme.onTertiaryContainer
-                        )
-                    }
-                )
             }
 
-            Spacer(modifier = Modifier.height(0.dp))
+            Spacer(modifier = Modifier.height(12.dp))
 
             Row(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.End
+                horizontalArrangement = Arrangement.End,
+                verticalAlignment = Alignment.CenterVertically
             ) {
-//                androidx.compose.material3.TextButton(
-//                    contentPadding = PaddingValues(0.dp),
-//                    onClick = {  },
-//
-//                ) {
+                androidx.compose.material3.TextButton(
+                    onClick = { onDeleteClick(place) }
+                ) {
                     Text(
-                        text = "Edit Radius",
+                        text = "Remove",
                         fontFamily = manrope,
-                        style = MaterialTheme.typography.labelMedium,
-                        fontWeight = FontWeight.Bold,
-                        color = MaterialTheme.colorScheme.primary,
-                        modifier = Modifier.clickable(
-                            indication = null,
-                            interactionSource = null
-                        ) {
-                            onEditRadiusClick(place)
-                        }
+                        fontWeight = FontWeight.SemiBold,
+                        color = MaterialTheme.colorScheme.error
                     )
-//                }
+                }
+                
+                Spacer(modifier = Modifier.width(8.dp))
+                
+                androidx.compose.material3.Button(
+                    onClick = { onEditClick(place) },
+                    colors = androidx.compose.material3.ButtonDefaults.buttonColors(
+                        containerColor = MaterialTheme.colorScheme.primaryContainer,
+                        contentColor = MaterialTheme.colorScheme.onPrimaryContainer
+                    )
+                ) {
+                    Text(
+                        text = "Edit Place",
+                        fontFamily = manrope,
+                        fontWeight = FontWeight.SemiBold
+                    )
+                }
             }
         }
     }
@@ -312,7 +251,7 @@ fun SearchItem(prediction: AutocompletePrediction, onClick: () -> Unit) {
 
 @Composable
 fun PlaceTextField(
-    labelText: String,
+    labelText: String? = null,
     placeHolder: String,
     infoText: String,
     name: String,
@@ -340,10 +279,12 @@ fun PlaceTextField(
             onValueChange = onValueChange,
             singleLine = true,
             label = {
-                Text(
-                    text = labelText,
-                    fontFamily = manrope
-                )
+                labelText?.let {
+                    Text(
+                        text = labelText,
+                        fontFamily = manrope,
+                    )
+                }
             },
             placeholder = {
                 Text(
@@ -384,7 +325,8 @@ fun RadiusChipGroup(
         )
 
         Row(
-            modifier = Modifier.fillMaxWidth(),
+            modifier = Modifier
+                .fillMaxWidth(),
             horizontalArrangement = Arrangement.spacedBy(10.dp)
         ) {
             chips.forEach { radius ->
