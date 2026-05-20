@@ -110,16 +110,16 @@ fun GeofencePlaceCard(
                         .clickable {
                             onDeleteClick(place)
                         },
-                    color = MaterialTheme.colorScheme.errorContainer,
+                    color = MaterialTheme.colorScheme.surfaceVariant,
                     shape = CircleShape,
                 ) {
                     Image(
                         painter = painterResource(id = R.drawable.trash),
-                        contentDescription = "navigation arrow",
+                        contentDescription = "Delete Place",
                         modifier = Modifier
                             .size(24.dp)
                             .padding(6.dp),
-                        colorFilter = ColorFilter.tint(MaterialTheme.colorScheme.onErrorContainer)
+                        colorFilter = ColorFilter.tint(MaterialTheme.colorScheme.onSurfaceVariant)
                     )
                 }
 
@@ -153,91 +153,17 @@ fun GeofencePlaceCard(
                         ),
                         label = {
                             Text(
-                                text = "${place.radius} m",
+                                text = "${place.radius.roundToInt()}m Awareness Zone",
                                 fontSize = 12.sp,
-                                fontWeight = FontWeight.Normal,
-                                fontFamily = manrope,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant
-                            )
-                        }
-                    )
-
-                    AssistChip(
-                        onClick = {},
-                        colors = AssistChipDefaults.assistChipColors(
-                            containerColor = MaterialTheme.colorScheme.surfaceVariant
-                        ),
-                        label = {
-                            Text(
-                                text = "Lat: ${place.latitude.toString().take(7)}",
-                                fontSize = 12.sp,
-                                fontWeight = FontWeight.Normal,
-                                fontFamily = manrope,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant
-                            )
-                        }
-                    )
-
-                    AssistChip(
-                        onClick = {},
-                        colors = AssistChipDefaults.assistChipColors(
-                            containerColor = MaterialTheme.colorScheme.surfaceVariant
-                        ),
-                        label = {
-                            Text(
-                                text = "Lng: ${place.longitude.toString().take(7)}",
-                                fontSize = 12.sp,
-                                fontWeight = FontWeight.Normal,
+                                fontWeight = FontWeight.Medium,
                                 fontFamily = manrope,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
                         }
                     )
                 }
-
-                AssistChip(
-                    onClick = {},
-                    colors = AssistChipDefaults.assistChipColors(
-                        containerColor = MaterialTheme.colorScheme.tertiaryContainer
-                    ),
-                    label = {
-                        Text(
-                            text = "Added on: " + place.addedOn,
-                            fontSize = 12.sp,
-                            fontWeight = FontWeight.W600,
-                            fontFamily = manrope,
-                            color = MaterialTheme.colorScheme.onTertiaryContainer
-                        )
-                    }
-                )
             }
 
-            Spacer(modifier = Modifier.height(0.dp))
-
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.End
-            ) {
-//                androidx.compose.material3.TextButton(
-//                    contentPadding = PaddingValues(0.dp),
-//                    onClick = {  },
-//
-//                ) {
-                    Text(
-                        text = "Edit Radius",
-                        fontFamily = manrope,
-                        style = MaterialTheme.typography.labelMedium,
-                        fontWeight = FontWeight.Bold,
-                        color = MaterialTheme.colorScheme.primary,
-                        modifier = Modifier.clickable(
-                            indication = null,
-                            interactionSource = null
-                        ) {
-                            onEditRadiusClick(place)
-                        }
-                    )
-//                }
-            }
         }
     }
 }

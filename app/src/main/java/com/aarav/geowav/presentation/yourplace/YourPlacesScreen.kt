@@ -185,29 +185,43 @@ fun YourPlacesScreen(
                     Column(
                         modifier = Modifier.align(Alignment.Center),
                         horizontalAlignment = Alignment.CenterHorizontally,
-                        verticalArrangement = Arrangement.spacedBy(24.dp)
+                        verticalArrangement = Arrangement.spacedBy(16.dp)
                     ) {
                         Surface(
                             shape = CircleShape,
-                            color = MaterialTheme.colorScheme.primaryContainer,
-                            modifier = Modifier.size(102.dp)
+                            color = MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.5f),
+                            modifier = Modifier.size(96.dp)
                         ) {
                             Image(
-                                painter = painterResource(R.drawable.tray),
-                                contentDescription = "tray",
-                                colorFilter = ColorFilter.tint(MaterialTheme.colorScheme.onPrimaryContainer),
-                                modifier = Modifier.padding(16.dp)
+                                painter = painterResource(R.drawable.map_trifold),
+                                contentDescription = "Empty places",
+                                colorFilter = ColorFilter.tint(MaterialTheme.colorScheme.onSecondaryContainer.copy(alpha = 0.7f)),
+                                modifier = Modifier.padding(24.dp)
                             )
                         }
 
-                        Text(
-                            text = "Add a location to start tracking your places",
-                            fontSize = 14.sp,
-                            textAlign = TextAlign.Center,
-                            fontFamily = manrope,
-                            color = MaterialTheme.colorScheme.onBackground,
-                            fontWeight = FontWeight.Normal,
-                        )
+                        Column(
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                            verticalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            Text(
+                                text = "No awareness zones",
+                                fontSize = 18.sp,
+                                fontFamily = manrope,
+                                color = MaterialTheme.colorScheme.onBackground,
+                                fontWeight = FontWeight.SemiBold,
+                            )
+
+                            Text(
+                                text = "Add a meaningful place like Home or Work to get started.",
+                                fontSize = 14.sp,
+                                textAlign = TextAlign.Center,
+                                fontFamily = manrope,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                fontWeight = FontWeight.Normal,
+                                modifier = Modifier.padding(horizontal = 32.dp)
+                            )
+                        }
                     }
                 }
             }
