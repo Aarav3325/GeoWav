@@ -92,10 +92,6 @@ android {
             arg("room.schemaLocation", "$projectDir/schemas")
         }
     }
-
-//    composeOptions {
-//        kotlinCompilerExtensionVersion = "2.0.0"
-//    }
 }
 
 dependencies {
