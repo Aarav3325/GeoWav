@@ -85,7 +85,6 @@ android {
         compose = true
         buildConfig = true
     }
-
     kapt {
         correctErrorTypes = true
         arguments {
