@@ -4,6 +4,7 @@ import android.content.Context
 import android.util.Log
 import androidx.work.Worker
 import androidx.work.WorkerParameters
+import com.aarav.geowav.data.model.ActivityTransition
 import com.aarav.geowav.data.model.Component
 import com.aarav.geowav.data.model.Language
 import com.aarav.geowav.data.model.Parameter
@@ -27,10 +28,11 @@ class GeofenceWorker(
 
         val geofenceId = inputData.getString("geofenceId") ?: return Result.failure()
         val transitionTypeRaw = inputData.getString("transitionType") ?: return Result.failure()
-        val transitionType = when (transitionTypeRaw.uppercase()) {
-            "ENTER" -> "reached"
-            "EXIT" -> "left"
-            else -> transitionTypeRaw.lowercase()
+        val normalizedTransition = ActivityTransition.fromRaw(transitionTypeRaw)
+            ?: return Result.failure()
+        val transitionType = when (normalizedTransition) {
+            ActivityTransition.ARRIVED -> "reached"
+            ActivityTransition.LEFT -> "left"
         }
 
 
@@ -53,6 +55,7 @@ class GeofenceWorker(
         val activityData = mapOf(
             "geofenceId" to geofenceId,
             "transitionType" to transitionType,
+            "normalizedTransitionType" to normalizedTransition.name,
             "timestamp" to timestamp,
             "dateKey" to dateKey,       // yyyy-MM-dd
             "readableTime" to readableTime,
