@@ -38,12 +38,12 @@ data class MovementActivityRecord(
 }
 
 data class CircleActivityItem(
-    val actorId: String,
-    val actorName: String,
-    val actorAvatar: String?,
-    val placeName: String,
-    val normalizedTransitionType: String,
-    val timestamp: Long
+    val actorId: String = "",
+    val actorName: String = "",
+    val actorAvatar: String? = null,
+    val placeName: String = "",
+    val normalizedTransitionType: String = "",
+    val timestamp: Long = 0L
 ) {
     fun toFirebasePayload(): Map<String, Any> = buildMap {
         put("actorId", actorId)

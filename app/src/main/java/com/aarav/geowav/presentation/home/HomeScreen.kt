@@ -87,6 +87,8 @@ import com.aarav.geowav.core.utils.SubscriptionHelper
 import com.aarav.geowav.core.utils.ViewerLocationState
 import com.aarav.geowav.core.utils.formatRemainingForEmergency
 import com.aarav.geowav.core.utils.formatTime
+import com.aarav.geowav.data.model.ActivityTransition
+import com.aarav.geowav.data.model.CircleActivityItem
 import com.aarav.geowav.data.model.CircleMember
 import com.aarav.geowav.data.model.Place
 import com.aarav.geowav.data.model.User
@@ -441,7 +443,11 @@ fun GeoWavHomeScreen(
                             }
                         }
 
-                        RecentAlertsList(uiState.alertsList.take(5), isDarkThemeEnabled)
+                        RecentAlertsList(
+                            activities = uiState.awarenessItems,
+                            currentUserId = uiState.currentUser?.userId ?: homeScreenVM.viewerId,
+                            isDarkThemeEnabled = isDarkThemeEnabled
+                        )
 
 
                         Spacer(modifier = Modifier.height(28.dp))
@@ -1160,7 +1166,8 @@ fun QuickActionButton(
 
 @Composable
 fun RecentAlertsList(
-    alerts: List<com.aarav.geowav.data.model.GeoAlert>,
+    activities: List<CircleActivityItem>,
+    currentUserId: String,
     isDarkThemeEnabled: Boolean
 ) {
 
@@ -1171,7 +1178,7 @@ fun RecentAlertsList(
             .fillMaxWidth()
             .padding(vertical = 8.dp)
     ) {
-        if (alerts.isEmpty()) {
+        if (activities.isEmpty()) {
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -1195,7 +1202,7 @@ fun RecentAlertsList(
                 }
 
                 Text(
-                    "No movement events today",
+                    "No recent movement updates",
                     style = MaterialTheme.typography.bodySmall.copy(
                         color = MaterialTheme.colorScheme.onBackground,
                         fontFamily = manrope,
@@ -1215,7 +1222,114 @@ fun RecentAlertsList(
                 )
             }
         } else {
-            alerts.forEach { alert -> AlertItem(alert, isDarkThemeEnabled) }
+            activities.forEach { activity ->
+                AwarenessItem(
+                    activity = activity,
+                    currentUserId = currentUserId,
+                    isDarkThemeEnabled = isDarkThemeEnabled
+                )
+            }
+        }
+    }
+}
+
+@Composable
+fun AwarenessItem(
+    activity: CircleActivityItem,
+    currentUserId: String,
+    isDarkThemeEnabled: Boolean,
+    modifier: Modifier = Modifier
+) {
+    val isArrival = activity.normalizedTransitionType == ActivityTransition.ARRIVED.name
+    val actorLabel = if (activity.actorId == currentUserId) "You" else activity.actorName
+    val title = if (isArrival) {
+        "$actorLabel arrived at ${activity.placeName}"
+    } else {
+        "$actorLabel left ${activity.placeName}"
+    }
+    val relativeTime = buildRelativeSubtitle(
+        type = if (isArrival) "enter" else "exit",
+        timestamp = activity.timestamp
+    )
+    val accentColor = if (isArrival) {
+        MaterialTheme.colorScheme.tertiary
+    } else {
+        MaterialTheme.colorScheme.error
+    }
+    val containerColor = if (isDarkThemeEnabled) {
+        MaterialTheme.colorScheme.surfaceContainerHigh.copy(alpha = 0.72f)
+    } else {
+        MaterialTheme.colorScheme.surfaceContainerLowest
+    }
+
+    Card(
+        shape = RoundedCornerShape(14.dp),
+        modifier = modifier.fillMaxWidth(),
+        border = BorderStroke(
+            1.dp,
+            MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.26f)
+        ),
+        colors = CardDefaults.cardColors(
+            containerColor = containerColor,
+            contentColor = MaterialTheme.colorScheme.onSurface
+        )
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 12.dp, vertical = 10.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Box(
+                modifier = Modifier
+                    .size(40.dp)
+                    .clip(RoundedCornerShape(10.dp))
+                    .background(accentColor.copy(alpha = 0.12f)),
+                contentAlignment = Alignment.Center
+            ) {
+                Icon(
+                    painter = painterResource(R.drawable.map_pin),
+                    contentDescription = null,
+                    modifier = Modifier.size(22.dp),
+                    tint = accentColor
+                )
+            }
+
+            Spacer(modifier = Modifier.width(12.dp))
+            Column(
+                modifier = Modifier.weight(1f),
+                verticalArrangement = Arrangement.spacedBy(3.dp)
+            ) {
+                Text(
+                    title,
+                    fontSize = 14.sp,
+                    color = MaterialTheme.colorScheme.onSurface,
+                    style = MaterialTheme.typography.bodyMedium.copy(
+                        fontWeight = FontWeight.SemiBold,
+                        fontFamily = manrope
+                    )
+                )
+                Text(
+                    relativeTime,
+                    fontSize = 12.sp,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    style = MaterialTheme.typography.bodySmall.copy(fontFamily = manrope)
+                )
+            }
+
+            Surface(
+                color = accentColor.copy(alpha = 0.10f),
+                contentColor = accentColor,
+                shape = RoundedCornerShape(50)
+            ) {
+                Text(
+                    if (isArrival) "Arrived" else "Left",
+                    modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp),
+                    fontFamily = manrope,
+                    fontWeight = FontWeight.SemiBold,
+                    fontSize = 11.sp
+                )
+            }
         }
     }
 }
