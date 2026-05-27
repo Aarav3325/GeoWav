@@ -5,12 +5,8 @@ import android.util.Log
 import androidx.work.Worker
 import androidx.work.WorkerParameters
 import com.aarav.geowav.data.model.ActivityTransition
-import com.aarav.geowav.data.model.Component
-import com.aarav.geowav.data.model.Language
-import com.aarav.geowav.data.model.Parameter
-import com.aarav.geowav.data.model.Template
-import com.aarav.geowav.data.model.TemplateMessageRequest
-import com.aarav.geowav.data.repository.MessageRepo
+import com.aarav.geowav.data.model.MovementActivityRecord
+import com.aarav.geowav.data.repository.ActivityWriteRepository
 import com.google.firebase.remoteconfig.FirebaseRemoteConfig
 import java.text.SimpleDateFormat
 import java.util.Date
@@ -30,13 +26,6 @@ class GeofenceWorker(
         val transitionTypeRaw = inputData.getString("transitionType") ?: return Result.failure()
         val normalizedTransition = ActivityTransition.fromRaw(transitionTypeRaw)
             ?: return Result.failure()
-        val transitionType = when (normalizedTransition) {
-            ActivityTransition.ARRIVED -> "reached"
-            ActivityTransition.LEFT -> "left"
-        }
-
-
-        val userId = "user123"
 
         val timestamp = System.currentTimeMillis()
         val readableTime = SimpleDateFormat("h:mm a", Locale.getDefault()).format(Date(timestamp))
@@ -52,47 +41,23 @@ class GeofenceWorker(
         }
 
 
-        val activityData = mapOf(
-            "geofenceId" to geofenceId,
-            "transitionType" to transitionType,
-            "normalizedTransitionType" to normalizedTransition.name,
-            "timestamp" to timestamp,
-            "dateKey" to dateKey,       // yyyy-MM-dd
-            "readableTime" to readableTime,
-            "location" to mapOf(
-                "latitude" to latitude,
-                "longitude" to longitude
-            )
+        val activity = MovementActivityRecord(
+            placeName = geofenceId,
+            transition = normalizedTransition,
+            timestamp = timestamp,
+            dateKey = dateKey,
+            readableTime = readableTime,
+            latitude = latitude,
+            longitude = longitude
         )
 
-
-        // Changes - 1. phoneNumber field 2. fetch user name
-
-        val templateRequest = TemplateMessageRequest(
-            messaging_product = "whatsapp",
-            to = "919558030582",
-            type = "template",
-            template = Template(
-                name = "geowav_location_update",
-                language = Language("en"),
-                components = listOf(
-                    Component(
-                        type = "body",
-                        parameters = listOf(
-                            Parameter("text", "user_name", "Aarav"),
-                            Parameter("text", "action", "$transitionType $geofenceId"),
-                            Parameter("text", "time", readableTime)
-                        )
-                    )
-                )
-            )
-        )
-
-        // Send message via WhatsApp Cloud API and register event in rtdb
-        val messageRepo = MessageRepo()
-        messageRepo.sendMessageSync(templateRequest, activityData)
-
-        return Result.success()
+        return try {
+            ActivityWriteRepository().recordMovementActivity(activity)
+            Result.success()
+        } catch (error: Exception) {
+            Log.e("MYTAG", "Failed to record geofence activity", error)
+            Result.retry()
+        }
 
     }
 }
