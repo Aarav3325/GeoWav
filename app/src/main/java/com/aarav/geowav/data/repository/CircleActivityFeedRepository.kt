@@ -1,5 +1,7 @@
 package com.aarav.geowav.data.repository
 
+import com.aarav.geowav.core.utils.ActivityFilter
+import com.aarav.geowav.core.utils.rangeForFilter
 import com.aarav.geowav.data.model.ActivityTransition
 import com.aarav.geowav.data.model.CircleActivityItem
 import com.google.firebase.auth.FirebaseAuth
@@ -17,13 +19,32 @@ class CircleActivityFeedRepository @Inject constructor(
     private val firebaseAuth: FirebaseAuth
 ) {
     fun observeRecentActivity(limit: Int = 5): Flow<List<CircleActivityItem>> = callbackFlow {
-        val viewerId = firebaseAuth.currentUser?.uid
-            ?: throw IllegalStateException("User not logged in")
-        val query = firebaseDatabase.getReference("circle_activity")
-            .child(viewerId)
+        val query = activityRef()
             .orderByChild("timestamp")
             .limitToLast(limit)
 
+        observeQuery(query)
+    }
+
+    fun observeActivity(filter: ActivityFilter): Flow<List<CircleActivityItem>> = callbackFlow {
+        val timeRange = rangeForFilter(filter)
+        val query = activityRef()
+            .orderByChild("timestamp")
+            .startAt(timeRange.startMillis.toDouble())
+            .endAt(timeRange.endMillis.toDouble())
+
+        observeQuery(query)
+    }
+
+    private fun activityRef() = firebaseDatabase.getReference("circle_activity")
+        .child(
+            firebaseAuth.currentUser?.uid
+                ?: throw IllegalStateException("User not logged in")
+        )
+
+    private suspend fun kotlinx.coroutines.channels.ProducerScope<List<CircleActivityItem>>.observeQuery(
+        query: com.google.firebase.database.Query
+    ) {
         val listener = object : ValueEventListener {
             override fun onDataChange(snapshot: DataSnapshot) {
                 val activities = snapshot.children.mapNotNull { child ->

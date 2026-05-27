@@ -3,8 +3,9 @@ package com.aarav.geowav.presentation.activity
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.aarav.geowav.core.utils.ActivityFilter
-import com.aarav.geowav.data.model.GeoAlert
-import com.aarav.geowav.domain.repository.GeoActivityRepository
+import com.aarav.geowav.data.authentication.GoogleSignInClient
+import com.aarav.geowav.data.model.CircleActivityItem
+import com.aarav.geowav.data.repository.CircleActivityFeedRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -18,9 +19,13 @@ import javax.inject.Inject
 
 @HiltViewModel
 class ActivityViewModel
-@Inject constructor(val activityRepository: GeoActivityRepository) : ViewModel() {
+@Inject constructor(
+    private val circleActivityFeedRepository: CircleActivityFeedRepository,
+    googleSignInClient: GoogleSignInClient
+) : ViewModel() {
     private val _uiState = MutableStateFlow(ActivityUiState())
     val uiState: StateFlow<ActivityUiState> = _uiState.asStateFlow()
+    val viewerId: String = googleSignInClient.getUserId()
 
     private var observeJob: Job? = null
 
@@ -48,20 +53,20 @@ class ActivityViewModel
         }
 
         observeJob = viewModelScope.launch {
-            activityRepository.observeAlerts(filter)
+            circleActivityFeedRepository.observeActivity(filter)
                 .catch { e ->
                     _uiState.update {
                         it.copy(
                             isLoading = false,
                             error = e.message,
-                            alerts = emptyList()
+                            activities = emptyList()
                         )
                     }
                 }
-                .collectLatest { alerts ->
+                .collectLatest { activities ->
                     _uiState.update {
                         it.copy(
-                            alerts = alerts,
+                            activities = activities,
                             isLoading = false,
                             error = null
                         )
@@ -85,7 +90,7 @@ class ActivityViewModel
 }
 
 data class ActivityUiState(
-    val alerts: List<GeoAlert> = emptyList(),
+    val activities: List<CircleActivityItem> = emptyList(),
     val isLoading: Boolean = true,
     val error: String? = null,
     val showDatePicker: Boolean = false,

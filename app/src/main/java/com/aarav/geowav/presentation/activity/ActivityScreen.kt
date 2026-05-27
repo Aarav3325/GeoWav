@@ -56,7 +56,7 @@ import com.aarav.geowav.data.model.UserPlan
 import com.aarav.geowav.presentation.components.CustomBottomSheet
 import com.aarav.geowav.presentation.components.MyAlertDialog
 import com.aarav.geowav.presentation.components.UpgradeBottomSheetContent
-import com.aarav.geowav.presentation.home.AlertItem
+import com.aarav.geowav.presentation.home.AwarenessItem
 import com.aarav.geowav.presentation.subscription.SubscriptionViewModel
 import com.aarav.geowav.presentation.theme.manrope
 import java.time.LocalDate
@@ -133,7 +133,7 @@ fun ActivityScreen(
                 color = MaterialTheme.colorScheme.onBackground
             )
             Text(
-                text = "Your movement history",
+                text = "Movement updates from your circle",
                 fontSize = 13.sp,
                 fontFamily = manrope,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
@@ -156,7 +156,11 @@ fun ActivityScreen(
             modifier = Modifier.padding(top = 8.dp)
             )
 
-        ActivityContent(isDarkThemeEnabled, uiState)
+        ActivityContent(
+            isDarkThemeEnabled = isDarkThemeEnabled,
+            currentUserId = activityViewModel.viewerId,
+            uiState = uiState
+        )
 
         if (uiState.showDatePicker) {
             DateRangePickerModal(onDateRangeSelected = { (from, to) ->
@@ -231,6 +235,7 @@ fun DateRangePickerModal(
 @Composable
 fun ActivityContent(
     isDarkThemeEnabled: Boolean,
+    currentUserId: String,
     uiState: ActivityUiState
 ) {
     Box(
@@ -262,7 +267,7 @@ fun ActivityContent(
                 }
             }
 
-            uiState.alerts.isEmpty() -> {
+            uiState.activities.isEmpty() -> {
                 Column(
                     horizontalAlignment = Alignment.CenterHorizontally,
                     verticalArrangement = Arrangement.spacedBy(4.dp),
@@ -286,7 +291,7 @@ fun ActivityContent(
                         color = MaterialTheme.colorScheme.onBackground
                     )
                     Text(
-                        text = "It's quiet right now. Your movement history will appear here.",
+                        text = "It's quiet right now. Circle movement updates will appear here.",
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
@@ -300,8 +305,13 @@ fun ActivityContent(
                         .fillMaxSize(),
                     verticalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
-                    items(uiState.alerts) { alert ->
-                        AlertItem(alert, isDarkThemeEnabled, Modifier.padding(horizontal = 12.dp))
+                    items(uiState.activities) { activity ->
+                        AwarenessItem(
+                            activity = activity,
+                            currentUserId = currentUserId,
+                            isDarkThemeEnabled = isDarkThemeEnabled,
+                            modifier = Modifier.padding(horizontal = 12.dp)
+                        )
                     }
 
                     item {
