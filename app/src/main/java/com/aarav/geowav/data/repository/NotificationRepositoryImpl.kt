@@ -53,7 +53,7 @@ class NotificationRepositoryImpl @Inject constructor(
 
         listenToInvites(userId)
         listenToCircle(userId)
-        members.forEach { memberId ->
+        members.filterNot { it == userId }.forEach { memberId ->
 
             if (!listenerMap.containsKey(memberId)) {
                 attachSharingListener(memberId, userId)
