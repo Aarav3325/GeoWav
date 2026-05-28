@@ -4,20 +4,28 @@ import android.util.Log
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.input.clearText
 import androidx.compose.foundation.text.input.rememberTextFieldState
 import androidx.compose.material3.ContainedLoadingIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
+import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
@@ -34,7 +42,10 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import com.aarav.geowav.R
 import com.aarav.geowav.presentation.components.MyAlertDialog
 import com.aarav.geowav.presentation.components.PermissionRequiredContent
@@ -62,6 +73,7 @@ fun MapScreen(
     location: Pair<Double, Double>?,
     hasForegroundLocationPermission: Boolean,
     navigateToAddPlace: (String) -> Unit,
+    navigateToManualAddPlace: (Double, Double) -> Unit,
     navigateToSettings: () -> Unit,
     navigateToHome: () -> Unit,
     modifier: Modifier = Modifier
@@ -95,6 +107,7 @@ fun MapScreen(
     }
 
     val selectedPlace = uiState.selectedPlace
+    val manualSelectedLatLng = uiState.manualSelectedLatLng
 
     location?.let { (lat, lng) ->
         LaunchedEffect(lat, lng) {
@@ -150,7 +163,7 @@ fun MapScreen(
             )
         },
         floatingActionButton = {
-            if(hasForegroundLocationPermission) {
+            if(hasForegroundLocationPermission && manualSelectedLatLng == null) {
                 FloatingActionButton(
                     shape = RoundedCornerShape(16.dp),
                     containerColor = MaterialTheme.colorScheme.primary,
@@ -228,7 +241,10 @@ fun MapScreen(
                     mapLoaded = true
                 },
                 cameraPositionState = cameraPositionState,
-                onMapClick = { /* later we'll handle adding a place */ }
+                onMapClick = { /* Search remains the tap-first path for known places. */ },
+                onMapLongClick = { latLng ->
+                    mapViewModel.selectManualPlace(latLng)
+                }
             ) {
                 /* place.let {
                        Marker(
@@ -251,6 +267,13 @@ fun MapScreen(
                             return@Marker true
                         },
                         title = selectedPlace?.displayName
+                    )
+                }
+
+                manualSelectedLatLng?.let { latLng ->
+                    Marker(
+                        state = MarkerState(position = latLng),
+                        title = "Dropped pin"
                     )
                 }
             }
@@ -308,6 +331,17 @@ fun MapScreen(
                 },
                 textFieldState = textFieldState
             )
+
+            manualSelectedLatLng?.let { latLng ->
+                ManualPlacePreview(
+                    modifier = Modifier
+                        .align(Alignment.BottomCenter)
+                        .padding(horizontal = 16.dp, vertical = 24.dp),
+                    onContinue = {
+                        navigateToManualAddPlace(latLng.latitude, latLng.longitude)
+                    }
+                )
+            }
             /*
              {
                 location?.let { (lat, lng) ->
@@ -319,5 +353,78 @@ fun MapScreen(
 
         }
 
+    }
+}
+
+@Composable
+private fun ManualPlacePreview(
+    onContinue: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    Surface(
+        modifier = modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(18.dp),
+        tonalElevation = 6.dp,
+        shadowElevation = 8.dp,
+        color = MaterialTheme.colorScheme.surface.copy(alpha = 0.96f),
+        contentColor = MaterialTheme.colorScheme.onSurface
+    ) {
+        Row(
+            modifier = Modifier.padding(14.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Surface(
+                modifier = Modifier.size(38.dp),
+                shape = RoundedCornerShape(12.dp),
+                color = MaterialTheme.colorScheme.secondaryContainer
+            ) {
+                Icon(
+                    painter = painterResource(R.drawable.map_pin_area),
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.onSecondaryContainer,
+                    modifier = Modifier.padding(8.dp)
+                )
+            }
+
+            Spacer(Modifier.width(12.dp))
+
+            Column(
+                modifier = Modifier.weight(1f)
+            ) {
+                Text(
+                    text = "Dropped pin",
+                    fontFamily = manrope,
+                    fontWeight = FontWeight.SemiBold,
+                    fontSize = 16.sp,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
+                )
+
+                Spacer(Modifier.height(2.dp))
+
+                Text(
+                    text = "Approximate place",
+                    fontFamily = manrope,
+                    fontWeight = FontWeight.Normal,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    fontSize = 13.sp,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
+                )
+            }
+
+            Spacer(Modifier.width(12.dp))
+
+            FilledTonalButton(
+                onClick = onContinue,
+                shape = RoundedCornerShape(10.dp)
+            ) {
+                Text(
+                    text = "Continue",
+                    fontFamily = manrope,
+                    fontWeight = FontWeight.SemiBold
+                )
+            }
+        }
     }
 }

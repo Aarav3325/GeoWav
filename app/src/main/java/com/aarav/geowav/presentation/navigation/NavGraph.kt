@@ -35,6 +35,7 @@ import com.aarav.geowav.presentation.subscription.SubscriptionViewModel
 import com.aarav.geowav.presentation.timeline.TimelineMapPreview
 import com.aarav.geowav.presentation.timeline.TimelineScreen
 import com.aarav.geowav.presentation.yourplace.YourPlacesScreen
+import com.google.android.gms.maps.model.LatLng
 
 @Composable
 fun NavGraph(
@@ -200,6 +201,9 @@ fun AddMapsScreen(
             navigateToAddPlace = { id ->
                 navController.navigate(NavRoute.AddPlace.createRoute(id))
             },
+            navigateToManualAddPlace = { lat, lng ->
+                navController.navigate(NavRoute.ManualAddPlace.createRoute(lat, lng))
+            },
             navigateToSettings = {
                 navController.navigate(NavRoute.Settings.path)
             },
@@ -218,6 +222,48 @@ fun AddNewPlaceScreen(
     locationServicesReady: Boolean
 ) {
     navGraphBuilder.composable(
+        route = NavRoute.ManualAddPlace.path.plus("/{lat}/{lng}"),
+        arguments = listOf(
+            navArgument("lat") {
+                type = NavType.StringType
+            },
+            navArgument("lng") {
+                type = NavType.StringType
+            }
+        )
+    ) {
+        val lat = it.arguments?.getString("lat")?.toDoubleOrNull()
+        val lng = it.arguments?.getString("lng")?.toDoubleOrNull()
+        val manualLatLng = if (lat != null && lng != null) LatLng(lat, lng) else null
+
+        AddPlaceScreen(
+            isDarkThemeEnabled,
+            placeId = null,
+            manualLatLng = manualLatLng,
+            navigateToMaps = {
+                navController.navigateUp()
+            },
+            navigateToPaywall = {
+                navController.navigate(NavRoute.Paywall.path)
+            },
+            navigateToYourPlaces = {
+                navController.navigate(NavRoute.YourPlaces.path) {
+                    popUpTo(navController.graph.startDestinationId) {
+                        inclusive = false
+                    }
+                    launchSingleTop = true
+                }
+            },
+            navigateToSettings = {
+                navController.navigate(NavRoute.Settings.path)
+            },
+            locationServicesReady = locationServicesReady,
+            subscriptionVM = subscriptionVM,
+            placeViewModel = hiltViewModel()
+        )
+    }
+
+    navGraphBuilder.composable(
         route = NavRoute.AddPlace.path.plus("/{placeId}"),
         arguments = listOf(
             navArgument("placeId") {
@@ -225,11 +271,11 @@ fun AddNewPlaceScreen(
             }
         )
     ) {
-        val placeId = it.arguments?.get("placeId").toString()
+        val placeId = it.arguments?.getString("placeId").orEmpty()
 
         AddPlaceScreen(
             isDarkThemeEnabled,
-            placeId,
+            placeId = placeId,
             navigateToMaps = {
                 navController.navigateUp()
             },
@@ -635,4 +681,3 @@ fun AddProfileScreen(
         )
     }
 }
-

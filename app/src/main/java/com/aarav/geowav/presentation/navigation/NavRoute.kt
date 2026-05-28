@@ -28,6 +28,12 @@ sealed class NavRoute(val path: String) {
         }
     }
 
+    object ManualAddPlace : NavRoute("addPlace/manual") {
+        fun createRoute(lat: Double, lng: Double): String {
+            return "addPlace/manual/$lat/$lng"
+        }
+    }
+
     object YourPlaces : NavRoute("yourPlaces")
     object SignUp : NavRoute("signUp")
     object Login : NavRoute("login")

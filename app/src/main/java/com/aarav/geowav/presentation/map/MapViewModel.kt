@@ -5,6 +5,7 @@ import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.aarav.geowav.domain.repository.PlaceRepository
 import com.aarav.geowav.core.utils.Resource
+import com.google.android.gms.maps.model.LatLng
 import com.google.android.libraries.places.api.model.AutocompletePrediction
 import com.google.android.libraries.places.api.model.Place
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -53,6 +54,7 @@ class MapViewModel @Inject constructor(application: Application,
                     _uiState.update {
                         it.copy(
                             selectedPlace = result.data,
+                            manualSelectedLatLng = null,
                             isLoading = false,
                             isBottomSheetShowing = true,
                             isSearchExpanded = false,
@@ -131,6 +133,20 @@ class MapViewModel @Inject constructor(application: Application,
         }
     }
 
+    fun selectManualPlace(latLng: LatLng) {
+        _uiState.update {
+            it.copy(
+                manualSelectedLatLng = latLng,
+                selectedPlace = null,
+                isBottomSheetShowing = false,
+                isSearchExpanded = false,
+                predictions = emptyList(),
+                error = null,
+                showErrorDialog = false
+            )
+        }
+    }
+
     fun dismissBottomSheet() {
         _uiState.update {
             it.copy(
@@ -155,6 +171,7 @@ data class MapScreenUiState(
     val isSearchExpanded: Boolean = false,
     val isBottomSheetShowing: Boolean = false,
     val selectedPlace: Place? = null,
+    val manualSelectedLatLng: LatLng? = null,
     val showErrorDialog: Boolean = false,
     val isLoading: Boolean = false,
     val error: String? = null,
