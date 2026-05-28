@@ -109,10 +109,16 @@ fun MapScreen(
     val selectedPlace = uiState.selectedPlace
     val manualSelectedLatLng = uiState.manualSelectedLatLng
     val manualPlaceAddress = uiState.manualPlaceAddress
+    var hasCenteredOnInitialLocation by remember {
+        mutableStateOf(false)
+    }
 
     location?.let { (lat, lng) ->
-        LaunchedEffect(lat, lng) {
+        LaunchedEffect(location) {
+            if (hasCenteredOnInitialLocation) return@LaunchedEffect
+
             cameraPositionState.position = CameraPosition.fromLatLngZoom(LatLng(lat, lng), 16f)
+            hasCenteredOnInitialLocation = true
         }
     }
 
