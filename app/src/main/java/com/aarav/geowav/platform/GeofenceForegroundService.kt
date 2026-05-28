@@ -136,10 +136,7 @@ class GeofenceForegroundService : Service() {
                 .build()
         }
 
-        val geofencingRequest = GeofencingRequest.Builder().setInitialTrigger(
-            GeofencingRequest.INITIAL_TRIGGER_ENTER
-            //or GeofencingRequest.INITIAL_TRIGGER_EXIT
-        )
+        val geofencingRequest = GeofencingRequest.Builder().setInitialTrigger(0)
             .addGeofences(geofenceList)
             .build()
 

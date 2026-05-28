@@ -23,9 +23,7 @@ class GeofenceHelper @Inject constructor(@ApplicationContext val context: Contex
 
     fun createGeofencingRequest(geofence: Geofence): GeofencingRequest {
         return GeofencingRequest.Builder()
-            .setInitialTrigger(
-                GeofencingRequest.INITIAL_TRIGGER_ENTER or GeofencingRequest.INITIAL_TRIGGER_EXIT
-            )
+            .setInitialTrigger(0)
             .addGeofence(geofence)
             .build()
     }
