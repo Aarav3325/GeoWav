@@ -1,6 +1,7 @@
 package com.aarav.geowav.data.mapper
 
 import com.aarav.geowav.data.model.GeoAlert
+import com.aarav.geowav.data.model.ActivityTransition
 
 data class FirebaseLocation(
     val latitude: Double? = null,
@@ -9,7 +10,8 @@ data class FirebaseLocation(
 
 data class FirebaseActivity(
     val geofenceId: String? = null,
-    val transitionType: String? = null,  // "ENTER" / "EXIT"
+    val transitionType: String? = null,
+    val normalizedTransitionType: String? = null, // "ARRIVED" / "LEFT"
     val timestamp: Long? = null,
     val dateKey: String? = null,         // "yyyy-MM-dd"
     val readableTime: String? = null,    // "5:42 PM"
@@ -20,12 +22,16 @@ data class FirebaseActivity(
 // Mappers.kt
 fun FirebaseActivity.toGeoAlert(id: String, username: String): GeoAlert? {
     val geofenceId = geofenceId ?: return null
-    val transition = transitionType ?: "UNKNOWN"
     val readable = readableTime ?: ""
 
 
     val ts = timestamp ?: return null
-    val type = if (transition.equals("reached", ignoreCase = true)) "enter" else "exit"
+    val transition = ActivityTransition.fromRaw(normalizedTransitionType ?: transitionType)
+        ?: return null
+    val type = when (transition) {
+        ActivityTransition.ARRIVED -> "enter"
+        ActivityTransition.LEFT -> "exit"
+    }
 
     val zoneLabel = geofenceId
 

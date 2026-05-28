@@ -17,7 +17,9 @@ import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ContainedLoadingIndicator
 import androidx.compose.material3.DatePickerDialog
 import androidx.compose.material3.DateRangePicker
@@ -32,7 +34,9 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.rememberDateRangePickerState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -56,7 +60,7 @@ import com.aarav.geowav.data.model.UserPlan
 import com.aarav.geowav.presentation.components.CustomBottomSheet
 import com.aarav.geowav.presentation.components.MyAlertDialog
 import com.aarav.geowav.presentation.components.UpgradeBottomSheetContent
-import com.aarav.geowav.presentation.home.AlertItem
+import com.aarav.geowav.presentation.home.AwarenessItem
 import com.aarav.geowav.presentation.subscription.SubscriptionViewModel
 import com.aarav.geowav.presentation.theme.manrope
 import java.time.LocalDate
@@ -133,7 +137,7 @@ fun ActivityScreen(
                 color = MaterialTheme.colorScheme.onBackground
             )
             Text(
-                text = "Your movement history",
+                text = "Movement updates from your circle",
                 fontSize = 13.sp,
                 fontFamily = manrope,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
@@ -156,7 +160,12 @@ fun ActivityScreen(
             modifier = Modifier.padding(top = 8.dp)
             )
 
-        ActivityContent(isDarkThemeEnabled, uiState)
+        ActivityContent(
+            isDarkThemeEnabled = isDarkThemeEnabled,
+            currentUserId = activityViewModel.viewerId,
+            uiState = uiState,
+            onLoadMore = activityViewModel::loadMore
+        )
 
         if (uiState.showDatePicker) {
             DateRangePickerModal(onDateRangeSelected = { (from, to) ->
@@ -231,7 +240,9 @@ fun DateRangePickerModal(
 @Composable
 fun ActivityContent(
     isDarkThemeEnabled: Boolean,
-    uiState: ActivityUiState
+    currentUserId: String,
+    uiState: ActivityUiState,
+    onLoadMore: () -> Unit
 ) {
     Box(
         modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center
@@ -262,7 +273,7 @@ fun ActivityContent(
                 }
             }
 
-            uiState.alerts.isEmpty() -> {
+            uiState.activities.isEmpty() -> {
                 Column(
                     horizontalAlignment = Alignment.CenterHorizontally,
                     verticalArrangement = Arrangement.spacedBy(4.dp),
@@ -286,7 +297,7 @@ fun ActivityContent(
                         color = MaterialTheme.colorScheme.onBackground
                     )
                     Text(
-                        text = "It's quiet right now. Your movement history will appear here.",
+                        text = "It's quiet right now. Circle movement updates will appear here.",
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
@@ -294,18 +305,53 @@ fun ActivityContent(
             }
 
             else -> {
+                val listState = rememberLazyListState()
+                val shouldLoadMore by remember {
+                    derivedStateOf {
+                        val lastVisibleIndex = listState.layoutInfo.visibleItemsInfo.lastOrNull()?.index
+                            ?: return@derivedStateOf false
+                        lastVisibleIndex >= listState.layoutInfo.totalItemsCount - 5
+                    }
+                }
+
+                LaunchedEffect(shouldLoadMore, uiState.hasMore, uiState.isLoadingMore) {
+                    if (shouldLoadMore && uiState.hasMore && !uiState.isLoadingMore) {
+                        onLoadMore()
+                    }
+                }
+
                 LazyColumn(
+                    state = listState,
                     modifier = Modifier
                         .padding(top = 12.dp)
                         .fillMaxSize(),
                     verticalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
-                    items(uiState.alerts) { alert ->
-                        AlertItem(alert, isDarkThemeEnabled, Modifier.padding(horizontal = 12.dp))
+                    items(uiState.activities) { activity ->
+                        AwarenessItem(
+                            activity = activity,
+                            currentUserId = currentUserId,
+                            isDarkThemeEnabled = isDarkThemeEnabled,
+                            modifier = Modifier.padding(horizontal = 12.dp)
+                        )
                     }
 
                     item {
-                        Spacer(modifier = Modifier.height(16.dp))
+                        if (uiState.isLoadingMore) {
+                            Box(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(vertical = 16.dp),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                CircularProgressIndicator(
+                                    modifier = Modifier.size(24.dp),
+                                    strokeWidth = 2.dp
+                                )
+                            }
+                        } else {
+                            Spacer(modifier = Modifier.height(16.dp))
+                        }
                     }
                 }
             }

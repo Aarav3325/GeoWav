@@ -3,8 +3,10 @@ package com.aarav.geowav.presentation.activity
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.aarav.geowav.core.utils.ActivityFilter
-import com.aarav.geowav.data.model.GeoAlert
-import com.aarav.geowav.domain.repository.GeoActivityRepository
+import com.aarav.geowav.data.authentication.GoogleSignInClient
+import com.aarav.geowav.data.model.CircleActivityItem
+import com.aarav.geowav.data.repository.CircleActivityFeedRepository
+import com.aarav.geowav.data.repository.CircleActivityFeedRepository.Companion.ACTIVITY_PAGE_SIZE
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -18,11 +20,16 @@ import javax.inject.Inject
 
 @HiltViewModel
 class ActivityViewModel
-@Inject constructor(val activityRepository: GeoActivityRepository) : ViewModel() {
+@Inject constructor(
+    private val circleActivityFeedRepository: CircleActivityFeedRepository,
+    googleSignInClient: GoogleSignInClient
+) : ViewModel() {
     private val _uiState = MutableStateFlow(ActivityUiState())
     val uiState: StateFlow<ActivityUiState> = _uiState.asStateFlow()
+    val viewerId: String = googleSignInClient.getUserId()
 
     private var observeJob: Job? = null
+    private var olderPageItems: List<CircleActivityItem> = emptyList()
 
     init {
         observeForFilter(ActivityFilter.Today)
@@ -33,35 +40,40 @@ class ActivityViewModel
         observeForFilter(newFilter)
     }
 
-
-
-
     fun observeForFilter(filter: ActivityFilter) {
         observeJob?.cancel()
 
         _uiState.update {
             it.copy(
                 currentFilter = filter,
+                activities = emptyList(),
                 isLoading = true,
+                isLoadingMore = false,
+                hasMore = true,
                 error = null
             )
         }
+        olderPageItems = emptyList()
 
         observeJob = viewModelScope.launch {
-            activityRepository.observeAlerts(filter)
+            circleActivityFeedRepository.observeActivityPage(filter)
                 .catch { e ->
                     _uiState.update {
                         it.copy(
                             isLoading = false,
+                            isLoadingMore = false,
                             error = e.message,
-                            alerts = emptyList()
+                            activities = emptyList()
                         )
                     }
                 }
-                .collectLatest { alerts ->
+                .collectLatest { activities ->
+                    val mergedActivities = mergeActivities(activities, olderPageItems)
                     _uiState.update {
                         it.copy(
-                            alerts = alerts,
+                            activities = mergedActivities,
+                            oldestLoadedTimestamp = mergedActivities.minOfOrNull { item -> item.timestamp },
+                            hasMore = activities.size == ACTIVITY_PAGE_SIZE,
                             isLoading = false,
                             error = null
                         )
@@ -69,6 +81,48 @@ class ActivityViewModel
                 }
         }
 
+    }
+
+    fun loadMore() {
+        val state = _uiState.value
+        val oldestTimestamp = state.oldestLoadedTimestamp ?: return
+        if (state.isLoading || state.isLoadingMore || !state.hasMore) return
+
+        _uiState.update {
+            it.copy(
+                isLoadingMore = true,
+                loadMoreError = null
+            )
+        }
+
+        viewModelScope.launch {
+            runCatching {
+                circleActivityFeedRepository.loadOlderActivityPage(
+                    filter = state.currentFilter,
+                    olderThanTimestamp = oldestTimestamp
+                )
+            }.onSuccess { olderItems ->
+                olderPageItems = mergeActivities(olderPageItems, olderItems)
+                val currentState = _uiState.value
+                val mergedActivities = mergeActivities(currentState.activities, olderItems)
+                _uiState.update {
+                    it.copy(
+                        activities = mergedActivities,
+                        oldestLoadedTimestamp = mergedActivities.minOfOrNull { item -> item.timestamp },
+                        isLoadingMore = false,
+                        hasMore = olderItems.size == ACTIVITY_PAGE_SIZE,
+                        loadMoreError = null
+                    )
+                }
+            }.onFailure { error ->
+                _uiState.update {
+                    it.copy(
+                        isLoadingMore = false,
+                        loadMoreError = error.message
+                    )
+                }
+            }
+        }
     }
 
     fun showDatePicker() {
@@ -82,12 +136,32 @@ class ActivityViewModel
             it.copy(showDatePicker = false)
         }
     }
+
+    private fun mergeActivities(
+        currentItems: List<CircleActivityItem>,
+        newItems: List<CircleActivityItem>
+    ): List<CircleActivityItem> {
+        return (currentItems + newItems)
+            .distinctBy { item ->
+                listOf(
+                    item.actorId,
+                    item.placeName,
+                    item.normalizedTransitionType,
+                    item.timestamp
+                ).joinToString("|")
+            }
+            .sortedByDescending { it.timestamp }
+    }
 }
 
 data class ActivityUiState(
-    val alerts: List<GeoAlert> = emptyList(),
+    val activities: List<CircleActivityItem> = emptyList(),
     val isLoading: Boolean = true,
+    val isLoadingMore: Boolean = false,
+    val hasMore: Boolean = true,
+    val oldestLoadedTimestamp: Long? = null,
     val error: String? = null,
+    val loadMoreError: String? = null,
     val showDatePicker: Boolean = false,
     val currentFilter: ActivityFilter = ActivityFilter.Today
 )

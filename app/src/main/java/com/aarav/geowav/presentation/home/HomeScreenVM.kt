@@ -5,19 +5,18 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.aarav.geowav.core.permissions.GeoPermissionCoordinator
 import com.aarav.geowav.core.permissions.GeoPermissionUiState
-import com.aarav.geowav.core.utils.ActivityFilter
 import com.aarav.geowav.core.utils.Resource
 import com.aarav.geowav.core.utils.ViewerLocationState
 import com.aarav.geowav.core.utils.formatRemainingForEmergency
 import com.aarav.geowav.data.authentication.GoogleSignInClient
+import com.aarav.geowav.data.model.CircleActivityItem
 import com.aarav.geowav.data.model.CircleMember
-import com.aarav.geowav.data.model.GeoAlert
 import com.aarav.geowav.data.model.GeoConnection
 import com.aarav.geowav.data.model.Place
 import com.aarav.geowav.data.model.StayPoint
 import com.aarav.geowav.data.model.User
 import com.aarav.geowav.data.model.UserPath
-import com.aarav.geowav.data.repository.GeoActivityRepositoryImpl
+import com.aarav.geowav.data.repository.CircleActivityFeedRepository
 import com.aarav.geowav.data.repository.PlaceRepositoryImpl
 import com.aarav.geowav.domain.repository.CircleRepository
 import com.aarav.geowav.domain.repository.ViewerLocationRepository
@@ -42,7 +41,7 @@ import javax.inject.Inject
 class HomeScreenVM @Inject constructor(
     private val googleSignInClient: GoogleSignInClient,
     private val placeRepository: PlaceRepositoryImpl,
-    private val geoActivityRepositoryImpl: GeoActivityRepositoryImpl,
+    private val circleActivityFeedRepository: CircleActivityFeedRepository,
     private val circleRepository: CircleRepository,
     private val viewerLocationRepository: ViewerLocationRepository,
     private val permissionCoordinator: GeoPermissionCoordinator,
@@ -189,7 +188,7 @@ class HomeScreenVM @Inject constructor(
     val allPlaces = placeRepository.getPlaces()
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
 
-    val alerts = geoActivityRepositoryImpl.observeAlerts(ActivityFilter.Today)
+    val awarenessItems = circleActivityFeedRepository.observeRecentActivity()
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
 
     fun loadLovedOnes() {
@@ -255,13 +254,13 @@ class HomeScreenVM @Inject constructor(
         fetchUser()
 
         viewModelScope.launch {
-            combine(allPlaces, alerts) { p, a ->
-                Pair(p, a)
-            }.collect { (places, alerts) ->
+            combine(allPlaces, awarenessItems) { places, activities ->
+                Pair(places, activities)
+            }.collect { (places, activities) ->
                 _uiState.update {
                     it.copy(
                         placesList = places,
-                        alertsList = alerts
+                        awarenessItems = activities
                     )
                 }
             }
@@ -401,7 +400,7 @@ data class HomeScreenUiState(
     val lastPosition: LatLng? = null,
     val playbackIndex: Int = 0,
     val speed: Float = 1f,
-    val alertsList: List<GeoAlert> = emptyList(),
+    val awarenessItems: List<CircleActivityItem> = emptyList(),
     val currentUser: User? = null,
     val userAvatar: String? = null,
     val username: String? = null,
