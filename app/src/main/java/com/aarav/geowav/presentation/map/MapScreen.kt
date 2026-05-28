@@ -16,6 +16,8 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.input.clearText
 import androidx.compose.foundation.text.input.rememberTextFieldState
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.ContainedLoadingIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
@@ -112,6 +114,9 @@ fun MapScreen(
     var hasCenteredOnInitialLocation by remember {
         mutableStateOf(false)
     }
+    var showPlaceHelpDialog by remember {
+        mutableStateOf(false)
+    }
 
     location?.let { (lat, lng) ->
         LaunchedEffect(location) {
@@ -131,6 +136,11 @@ fun MapScreen(
     ) {
         mapViewModel.clearError()
     }
+
+    PlaceSelectionHelpDialog(
+        showDialog = showPlaceHelpDialog,
+        onDismiss = { showPlaceHelpDialog = false }
+    )
 
     LaunchedEffect(location) {
         Log.i("MYTAG", "${location?.first} and ${location?.second}")
@@ -164,6 +174,16 @@ fun MapScreen(
                         Icon(
                             painter = painterResource(R.drawable.back),
                             contentDescription = null
+                        )
+                    }
+                },
+                actions = {
+                    IconButton(
+                        onClick = { showPlaceHelpDialog = true }
+                    ) {
+                        Icon(
+                            painter = painterResource(R.drawable.info),
+                            contentDescription = "How place selection works"
                         )
                     }
                 }
@@ -349,6 +369,9 @@ fun MapScreen(
                     modifier = Modifier
                         .align(Alignment.BottomCenter)
                         .padding(horizontal = 16.dp, vertical = 24.dp),
+                    onClear = {
+                        mapViewModel.clearManualPlace()
+                    },
                     onContinue = {
                         navigateToManualAddPlace(
                             latLng.latitude,
@@ -375,6 +398,7 @@ fun MapScreen(
 @Composable
 private fun ManualPlacePreview(
     address: String,
+    onClear: () -> Unit,
     onContinue: () -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -432,6 +456,19 @@ private fun ManualPlacePreview(
 
             Spacer(Modifier.width(12.dp))
 
+            IconButton(
+                onClick = onClear,
+                modifier = Modifier.size(40.dp)
+            ) {
+                Icon(
+                    painter = painterResource(R.drawable.clear),
+                    contentDescription = "Remove dropped pin",
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+
+            Spacer(Modifier.width(4.dp))
+
             FilledTonalButton(
                 onClick = onContinue,
                 shape = RoundedCornerShape(10.dp)
@@ -443,5 +480,87 @@ private fun ManualPlacePreview(
                 )
             }
         }
+    }
+}
+
+@Composable
+private fun PlaceSelectionHelpDialog(
+    showDialog: Boolean,
+    onDismiss: () -> Unit
+) {
+    if (!showDialog) return
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        icon = {
+            Icon(
+                painter = painterResource(R.drawable.map_pin_area),
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.primary
+            )
+        },
+        title = {
+            Text(
+                text = "Choose a place",
+                fontFamily = manrope,
+                fontWeight = FontWeight.SemiBold,
+                fontSize = 18.sp
+            )
+        },
+        text = {
+            Column {
+                HelpText("Search for known businesses, addresses, or landmarks.")
+                Spacer(Modifier.height(10.dp))
+                HelpText("Long press the map to drop a pin for local spots that are not easy to search.")
+                Spacer(Modifier.height(10.dp))
+                HelpText("After selecting a place, continue to name it and set its awareness area.")
+            }
+        },
+        confirmButton = {
+            FilledTonalButton(
+                onClick = onDismiss,
+                modifier = Modifier.fillMaxWidth(),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = MaterialTheme.colorScheme.primary,
+                    contentColor = MaterialTheme.colorScheme.onPrimary
+                ),
+                shape = RoundedCornerShape(10.dp)
+            ) {
+                Text(
+                    text = "Got it",
+                    fontFamily = manrope,
+                    fontWeight = FontWeight.SemiBold
+                )
+            }
+        },
+        containerColor = MaterialTheme.colorScheme.background,
+        shape = RoundedCornerShape(18.dp)
+    )
+}
+
+@Composable
+private fun HelpText(
+    text: String
+) {
+    Row(
+        verticalAlignment = Alignment.Top
+    ) {
+        Surface(
+            modifier = Modifier
+                .padding(top = 6.dp)
+                .size(6.dp),
+            shape = RoundedCornerShape(6.dp),
+            color = MaterialTheme.colorScheme.primary
+        ) {}
+
+        Spacer(Modifier.width(10.dp))
+
+        Text(
+            text = text,
+            fontFamily = manrope,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            fontSize = 14.sp,
+            lineHeight = 20.sp
+        )
     }
 }

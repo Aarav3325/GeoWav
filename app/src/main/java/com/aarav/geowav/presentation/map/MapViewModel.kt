@@ -174,6 +174,18 @@ class MapViewModel @Inject constructor(application: Application,
         }
     }
 
+    fun clearManualPlace() {
+        manualAddressJob?.cancel()
+
+        _uiState.update {
+            it.copy(
+                manualSelectedLatLng = null,
+                manualPlaceAddress = null,
+                isManualPlaceAddressLoading = false
+            )
+        }
+    }
+
     fun dismissBottomSheet() {
         _uiState.update {
             it.copy(
