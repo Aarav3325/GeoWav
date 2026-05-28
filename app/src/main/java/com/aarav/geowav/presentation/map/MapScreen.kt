@@ -73,7 +73,7 @@ fun MapScreen(
     location: Pair<Double, Double>?,
     hasForegroundLocationPermission: Boolean,
     navigateToAddPlace: (String) -> Unit,
-    navigateToManualAddPlace: (Double, Double) -> Unit,
+    navigateToManualAddPlace: (Double, Double, String) -> Unit,
     navigateToSettings: () -> Unit,
     navigateToHome: () -> Unit,
     modifier: Modifier = Modifier
@@ -108,6 +108,7 @@ fun MapScreen(
 
     val selectedPlace = uiState.selectedPlace
     val manualSelectedLatLng = uiState.manualSelectedLatLng
+    val manualPlaceAddress = uiState.manualPlaceAddress
 
     location?.let { (lat, lng) ->
         LaunchedEffect(lat, lng) {
@@ -334,11 +335,20 @@ fun MapScreen(
 
             manualSelectedLatLng?.let { latLng ->
                 ManualPlacePreview(
+                    address = when {
+                        uiState.isManualPlaceAddressLoading -> "Finding nearby area..."
+                        !manualPlaceAddress.isNullOrBlank() -> manualPlaceAddress
+                        else -> "Approximate place"
+                    },
                     modifier = Modifier
                         .align(Alignment.BottomCenter)
                         .padding(horizontal = 16.dp, vertical = 24.dp),
                     onContinue = {
-                        navigateToManualAddPlace(latLng.latitude, latLng.longitude)
+                        navigateToManualAddPlace(
+                            latLng.latitude,
+                            latLng.longitude,
+                            manualPlaceAddress ?: "Approximate location"
+                        )
                     }
                 )
             }
@@ -358,6 +368,7 @@ fun MapScreen(
 
 @Composable
 private fun ManualPlacePreview(
+    address: String,
     onContinue: () -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -403,7 +414,7 @@ private fun ManualPlacePreview(
                 Spacer(Modifier.height(2.dp))
 
                 Text(
-                    text = "Approximate place",
+                    text = address,
                     fontFamily = manrope,
                     fontWeight = FontWeight.Normal,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,

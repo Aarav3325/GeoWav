@@ -1,5 +1,7 @@
 package com.aarav.geowav.presentation.navigation
 
+import android.net.Uri
+
 sealed class NavRoute(val path: String) {
     object HomeScreen : NavRoute("home")
     object ActivityScreen : NavRoute("activity")
@@ -29,8 +31,8 @@ sealed class NavRoute(val path: String) {
     }
 
     object ManualAddPlace : NavRoute("addPlace/manual") {
-        fun createRoute(lat: Double, lng: Double): String {
-            return "addPlace/manual/$lat/$lng"
+        fun createRoute(lat: Double, lng: Double, address: String): String {
+            return "addPlace/manual/$lat/$lng?address=${Uri.encode(address)}"
         }
     }
 

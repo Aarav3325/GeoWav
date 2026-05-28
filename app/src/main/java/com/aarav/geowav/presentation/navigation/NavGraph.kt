@@ -201,8 +201,8 @@ fun AddMapsScreen(
             navigateToAddPlace = { id ->
                 navController.navigate(NavRoute.AddPlace.createRoute(id))
             },
-            navigateToManualAddPlace = { lat, lng ->
-                navController.navigate(NavRoute.ManualAddPlace.createRoute(lat, lng))
+            navigateToManualAddPlace = { lat, lng, address ->
+                navController.navigate(NavRoute.ManualAddPlace.createRoute(lat, lng, address))
             },
             navigateToSettings = {
                 navController.navigate(NavRoute.Settings.path)
@@ -222,24 +222,30 @@ fun AddNewPlaceScreen(
     locationServicesReady: Boolean
 ) {
     navGraphBuilder.composable(
-        route = NavRoute.ManualAddPlace.path.plus("/{lat}/{lng}"),
+        route = NavRoute.ManualAddPlace.path.plus("/{lat}/{lng}?address={address}"),
         arguments = listOf(
             navArgument("lat") {
                 type = NavType.StringType
             },
             navArgument("lng") {
                 type = NavType.StringType
+            },
+            navArgument("address") {
+                type = NavType.StringType
+                defaultValue = "Approximate location"
             }
         )
     ) {
         val lat = it.arguments?.getString("lat")?.toDoubleOrNull()
         val lng = it.arguments?.getString("lng")?.toDoubleOrNull()
+        val address = it.arguments?.getString("address") ?: "Approximate location"
         val manualLatLng = if (lat != null && lng != null) LatLng(lat, lng) else null
 
         AddPlaceScreen(
             isDarkThemeEnabled,
             placeId = null,
             manualLatLng = manualLatLng,
+            manualAddress = address,
             navigateToMaps = {
                 navController.navigateUp()
             },

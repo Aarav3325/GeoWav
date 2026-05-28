@@ -82,6 +82,7 @@ fun AddPlaceScreen(
     isDarkThemeEnabled: Boolean,
     placeId: String?,
     manualLatLng: LatLng? = null,
+    manualAddress: String? = null,
     navigateToMaps: () -> Unit,
     navigateToPaywall: () -> Unit,
     navigateToYourPlaces: () -> Unit,
@@ -102,7 +103,7 @@ fun AddPlaceScreen(
     val isManualPlace = manualLatLng != null
     val placeTitle = selectedPlace?.displayName ?: if (isManualPlace) "Dropped pin" else "New Place"
     val placeAddress = selectedPlace?.shortFormattedAddress
-        ?: if (isManualPlace) "Approximate location" else "Address Unavailable"
+        ?: if (isManualPlace) manualAddress ?: "Approximate location" else "Address Unavailable"
 
     var placeName by remember {
         mutableStateOf(if (isManualPlace) "Dropped pin" else extractShortPlaceName(selectedPlace?.displayName))
