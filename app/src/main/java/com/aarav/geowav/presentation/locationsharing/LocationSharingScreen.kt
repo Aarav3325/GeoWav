@@ -47,7 +47,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.res.painterResource
@@ -64,6 +63,7 @@ import com.aarav.geowav.data.model.UpgradeReason
 import com.aarav.geowav.data.model.UserPlan
 import com.aarav.geowav.presentation.components.EmergencyShareDialog
 import com.aarav.geowav.presentation.components.CustomBottomSheet
+import com.aarav.geowav.presentation.components.IdentityAvatar
 import com.aarav.geowav.presentation.components.PermissionRequiredContent
 import com.aarav.geowav.presentation.components.SnackbarManager
 import com.aarav.geowav.presentation.components.UpgradeBottomSheetContent
@@ -679,24 +679,6 @@ fun LovedOnesCard(
     val toggleEnabled =
         locationState is LiveLocationState.NotSharing
 
-    val lovedOnes = listOf(
-        LovedOneUi(
-            "1",
-            "Mom",
-            true
-        ),
-        LovedOneUi(
-            "2",
-            "Dad",
-            true
-        ),
-        LovedOneUi(
-            "3",
-            "Brother",
-            true
-        ),
-    )
-
     Card(
         modifier = Modifier
             .fillMaxWidth()
@@ -738,8 +720,8 @@ fun LovedOnesCard(
             when (locationState) {
                 LiveLocationState.NotSharing -> {
                     Text(
-                        "You are not sharing your live location with anyone currently",
-                        color = MaterialTheme.colorScheme.onBackground,
+                        "When you start sharing, these people will be able to see your live location.",
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
                         style = MaterialTheme.typography.headlineSmall.copy(
                             fontWeight = FontWeight.Normal,
                             fontFamily = manrope,
@@ -757,16 +739,11 @@ fun LovedOnesCard(
             }
 
             if (!expanded) {
-                when (locationState) {
-                    is LiveLocationState.Sharing -> {
-                        CollapsedLovedOnes(
-                            lovedOnesList,
-                            selectedViewerIds
-                        )
-                    }
-
-                    else -> {}
-                }
+                CollapsedLovedOnes(
+                    lovedOnes = lovedOnesList,
+                    selectedViewerIds = selectedViewerIds,
+                    locationState = locationState
+                )
             } else {
                 ExpandedLovedOnes(
                     lovedOnesList,
@@ -808,119 +785,100 @@ fun ExpandedLovedOnes(
 @Composable
 private fun CollapsedLovedOnes(
     lovedOnes: List<CircleMember>,
-    selectedViewerIds: Set<String>
+    selectedViewerIds: Set<String>,
+    locationState: LiveLocationState
 ) {
 
     val selected = lovedOnes.filter { it.id in selectedViewerIds }
+    val contextText = when (locationState) {
+        is LiveLocationState.Sharing,
+        is LiveLocationState.EmergencySharing -> "Seeing your live location"
+        else -> "Will see your location"
+    }
 
-
-//    val text = when {
-//        selected.isEmpty() ->
-//            "No one"
-//
-//        selected.size <= 2 ->
-//            selected.joinToString { it.al }
-//
-//        else ->
-//            "${selected[0].name}, ${selected[1].name} +${selected.size - 2}"
-//    }
-
-
-    Row(
-        horizontalArrangement = Arrangement.spacedBy(6.dp),
+    Column(
+        verticalArrangement = Arrangement.spacedBy(6.dp),
         modifier = Modifier.padding(vertical = 8.dp)
     ) {
-        if (selected.size <= 2) {
-            selected.forEach { connection ->
-                Box(
-                    modifier = Modifier
-                        .size(42.dp)
-                        .clip(CircleShape)
-                        .background(
-                            Brush.radialGradient(
-                                listOf(
-                                    MaterialTheme.colorScheme.onPrimary,
-                                    MaterialTheme.colorScheme.inversePrimary
-                                )
-                            )
-                        )
-                ) {
-                    Text(
-                        connection.alias?.take(1) ?: connection.profileName.take(1),
-                        color = MaterialTheme.colorScheme.onBackground,
-                        style = MaterialTheme.typography.headlineSmall.copy(
-                            fontWeight = FontWeight.Bold,
-                            fontFamily = manrope
-                        ),
-                        fontSize = 16.sp,
-                        modifier = Modifier.align(Alignment.Center)
-                    )
-                }
-            }
-        } else {
-            selected.take(2).forEach {
-
-                    connection ->
-                Box(
-                    modifier = Modifier
-                        .size(42.dp)
-                        .clip(CircleShape)
-                        .background(
-                            Brush.radialGradient(
-                                listOf(
-                                    MaterialTheme.colorScheme.onPrimary,
-                                    MaterialTheme.colorScheme.inversePrimary
-                                )
-                            )
-                        )
-                ) {
-                    Text(
-                        connection.alias?.take(1) ?: connection.profileName.take(1),
-                        color = MaterialTheme.colorScheme.onBackground,
-                        style = MaterialTheme.typography.headlineSmall.copy(
-                            fontWeight = FontWeight.Bold,
-                            fontFamily = manrope
-                        ),
-                        fontSize = 16.sp,
-                        modifier = Modifier.align(Alignment.Center)
-                    )
-                }
-            }
-
-            Box(
+        if (selected.isEmpty()) {
+            Text(
+                "No one is selected yet",
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                fontFamily = manrope,
+                fontSize = 13.sp,
                 modifier = Modifier
-                    .size(42.dp)
-                    .clip(CircleShape)
-                    .background(
-                        Brush.radialGradient(
-                            listOf(
-                                MaterialTheme.colorScheme.onPrimary,
-                                MaterialTheme.colorScheme.inversePrimary
-                            )
-                        )
-                    )
-            ) {
-                Text(
-                    "+${selected.size - 2}",
-                    color = MaterialTheme.colorScheme.onBackground,
-                    style = MaterialTheme.typography.headlineSmall.copy(
-                        fontWeight = FontWeight.Bold,
-                        fontFamily = manrope
-                    ),
-                    fontSize = 16.sp,
-                    modifier = Modifier.align(Alignment.Center)
-                )
-            }
+                    .fillMaxWidth()
+                    .padding(vertical = 8.dp),
+                textAlign = TextAlign.Center
+            )
+            return@Column
+        }
+
+        selected.take(3).forEach { connection ->
+            VisibleToPersonRow(
+                connection = connection,
+                contextText = contextText
+            )
+        }
+
+        if (selected.size > 3) {
+            Text(
+                "+${selected.size - 3} more included",
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                fontFamily = manrope,
+                fontWeight = FontWeight.Medium,
+                fontSize = 12.sp,
+                modifier = Modifier.padding(start = 54.dp, top = 2.dp)
+            )
         }
     }
 
 }
 
-data class LovedOneUi(
-    val id: String,
-    val name: String,
-    val selected: Boolean
-)
+@Composable
+private fun VisibleToPersonRow(
+    connection: CircleMember,
+    contextText: String,
+    modifier: Modifier = Modifier
+) {
+    val displayName = connection.alias?.takeIf { it.isNotBlank() } ?: connection.profileName
+
+    Row(
+        modifier = modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(14.dp))
+            .background(MaterialTheme.colorScheme.surfaceContainerLow)
+            .padding(horizontal = 10.dp, vertical = 8.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        IdentityAvatar(
+            avatarUrl = connection.avatarUrl,
+            displayName = displayName,
+            backgroundColor = MaterialTheme.colorScheme.primaryContainer,
+            contentColor = MaterialTheme.colorScheme.onPrimaryContainer,
+            modifier = Modifier.size(38.dp)
+        )
+
+        Spacer(Modifier.width(10.dp))
+
+        Column(modifier = Modifier.weight(1f)) {
+            Text(
+                displayName,
+                color = MaterialTheme.colorScheme.onSurface,
+                fontFamily = manrope,
+                fontWeight = FontWeight.SemiBold,
+                fontSize = 14.sp
+            )
+            Text(
+                contextText,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                fontFamily = manrope,
+                fontWeight = FontWeight.Medium,
+                fontSize = 12.sp
+            )
+        }
+    }
+}
 
 @Preview(showBackground = true)
 @Composable
@@ -949,43 +907,36 @@ fun LovedOneCard(
             .padding(12.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
-        Box(
-            modifier = Modifier
-                .size(42.dp)
-                .clip(CircleShape)
-                .background(
-                    Brush.radialGradient(
-                        listOf(
-                            MaterialTheme.colorScheme.onPrimary,
-                            MaterialTheme.colorScheme.inversePrimary
-                        )
-                    )
-                )
-        ) {
-            Text(
-                connection.alias?.take(1) ?: connection.profileName.take(1) ?: "",
-                color = MaterialTheme.colorScheme.onBackground,
-                style = MaterialTheme.typography.headlineSmall.copy(
-                    fontWeight = FontWeight.Bold,
-                    fontFamily = manrope
-                ),
-                fontSize = 16.sp,
-                modifier = Modifier.align(Alignment.Center)
-            )
-        }
+        val displayName = connection.alias?.takeIf { it.isNotBlank() } ?: connection.profileName
+
+        IdentityAvatar(
+            avatarUrl = connection.avatarUrl,
+            displayName = displayName,
+            backgroundColor = MaterialTheme.colorScheme.primaryContainer,
+            contentColor = MaterialTheme.colorScheme.onPrimaryContainer,
+            modifier = Modifier.size(42.dp)
+        )
 
         Spacer(Modifier.width(12.dp))
 
-        Text(
-            connection.alias ?: connection.profileName,
-            color = MaterialTheme.colorScheme.onBackground,
-            style = MaterialTheme.typography.headlineSmall.copy(
-                fontWeight = FontWeight.Bold,
-                fontFamily = manrope
-            ),
-            fontSize = 14.sp,
-            modifier = Modifier.weight(1f)
-        )
+        Column(modifier = Modifier.weight(1f)) {
+            Text(
+                displayName,
+                color = MaterialTheme.colorScheme.onSurface,
+                style = MaterialTheme.typography.headlineSmall.copy(
+                    fontWeight = FontWeight.SemiBold,
+                    fontFamily = manrope
+                ),
+                fontSize = 14.sp
+            )
+            Text(
+                if (isSelected) "Included in live sharing" else "Not included",
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                fontFamily = manrope,
+                fontWeight = FontWeight.Medium,
+                fontSize = 12.sp
+            )
+        }
 
         Switch(
             checked = isSelected,
@@ -1199,6 +1150,4 @@ fun LastUpdatedText(lastUpdatedAt: Long) {
 
     )
 }
-
-
 
