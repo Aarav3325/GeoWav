@@ -2,7 +2,10 @@ package com.aarav.geowav.presentation.map
 
 import android.util.Log
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.isSystemInDarkTheme
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -12,6 +15,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.input.clearText
@@ -25,12 +29,11 @@ import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.IconButtonDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBar
-import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -42,6 +45,7 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
@@ -156,39 +160,6 @@ fun MapScreen(
 
     Scaffold(
         modifier = Modifier.fillMaxSize(),
-        topBar = {
-            TopAppBar(
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.background,
-                ),
-                title = {
-                    Text(
-                        text = "Select Place",
-                        fontFamily = manrope
-                    )
-                },
-                navigationIcon = {
-                    IconButton(
-                        onClick = navigateToHome
-                    ) {
-                        Icon(
-                            painter = painterResource(R.drawable.back),
-                            contentDescription = null
-                        )
-                    }
-                },
-                actions = {
-                    IconButton(
-                        onClick = { showPlaceHelpDialog = true }
-                    ) {
-                        Icon(
-                            painter = painterResource(R.drawable.info),
-                            contentDescription = "How place selection works"
-                        )
-                    }
-                }
-            )
-        },
         floatingActionButton = {
             if(hasForegroundLocationPermission && manualSelectedLatLng == null) {
                 FloatingActionButton(
@@ -359,6 +330,19 @@ fun MapScreen(
                 textFieldState = textFieldState
             )
 
+            if (!uiState.isSearchExpanded) {
+                SelectPlaceTopBar(
+                    screenTitle = "Select place",
+                    actionLabel = "Help",
+                    onBack = navigateToHome,
+                    onAction = { showPlaceHelpDialog = true },
+                    modifier = Modifier
+                        .align(Alignment.TopStart)
+                        .statusBarsPadding()
+                        .padding(start = 16.dp, top = 10.dp, end = 16.dp)
+                )
+            }
+
             manualSelectedLatLng?.let { latLng ->
                 ManualPlacePreview(
                     address = when {
@@ -392,6 +376,72 @@ fun MapScreen(
 
         }
 
+    }
+}
+
+@Composable
+private fun SelectPlaceTopBar(
+    screenTitle: String,
+    actionLabel: String,
+    onBack: () -> Unit,
+    onAction: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    Row(
+        modifier = modifier.fillMaxWidth(),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(10.dp)
+    ) {
+        IconButton(
+            modifier = Modifier.size(42.dp),
+            colors = IconButtonDefaults.iconButtonColors(
+                containerColor = Color(0xCC111820),
+                contentColor = Color.White.copy(alpha = 0.88f)
+            ),
+            onClick = onBack
+        ) {
+            Icon(
+                painter = painterResource(R.drawable.back),
+                contentDescription = "Back",
+                tint = Color.White.copy(alpha = 0.84f),
+                modifier = Modifier.size(21.dp)
+            )
+        }
+
+        Surface(
+            shape = RoundedCornerShape(99.dp),
+            color = Color(0xCC111820)
+        ) {
+            Text(
+                text = screenTitle,
+                modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp),
+                fontFamily = manrope,
+                fontSize = 13.sp,
+                fontWeight = FontWeight.SemiBold,
+                color = Color.White.copy(alpha = 0.84f)
+            )
+        }
+
+        Spacer(Modifier.weight(1f))
+
+        Surface(
+            modifier = Modifier.clickable(
+                interactionSource = remember { MutableInteractionSource() },
+                indication = null,
+                onClick = onAction
+            ),
+            shape = RoundedCornerShape(99.dp),
+            color = Color(0xCC111820)
+        ) {
+            Text(
+                text = actionLabel,
+                modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp),
+                fontFamily = manrope,
+                fontSize = 13.sp,
+                fontWeight = FontWeight.SemiBold,
+                color = Color.White.copy(alpha = 0.84f)
+            )
+        }
     }
 }
 
