@@ -1,10 +1,13 @@
 package com.aarav.geowav.presentation.map
 
 import android.app.Application
+import android.location.Address
+import android.location.Geocoder
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.aarav.geowav.domain.repository.PlaceRepository
 import com.aarav.geowav.core.utils.Resource
+import com.google.android.gms.maps.model.LatLng
 import com.google.android.libraries.places.api.model.AutocompletePrediction
 import com.google.android.libraries.places.api.model.Place
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -12,7 +15,12 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+import java.io.IOException
+import java.util.Locale
 import javax.inject.Inject
 
 @HiltViewModel
@@ -53,6 +61,7 @@ class MapViewModel @Inject constructor(application: Application,
                     _uiState.update {
                         it.copy(
                             selectedPlace = result.data,
+                            manualSelectedLatLng = null,
                             isLoading = false,
                             isBottomSheetShowing = true,
                             isSearchExpanded = false,
@@ -78,6 +87,7 @@ class MapViewModel @Inject constructor(application: Application,
 
 
     private var searchJob: kotlinx.coroutines.Job? = null
+    private var manualAddressJob: Job? = null
 
     fun searchPlaces(query: String) {
 
@@ -131,6 +141,51 @@ class MapViewModel @Inject constructor(application: Application,
         }
     }
 
+    fun selectManualPlace(latLng: LatLng) {
+        manualAddressJob?.cancel()
+
+        _uiState.update {
+            it.copy(
+                manualSelectedLatLng = latLng,
+                manualPlaceAddress = null,
+                isManualPlaceAddressLoading = true,
+                selectedPlace = null,
+                isBottomSheetShowing = false,
+                isSearchExpanded = false,
+                predictions = emptyList(),
+                error = null,
+                showErrorDialog = false
+            )
+        }
+
+        manualAddressJob = viewModelScope.launch {
+            val address = resolveApproximateAddress(latLng)
+
+            _uiState.update {
+                if (it.manualSelectedLatLng == latLng) {
+                    it.copy(
+                        manualPlaceAddress = address,
+                        isManualPlaceAddressLoading = false
+                    )
+                } else {
+                    it
+                }
+            }
+        }
+    }
+
+    fun clearManualPlace() {
+        manualAddressJob?.cancel()
+
+        _uiState.update {
+            it.copy(
+                manualSelectedLatLng = null,
+                manualPlaceAddress = null,
+                isManualPlaceAddressLoading = false
+            )
+        }
+    }
+
     fun dismissBottomSheet() {
         _uiState.update {
             it.copy(
@@ -151,10 +206,48 @@ class MapViewModel @Inject constructor(application: Application,
 
 }
 
+@Suppress("DEPRECATION")
+private suspend fun MapViewModel.resolveApproximateAddress(latLng: LatLng): String? {
+    return withContext(Dispatchers.IO) {
+        try {
+            if (!Geocoder.isPresent()) return@withContext null
+
+            val geocoder = Geocoder(getApplication(), Locale.getDefault())
+            val address = geocoder.getFromLocation(latLng.latitude, latLng.longitude, 1)
+                ?.firstOrNull()
+
+            address?.toApproximateLabel()
+        } catch (_: IOException) {
+            null
+        } catch (_: IllegalArgumentException) {
+            null
+        }
+    }
+}
+
+private fun Address.toApproximateLabel(): String? {
+    val parts = listOfNotNull(
+        subLocality,
+        locality,
+        subAdminArea,
+        adminArea
+    )
+        .map { it.trim() }
+        .filter { it.isNotBlank() }
+        .distinct()
+
+    return parts.take(2).joinToString(", ").ifBlank {
+        getAddressLine(0)?.trim()?.takeIf { it.isNotBlank() }
+    }
+}
+
 data class MapScreenUiState(
     val isSearchExpanded: Boolean = false,
     val isBottomSheetShowing: Boolean = false,
     val selectedPlace: Place? = null,
+    val manualSelectedLatLng: LatLng? = null,
+    val manualPlaceAddress: String? = null,
+    val isManualPlaceAddressLoading: Boolean = false,
     val showErrorDialog: Boolean = false,
     val isLoading: Boolean = false,
     val error: String? = null,

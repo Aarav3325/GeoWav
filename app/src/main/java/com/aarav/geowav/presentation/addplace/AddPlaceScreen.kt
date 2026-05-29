@@ -80,7 +80,9 @@ import java.util.Locale
 @Composable
 fun AddPlaceScreen(
     isDarkThemeEnabled: Boolean,
-    placeId: String,
+    placeId: String?,
+    manualLatLng: LatLng? = null,
+    manualAddress: String? = null,
     navigateToMaps: () -> Unit,
     navigateToPaywall: () -> Unit,
     navigateToYourPlaces: () -> Unit,
@@ -98,9 +100,13 @@ fun AddPlaceScreen(
     val uiState by placeViewModel.uiState.collectAsState()
 
     val selectedPlace = uiState.selectedPlace
+    val isManualPlace = manualLatLng != null
+    val placeTitle = selectedPlace?.displayName ?: if (isManualPlace) "Dropped pin" else "New Place"
+    val placeAddress = selectedPlace?.shortFormattedAddress
+        ?: if (isManualPlace) manualAddress ?: "Approximate location" else "Address Unavailable"
 
     var placeName by remember {
-        mutableStateOf(extractShortPlaceName(selectedPlace?.displayName))
+        mutableStateOf(if (isManualPlace) "Dropped pin" else extractShortPlaceName(selectedPlace?.displayName))
     }
 
     val context = LocalContext.current
@@ -158,7 +164,7 @@ fun AddPlaceScreen(
 
 
     var latlng by remember {
-        mutableStateOf<LatLng>(LatLng(0.0, 0.0))
+        mutableStateOf<LatLng>(manualLatLng ?: LatLng(0.0, 0.0))
     }
 
     LaunchedEffect(selectedPlace) {
@@ -167,9 +173,16 @@ fun AddPlaceScreen(
         }
     }
 
+    LaunchedEffect(manualLatLng) {
+        manualLatLng?.let {
+            latlng = it
+        }
+    }
 
-    LaunchedEffect(placeId) {
-        placeViewModel.fetchPlace(placeId)
+    LaunchedEffect(placeId, isManualPlace) {
+        if (!isManualPlace && !placeId.isNullOrBlank()) {
+            placeViewModel.fetchPlace(placeId)
+        }
     }
 
 
@@ -191,7 +204,7 @@ fun AddPlaceScreen(
             TopAppBar(
                 title = {
                     Text(
-                        text = selectedPlace?.displayName ?: "New Place",
+                        text = placeTitle,
                         fontWeight = FontWeight.Normal,
                         fontFamily = manrope,
                         maxLines = 1,
@@ -239,15 +252,19 @@ fun AddPlaceScreen(
                         Button(
                             onClick = {
 
+                                val finalPlaceId = if (isManualPlace) {
+                                    createManualPlaceId(latlng)
+                                } else {
+                                    placeId.orEmpty()
+                                }
+
                                 val finalPlace = Place(
-                                    placeId = placeId,
+                                    placeId = finalPlaceId,
                                     customName = placeName,
-                                    placeName = selectedPlace?.displayName
-                                        ?: "Place Name Unavailable",
+                                    placeName = placeTitle,
                                     latitude = latlng.latitude,
                                     longitude = latlng.longitude,
-                                    address = selectedPlace?.shortFormattedAddress
-                                        ?: "Address Unavailable",
+                                    address = placeAddress,
                                     radius = uiState.selectedRadius,
                                     triggerType = "ENTER_EXIT",
                                     addedOn = getFormattedDate()
@@ -343,30 +360,28 @@ fun AddPlaceScreen(
                             )
                         }
 
-                        selectedPlace?.let { place ->
-                            Column(
-                                verticalArrangement = Arrangement.spacedBy(2.dp)
-                            ) {
-                                Text(
-                                    text = place.displayName ?: "Place Name Unavailable",
-                                    color = MaterialTheme.colorScheme.onSurface,
-                                    fontSize = 15.sp,
-                                    maxLines = 1,
-                                    overflow = TextOverflow.Ellipsis,
-                                    fontFamily = manrope,
-                                    fontWeight = FontWeight.SemiBold,
-                                )
+                        Column(
+                            verticalArrangement = Arrangement.spacedBy(2.dp)
+                        ) {
+                            Text(
+                                text = placeTitle,
+                                color = MaterialTheme.colorScheme.onSurface,
+                                fontSize = 15.sp,
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis,
+                                fontFamily = manrope,
+                                fontWeight = FontWeight.SemiBold,
+                            )
 
-                                Text(
-                                    text = place.shortFormattedAddress ?: "Address Unavailable",
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                    maxLines = 1,
-                                    overflow = TextOverflow.Ellipsis,
-                                    fontSize = 13.sp,
-                                    fontWeight = FontWeight.Normal,
-                                    fontFamily = manrope,
-                                )
-                            }
+                            Text(
+                                text = placeAddress,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis,
+                                fontSize = 13.sp,
+                                fontWeight = FontWeight.Normal,
+                                fontFamily = manrope,
+                            )
                         }
                     }
                 }
@@ -449,7 +464,7 @@ fun AddPlaceScreen(
                         if (latlng.latitude != 0.0 && latlng.longitude != 0.0) {
                             Marker(
                                 state = MarkerState(latlng),
-                                title = selectedPlace?.displayName ?: ""
+                                title = placeTitle
                             )
 
                             com.google.maps.android.compose.Circle(
@@ -497,4 +512,10 @@ fun extractShortPlaceName(displayName: String?): String {
         .minOrNull()
     return if (firstIndex != null) displayName.substring(0, firstIndex).trim()
     else displayName.trim()
+}
+
+private fun createManualPlaceId(latLng: LatLng): String {
+    val lat = "%.6f".format(Locale.US, latLng.latitude)
+    val lng = "%.6f".format(Locale.US, latLng.longitude)
+    return "manual_${lat}_${lng}_${System.currentTimeMillis()}"
 }

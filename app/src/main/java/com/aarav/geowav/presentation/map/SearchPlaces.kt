@@ -58,7 +58,7 @@ fun NewSearch(
         modifier = modifier
             .background(if(expanded) MaterialTheme.colorScheme.surface else Color.Transparent)
             .fillMaxWidth()
-            .padding(top = if(expanded) 54.dp else 66.dp)
+            .padding(top = if(expanded) 12.dp else 62.dp)
             .padding(horizontal = if (!expanded) 12.dp else 0.dp)
     ) {
         SearchBar(
