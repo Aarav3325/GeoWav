@@ -1268,26 +1268,24 @@ fun AwarenessItem(
             contentColor = MaterialTheme.colorScheme.onSurface
         )
     ) {
+
+
         Row(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(horizontal = 12.dp, vertical = 10.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Box(
+
+            IdentityAvatar(
+                avatarUrl = activity.actorAvatar,
+                displayName = activity.actorName,
+                backgroundColor = MaterialTheme.colorScheme.outline.copy(alpha = 0.12f),
+                contentColor = MaterialTheme.colorScheme.outline,
+                borderColor = MaterialTheme.colorScheme.outline.copy(alpha = 0.24f),
                 modifier = Modifier
-                    .size(40.dp)
-                    .clip(RoundedCornerShape(10.dp))
-                    .background(accentColor.copy(alpha = 0.12f)),
-                contentAlignment = Alignment.Center
-            ) {
-                Icon(
-                    painter = painterResource(R.drawable.map_pin),
-                    contentDescription = null,
-                    modifier = Modifier.size(22.dp),
-                    tint = accentColor
-                )
-            }
+                    .size(46.dp)
+            )
 
             Spacer(modifier = Modifier.width(12.dp))
             Column(
