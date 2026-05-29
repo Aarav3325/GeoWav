@@ -52,6 +52,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.TextStyle
@@ -75,6 +77,7 @@ import com.aarav.geowav.presentation.components.UpgradeBottomSheetContent
 import com.aarav.geowav.presentation.locationsharing.itemShape
 import com.aarav.geowav.presentation.subscription.SubscriptionViewModel
 import com.aarav.geowav.presentation.theme.manrope
+import coil.compose.SubcomposeAsyncImage
 
 
 @Composable
@@ -692,6 +695,76 @@ fun PendingInviteSection(
 }
 
 
+@Composable
+private fun CircleInitialsAvatar(
+    initial: String,
+    backgroundColor: Color,
+    contentColor: Color,
+    modifier: Modifier = Modifier
+) {
+    Box(
+        modifier = modifier
+            .clip(CircleShape)
+            .background(backgroundColor),
+        contentAlignment = Alignment.Center
+    ) {
+        Text(
+            text = initial,
+            color = contentColor,
+            fontFamily = manrope,
+            fontWeight = FontWeight.Bold,
+            fontSize = 16.sp
+        )
+    }
+}
+
+
+@Composable
+private fun CircleMemberAvatar(
+    avatarUrl: String?,
+    displayName: String,
+    backgroundColor: Color,
+    contentColor: Color,
+    modifier: Modifier = Modifier
+) {
+    val initial = displayName.take(1).ifBlank { "?" }.uppercase()
+    val cleanAvatarUrl = avatarUrl?.takeIf { it.isNotBlank() }
+
+    if (cleanAvatarUrl == null) {
+        CircleInitialsAvatar(
+            initial = initial,
+            backgroundColor = backgroundColor,
+            contentColor = contentColor,
+            modifier = modifier
+        )
+        return
+    }
+
+    SubcomposeAsyncImage(
+        model = cleanAvatarUrl,
+        contentDescription = "$displayName profile photo",
+        contentScale = ContentScale.Crop,
+        loading = {
+            CircleInitialsAvatar(
+                initial = initial,
+                backgroundColor = backgroundColor,
+                contentColor = contentColor,
+                modifier = Modifier.fillMaxSize()
+            )
+        },
+        error = {
+            CircleInitialsAvatar(
+                initial = initial,
+                backgroundColor = backgroundColor,
+                contentColor = contentColor,
+                modifier = Modifier.fillMaxSize()
+            )
+        },
+        modifier = modifier.clip(CircleShape)
+    )
+}
+
+
 @Preview(showBackground = true)
 @Composable
 fun LovedOneCardCircle(
@@ -716,46 +789,49 @@ fun LovedOneCardCircle(
             MaterialTheme.colorScheme.onTertiaryContainer
         )
     }
+    val displayName = connection.alias?.takeIf { it.isNotBlank() } ?: connection.profileName
+    val presenceContext = "In your circle"
 
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(horizontal = 16.dp, vertical = 10.dp),
+            .padding(horizontal = 16.dp, vertical = 12.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
-        Box(
+        CircleMemberAvatar(
+            avatarUrl = connection.avatarUrl,
+            displayName = displayName,
+            backgroundColor = avatarBg,
+            contentColor = avatarFg,
             modifier = Modifier
-                .size(38.dp)
-                .clip(CircleShape)
-                .background(avatarBg),
-            contentAlignment = Alignment.Center
-        ) {
-            Text(
-                text = (connection.alias?.take(1) ?: connection.profileName.take(1)).uppercase(),
-                color = avatarFg,
-                fontFamily = manrope,
-                fontWeight = FontWeight.Bold,
-                fontSize = 15.sp
-            )
-        }
+                .size(44.dp)
+        )
 
         Spacer(Modifier.width(12.dp))
 
-        Text(
-            text = connection.alias ?: connection.profileName,
-            color = MaterialTheme.colorScheme.onSurface,
-            fontFamily = manrope,
-            fontWeight = FontWeight.Medium,
-            fontSize = 14.sp,
-            modifier = Modifier.weight(1f)
-        )
-
+        Column(modifier = Modifier.weight(1f)) {
+            Text(
+                text = displayName,
+                color = MaterialTheme.colorScheme.onSurface,
+                fontFamily = manrope,
+                fontWeight = FontWeight.SemiBold,
+                fontSize = 15.sp
+            )
+            Spacer(Modifier.height(2.dp))
+            Text(
+                text = presenceContext,
+                color = MaterialTheme.colorScheme.outline,
+                fontFamily = manrope,
+                fontWeight = FontWeight.Medium,
+                fontSize = 12.sp
+            )
+        }
 
         Box(
             modifier = Modifier
                 .size(32.dp)
                 .clip(RoundedCornerShape(9.dp))
-                .background(MaterialTheme.colorScheme.errorContainer)
+                .background(MaterialTheme.colorScheme.surfaceContainerLow)
                 .clickable {
                     onDeleteMember()
                     confirmDelete(connection.id)
@@ -765,7 +841,7 @@ fun LovedOneCardCircle(
             Icon(
                 painter = painterResource(R.drawable.trash),
                 contentDescription = "Remove member",
-                tint = MaterialTheme.colorScheme.onErrorContainer,
+                tint = MaterialTheme.colorScheme.outline,
                 modifier = Modifier
                     .size(32.dp)
                     .padding(7.dp)
