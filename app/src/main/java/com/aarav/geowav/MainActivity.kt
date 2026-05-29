@@ -5,6 +5,7 @@ package com.aarav.geowav
 import android.annotation.SuppressLint
 
 import android.Manifest
+import android.app.Activity
 import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
@@ -29,12 +30,14 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -42,10 +45,13 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalView
 import androidx.core.app.NotificationManagerCompat
 import androidx.core.content.ContextCompat
 import androidx.core.view.ViewCompat
+import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.WindowInsetsControllerCompat
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
@@ -123,7 +129,12 @@ class MainActivity : ComponentActivity() {
     @OptIn(ExperimentalPermissionsApi::class, ExperimentalMaterial3Api::class)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        enableEdgeToEdge()
+        enableEdgeToEdge(
+            navigationBarStyle = SystemBarStyle.auto(
+                android.graphics.Color.TRANSPARENT,
+                android.graphics.Color.TRANSPARENT
+            )
+        )
         ViewCompat.setOnApplyWindowInsetsListener(View(applicationContext)) { v, insets ->
             val systemBars =
                 insets.getInsets(WindowInsetsCompat.Type.systemBars())
@@ -145,11 +156,17 @@ class MainActivity : ComponentActivity() {
             insets
         }
 
-
         fusedClient = LocationServices.getFusedLocationProviderClient(this)
 
 
         setContent {
+
+            SideEffect {
+                Log.d(
+                    "NAVBAR",
+                    "nav color = ${window.navigationBarColor}"
+                )
+            }
 
             var showAppDisabledState by remember {
                 mutableStateOf(false)
@@ -292,6 +309,19 @@ class MainActivity : ComponentActivity() {
             Log.i("SUBSCRIPTION", "plan $plan")
 
 
+            val view = LocalView.current
+
+//            SideEffect {
+//                val window = (view.context as Activity).window
+//
+//                WindowCompat.getInsetsController(window, view).apply {
+//                    isAppearanceLightStatusBars = if(isDarkTheme) true else false
+//                    isAppearanceLightNavigationBars = if(isDarkTheme) false else true
+//                }
+//            }
+
+
+
             Crossfade(
                 targetState = isDarkTheme, animationSpec = tween(800), label = "ThemeFade"
             ) { isDark ->
@@ -299,11 +329,18 @@ class MainActivity : ComponentActivity() {
                     darkTheme = isDark
                 ) {
 
-                    val controller = WindowInsetsControllerCompat(
-                        window,
-                        View(applicationContext)
-                    )
-                    controller.isAppearanceLightStatusBars = !isDark
+                    SideEffect {
+                        WindowCompat.getInsetsController(window, view).apply {
+                            isAppearanceLightStatusBars = !isDark
+                            isAppearanceLightNavigationBars = !isDark
+                        }
+                    }
+
+//                    val controller = WindowInsetsControllerCompat(
+//                        window,
+//                        View(applicationContext)
+//                    )
+//                    controller.isAppearanceLightStatusBars = !isDark
 
 
                     val fineLocationPermission =

@@ -206,9 +206,9 @@ fun ProfileScreen(
             else -> {
                 Column(
                     modifier = Modifier
-                        .padding(it)
                         .fillMaxSize()
                         .verticalScroll(rememberScrollState())
+                        .padding(it)
                         .background(MaterialTheme.colorScheme.background)
                         .padding(horizontal = 12.dp),
                     verticalArrangement = Arrangement.spacedBy(24.dp)

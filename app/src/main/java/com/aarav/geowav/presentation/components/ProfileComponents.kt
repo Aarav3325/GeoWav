@@ -1,10 +1,12 @@
 package com.aarav.geowav.presentation.components
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -33,6 +35,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil.ImageLoader
 import coil.compose.AsyncImage
+import coil.compose.SubcomposeAsyncImage
 import coil.decode.SvgDecoder
 import com.aarav.geowav.R
 import com.aarav.geowav.data.model.User
@@ -220,4 +223,88 @@ fun AvatarImage(
     }
 
 
+}
+
+@Composable
+fun IdentityAvatar(
+    avatarUrl: String?,
+    displayName: String,
+    backgroundColor: Color,
+    contentColor: Color,
+    modifier: Modifier = Modifier,
+    borderColor: Color? = null
+) {
+    val initial = displayName.take(1).ifBlank { "?" }.uppercase()
+    val cleanAvatarUrl = avatarUrl?.takeIf { it.isNotBlank() }
+    val avatarModifier = modifier
+        .clip(CircleShape)
+        .then(
+            if (borderColor != null) {
+                Modifier.border(1.dp, borderColor, CircleShape)
+            } else {
+                Modifier
+            }
+        )
+
+    Box(
+        modifier = avatarModifier,
+        contentAlignment = Alignment.Center
+    ) {
+        if (cleanAvatarUrl == null) {
+            IdentityAvatarInitials(
+                initial = initial,
+                backgroundColor = backgroundColor,
+                contentColor = contentColor,
+                modifier = Modifier.fillMaxSize()
+            )
+        } else {
+            SubcomposeAsyncImage(
+                model = cleanAvatarUrl,
+                contentDescription = "$displayName profile photo",
+                contentScale = ContentScale.Crop,
+                loading = {
+                    IdentityAvatarInitials(
+                        initial = initial,
+                        backgroundColor = backgroundColor,
+                        contentColor = contentColor,
+                        modifier = Modifier.fillMaxSize()
+                    )
+                },
+                error = {
+                    IdentityAvatarInitials(
+                        initial = initial,
+                        backgroundColor = backgroundColor,
+                        contentColor = contentColor,
+                        modifier = Modifier.fillMaxSize()
+                    )
+                },
+                modifier = Modifier
+                    .fillMaxSize()
+                    .clip(CircleShape)
+            )
+        }
+    }
+}
+
+@Composable
+private fun IdentityAvatarInitials(
+    initial: String,
+    backgroundColor: Color,
+    contentColor: Color,
+    modifier: Modifier = Modifier
+) {
+    Box(
+        modifier = modifier
+            .clip(CircleShape)
+            .background(backgroundColor),
+        contentAlignment = Alignment.Center
+    ) {
+        Text(
+            text = initial,
+            color = contentColor,
+            fontFamily = manrope,
+            fontWeight = FontWeight.Bold,
+            fontSize = 16.sp
+        )
+    }
 }

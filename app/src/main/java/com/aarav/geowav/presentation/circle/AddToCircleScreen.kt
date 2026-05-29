@@ -40,6 +40,7 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -70,6 +71,7 @@ import com.aarav.geowav.data.model.UpgradeContext
 import com.aarav.geowav.data.model.UserPlan
 import com.aarav.geowav.presentation.components.CustomBottomSheet
 import com.aarav.geowav.presentation.components.DeleteDialog
+import com.aarav.geowav.presentation.components.IdentityAvatar
 import com.aarav.geowav.presentation.components.SnackbarManager
 import com.aarav.geowav.presentation.components.UpgradeBottomSheetContent
 import com.aarav.geowav.presentation.locationsharing.itemShape
@@ -146,6 +148,9 @@ fun CircleScreen(
     Scaffold(
         topBar = {
             TopAppBar(
+                colors = TopAppBarDefaults.topAppBarColors(
+                    containerColor = MaterialTheme.colorScheme.background
+                ),
                 title = {
                     Text(
                         text = "Your Circle",
@@ -232,6 +237,20 @@ fun CircleContent(
         )
     ) {
         item {
+            SectionLabel(
+                text = "My circle",
+                modifier = Modifier.padding(top = 4.dp, start = 12.dp, end = 12.dp)
+            )
+        }
+        item {
+            MyCircleSection(
+                lovedOnesList = uiState.lovedOnes,
+                onDeleteMember = onDeleteMember,
+                confirmDelete = { confirmDeleteFor = it }
+            )
+        }
+
+        item {
             ConnectionUsageCard(
                 current = uiState.lovedOnes.size,
                 plan = userPlan,
@@ -241,7 +260,7 @@ fun CircleContent(
 
         item {
             SectionLabel(
-                text = "Add someone",
+                text = "Invite someone you trust",
                 modifier = Modifier.padding(top = 8.dp, start = 12.dp, end = 12.dp)
             )
         }
@@ -256,34 +275,22 @@ fun CircleContent(
             )
         }
 
-        item {
-            SectionLabel(
-                text = "My circle",
-                modifier = Modifier.padding(top = 8.dp, start = 12.dp, end = 12.dp)
-            )
-        }
-        item {
-            MyCircleSection(
-                lovedOnesList = uiState.lovedOnes,
-                onDeleteMember = onDeleteMember,
-                confirmDelete = { confirmDeleteFor = it }
-            )
-        }
-
-        item {
-            SectionLabel(
-                text = "Pending invites",
-                modifier = Modifier.padding(top = 8.dp, start = 12.dp, end = 12.dp)
-            )
-        }
-        item {
-            PendingInviteSection(
-                pendingInvites = uiState.pendingInvites,
-                acceptingInviteId = uiState.acceptingInviteId,
-                rejectingInviteId = uiState.rejectingInviteId,
-                acceptInvite = onAcceptInvite,
-                rejectInvite = onRejectInvite
-            )
+        if (uiState.pendingInvites.isNotEmpty()) {
+            item {
+                SectionLabel(
+                    text = "Pending invites",
+                    modifier = Modifier.padding(top = 8.dp, start = 12.dp, end = 12.dp)
+                )
+            }
+            item {
+                PendingInviteSection(
+                    pendingInvites = uiState.pendingInvites,
+                    acceptingInviteId = uiState.acceptingInviteId,
+                    rejectingInviteId = uiState.rejectingInviteId,
+                    acceptInvite = onAcceptInvite,
+                    rejectInvite = onRejectInvite
+                )
+            }
         }
     }
 }
@@ -314,7 +321,7 @@ fun AddLovedOneCard(
 
 
             Text(
-                text = "Invite a loved one",
+                text = "Bring someone into your circle",
                 style = MaterialTheme.typography.titleMedium.copy(
                     fontWeight = FontWeight.SemiBold,
                     fontFamily = manrope
@@ -323,7 +330,7 @@ fun AddLovedOneCard(
             )
             Spacer(Modifier.height(2.dp))
             Text(
-                text = "They'll receive an email to join your circle",
+                text = "They'll receive an email when you're ready to stay connected",
                 fontFamily = manrope,
                 fontSize = 12.sp,
                 color = MaterialTheme.colorScheme.outline
@@ -523,7 +530,7 @@ fun MyCircleSection(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
-                    text = "Members",
+                    text = "People you care about",
                     style = MaterialTheme.typography.titleMedium.copy(
                         fontWeight = FontWeight.SemiBold,
                         fontFamily = manrope
@@ -539,7 +546,7 @@ fun MyCircleSection(
                         color = MaterialTheme.colorScheme.primaryContainer
                     ) {
                         Text(
-                            text = "${lovedOnesList.size} active",
+                            text = "${lovedOnesList.size} in circle",
                             fontFamily = manrope,
                             fontWeight = FontWeight.SemiBold,
                             fontSize = 12.sp,
@@ -716,59 +723,59 @@ fun LovedOneCardCircle(
             MaterialTheme.colorScheme.onTertiaryContainer
         )
     }
+    val displayName = connection.alias?.takeIf { it.isNotBlank() } ?: connection.profileName
+    val presenceContext = "In your circle"
 
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(horizontal = 16.dp, vertical = 10.dp),
+            .padding(horizontal = 16.dp, vertical = 12.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
-        Box(
+        IdentityAvatar(
+            avatarUrl = connection.avatarUrl,
+            displayName = displayName,
+            backgroundColor = avatarBg,
+            contentColor = avatarFg,
             modifier = Modifier
-                .size(38.dp)
-                .clip(CircleShape)
-                .background(avatarBg),
-            contentAlignment = Alignment.Center
-        ) {
-            Text(
-                text = (connection.alias?.take(1) ?: connection.profileName.take(1)).uppercase(),
-                color = avatarFg,
-                fontFamily = manrope,
-                fontWeight = FontWeight.Bold,
-                fontSize = 15.sp
-            )
-        }
+                .size(44.dp)
+        )
 
         Spacer(Modifier.width(12.dp))
 
-        Text(
-            text = connection.alias ?: connection.profileName,
-            color = MaterialTheme.colorScheme.onSurface,
-            fontFamily = manrope,
-            fontWeight = FontWeight.Medium,
-            fontSize = 14.sp,
-            modifier = Modifier.weight(1f)
-        )
+        Column(modifier = Modifier.weight(1f)) {
+            Text(
+                text = displayName,
+                color = MaterialTheme.colorScheme.onSurface,
+                fontFamily = manrope,
+                fontWeight = FontWeight.SemiBold,
+                fontSize = 15.sp
+            )
+            Spacer(Modifier.height(2.dp))
+            Text(
+                text = presenceContext,
+                color = MaterialTheme.colorScheme.outline,
+                fontFamily = manrope,
+                fontWeight = FontWeight.Medium,
+                fontSize = 12.sp
+            )
+        }
 
-
-        Box(
+        IconButton(
+            onClick = {
+                onDeleteMember()
+                confirmDelete(connection.id)
+            },
             modifier = Modifier
                 .size(32.dp)
-                .clip(RoundedCornerShape(9.dp))
-                .background(MaterialTheme.colorScheme.errorContainer)
-                .clickable {
-                    onDeleteMember()
-                    confirmDelete(connection.id)
-                },
-            contentAlignment = Alignment.Center
+                .clip(CircleShape)
         ) {
             Icon(
                 painter = painterResource(R.drawable.trash),
                 contentDescription = "Remove member",
-                tint = MaterialTheme.colorScheme.onErrorContainer,
+                tint = MaterialTheme.colorScheme.outlineVariant,
                 modifier = Modifier
-                    .size(32.dp)
-                    .padding(7.dp)
+                    .size(18.dp)
             )
         }
     }
@@ -913,25 +920,28 @@ fun ConnectionUsageCard(
     val cardBg = if (isLimitReached)
         MaterialTheme.colorScheme.errorContainer
     else
-        MaterialTheme.colorScheme.primaryContainer
+        MaterialTheme.colorScheme.surfaceContainerHigh
 
     val cardFg = if (isLimitReached)
         MaterialTheme.colorScheme.onErrorContainer
     else
-        MaterialTheme.colorScheme.onPrimaryContainer
+        MaterialTheme.colorScheme.onSurface
 
-    val cardFgMuted = cardFg.copy(alpha = 0.65f)
+    val cardFgMuted = if (isLimitReached)
+        cardFg.copy(alpha = 0.65f)
+    else
+        MaterialTheme.colorScheme.outline
 
 
     val badgeBg = if (isLimitReached)
         MaterialTheme.colorScheme.error
     else
-        MaterialTheme.colorScheme.primary
+        MaterialTheme.colorScheme.surfaceContainerLow
 
     val badgeFg = if (isLimitReached)
         MaterialTheme.colorScheme.onError
     else
-        MaterialTheme.colorScheme.onPrimary
+        MaterialTheme.colorScheme.outline
 
     Card(
         modifier = modifier.fillMaxWidth(),
@@ -974,8 +984,8 @@ fun ConnectionUsageCard(
 
             Text(
                 text = usageText,
-                fontSize = textSize ?: 22.sp,
-                fontWeight = FontWeight.Bold,
+                fontSize = textSize ?: 18.sp,
+                fontWeight = FontWeight.SemiBold,
                 fontFamily = manrope,
                 color = cardFg
             )
@@ -993,7 +1003,12 @@ fun ConnectionUsageCard(
                             .fillMaxWidth(current.toFloat() / max)
                             .fillMaxHeight()
                             .clip(RoundedCornerShape(99.dp))
-                            .background(cardFg)
+                            .background(
+                                if (isLimitReached)
+                                    cardFg
+                                else
+                                    MaterialTheme.colorScheme.primary
+                            )
                     )
                 }
             }

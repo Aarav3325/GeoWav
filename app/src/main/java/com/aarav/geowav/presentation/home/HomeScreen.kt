@@ -94,6 +94,7 @@ import com.aarav.geowav.data.model.Place
 import com.aarav.geowav.data.model.User
 import com.aarav.geowav.data.model.UserPlan
 import com.aarav.geowav.presentation.components.AvatarImage
+import com.aarav.geowav.presentation.components.IdentityAvatar
 import com.aarav.geowav.presentation.subscription.SubscriptionViewModel
 import com.aarav.geowav.presentation.theme.manrope
 import com.google.accompanist.permissions.ExperimentalPermissionsApi
@@ -782,22 +783,15 @@ fun ConnectionStatusCard(
                 verticalAlignment = Alignment.CenterVertically
             ) {
 
-                Box(
+                IdentityAvatar(
+                    avatarUrl = member.avatarUrl,
+                    displayName = name,
+                    backgroundColor = statusColor.copy(alpha = 0.12f),
+                    contentColor = statusColor,
+                    borderColor = statusColor.copy(alpha = 0.24f),
                     modifier = Modifier
                         .size(46.dp)
-                        .clip(CircleShape)
-                        .background(
-                            statusColor.copy(alpha = 0.12f)
-                        ),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Icon(
-                        painter = painterResource(R.drawable.new_logo),
-                        contentDescription = null,
-                        tint = statusColor,
-                        modifier = Modifier.size(34.dp)
-                    )
-                }
+                )
 
                 Spacer(Modifier.width(12.dp))
 
