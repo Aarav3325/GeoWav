@@ -69,7 +69,6 @@ import com.aarav.geowav.presentation.components.SnackbarManager
 import com.aarav.geowav.presentation.components.UpgradeBottomSheetContent
 import com.aarav.geowav.presentation.subscription.SubscriptionViewModel
 import com.aarav.geowav.presentation.theme.manrope
-import com.aarav.geowav.presentation.theme.primaryLight
 import com.google.android.gms.maps.model.CameraPosition
 import com.google.android.gms.maps.model.LatLng
 import com.google.maps.android.compose.CameraPositionState
@@ -431,15 +430,16 @@ fun StatusCard(
                         .padding(horizontal = 16.dp, vertical = 8.dp)
                 ) {
                     Surface(
-                        color = Color.White,
-                        shape = CircleShape,
-                        shadowElevation = 2.dp
+                        color = color.copy(alpha = 0.12f),
+                        shape = CircleShape
                     ) {
                         Icon(
-                            painter = painterResource(R.drawable.new_logo),
+                            painter = painterResource(R.drawable.location_sharing),
                             contentDescription = null,
-                            tint = primaryLight,
-                            modifier = Modifier.size(32.dp)
+                            tint = color,
+                            modifier = Modifier
+                                .size(32.dp)
+                                .padding(6.dp)
                         )
                     }
 
@@ -721,6 +721,12 @@ fun LovedOnesCard(
 
     val toggleEnabled =
         locationState is LiveLocationState.NotSharing
+    val selectedViewerCount = lovedOnesList.count { it.id in selectedViewerIds }
+    val notSharingHelperText = when {
+        lovedOnesList.isEmpty() -> "Add people to your circle before starting live sharing."
+        selectedViewerCount == 0 -> "Choose who can see your live location before you start sharing."
+        else -> "When you start sharing, these people will be able to see your live location."
+    }
 
     Card(
         modifier = Modifier
@@ -752,7 +758,11 @@ fun LovedOnesCard(
 
                 TextButton(onClick = onExpandChange) {
                     Text(
-                        if (expanded) "Collapse" else "Edit",
+                        when {
+                            expanded -> "Collapse"
+                            toggleEnabled -> "Edit"
+                            else -> "View"
+                        },
                         fontFamily = manrope,
                         fontWeight = FontWeight.SemiBold,
                         color = MaterialTheme.colorScheme.secondary,
@@ -763,7 +773,7 @@ fun LovedOnesCard(
             when (locationState) {
                 LiveLocationState.NotSharing -> {
                     Text(
-                        "When you start sharing, these people will be able to see your live location.",
+                        notSharingHelperText,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                         style = MaterialTheme.typography.headlineSmall.copy(
                             fontWeight = FontWeight.Normal,
@@ -793,7 +803,8 @@ fun LovedOnesCard(
                     selectedViewerIds,
                     updatingViewerId,
                     onToggleChange,
-                    toggleEnabled
+                    toggleEnabled,
+                    locationState
                 )
             }
         }
@@ -806,7 +817,8 @@ fun ExpandedLovedOnes(
     selectedViewerIds: Set<String>,
     updatingViewerId: String? = null,
     onToggleChange: (String, Boolean) -> Unit,
-    toggleEnabled: Boolean
+    toggleEnabled: Boolean,
+    locationState: LiveLocationState
 ) {
     Column(
         modifier = Modifier.padding(vertical = 8.dp)
@@ -819,7 +831,8 @@ fun ExpandedLovedOnes(
                 selectedViewerIds,
                 updatingViewerId,
                 onToggleChange,
-                toggleEnabled
+                toggleEnabled,
+                locationState
             )
         }
     }
@@ -844,8 +857,13 @@ private fun CollapsedLovedOnes(
         modifier = Modifier.padding(vertical = 8.dp)
     ) {
         if (selected.isEmpty()) {
+            val emptyText = if (lovedOnes.isEmpty()) {
+                "No one is in your circle yet"
+            } else {
+                "No one is selected yet"
+            }
             Text(
-                "No one is selected yet",
+                emptyText,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 fontFamily = manrope,
                 fontSize = 13.sp,
@@ -932,7 +950,8 @@ fun LovedOneCard(
     selectedViewerIds: Set<String>,
     updatingViewerId: String? = null,
     onToggleChange: (String, Boolean) -> Unit,
-    toggleEnabled: Boolean
+    toggleEnabled: Boolean,
+    locationState: LiveLocationState
 ) {
 
     val shape = itemShape(index, count)
@@ -973,7 +992,10 @@ fun LovedOneCard(
                 fontSize = 14.sp
             )
             Text(
-                if (isSelected) "Included in live sharing" else "Not included",
+                viewerContextText(
+                    isSelected = isSelected,
+                    locationState = locationState
+                ),
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 fontFamily = manrope,
                 fontWeight = FontWeight.Medium,
@@ -993,6 +1015,18 @@ fun LovedOneCard(
         )
     }
 
+}
+
+private fun viewerContextText(
+    isSelected: Boolean,
+    locationState: LiveLocationState
+): String {
+    return when {
+        locationState is LiveLocationState.NotSharing && isSelected -> "Will see your location"
+        locationState is LiveLocationState.NotSharing -> "Will not see your location"
+        isSelected -> "Seeing your live location"
+        else -> "Not included in this session"
+    }
 }
 
 @Composable
