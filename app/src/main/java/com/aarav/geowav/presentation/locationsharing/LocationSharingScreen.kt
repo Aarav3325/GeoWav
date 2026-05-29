@@ -660,22 +660,52 @@ fun MapPreviewCard(
 
             Surface(
                 shape = RoundedCornerShape(8.dp),
-                color = MaterialTheme.colorScheme.secondary,
+                color = when (liveLocationState) {
+                    LiveLocationState.NotSharing -> MaterialTheme.colorScheme.surfaceContainerHigh
+                    is LiveLocationState.EmergencySharing -> MaterialTheme.colorScheme.error
+                    else -> MaterialTheme.colorScheme.secondary
+                },
                 modifier = Modifier
                     .padding(vertical = 8.dp, horizontal = 8.dp)
                     .align(Alignment.BottomEnd)
             ) {
-
-                if (liveLocationState !is LiveLocationState.NotSharing) {
-
-                    val state = liveLocationState as? LiveLocationState.Sharing
-                    if (state != null) {
-                        LastUpdatedText(state.lastUpdatedText)
-                    }
+                when (liveLocationState) {
+                    LiveLocationState.NotSharing -> MapStatusText(
+                        text = "Preview only",
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                    is LiveLocationState.Sharing -> LastUpdatedText(liveLocationState.lastUpdatedText)
+                    is LiveLocationState.EmergencySharing -> MapStatusText(
+                        text = "Emergency active",
+                        color = MaterialTheme.colorScheme.onError
+                    )
+                    LiveLocationState.Starting -> MapStatusText(
+                        text = "Starting...",
+                        color = MaterialTheme.colorScheme.onSecondary
+                    )
+                    is LiveLocationState.Error -> MapStatusText(
+                        text = "Not sharing",
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
                 }
             }
         }
     }
+}
+
+@Composable
+private fun MapStatusText(
+    text: String,
+    color: Color
+) {
+    Text(
+        text,
+        fontFamily = manrope,
+        fontWeight = FontWeight.SemiBold,
+        color = color,
+        style = MaterialTheme.typography.labelSmall,
+        modifier = Modifier.padding(vertical = 6.dp, horizontal = 12.dp)
+    )
 }
 
 @Composable
