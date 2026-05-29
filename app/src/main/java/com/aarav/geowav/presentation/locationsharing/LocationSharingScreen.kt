@@ -219,6 +219,7 @@ fun LocationSharingContent(
 
 
     val isEmergencyActive = locationUiState.emergencyEndsAt != null
+    val selectedViewerCount = locationUiState.selectedViewerIds.size
 
     EmergencyShareDialog(
         showEmergencyDialog,
@@ -268,14 +269,11 @@ fun LocationSharingContent(
                     locationUiState.remaining,
                     locationUiState.sharingState,
                     isEmergencyActive,
+                    selectedViewerCount,
                     onStartSharing,
                     onStopSharing,
                     onStopEmergency
                 )
-            }
-
-            item {
-                MapPreviewCard(cameraPosition, locationUiState.sharingState)
             }
 
             item {
@@ -290,6 +288,10 @@ fun LocationSharingContent(
                     locationUiState.updatingViewerId,
                     onToggleChange
                 )
+            }
+
+            item {
+                MapPreviewCard(cameraPosition, locationUiState.sharingState)
             }
 
             item {
@@ -335,6 +337,7 @@ fun StatusCard(
     remainingTime: String? = null,
     liveLocationState: LiveLocationState,
     isEmergencyActive: Boolean,
+    selectedViewerCount: Int,
     onStart: (UserPlan) -> Unit,
     onStop: () -> Unit,
     onEmergencyStop: () -> Unit,
@@ -355,11 +358,17 @@ fun StatusCard(
     }
 
 
+    val selectedAudienceText = when (selectedViewerCount) {
+        0 -> "No one selected yet"
+        1 -> "Ready to share with 1 person"
+        else -> "Ready to share with $selectedViewerCount people"
+    }
+
     val (title, subtitle, color) = when (liveLocationState) {
         LiveLocationState.NotSharing -> {
             Triple(
                 "Not sharing location",
-                "Tap to start sharing",
+                selectedAudienceText,
                 MaterialTheme.colorScheme.primary
             )
         }
@@ -549,7 +558,11 @@ fun StatusCard(
                 }
 
                 LiveLocationState.NotSharing -> {
-                    StartSharingButton(userPlan, onStart)
+                    StartSharingButton(
+                        userPlan = userPlan,
+                        enabled = selectedViewerCount > 0,
+                        onClick = onStart
+                    )
                 }
 
                 is LiveLocationState.EmergencySharing -> {
@@ -1086,12 +1099,14 @@ fun StopSharingButton(
 @Composable
 fun StartSharingButton(
     userPlan: UserPlan,
+    enabled: Boolean = true,
     onClick: (UserPlan) -> Unit
 ) {
     FilledTonalButton(
         onClick = {
             onClick(userPlan)
         },
+        enabled = enabled,
         modifier = Modifier
             .fillMaxWidth()
             .padding(vertical = 8.dp, horizontal = 16.dp)
@@ -1099,11 +1114,13 @@ fun StartSharingButton(
         shape = RoundedCornerShape(14.dp),
         colors = ButtonDefaults.buttonColors(
             containerColor = MaterialTheme.colorScheme.primary,
-            contentColor = MaterialTheme.colorScheme.onPrimary
+            contentColor = MaterialTheme.colorScheme.onPrimary,
+            disabledContainerColor = MaterialTheme.colorScheme.surfaceContainerLow,
+            disabledContentColor = MaterialTheme.colorScheme.onSurfaceVariant
         )
     ) {
         Text(
-            "Start Sharing",
+            if (enabled) "Start Sharing" else "Select someone to share with",
             fontFamily = manrope,
             fontWeight = FontWeight.SemiBold
         )
@@ -1150,4 +1167,3 @@ fun LastUpdatedText(lastUpdatedAt: Long) {
 
     )
 }
-
