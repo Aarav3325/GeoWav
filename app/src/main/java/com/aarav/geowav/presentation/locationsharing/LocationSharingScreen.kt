@@ -522,7 +522,13 @@ fun StatusCard(
                 Box(
                     modifier = Modifier
                         .size(10.dp)
-                        .background(MaterialTheme.colorScheme.error, CircleShape)
+                        .background(
+                            if (isEmergencyActive)
+                                MaterialTheme.colorScheme.error
+                            else
+                                MaterialTheme.colorScheme.outlineVariant,
+                            CircleShape
+                        )
                 )
             }
 
@@ -561,6 +567,7 @@ fun StatusCard(
                     StartSharingButton(
                         userPlan = userPlan,
                         enabled = selectedViewerCount > 0,
+                        selectedViewerCount = selectedViewerCount,
                         onClick = onStart
                     )
                 }
@@ -756,17 +763,19 @@ fun LovedOnesCard(
                     modifier = Modifier.weight(1f)
                 )
 
-                TextButton(onClick = onExpandChange) {
-                    Text(
-                        when {
-                            expanded -> "Collapse"
-                            toggleEnabled -> "Edit"
-                            else -> "View"
-                        },
-                        fontFamily = manrope,
-                        fontWeight = FontWeight.SemiBold,
-                        color = MaterialTheme.colorScheme.secondary,
-                    )
+                if (lovedOnesList.isNotEmpty()) {
+                    TextButton(onClick = onExpandChange) {
+                        Text(
+                            when {
+                                expanded -> "Collapse"
+                                toggleEnabled -> "Edit"
+                                else -> "View"
+                            },
+                            fontFamily = manrope,
+                            fontWeight = FontWeight.SemiBold,
+                            color = MaterialTheme.colorScheme.secondary,
+                        )
+                    }
                 }
             }
 
@@ -1164,8 +1173,15 @@ fun StopSharingButton(
 fun StartSharingButton(
     userPlan: UserPlan,
     enabled: Boolean = true,
+    selectedViewerCount: Int = 0,
     onClick: (UserPlan) -> Unit
 ) {
+    val label = when {
+        !enabled -> "Select someone to share with"
+        selectedViewerCount == 1 -> "Start Sharing with 1 Person"
+        else -> "Start Sharing with $selectedViewerCount People"
+    }
+
     FilledTonalButton(
         onClick = {
             onClick(userPlan)
@@ -1184,7 +1200,7 @@ fun StartSharingButton(
         )
     ) {
         Text(
-            if (enabled) "Start Sharing" else "Select someone to share with",
+            label,
             fontFamily = manrope,
             fontWeight = FontWeight.SemiBold
         )
