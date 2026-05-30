@@ -58,6 +58,7 @@ import com.aarav.geowav.presentation.components.UpgradeBottomSheetContent
 import com.aarav.geowav.presentation.components.RadiusChipGroup
 import androidx.compose.material3.Button
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.material3.ExtendedFloatingActionButton
 import androidx.compose.material3.HorizontalDivider
 import com.aarav.geowav.presentation.components.PlaceTextField
@@ -292,7 +293,7 @@ fun YourPlacesScreen(
             yourPlacesVM::onPlaceLimitReached,
             plan,
             Modifier
-                .align(Alignment.BottomEnd)
+                .align(Alignment.BottomEnd).navigationBarsPadding().padding(bottom = 80.dp)
                 .padding(vertical = 16.dp, horizontal = 12.dp),
             navigateToMap
         )
