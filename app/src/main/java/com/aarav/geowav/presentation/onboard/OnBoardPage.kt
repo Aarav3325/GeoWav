@@ -44,9 +44,9 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
+
 import androidx.compose.ui.graphics.ColorFilter
-import androidx.compose.ui.layout.ContentScale
+
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -55,14 +55,11 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.aarav.geowav.R
 import com.aarav.geowav.presentation.theme.manrope
-import com.aarav.geowav.presentation.theme.onBackgroundDark
-import com.aarav.geowav.presentation.theme.onBackgroundLight
+
+
 import com.aarav.geowav.presentation.theme.onPrimaryDark
-import com.aarav.geowav.presentation.theme.onSurfaceDark
-import com.aarav.geowav.presentation.theme.onSurfaceLight
-import com.aarav.geowav.presentation.theme.onSurfaceVariantDark
-import com.aarav.geowav.presentation.theme.onSurfaceVariantLight
-import com.aarav.geowav.presentation.theme.outlineVariantLight
+
+
 import com.aarav.geowav.presentation.theme.primaryDark
 import com.google.accompanist.permissions.ExperimentalPermissionsApi
 import com.google.accompanist.permissions.isGranted
@@ -102,123 +99,122 @@ fun OnboardingScreen(
         )
     }
 
-    Box(
-        modifier = Modifier.fillMaxSize()
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(MaterialTheme.colorScheme.background),
+        verticalArrangement = Arrangement.SpaceBetween
     ) {
-        Image(
-            painter = painterResource(R.drawable.onboard_bg_new),
-            contentScale = ContentScale.Crop,
-            contentDescription = "bg gradient",
-            modifier = Modifier.fillMaxSize()
-        )
+        HorizontalPager(
+            state = pagerState,
+            modifier = Modifier.weight(1f)
+        ) { page ->
+            OnboardingPageContent(index = page, page = pages[page])
+        }
 
         Column(
             modifier = Modifier
-                .fillMaxSize()
-                .background(Color.Transparent),
-//                .background(MaterialTheme.colorScheme.background),
-            verticalArrangement = Arrangement.SpaceBetween
+                .fillMaxWidth()
+                .padding(horizontal = 16.dp)
+                .padding(bottom = 36.dp),
+            horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            HorizontalPager(
-                state = pagerState,
-                modifier = Modifier.weight(1f)
-            ) { page ->
-                OnboardingPageContent(index = page, page = pages[page])
-            }
+            Row(
 
-            Column(
+
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = 16.dp)
-                    .padding(bottom = 36.dp),
-                horizontalAlignment = Alignment.CenterHorizontally
+                    .wrapContentHeight(),
+                verticalAlignment = Alignment.CenterVertically
+
             ) {
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .wrapContentHeight(),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    AnimatedVisibility(uiState.currentPage != pages.lastIndex) {
-                        TextButton(
-                            onClick = {
-                                scope.launch {
-                                    pagerState.animateScrollToPage(
-                                        pages.lastIndex,
-                                        animationSpec = TweenSpec(durationMillis = 400)
-                                    )
-                                }
-                            },
-                            shape = RoundedCornerShape(12.dp),
-                            colors = ButtonDefaults.textButtonColors(
-                                contentColor = MaterialTheme.colorScheme.onBackground
-                            ),
-                            modifier = Modifier
-                                .wrapContentWidth()
-                                .height(48.dp)
-                        ) {
-                            Text(
-                                text = "Skip setup",
-                                fontSize = 14.sp,
-                                textAlign = TextAlign.Center,
-                                fontFamily = manrope,
-                                color = Color.White,
-                                fontWeight = FontWeight.SemiBold
-                            )
-                        }
-                    }
+                AnimatedVisibility(uiState.currentPage != pages.lastIndex) {
+                    TextButton(
 
-                    AnimatedVisibility(
-                        modifier = Modifier.weight(1f),
-                        visible = uiState.currentPage != pages.lastIndex
-                    ) {
-                        DotsIndicator(
-                            modifier = Modifier.weight(1f),
-                            currentPage = pagerState.currentPage,
-                            totalDots = pages.size
-                        )
-                    }
 
-                    Spacer(modifier = Modifier.height(16.dp))
-
-                    FilledTonalButton(
                         onClick = {
-                            if (uiState.currentPage == pages.lastIndex) {
-                                onBoardVM.onContinueClicked()
-                            } else {
-                                scope.launch {
-                                    pagerState.animateScrollToPage(
-                                        pagerState.currentPage + 1,
-                                        animationSpec = TweenSpec(durationMillis = 350)
-                                    )
-                                }
+                            scope.launch {
+                                pagerState.animateScrollToPage(
+                                    pages.lastIndex,
+                                    animationSpec = TweenSpec(durationMillis = 400)
+                                )
+
+
                             }
                         },
-                        shape = RoundedCornerShape(18.dp),
-                        colors = ButtonDefaults.filledTonalButtonColors(
-                            containerColor = primaryDark,
-                            contentColor = onPrimaryDark
+                        shape = RoundedCornerShape(12.dp),
+                        colors = ButtonDefaults.textButtonColors(
+                            contentColor = MaterialTheme.colorScheme.onBackground
+
                         ),
-                        modifier = if (uiState.currentPage == pages.lastIndex) {
-                            Modifier
-                                .fillMaxWidth()
-                                .height(48.dp)
-                        } else {
-                            Modifier.height(48.dp)
-                        }
+                        modifier = Modifier
+                            .wrapContentWidth()
+                            .height(48.dp)
+
+
                     ) {
                         Text(
-                            text = if (uiState.currentPage == pages.lastIndex) {
-                                "Set up access"
-                            } else {
-                                "Next"
-                            },
+                            text = "Skip setup",
+
+
                             fontSize = 14.sp,
                             textAlign = TextAlign.Center,
                             fontFamily = manrope,
                             fontWeight = FontWeight.SemiBold
                         )
                     }
+                }
+
+                AnimatedVisibility(
+                    modifier = Modifier.weight(1f),
+                    visible = uiState.currentPage != pages.lastIndex
+                ) {
+                    DotsIndicator(
+                        modifier = Modifier.weight(1f),
+                        currentPage = pagerState.currentPage,
+                        totalDots = pages.size
+                    )
+                }
+
+                Spacer(modifier = Modifier.height(16.dp))
+
+                FilledTonalButton(
+                    onClick = {
+                        if (uiState.currentPage == pages.lastIndex) {
+                            onBoardVM.onContinueClicked()
+                        } else {
+                            scope.launch {
+                                pagerState.animateScrollToPage(
+                                    pagerState.currentPage + 1,
+                                    animationSpec = TweenSpec(durationMillis = 350)
+                                )
+                            }
+                        }
+                    },
+                    shape = RoundedCornerShape(18.dp),
+                    colors = ButtonDefaults.filledTonalButtonColors(
+                        containerColor = MaterialTheme.colorScheme.primary,
+                        contentColor = MaterialTheme.colorScheme.onPrimary
+                    ),
+                    modifier = if (uiState.currentPage == pages.lastIndex) {
+                        Modifier
+                            .fillMaxWidth()
+                            .height(48.dp)
+                    } else {
+                        Modifier.height(48.dp)
+                    }
+                ) {
+                    Text(
+                        text = if (uiState.currentPage == pages.lastIndex) {
+                            "Set up access"
+                        } else {
+                            "Next"
+                        },
+                        fontSize = 14.sp,
+                        textAlign = TextAlign.Center,
+                        fontFamily = manrope,
+                        fontWeight = FontWeight.SemiBold
+                    )
                 }
             }
         }
@@ -462,7 +458,7 @@ fun OnboardingPageContent(
             text = "GeoWav",
             fontSize = 34.sp,
             fontFamily = manrope,
-            color = onBackgroundLight,
+            color = MaterialTheme.colorScheme.onBackground,
             fontWeight = FontWeight.Bold
         )
 
@@ -481,7 +477,7 @@ fun OnboardingPageContent(
                     contentDescription = null,
                     modifier = Modifier
                         .size(24.dp)
-                        .padding(if(index == 0) 14.dp else 28.dp),
+                        .padding(if (index == 0) 14.dp else 28.dp),
                     colorFilter = ColorFilter.tint(
                         if (index == 0) onPrimaryDark else MaterialTheme.colorScheme.onSecondaryContainer
                     )
@@ -495,7 +491,7 @@ fun OnboardingPageContent(
             text = page.title,
             fontFamily = manrope,
             fontSize = 20.sp,
-            color =onBackgroundLight,
+            color = MaterialTheme.colorScheme.onBackground,
             fontWeight = FontWeight.SemiBold,
             textAlign = TextAlign.Center
         )
@@ -508,7 +504,7 @@ fun OnboardingPageContent(
             fontSize = 14.sp,
             textAlign = TextAlign.Center,
             fontFamily = manrope,
-            color = onSurfaceVariantLight,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
             fontWeight = FontWeight.Normal,
             lineHeight = 20.sp
         )
@@ -548,8 +544,8 @@ fun DotsIndicator(
         repeat(totalDots) { index ->
             val width = if (index == currentPage) 25.dp else 8.dp
             val color =
-                if (index == currentPage) onBackgroundLight
-                else outlineVariantLight
+                if (index == currentPage) MaterialTheme.colorScheme.onBackground
+                else MaterialTheme.colorScheme.outlineVariant
             Box(
                 modifier = Modifier
                     .padding(4.dp)
