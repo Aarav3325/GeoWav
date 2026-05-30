@@ -1017,7 +1017,7 @@ fun LovedOneCard(
 
         Switch(
             checked = isSelected,
-            enabled = toggleEnabled,
+            enabled = toggleEnabled && !isUpdating,
             onCheckedChange = {
                 onToggleChange(connection.id, it)
             },
