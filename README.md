@@ -1,210 +1,113 @@
 # GeoWav
 
-GeoWav is a production-focused Android application that combines **geofencing automation**, **real-time live location sharing**, and **session-based timeline history** into a privacy-aware location intelligence system.
+GeoWav is a real-time location awareness app that helps you stay connected with the people who matter most.
 
-The application is designed with clean architecture principles, reactive state management, and scalable Firebase integration.
-
----
-
-# Core Functionalities
-
-## Geofencing (Primary Feature)
-
-- Select important places using Google Places API  
-- Continuous background geofence monitoring  
-- Automatic detection of entry and exit events  
-- Accurate timestamp logging  
-- Works even when the app is in background  
-
-Geofencing is the foundational system of the application.
-
-The system detects when a user enters or exits predefined zones and triggers real-time actions without requiring the app to be open.
+Built with modern Android technologies, GeoWav combines live location sharing, place awareness, movement activity tracking, and session-based location history into a privacy-focused awareness platform.
 
 ---
 
-## WhatsApp Cloud API Integration (Primary Feature)
+## Core Features
 
-- Automatic WhatsApp message alerts on entry/exit events  
-- Cloud-based message dispatch  
-- Configurable recipient number  
-- Real-time alert triggering  
+### Live Location Sharing
 
-This transforms GeoWav into an automated location-based notification system.
+* Real-time location sharing with selected circle members
+* Smooth animated location updates
+* Live path visualization on Google Maps
+* Session-based sharing controls
+* Privacy-focused audience selection
 
-When a geofence event occurs, the system immediately sends a WhatsApp notification through the Cloud API, enabling real-time remote awareness.
+### Place Awareness
 
----
+* Create awareness places using Google Places API
+* Drop custom pins anywhere on the map
+* Configurable awareness radius
+* Automatic arrival and departure detection
+* Background geofence monitoring
 
-# Live Location Sharing
+### Circle Activity Feed
 
-- Real-time live location updates using Firebase Realtime Database  
-- Smooth animated marker movement  
-- Polyline-based path visualization  
-- Distance-based coordinate filtering to prevent noisy updates  
-- Supports multiple active viewers  
+* Unified awareness timeline across your circle
+* Arrival and departure activity updates
+* People-first activity cards with member avatars
+* Activity filtering and pagination
+* Real-time awareness highlights
 
-Users can share their live location with selected connections. Movement is rendered dynamically on Google Maps with smooth transitions and live path drawing.
+### Observe Mode
 
----
+* View a member's live location in real time
+* Follow movement with timeline replay
+* Path visualization and map context
+* Presence-aware member tracking
 
-# Emergency Mode
+### Session History
 
-- Dedicated emergency sharing state  
-- Real-time countdown timer  
-- Visually differentiated emergency UI  
-- Automatic session termination handling  
-- Special highlighting on map  
+* Automatic session recording
+* Timeline-based location history
+* Route visualization
+* Reverse geocoded addresses
+* Session duration tracking
+* Privacy-aware access control
 
-Emergency mode allows users to temporarily escalate sharing with stronger visibility and time-bound tracking.
+### Emergency Sharing
 
----
-
-# Activity Logging
-
-- Logs all geofence entry and exit events  
-- Timestamped activity tracking  
-- Daily activity filtering  
-- Organized event history  
-
-Provides a structured record of user movement relative to selected places.
-
----
-
-# Session History System
-
-- Automatically stores completed live sharing sessions  
-- Reverse geocoding for readable start and end addresses  
-- Stores full polyline route data  
-- Session duration tracking  
-- Secure session-level visibility control  
-
-Each completed session captures:
-
-- Start & end coordinates  
-- Start & end timestamps  
-- Human-readable addresses  
-- Full route path  
-- List of participants allowed to view the session  
-
-Session history visibility is restricted only to users included in that session’s sharing audience.
+* Dedicated emergency sharing mode
+* Elevated visibility for trusted contacts
+* Emergency state indicators
+* Time-bound emergency sessions
 
 ---
 
-# Timeline Screen
+## Privacy First
 
-- User-wise session grouping  
-- Chronological ordering  
-- Clean, contextual timeline UI  
-- Session duration display  
-- “View on Map” navigation  
+GeoWav is built around user-controlled sharing.
 
-Each timeline item clearly displays:
-
-- User name  
-- Session date  
-- Start time & address  
-- End time & address  
-- Total session duration  
+* Audience-controlled live sharing
+* Session-level visibility control
+* No retroactive access to historical sessions
+* Privacy-preserving location history
+* Explicit sharing relationships
 
 ---
 
-# Timeline Map Preview
+## Architecture
 
-- Custom start and end markers  
-- Polyline rendering of recorded route  
-- Auto camera bounds adjustment  
-- Bottom information tray with session details  
-- Smooth map UI integration  
-
-Users can preview any historical session visually on the map with a clean and contextual layout.
-
----
-
-# Privacy & Access Control
-
-GeoWav implements session-level access control:
-
-- Only users included in a session’s `sharedWith` list can view that session  
-- No retroactive access to past sessions  
-- No global history visibility  
-- Audience snapshot stored at session creation  
-
-This ensures privacy is preserved even if connections change later.
+* MVVM Architecture
+* Clean Architecture principles
+* Repository Pattern
+* StateFlow-based state management
+* Firebase Realtime Database
+* Reactive location and awareness systems
 
 ---
 
-# Architecture
+## Tech Stack
 
-The project follows a scalable and clean structure:
-
-- MVVM Architecture  
-- Repository Pattern  
-- Reactive StateFlow-based state management  
-- CallbackFlow for Firebase real-time listeners  
-- Separation of UI state and domain logic  
-
----
-
-# Tech Stack
-
-- Kotlin  
-- Jetpack Compose  
-- Google Maps Compose  
-- Firebase Realtime Database  
-- Coroutines & Flow  
-- Hilt (Dependency Injection)  
-- Google Places API  
-- WhatsApp Cloud API  
-- Android Geofencing API  
-- Geocoder API (Reverse geocoding)  
+* Kotlin
+* Jetpack Compose
+* Google Maps Compose
+* Firebase Realtime Database
+* Coroutines & Flow
+* Hilt
+* Google Places API
+* Android Geofencing API
+* WorkManager
+* Geocoder API
 
 ---
 
-# Real-Time System Design
+## Future Improvements
 
-- Location updates observed using callbackFlow  
-- Marker animation with Compose state updates  
-- Polyline updates filtered by distance threshold  
-- Session compression after stop (start & end preserved)  
-- Listener cleanup to prevent memory leaks  
-
----
-
-# Edge Case Handling
-
-- Invalid coordinate filtering  
-- Duplicate point filtering  
-- Geocoder failure handling  
-- Background monitoring reliability  
-- Session audience freezing at creation  
-- Proper coroutine lifecycle handling  
+* Offline-first architecture
+* Presence reliability indicators
+* Enhanced route analytics
+* Circle insights and statistics
+* Additional awareness automation
 
 ---
 
-# What This Project Demonstrates
+## Author
 
-- Real-time distributed system handling  
-- Privacy-aware data modeling  
-- Automated geofence-triggered messaging  
-- Clean reactive UI architecture  
-- Advanced Google Maps integration  
-- Production-level Android system design  
+**Aarav Halvadiya**
 
----
-
-# Future Enhancements
-
-- Mutual live sharing detection  
-- Live distance calculation between users  
-- Route snapping to roads  
-- Session statistics (distance, speed, duration analytics)  
-- Performance optimizations  
-
----
-
-# Author
-
-Aarav Halvadiya  
-
-GitHub: https://github.com/Aarav3325  
-LinkedIn: https://www.linkedin.com/in/aaravhalvadiya  
+* GitHub: https://github.com/Aarav3325
+* LinkedIn: https://www.linkedin.com/in/aaravhalvadiya
