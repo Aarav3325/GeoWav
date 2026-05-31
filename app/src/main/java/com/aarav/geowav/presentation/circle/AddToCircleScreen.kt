@@ -174,7 +174,16 @@ fun CircleScreen(
         containerColor = MaterialTheme.colorScheme.background,
     ) { padding ->
         when {
-            uiState.isLoading -> ContainedLoadingIndicator()
+            uiState.isLoading -> {
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(padding),
+                    contentAlignment = Alignment.Center
+                ) {
+                    ContainedLoadingIndicator()
+                }
+            }
             else -> CircleContent(
                 modifier = Modifier.padding(padding),
                 uiState = uiState,
@@ -245,6 +254,7 @@ fun CircleContent(
         item {
             MyCircleSection(
                 lovedOnesList = uiState.lovedOnes,
+                deletingMemberId = uiState.deletingMemberId,
                 onDeleteMember = onDeleteMember,
                 confirmDelete = { confirmDeleteFor = it }
             )
@@ -508,6 +518,7 @@ fun SendInviteButton(
 @Composable
 fun MyCircleSection(
     lovedOnesList: List<CircleMember>,
+    deletingMemberId: String?,
     onDeleteMember: () -> Unit,
     confirmDelete: (String) -> Unit,
 ) {
@@ -581,6 +592,7 @@ fun MyCircleSection(
                         connection = member,
                         index = index,
                         count = lovedOnesList.size,
+                        deletingMemberId = deletingMemberId,
                         onDeleteMember = onDeleteMember,
                         confirmDelete = confirmDelete
                     )
@@ -705,6 +717,7 @@ fun LovedOneCardCircle(
     connection: CircleMember,
     index: Int,
     count: Int,
+    deletingMemberId: String? = null,
     onDeleteMember: () -> Unit,
     confirmDelete: (String) -> Unit
 ) {
@@ -761,22 +774,41 @@ fun LovedOneCardCircle(
             )
         }
 
-        IconButton(
-            onClick = {
-                onDeleteMember()
-                confirmDelete(connection.id)
-            },
-            modifier = Modifier
-                .size(32.dp)
-                .clip(CircleShape)
-        ) {
-            Icon(
-                painter = painterResource(R.drawable.trash),
-                contentDescription = "Remove member",
-                tint = MaterialTheme.colorScheme.outlineVariant,
+        val isDeleting = deletingMemberId == connection.id
+        val isAnyDeleting = deletingMemberId != null
+
+        if (isDeleting) {
+            Box(
+                modifier = Modifier.size(32.dp),
+                contentAlignment = Alignment.Center
+            ) {
+                CircularProgressIndicator(
+                    modifier = Modifier.size(16.dp),
+                    color = MaterialTheme.colorScheme.primary,
+                    strokeWidth = 2.dp
+                )
+            }
+        } else {
+            IconButton(
+                onClick = {
+                    onDeleteMember()
+                    confirmDelete(connection.id)
+                },
+                enabled = !isAnyDeleting,
                 modifier = Modifier
-                    .size(18.dp)
-            )
+                    .size(32.dp)
+                    .clip(CircleShape)
+            ) {
+                Icon(
+                    painter = painterResource(R.drawable.trash),
+                    contentDescription = "Remove member",
+                    tint = if (isAnyDeleting)
+                        MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.38f)
+                    else
+                        MaterialTheme.colorScheme.outlineVariant,
+                    modifier = Modifier.size(18.dp)
+                )
+            }
         }
     }
 }
@@ -809,6 +841,32 @@ fun PendingInviteRow(
 
     val isAccepting = acceptingInviteId == connection.senderId
     val isDeclining = rejectingInviteId == connection.senderId
+    val isRowBusy = isAccepting || isDeclining
+    val isAnyInviteBusy = acceptingInviteId != null || rejectingInviteId != null
+
+    val isAcceptEnabled = !isAnyInviteBusy
+    val acceptBg = when {
+        isAccepting -> MaterialTheme.colorScheme.secondaryContainer
+        isAnyInviteBusy -> MaterialTheme.colorScheme.surfaceVariant
+        else -> MaterialTheme.colorScheme.secondaryContainer
+    }
+    val acceptFg = when {
+        isAccepting -> MaterialTheme.colorScheme.onSecondaryContainer
+        isAnyInviteBusy -> MaterialTheme.colorScheme.outline
+        else -> MaterialTheme.colorScheme.onSecondaryContainer
+    }
+
+    val isDeclineEnabled = !isAnyInviteBusy
+    val declineBg = when {
+        isDeclining -> MaterialTheme.colorScheme.errorContainer
+        isAnyInviteBusy -> MaterialTheme.colorScheme.surfaceVariant
+        else -> MaterialTheme.colorScheme.errorContainer
+    }
+    val declineFg = when {
+        isDeclining -> MaterialTheme.colorScheme.onErrorContainer
+        isAnyInviteBusy -> MaterialTheme.colorScheme.outline
+        else -> MaterialTheme.colorScheme.onErrorContainer
+    }
 
     Row(
         modifier = Modifier
@@ -846,25 +904,31 @@ fun PendingInviteRow(
 
         Surface(
             shape = RoundedCornerShape(10.dp),
-            color = if (!isAccepting)
-                MaterialTheme.colorScheme.secondaryContainer
-            else
-                MaterialTheme.colorScheme.surfaceVariant,
-            modifier = Modifier.clickable(enabled = !isAccepting) {
+            color = acceptBg,
+            modifier = Modifier.clickable(enabled = isAcceptEnabled) {
                 onAccept(connection.senderId)
             }
         ) {
-            Text(
-                text = "Accept",
-                fontFamily = manrope,
-                fontWeight = FontWeight.SemiBold,
-                fontSize = 12.sp,
-                color = if (!isAccepting)
-                    MaterialTheme.colorScheme.onSecondaryContainer
-                else
-                    MaterialTheme.colorScheme.outline,
+            Box(
+                contentAlignment = Alignment.Center,
                 modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp)
-            )
+            ) {
+                if (isAccepting) {
+                    CircularProgressIndicator(
+                        modifier = Modifier.size(16.dp),
+                        color = acceptFg,
+                        strokeWidth = 2.dp
+                    )
+                } else {
+                    Text(
+                        text = "Accept",
+                        fontFamily = manrope,
+                        fontWeight = FontWeight.SemiBold,
+                        fontSize = 12.sp,
+                        color = acceptFg
+                    )
+                }
+            }
         }
 
         Spacer(Modifier.width(6.dp))
@@ -872,25 +936,31 @@ fun PendingInviteRow(
 
         Surface(
             shape = RoundedCornerShape(10.dp),
-            color = if (!isDeclining)
-                MaterialTheme.colorScheme.errorContainer
-            else
-                MaterialTheme.colorScheme.surfaceVariant,
-            modifier = Modifier.clickable(enabled = !isDeclining) {
+            color = declineBg,
+            modifier = Modifier.clickable(enabled = isDeclineEnabled) {
                 onDecline(connection.senderId)
             }
         ) {
-            Text(
-                text = "Decline",
-                fontFamily = manrope,
-                fontWeight = FontWeight.SemiBold,
-                fontSize = 12.sp,
-                color = if (!isDeclining)
-                    MaterialTheme.colorScheme.onErrorContainer
-                else
-                    MaterialTheme.colorScheme.outline,
+            Box(
+                contentAlignment = Alignment.Center,
                 modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp)
-            )
+            ) {
+                if (isDeclining) {
+                    CircularProgressIndicator(
+                        modifier = Modifier.size(16.dp),
+                        color = declineFg,
+                        strokeWidth = 2.dp
+                    )
+                } else {
+                    Text(
+                        text = "Decline",
+                        fontFamily = manrope,
+                        fontWeight = FontWeight.SemiBold,
+                        fontSize = 12.sp,
+                        color = declineFg
+                    )
+                }
+            }
         }
     }
 }
