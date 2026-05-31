@@ -362,18 +362,23 @@ class CircleVM
         }
 
         viewModelScope.launch {
-            when (val result = circleRepository.deleteCircleMember(currentUserId, circleMemberId)) {
-                is Resource.Success -> {
-                    // Update UI
-                    loadLovedOnes()
-                    _events.emit(CircleUiEvent.MemberDeleted)
-                }
+            _uiState.update { it.copy(deletingMemberId = circleMemberId) }
+            try {
+                when (val result = circleRepository.deleteCircleMember(currentUserId, circleMemberId)) {
+                    is Resource.Success -> {
+                        // Update UI
+                        loadLovedOnes()
+                        _events.emit(CircleUiEvent.MemberDeleted)
+                    }
 
-                is Resource.Error -> {
-                    emitError(result.message ?: "Failed to delete member")
-                }
+                    is Resource.Error -> {
+                        emitError(result.message ?: "Failed to delete member")
+                    }
 
-                else -> Unit
+                    else -> Unit
+                }
+            } finally {
+                _uiState.update { it.copy(deletingMemberId = null) }
             }
         }
     }
@@ -425,6 +430,7 @@ data class CircleUiState(
     val sendingRequest: Boolean = false,
     val acceptingInviteId: String? = null,
     val rejectingInviteId: String? = null,
+    val deletingMemberId: String? = null,
     val name: String = "",
     val email: String = "",
     val showDeleteDialog: Boolean = false,

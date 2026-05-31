@@ -220,3 +220,5 @@ val surfaceContainerHighestDarkHighContrast = Color(0xFF42474A)
 
 
 
+val DarkFloatingSurface = Color(0xCC111820)
+val LightFloatingSurface = Color(0xCCEDF1F5)

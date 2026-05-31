@@ -475,14 +475,44 @@ class LocationSharingVM
             return
         }
 
+        // Update local state immediately for responsiveness
         _uiState.update { state ->
             val updated = if (enabled) {
                 state.selectedViewerIds + viewerId
             } else {
                 state.selectedViewerIds - viewerId
             }
+            state.copy(selectedViewerIds = updated, updatingViewerId = viewerId)
+        }
 
-            state.copy(selectedViewerIds = updated)
+        viewModelScope.launch {
+            try {
+                if (enabled) {
+                    locationPermissionRepository.allowViewer(currentUserId, viewerId)
+                } else {
+                    locationPermissionRepository.revokeViewer(currentUserId, viewerId)
+                }
+            } catch (e: Exception) {
+                Log.e("LOCATION_SHARING_VM", "Failed to update viewer permission in Firebase", e)
+                // Revert local state update on error
+                _uiState.update { state ->
+                    val reverted = if (enabled) {
+                        state.selectedViewerIds - viewerId
+                    } else {
+                        state.selectedViewerIds + viewerId
+                    }
+                    state.copy(selectedViewerIds = reverted)
+                }
+                emitError("Failed to update sharing preference")
+            } finally {
+                _uiState.update { state ->
+                    if (state.updatingViewerId == viewerId) {
+                        state.copy(updatingViewerId = null)
+                    } else {
+                        state
+                    }
+                }
+            }
         }
     }
 

@@ -322,6 +322,7 @@ fun ActivityContent(
 
                 LazyColumn(
                     state = listState,
+                    contentPadding = PaddingValues(bottom = 83.dp),
                     modifier = Modifier
                         .padding(top = 12.dp)
                         .fillMaxSize(),

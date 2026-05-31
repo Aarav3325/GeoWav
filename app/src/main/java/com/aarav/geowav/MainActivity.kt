@@ -25,10 +25,12 @@ import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.Crossfade
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.isSystemInDarkTheme
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
@@ -43,6 +45,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
@@ -73,6 +76,7 @@ import com.aarav.geowav.presentation.components.AppDisabled
 import com.aarav.geowav.presentation.components.NotificationDisabledDialog
 import com.aarav.geowav.presentation.components.SnackbarManager
 import com.aarav.geowav.presentation.navigation.BottomNavigationBar
+import com.aarav.geowav.presentation.navigation.CustomBottomNavigationBar
 import com.aarav.geowav.presentation.navigation.NavGraph
 import com.aarav.geowav.presentation.navigation.NavRoute
 import com.aarav.geowav.presentation.profile.ThemeMode
@@ -415,32 +419,39 @@ class MainActivity : ComponentActivity() {
                             SnackbarHost(snackbarHostState)
                         },
                         modifier = Modifier.fillMaxSize(),
-                        contentWindowInsets = WindowInsets(0),
+                        contentWindowInsets = WindowInsets(0, 0, 0, 0),
                         containerColor = Color.Transparent,
-                        bottomBar = {
-                            AnimatedVisibility(isBottomBarVisible) {
-                                BottomNavigationBar(navController)
-                            }
-                        }) {
+//                        bottomBar = {
+//
+//                        }
+                    ) {
                         val location1 =
                             location?.let { it.latitude to it.longitude }
 
 
-                        NavGraph(
-                            isDarkThemeEnabled = isDark,
-                            themeMode = themeMode,
-                            onThemeChange = { newMode ->
-                                mainVM.setThemeMode(newMode)
-                            },
-                            navHostController = navController,
-                            subscriptionVM = subscriptionVM,
-                            sharedPreferences = sharedPreferences,
-                            location = location1,
-                            permissionState = permissionUiState,
-                            googleSignInClient = googleSignInClient,
-                            modifier = Modifier
+                        Box(
+                            modifier = Modifier.fillMaxSize()
                                 .padding(it)
-                        )
+                        ) {
+                            NavGraph(
+                                isDarkThemeEnabled = isDark,
+                                themeMode = themeMode,
+                                onThemeChange = { newMode ->
+                                    mainVM.setThemeMode(newMode)
+                                },
+                                navHostController = navController,
+                                subscriptionVM = subscriptionVM,
+                                sharedPreferences = sharedPreferences,
+                                location = location1,
+                                permissionState = permissionUiState,
+                                googleSignInClient = googleSignInClient,
+                                modifier = Modifier
+                            )
+
+                            AnimatedVisibility(isBottomBarVisible, Modifier.align(Alignment.BottomCenter)) {
+                                CustomBottomNavigationBar(navController, Modifier)
+                            }
+                        }
                     }
                 }
             }

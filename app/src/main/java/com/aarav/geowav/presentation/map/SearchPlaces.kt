@@ -32,6 +32,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.aarav.geowav.R
@@ -62,27 +63,27 @@ fun NewSearch(
             .padding(horizontal = if (!expanded) 12.dp else 0.dp)
     ) {
         SearchBar(
-            shadowElevation = 16.dp,
+            shape = if (expanded) RoundedCornerShape(0.dp) else RoundedCornerShape(99.dp),
+            shadowElevation = if (expanded) 0.dp else 6.dp,
             colors = SearchBarDefaults.colors(
-                containerColor = MaterialTheme.colorScheme.surface,
-                dividerColor = MaterialTheme.colorScheme.primary
+                containerColor = if (expanded)
+                    MaterialTheme.colorScheme.surface
+                else
+                    MaterialTheme.colorScheme.surface.copy(alpha = 0.95f),
+                dividerColor = MaterialTheme.colorScheme.outlineVariant
             ),
             expanded = expanded,
             onExpandedChange = onExpandedChange,
             modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = if (!expanded) 0.dp else 0.dp),
+                .fillMaxWidth(),
             inputField = {
                 SearchBarDefaults.InputField(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .clip(
-                            shape = RoundedCornerShape(16.dp)
-                        )
-                        .padding(horizontal = if (expanded) 12.dp else 0.dp),
-                    query = textFieldState.text.toString(),
-                    onQueryChange = onQueryChange,
+                    state = textFieldState,
                     onSearch = {},
+                    expanded = expanded,
+                    onExpandedChange = onExpandedChange,
+                    modifier = Modifier.fillMaxWidth(),
+                    textStyle = MaterialTheme.typography.bodyLarge.copy(fontFamily = manrope),
                     leadingIcon = {
                         if (expanded) {
                             IconButton(onClick = {
@@ -92,52 +93,67 @@ fun NewSearch(
                                 Icon(
                                     painter = painterResource(R.drawable.back),
                                     contentDescription = "back",
-                                    modifier = Modifier.size(24.dp),
-                                    tint = MaterialTheme.colorScheme.tertiary
+                                    modifier = Modifier.size(20.dp),
+                                    tint = MaterialTheme.colorScheme.onSurface
                                 )
                             }
                         } else {
-                            IconButton(onClick = {}) {
+                            IconButton(
+                                onClick = {},
+                                enabled = false
+                            ) {
                                 Icon(
                                     painter = painterResource(R.drawable.map_pin),
                                     contentDescription = "location",
-                                    modifier = Modifier.size(24.dp),
-                                    tint = MaterialTheme.colorScheme.tertiary
+                                    modifier = Modifier.size(20.dp),
+                                    tint = MaterialTheme.colorScheme.primary
                                 )
                             }
                         }
                     },
                     trailingIcon = {
                         if (expanded) {
-                            if(textFieldState.text.isNotEmpty()){
+                            if (textFieldState.text.isNotEmpty()) {
                                 IconButton(onClick = { textFieldState.clearText() }) {
                                     Icon(
                                         painter = painterResource(R.drawable.clear),
                                         contentDescription = "clear",
-                                        modifier = Modifier.size(24.dp),
-                                        tint = MaterialTheme.colorScheme.tertiary
+                                        modifier = Modifier.size(20.dp),
+                                        tint = MaterialTheme.colorScheme.onSurfaceVariant
                                     )
                                 }
                             }
                         } else {
-                            IconButton(onClick = {}) {
+                            IconButton(
+                                onClick = {},
+                                enabled = false
+                            ) {
                                 Icon(
                                     painter = painterResource(R.drawable.search),
                                     contentDescription = "search",
-                                    modifier = Modifier.size(24.dp),
-                                    tint = MaterialTheme.colorScheme.tertiary
+                                    modifier = Modifier.size(20.dp),
+                                    tint = MaterialTheme.colorScheme.onSurfaceVariant
                                 )
                             }
                         }
                     },
-                    expanded = expanded,
-                    onExpandedChange = onExpandedChange,
-                    placeholder = { Text("Search here", fontFamily = manrope) },
+
+                    placeholder = {
+                        Text(
+                            text = "Search places, addresses...",
+                            fontFamily = manrope,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f),
+                            fontSize = 15.sp
+                        )
+                    },
                     colors = TextFieldDefaults.colors(
-                        unfocusedContainerColor = MaterialTheme.colorScheme.surfaceContainer,
-                        focusedContainerColor = MaterialTheme.colorScheme.surfaceContainer,
+                        unfocusedContainerColor = Color.Transparent,
+                        focusedContainerColor = Color.Transparent,
                         focusedTextColor = MaterialTheme.colorScheme.onSurface,
-                        focusedIndicatorColor = MaterialTheme.colorScheme.primary,
+                        unfocusedTextColor = MaterialTheme.colorScheme.onSurface,
+                        focusedIndicatorColor = Color.Transparent,
+                        unfocusedIndicatorColor = Color.Transparent,
+                        disabledIndicatorColor = Color.Transparent,
                         cursorColor = MaterialTheme.colorScheme.primary
                     )
                 )
@@ -152,15 +168,24 @@ fun NewSearch(
                 }
             }
             else if(textFieldState.text.isEmpty() && expanded){
-                Box(
+                Column(
                     modifier = Modifier.fillMaxSize(),
-                    contentAlignment = Alignment.Center
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.Center
                 ) {
+                    Icon(
+                        painter = painterResource(R.drawable.search),
+                        contentDescription = null,
+                        tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.4f),
+                        modifier = Modifier.size(48.dp)
+                    )
+                    Spacer(Modifier.height(16.dp))
                     Text(
-                        text = "No Recent Places Found",
+                        text = "Search for a place or address",
                         fontFamily = manrope,
-                        color = MaterialTheme.colorScheme.onBackground,
-                        fontSize = 16.sp
+                        fontWeight = FontWeight.Medium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        fontSize = 15.sp
                     )
                 }
             }
@@ -172,17 +197,19 @@ fun NewSearch(
                 ) {
                     Icon(
                         painter = painterResource(R.drawable.gps),
-                        contentDescription = "",
-                        tint = MaterialTheme.colorScheme.primaryContainer
+                        contentDescription = null,
+                        tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.4f),
+                        modifier = Modifier.size(48.dp)
                     )
 
-                    Spacer(modifier = Modifier.height(24.dp))
+                    Spacer(modifier = Modifier.height(16.dp))
 
                     Text(
                         text = "No Places Found",
                         fontFamily = manrope,
-                        color = MaterialTheme.colorScheme.onBackground,
-                        fontSize = 16.sp
+                        fontWeight = FontWeight.Medium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        fontSize = 15.sp
                     )
                 }
             }
