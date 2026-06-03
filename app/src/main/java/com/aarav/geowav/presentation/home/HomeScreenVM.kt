@@ -3,8 +3,6 @@ package com.aarav.geowav.presentation.home
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.aarav.geowav.core.insights.MostVisitedPlaceInsight
-import com.aarav.geowav.core.insights.PersonalInsightScope
 import com.aarav.geowav.core.permissions.GeoPermissionCoordinator
 import com.aarav.geowav.core.permissions.GeoPermissionUiState
 import com.aarav.geowav.core.utils.Resource
@@ -21,7 +19,6 @@ import com.aarav.geowav.data.model.UserPath
 import com.aarav.geowav.data.repository.CircleActivityFeedRepository
 import com.aarav.geowav.data.repository.PlaceRepositoryImpl
 import com.aarav.geowav.domain.repository.CircleRepository
-import com.aarav.geowav.domain.repository.GeoActivityRepository
 import com.aarav.geowav.domain.repository.ViewerLocationRepository
 import com.google.android.gms.maps.model.LatLng
 import com.google.maps.android.SphericalUtil
@@ -33,7 +30,6 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
@@ -46,7 +42,6 @@ class HomeScreenVM @Inject constructor(
     private val googleSignInClient: GoogleSignInClient,
     private val placeRepository: PlaceRepositoryImpl,
     private val circleActivityFeedRepository: CircleActivityFeedRepository,
-    private val geoActivityRepository: GeoActivityRepository,
     private val circleRepository: CircleRepository,
     private val viewerLocationRepository: ViewerLocationRepository,
     private val permissionCoordinator: GeoPermissionCoordinator,
@@ -63,7 +58,6 @@ class HomeScreenVM @Inject constructor(
     val userPaths = _userPaths.asStateFlow()
 
     private var pathJob: Job? = null
-    private var insightJob: Job? = null
 
     var hasShownWelcome = false
     private val _liveStayPoints = MutableStateFlow<Map<String, List<StayPoint>>>(emptyMap())
@@ -258,7 +252,6 @@ class HomeScreenVM @Inject constructor(
 
     init {
         fetchUser()
-        observeMostVisitedPlace(PersonalInsightScope.Month)
 
         viewModelScope.launch {
             combine(allPlaces, awarenessItems) { places, activities ->
@@ -275,42 +268,6 @@ class HomeScreenVM @Inject constructor(
 
         getUserProfile()
         observePermissionState()
-    }
-
-    fun onMostVisitedPlaceScopeChanged(scope: PersonalInsightScope) {
-        if (_uiState.value.mostVisitedPlaceScope == scope) return
-        observeMostVisitedPlace(scope)
-    }
-
-    private fun observeMostVisitedPlace(scope: PersonalInsightScope) {
-        insightJob?.cancel()
-        _uiState.update {
-            it.copy(
-                mostVisitedPlaceScope = scope,
-                isMostVisitedPlaceLoading = true,
-                mostVisitedPlaceInsight = null
-            )
-        }
-
-        insightJob = viewModelScope.launch {
-            geoActivityRepository.observeMostVisitedPlace(scope)
-                .catch {
-                    _uiState.update { state ->
-                        state.copy(
-                            mostVisitedPlaceInsight = null,
-                            isMostVisitedPlaceLoading = false
-                        )
-                    }
-                }
-                .collect { insight ->
-                    _uiState.update {
-                        it.copy(
-                            mostVisitedPlaceInsight = insight,
-                            isMostVisitedPlaceLoading = false
-                        )
-                    }
-                }
-        }
     }
 
     fun refreshPermissionState() {
@@ -414,7 +371,6 @@ class HomeScreenVM @Inject constructor(
     override fun onCleared() {
         super.onCleared()
         pathJob?.cancel()
-        insightJob?.cancel()
 
         Log.i("HOME", "cleared")
     }
@@ -445,9 +401,6 @@ data class HomeScreenUiState(
     val playbackIndex: Int = 0,
     val speed: Float = 1f,
     val awarenessItems: List<CircleActivityItem> = emptyList(),
-    val mostVisitedPlaceScope: PersonalInsightScope = PersonalInsightScope.Month,
-    val mostVisitedPlaceInsight: MostVisitedPlaceInsight? = null,
-    val isMostVisitedPlaceLoading: Boolean = true,
     val currentUser: User? = null,
     val userAvatar: String? = null,
     val username: String? = null,

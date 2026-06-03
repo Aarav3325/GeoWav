@@ -91,6 +91,7 @@ fun ProfileScreen(
     hasLocationPermission: Boolean,
     notificationsEnabled: Boolean,
     navigateToHome: () -> Unit,
+    navigateToInsights: () -> Unit,
     onLogout: () -> Unit,
     onDeleteAccount: () -> Unit
 ) {
@@ -245,6 +246,16 @@ fun ProfileScreen(
                             textSize = MaterialTheme.typography.bodyMedium.fontSize,
                             false,
                             Modifier.padding(top = 8.dp)
+                        )
+                    }
+
+                    Section(title = "Personal") {
+                        SettingItemNew(
+                            title = "Insights",
+                            subtitle = "Reflect on your place awareness patterns",
+                            index = 0,
+                            count = 1,
+                            onClick = navigateToInsights
                         )
                     }
 
