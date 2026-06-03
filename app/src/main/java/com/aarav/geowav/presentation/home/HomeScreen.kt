@@ -82,6 +82,8 @@ import androidx.lifecycle.compose.LocalLifecycleOwner
 import coil.ImageLoader
 import coil.decode.SvgDecoder
 import com.aarav.geowav.R
+import com.aarav.geowav.core.insights.MostVisitedPlaceInsight
+import com.aarav.geowav.core.insights.PersonalInsightScope
 import com.aarav.geowav.core.permissions.GeoPermissionUiState
 import com.aarav.geowav.core.utils.SubscriptionHelper
 import com.aarav.geowav.core.utils.ViewerLocationState
@@ -410,6 +412,14 @@ fun GeoWavHomeScreen(
                             }
                         )
 
+//                        MostVisitedPlaceInsightCard(
+//                            insight = uiState.mostVisitedPlaceInsight,
+//                            selectedScope = uiState.mostVisitedPlaceScope,
+//                            isLoading = uiState.isMostVisitedPlaceLoading,
+//                            onScopeSelected = homeScreenVM::onMostVisitedPlaceScopeChanged,
+//                            modifier = Modifier.padding(vertical = 8.dp)
+//                        )
+
                         if (uiState.placesList.isEmpty()) {
                             QuickActionsRow(
                                 onAddZone = onAddZone
@@ -459,6 +469,160 @@ fun GeoWavHomeScreen(
     }
 
 
+}
+
+@Composable
+fun MostVisitedPlaceInsightCard(
+    insight: MostVisitedPlaceInsight?,
+    selectedScope: PersonalInsightScope,
+    isLoading: Boolean,
+    onScopeSelected: (PersonalInsightScope) -> Unit,
+    modifier: Modifier = Modifier
+) {
+    Card(
+        shape = RoundedCornerShape(14.dp),
+        modifier = modifier.fillMaxWidth(),
+        border = BorderStroke(
+            1.dp,
+            MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.26f)
+        ),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surfaceContainerLowest,
+            contentColor = MaterialTheme.colorScheme.onSurface
+        )
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(14.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(
+                        "Most Visited Place",
+                        fontFamily = manrope,
+                        fontSize = 13.sp,
+                        fontWeight = FontWeight.SemiBold,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                    Text(
+                        text = if (selectedScope == PersonalInsightScope.Month) {
+                            "This month"
+                        } else {
+                            "This week"
+                        },
+                        fontFamily = manrope,
+                        fontSize = 11.sp,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.78f)
+                    )
+                }
+
+                Row(
+                    modifier = Modifier
+                        .clip(RoundedCornerShape(50))
+                        .background(MaterialTheme.colorScheme.surfaceContainerHigh)
+                        .padding(3.dp),
+                    horizontalArrangement = Arrangement.spacedBy(2.dp)
+                ) {
+                    PersonalInsightScopeChip(
+                        label = "Week",
+                        selected = selectedScope == PersonalInsightScope.Week,
+                        onClick = { onScopeSelected(PersonalInsightScope.Week) }
+                    )
+                    PersonalInsightScopeChip(
+                        label = "Month",
+                        selected = selectedScope == PersonalInsightScope.Month,
+                        onClick = { onScopeSelected(PersonalInsightScope.Month) }
+                    )
+                }
+            }
+
+            when {
+                isLoading -> {
+                    Text(
+                        "Reading your place history...",
+                        fontFamily = manrope,
+                        fontSize = 13.sp,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+
+                insight == null -> {
+                    Text(
+                        "No arrivals yet for this period",
+                        fontFamily = manrope,
+                        fontSize = 18.sp,
+                        fontWeight = FontWeight.SemiBold,
+                        color = MaterialTheme.colorScheme.onSurface
+                    )
+                    Text(
+                        "GeoWav will notice your most familiar place after an arrival is recorded.",
+                        fontFamily = manrope,
+                        fontSize = 12.sp,
+                        lineHeight = 17.sp,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+
+                else -> {
+                    Text(
+                        insight.placeName,
+                        fontFamily = manrope,
+                        fontSize = 24.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.onSurface
+                    )
+                    Text(
+                        text = "${insight.visitCount} ${if (insight.visitCount == 1) "visit" else "visits"} ${
+                            if (selectedScope == PersonalInsightScope.Month) {
+                                "this month"
+                            } else {
+                                "this week"
+                            }
+                        }",
+                        fontFamily = manrope,
+                        fontSize = 13.sp,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun PersonalInsightScopeChip(
+    label: String,
+    selected: Boolean,
+    onClick: () -> Unit
+) {
+    Surface(
+        color = if (selected) {
+            MaterialTheme.colorScheme.primary
+        } else {
+            Color.Transparent
+        },
+        contentColor = if (selected) {
+            MaterialTheme.colorScheme.onPrimary
+        } else {
+            MaterialTheme.colorScheme.onSurfaceVariant
+        },
+        shape = RoundedCornerShape(50),
+        modifier = Modifier.clickable(onClick = onClick)
+    ) {
+        Text(
+            text = label,
+            modifier = Modifier.padding(horizontal = 10.dp, vertical = 5.dp),
+            fontFamily = manrope,
+            fontWeight = FontWeight.SemiBold,
+            fontSize = 11.sp
+        )
+    }
 }
 
 @Composable

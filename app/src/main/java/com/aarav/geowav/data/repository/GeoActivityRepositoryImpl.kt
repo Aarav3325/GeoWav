@@ -1,6 +1,10 @@
 package com.aarav.geowav.data.repository
 
 import com.aarav.geowav.core.utils.ActivityFilter
+import com.aarav.geowav.core.insights.MostVisitedPlaceInsight
+import com.aarav.geowav.core.insights.PersonalInsightScope
+import com.aarav.geowav.core.insights.mostVisitedPlaceInsight
+import com.aarav.geowav.core.insights.rangeForPersonalInsightScope
 import com.aarav.geowav.data.mapper.FirebaseActivity
 import com.aarav.geowav.data.mapper.toGeoAlert
 import com.aarav.geowav.data.model.GeoAlert
@@ -62,6 +66,36 @@ class GeoActivityRepositoryImpl
         query.addValueEventListener(listener)
         awaitClose { query.removeEventListener(listener) }
 
+    }
+
+    override fun observeMostVisitedPlace(
+        scope: PersonalInsightScope
+    ): Flow<MostVisitedPlaceInsight?> = callbackFlow {
+        val userID = uid()
+        val (startMillis, endMillis) = rangeForPersonalInsightScope(scope)
+
+        val query = db.getReference("geofence_activity")
+            .child(userID)
+            .orderByChild("timestamp")
+            .startAt(startMillis.toDouble())
+            .endAt(endMillis.toDouble())
+
+        val listener = object : ValueEventListener {
+            override fun onDataChange(snapshot: DataSnapshot) {
+                val activities = snapshot.children.mapNotNull { snap ->
+                    snap.getValue(FirebaseActivity::class.java)
+                }
+
+                trySend(mostVisitedPlaceInsight(activities, scope))
+            }
+
+            override fun onCancelled(error: DatabaseError) {
+                close(error.toException())
+            }
+        }
+
+        query.addValueEventListener(listener)
+        awaitClose { query.removeEventListener(listener) }
     }
 
 }

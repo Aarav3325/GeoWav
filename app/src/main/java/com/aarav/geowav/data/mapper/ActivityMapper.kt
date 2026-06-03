@@ -10,6 +10,7 @@ data class FirebaseLocation(
 
 data class FirebaseActivity(
     val geofenceId: String? = null,
+    val placeName: String? = null,
     val transitionType: String? = null,
     val normalizedTransitionType: String? = null, // "ARRIVED" / "LEFT"
     val timestamp: Long? = null,
@@ -21,7 +22,9 @@ data class FirebaseActivity(
 
 // Mappers.kt
 fun FirebaseActivity.toGeoAlert(id: String, username: String): GeoAlert? {
-    val geofenceId = geofenceId ?: return null
+    val geofenceId = placeName?.takeIf { it.isNotBlank() }
+        ?: geofenceId?.takeIf { it.isNotBlank() }
+        ?: return null
     val readable = readableTime ?: ""
 
 
