@@ -24,6 +24,7 @@ import com.aarav.geowav.presentation.auth.SignupScreen
 import com.aarav.geowav.presentation.circle.CircleScreen
 import com.aarav.geowav.presentation.home.GeoWavHomeScreen
 import com.aarav.geowav.presentation.home.HomeScreenVM
+import com.aarav.geowav.presentation.insights.PersonalInsightsScreen
 import com.aarav.geowav.presentation.locationsharing.LocationSharingScreen
 import com.aarav.geowav.presentation.map.MapScreen
 import com.aarav.geowav.presentation.observe.ObserveScreen
@@ -144,6 +145,11 @@ fun NavGraph(
             navHostController,
             this,
             subscriptionVM
+        )
+
+        AddInsightsScreen(
+            navHostController,
+            this
         )
 
 //        AddObserveScreen(
@@ -671,6 +677,9 @@ fun AddProfileScreen(
             navigateToHome = {
                 navController.navigateUp()
             },
+            navigateToInsights = {
+                navController.navigate(NavRoute.Insights.path)
+            },
             onLogout = {
                 navController.navigate(NavRoute.Login.path) {
                     popUpTo(0)
@@ -684,6 +693,22 @@ fun AddProfileScreen(
 //                }
 //            },
             onDeleteAccount = {}
+        )
+    }
+}
+
+fun AddInsightsScreen(
+    navController: NavController,
+    navGraphBuilder: NavGraphBuilder
+) {
+    navGraphBuilder.composable(
+        route = NavRoute.Insights.path
+    ) {
+        PersonalInsightsScreen(
+            viewModel = hiltViewModel(),
+            back = {
+                navController.popBackStack()
+            }
         )
     }
 }

@@ -1,0 +1,9 @@
+{
+  "ketoyVersion": "0.3.4-alpha",
+  "initRanOn": "2026-06-02T05:51:55.639Z",
+  "hilt": false,
+  "applicationId": "com.aarav.geowav",
+  "namespace": "com.aarav.geowav",
+  "packagePath": "/Users/aaravhalvadiya/AndroidStudioProjects/GeoWav/app/src/main/java/com/aarav/geowav",
+  "bundlePath": "app/src/main/assets/ketoy/main.ktx"
+}

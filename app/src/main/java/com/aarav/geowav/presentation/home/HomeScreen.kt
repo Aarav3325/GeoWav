@@ -424,7 +424,7 @@ fun GeoWavHomeScreen(
                             horizontalArrangement = Arrangement.SpaceBetween
                         ) {
                             Text(
-                                "Movement",
+                                "Awareness",
                                 color = MaterialTheme.colorScheme.onBackground,
                                 style = MaterialTheme.typography.titleMedium.copy(
                                     fontFamily = manrope,
