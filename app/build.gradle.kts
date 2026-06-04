@@ -16,6 +16,7 @@ plugins {
     id("com.google.dagger.hilt.android")
     id("com.google.gms.google-services")
     id("com.google.firebase.crashlytics")
+    id("com.google.firebase.firebase-perf")
 }
 
 android {
@@ -95,6 +96,7 @@ android {
 
 dependencies {
 
+    implementation("com.google.firebase:firebase-perf")
 
     // RevenueCat
     implementation("com.revenuecat.purchases:purchases:8.10.8")
