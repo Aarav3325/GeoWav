@@ -35,6 +35,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.aarav.geowav.R
+import com.aarav.geowav.core.insights.AverageVisitDurationInsight
 import com.aarav.geowav.core.insights.MostVisitedPlaceInsight
 import com.aarav.geowav.core.insights.PersonalInsightScope
 import com.aarav.geowav.presentation.theme.manrope
@@ -77,6 +78,7 @@ fun PersonalInsightsScreen(
         }
     ) { paddingValues ->
         val mostVisitedPlaceInsight = uiState.mostVisitedPlaceInsight
+        val averageVisitDurationInsight = uiState.averageVisitDurationInsight
 
         Column(
             modifier = Modifier
@@ -91,6 +93,11 @@ fun PersonalInsightsScreen(
                 fontFamily = manrope,
                 fontSize = 13.sp,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+
+            InsightScopeSelector(
+                selectedScope = uiState.mostVisitedPlaceScope,
+                onScopeSelected = viewModel::onScopeChanged
             )
 
             when {
@@ -113,7 +120,7 @@ fun PersonalInsightsScreen(
                     )
                 }
 
-                mostVisitedPlaceInsight == null -> {
+                mostVisitedPlaceInsight == null && averageVisitDurationInsight == null -> {
                     Text(
                         text = "No insights yet",
                         fontFamily = manrope,
@@ -130,11 +137,19 @@ fun PersonalInsightsScreen(
                 }
 
                 else -> {
-                    MostVisitedPlaceInsightCard(
-                        insight = mostVisitedPlaceInsight,
-                        selectedScope = uiState.mostVisitedPlaceScope,
-                        onScopeSelected = viewModel::onMostVisitedPlaceScopeChanged
-                    )
+                    mostVisitedPlaceInsight?.let { insight ->
+                        MostVisitedPlaceInsightCard(
+                            insight = insight,
+                            selectedScope = uiState.mostVisitedPlaceScope
+                        )
+                    }
+
+                    averageVisitDurationInsight?.let { insight ->
+                        AverageVisitDurationInsightCard(
+                            insight = insight,
+                            selectedScope = uiState.mostVisitedPlaceScope
+                        )
+                    }
                 }
             }
 
@@ -144,10 +159,34 @@ fun PersonalInsightsScreen(
 }
 
 @Composable
+private fun InsightScopeSelector(
+    selectedScope: PersonalInsightScope,
+    onScopeSelected: (PersonalInsightScope) -> Unit
+) {
+    Row(
+        modifier = Modifier
+            .clip(RoundedCornerShape(50))
+            .background(MaterialTheme.colorScheme.surfaceContainerHigh)
+            .padding(3.dp),
+        horizontalArrangement = Arrangement.spacedBy(2.dp)
+    ) {
+        PersonalInsightScopeChip(
+            label = "Week",
+            selected = selectedScope == PersonalInsightScope.Week,
+            onClick = { onScopeSelected(PersonalInsightScope.Week) }
+        )
+        PersonalInsightScopeChip(
+            label = "Month",
+            selected = selectedScope == PersonalInsightScope.Month,
+            onClick = { onScopeSelected(PersonalInsightScope.Month) }
+        )
+    }
+}
+
+@Composable
 private fun MostVisitedPlaceInsightCard(
     insight: MostVisitedPlaceInsight,
     selectedScope: PersonalInsightScope,
-    onScopeSelected: (PersonalInsightScope) -> Unit,
     modifier: Modifier = Modifier
 ) {
     Card(
@@ -168,50 +207,10 @@ private fun MostVisitedPlaceInsightCard(
                 .padding(14.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Column(modifier = Modifier.weight(1f)) {
-                    Text(
-                        text = "Most Visited Place",
-                        fontFamily = manrope,
-                        fontSize = 13.sp,
-                        fontWeight = FontWeight.SemiBold,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                    Text(
-                        text = if (selectedScope == PersonalInsightScope.Month) {
-                            "This month"
-                        } else {
-                            "This week"
-                        },
-                        fontFamily = manrope,
-                        fontSize = 11.sp,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.78f)
-                    )
-                }
-
-                Row(
-                    modifier = Modifier
-                        .clip(RoundedCornerShape(50))
-                        .background(MaterialTheme.colorScheme.surfaceContainerHigh)
-                        .padding(3.dp),
-                    horizontalArrangement = Arrangement.spacedBy(2.dp)
-                ) {
-                    PersonalInsightScopeChip(
-                        label = "Week",
-                        selected = selectedScope == PersonalInsightScope.Week,
-                        onClick = { onScopeSelected(PersonalInsightScope.Week) }
-                    )
-                    PersonalInsightScopeChip(
-                        label = "Month",
-                        selected = selectedScope == PersonalInsightScope.Month,
-                        onClick = { onScopeSelected(PersonalInsightScope.Month) }
-                    )
-                }
-            }
+            InsightCardHeader(
+                title = "Most Visited Place",
+                selectedScope = selectedScope
+            )
 
             Text(
                 text = insight.placeName,
@@ -233,6 +232,90 @@ private fun MostVisitedPlaceInsightCard(
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
         }
+    }
+}
+
+@Composable
+private fun AverageVisitDurationInsightCard(
+    insight: AverageVisitDurationInsight,
+    selectedScope: PersonalInsightScope,
+    modifier: Modifier = Modifier
+) {
+    Card(
+        shape = RoundedCornerShape(14.dp),
+        modifier = modifier.fillMaxWidth(),
+        border = BorderStroke(
+            1.dp,
+            MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.26f)
+        ),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surfaceContainerLowest,
+            contentColor = MaterialTheme.colorScheme.onSurface
+        )
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(14.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            InsightCardHeader(
+                title = "Average Visit Duration",
+                selectedScope = selectedScope
+            )
+
+            Text(
+                text = insight.placeName,
+                fontFamily = manrope,
+                fontSize = 24.sp,
+                fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.onSurface
+            )
+            Text(
+                text = formatDuration(insight.averageDurationMillis),
+                fontFamily = manrope,
+                fontSize = 13.sp,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+        }
+    }
+}
+
+@Composable
+private fun InsightCardHeader(
+    title: String,
+    selectedScope: PersonalInsightScope
+) {
+    Column {
+        Text(
+            text = title,
+            fontFamily = manrope,
+            fontSize = 13.sp,
+            fontWeight = FontWeight.SemiBold,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
+        )
+        Text(
+            text = if (selectedScope == PersonalInsightScope.Month) {
+                "This month"
+            } else {
+                "This week"
+            },
+            fontFamily = manrope,
+            fontSize = 11.sp,
+            color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.78f)
+        )
+    }
+}
+
+private fun formatDuration(durationMillis: Long): String {
+    val totalMinutes = durationMillis / 60_000L
+    val hours = totalMinutes / 60L
+    val minutes = totalMinutes % 60L
+
+    return when {
+        hours > 0L && minutes > 0L -> "${hours}h ${minutes}m"
+        hours > 0L -> "${hours}h"
+        else -> "${minutes}m"
     }
 }
 

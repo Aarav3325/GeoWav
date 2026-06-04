@@ -1,8 +1,10 @@
 package com.aarav.geowav.data.repository
 
 import com.aarav.geowav.core.utils.ActivityFilter
+import com.aarav.geowav.core.insights.AverageVisitDurationInsight
 import com.aarav.geowav.core.insights.MostVisitedPlaceInsight
 import com.aarav.geowav.core.insights.PersonalInsightScope
+import com.aarav.geowav.core.insights.averageVisitDurationInsight
 import com.aarav.geowav.core.insights.mostVisitedPlaceInsight
 import com.aarav.geowav.core.insights.rangeForPersonalInsightScope
 import com.aarav.geowav.data.mapper.FirebaseActivity
@@ -87,6 +89,36 @@ class GeoActivityRepositoryImpl
                 }
 
                 trySend(mostVisitedPlaceInsight(activities, scope))
+            }
+
+            override fun onCancelled(error: DatabaseError) {
+                close(error.toException())
+            }
+        }
+
+        query.addValueEventListener(listener)
+        awaitClose { query.removeEventListener(listener) }
+    }
+
+    override fun observeAverageVisitDuration(
+        scope: PersonalInsightScope
+    ): Flow<AverageVisitDurationInsight?> = callbackFlow {
+        val userID = uid()
+        val (startMillis, endMillis) = rangeForPersonalInsightScope(scope)
+
+        val query = db.getReference("geofence_activity")
+            .child(userID)
+            .orderByChild("timestamp")
+            .startAt(startMillis.toDouble())
+            .endAt(endMillis.toDouble())
+
+        val listener = object : ValueEventListener {
+            override fun onDataChange(snapshot: DataSnapshot) {
+                val activities = snapshot.children.mapNotNull { snap ->
+                    snap.getValue(FirebaseActivity::class.java)
+                }
+
+                trySend(averageVisitDurationInsight(activities, scope))
             }
 
             override fun onCancelled(error: DatabaseError) {

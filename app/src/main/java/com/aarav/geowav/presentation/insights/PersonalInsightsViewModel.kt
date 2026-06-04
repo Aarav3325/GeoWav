@@ -2,6 +2,7 @@ package com.aarav.geowav.presentation.insights
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.aarav.geowav.core.insights.AverageVisitDurationInsight
 import com.aarav.geowav.core.insights.MostVisitedPlaceInsight
 import com.aarav.geowav.core.insights.PersonalInsightScope
 import com.aarav.geowav.domain.repository.GeoActivityRepository
@@ -12,6 +13,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import javax.inject.Inject
@@ -26,40 +28,48 @@ class PersonalInsightsViewModel @Inject constructor(
     private var insightJob: Job? = null
 
     init {
-        observeMostVisitedPlace(PersonalInsightScope.Month)
+        observeInsights(PersonalInsightScope.Month)
     }
 
-    fun onMostVisitedPlaceScopeChanged(scope: PersonalInsightScope) {
+    fun onScopeChanged(scope: PersonalInsightScope) {
         if (_uiState.value.mostVisitedPlaceScope == scope) return
-        observeMostVisitedPlace(scope)
+        observeInsights(scope)
     }
 
-    private fun observeMostVisitedPlace(scope: PersonalInsightScope) {
+    private fun observeInsights(scope: PersonalInsightScope) {
         insightJob?.cancel()
         _uiState.update {
             it.copy(
                 mostVisitedPlaceScope = scope,
                 mostVisitedPlaceInsight = null,
+                averageVisitDurationInsight = null,
                 isLoading = true,
                 error = null
             )
         }
 
         insightJob = viewModelScope.launch {
-            geoActivityRepository.observeMostVisitedPlace(scope)
+            combine(
+                geoActivityRepository.observeMostVisitedPlace(scope),
+                geoActivityRepository.observeAverageVisitDuration(scope)
+            ) { mostVisitedPlace, averageVisitDuration ->
+                mostVisitedPlace to averageVisitDuration
+            }
                 .catch { error ->
                     _uiState.update {
                         it.copy(
                             mostVisitedPlaceInsight = null,
+                            averageVisitDurationInsight = null,
                             isLoading = false,
                             error = error.message
                         )
                     }
                 }
-                .collectLatest { insight ->
+                .collectLatest { (mostVisitedPlace, averageVisitDuration) ->
                     _uiState.update {
                         it.copy(
-                            mostVisitedPlaceInsight = insight,
+                            mostVisitedPlaceInsight = mostVisitedPlace,
+                            averageVisitDurationInsight = averageVisitDuration,
                             isLoading = false,
                             error = null
                         )
@@ -72,6 +82,7 @@ class PersonalInsightsViewModel @Inject constructor(
 data class PersonalInsightsUiState(
     val mostVisitedPlaceScope: PersonalInsightScope = PersonalInsightScope.Month,
     val mostVisitedPlaceInsight: MostVisitedPlaceInsight? = null,
+    val averageVisitDurationInsight: AverageVisitDurationInsight? = null,
     val isLoading: Boolean = true,
     val error: String? = null
 )
