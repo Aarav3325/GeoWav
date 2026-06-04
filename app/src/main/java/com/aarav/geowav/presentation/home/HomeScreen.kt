@@ -32,6 +32,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
@@ -72,8 +73,12 @@ import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.withStyle
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.Lifecycle
@@ -183,7 +188,7 @@ fun GeoWavHomeScreen(
 
     // Switch colors after scrolling 240px
     val useDarkIcons by remember {
-        derivedStateOf { scroll.value > 150 }
+        derivedStateOf { scroll.value > 60 }
     }
 
     // Animate colors smoothly
@@ -220,51 +225,63 @@ fun GeoWavHomeScreen(
         contentWindowInsets = WindowInsets(0),
         topBar = {
             if (!uiState.username.isNullOrEmpty()) {
-                TopAppBar(
-                    title = {
-                        Text(
-                            text = "GeoWav",
-                            style = MaterialTheme.typography.headlineLarge.copy(
-                                color = textColor
-                            ),
-                            fontFamily = manrope,
-                            fontWeight = FontWeight.Bold
-                        )
-                    },
-                    actions = {
-                        IconButton(
-                            onClick = {
-                                navigateToPaywall()
-//                            activity?.let {
-//                                homeScreenVM.launchBillingFlow(it, "")
-//                            }
-                            }
-                        ) {
-                            Image(
-                                painter = painterResource(R.drawable.payment),
-                                contentDescription = "payment",
-                                modifier = Modifier.size(28.dp),
-                                colorFilter = ColorFilter.tint(textColor)
-                            )
-                        }
-
-                        IconButton(
-                            onClick = {
-                                navigateToSettings()
-                            }
-                        ) {
-                            Image(
-                                painter = painterResource(R.drawable.gear_six),
-                                contentDescription = "setting",
-                                modifier = Modifier.size(28.dp),
-                                colorFilter = ColorFilter.tint(textColor)
-                            )
-                        }
-                    },
-                    colors = TopAppBarDefaults.topAppBarColors(
-                        containerColor = backgroundColor
-                    )
+                ProfileCardV2(
+                    currentUser = uiState.currentUser,
+                    userName = uiState.username,
+                    contentColor = textColor,
+                    navigateToPaywall,
+                    navigateToSettings,
+                    Modifier
+                        .background(backgroundColor)
+                        .windowInsetsPadding(TopAppBarDefaults.windowInsets)
+                        .padding(TopAppBarDefaults.ContentPadding)
+                        .height(TopAppBarDefaults.TopAppBarExpandedHeight)
                 )
+//                TopAppBar(
+//                    title = {
+//                        Text(
+//                            text = "GeoWav",
+//                            style = MaterialTheme.typography.headlineLarge.copy(
+//                                color = textColor
+//                            ),
+//                            fontFamily = manrope,
+//                            fontWeight = FontWeight.Bold
+//                        )
+//                    },
+//                    actions = {
+//                        IconButton(
+//                            onClick = {
+//                                navigateToPaywall()
+////                            activity?.let {
+////                                homeScreenVM.launchBillingFlow(it, "")
+////                            }
+//                            }
+//                        ) {
+//                            Image(
+//                                painter = painterResource(R.drawable.payment),
+//                                contentDescription = "payment",
+//                                modifier = Modifier.size(28.dp),
+//                                colorFilter = ColorFilter.tint(textColor)
+//                            )
+//                        }
+//
+//                        IconButton(
+//                            onClick = {
+//                                navigateToSettings()
+//                            }
+//                        ) {
+//                            Image(
+//                                painter = painterResource(R.drawable.gear_six),
+//                                contentDescription = "setting",
+//                                modifier = Modifier.size(28.dp),
+//                                colorFilter = ColorFilter.tint(textColor)
+//                            )
+//                        }
+//                    },
+//                    colors = TopAppBarDefaults.topAppBarColors(
+//                        containerColor = backgroundColor
+//                    )
+//                )
             }
         }
 
@@ -307,7 +324,7 @@ fun GeoWavHomeScreen(
                             contentScale = ContentScale.FillBounds,
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .height(220.dp)
+                                .height(120.dp)
                         )
 
 
@@ -327,17 +344,17 @@ fun GeoWavHomeScreen(
                         )
 
 
-                        ProfileCard(
-                            plan,
-                            avatar = uiState.userAvatar,
-                            currentUser = uiState.currentUser,
-                            userName = uiState.username,
-                            activeSharingCount = activeSharingCount,
-                            modifier = Modifier
-                                .align(Alignment.Center)
-                                .padding(top = 92.dp),
-                            isDarkThemeEnabled = isDarkThemeEnabled
-                        )
+//                        ProfileCard(
+//                            plan,
+//                            avatar = uiState.userAvatar,
+//                            currentUser = uiState.currentUser,
+//                            userName = uiState.username,
+//                            activeSharingCount = activeSharingCount,
+//                            modifier = Modifier
+//                                .align(Alignment.Center)
+//                                .padding(top = 92.dp),
+//                            isDarkThemeEnabled = isDarkThemeEnabled
+//                        )
                     }
 
                     Column(
@@ -1600,6 +1617,82 @@ fun ProfileCard(
 
             }
         }
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+fun ProfileCardV2(
+    currentUser: User?,
+    userName: String?,
+    contentColor: Color,
+    navigateToPaywall: () -> Unit,
+    navigateToProfile: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    val imageUrl =
+        currentUser?.avatar?.takeIf { it.isNotBlank() }
+
+    Row(
+        modifier = modifier.fillMaxWidth()
+            .padding(horizontal = 12.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Column(
+            modifier = Modifier.weight(1f),
+        ) {
+            Text(
+                text = buildAnnotatedString {
+                    append("Hello ")
+                    withStyle(
+                        SpanStyle(
+                            color = contentColor,
+                            fontWeight = FontWeight.Bold
+                        )
+                    ) {
+                        append("Aarav,")
+                    }
+                },
+                style = MaterialTheme.typography.bodyLarge,
+                color = contentColor
+            )
+
+            Text(
+                text = "GeoWav",
+                style = MaterialTheme.typography.titleLarge.copy(
+                    color = contentColor
+                ),
+                fontFamily = manrope,
+                fontWeight = FontWeight.Bold
+            )
+        }
+
+        IconButton(
+            onClick = navigateToPaywall
+        ) {
+            Image(
+                painter = painterResource(R.drawable.payment),
+                contentDescription = "payment",
+                modifier = Modifier.size(24.dp),
+                colorFilter = ColorFilter.tint(contentColor)
+            )
+        }
+
+        Spacer(Modifier.width(8.dp))
+
+        IdentityAvatar(
+            avatarUrl = imageUrl,
+            displayName = userName ?: "",
+            backgroundColor = MaterialTheme.colorScheme.outline,
+            contentColor = contentColor,
+            borderColor = MaterialTheme.colorScheme.outline.copy(alpha = 0.24f),
+            modifier = Modifier
+                .size(40.dp)
+                .clip(CircleShape)
+                .clickable {
+                    navigateToProfile()
+                }
+        )
     }
 }
 
