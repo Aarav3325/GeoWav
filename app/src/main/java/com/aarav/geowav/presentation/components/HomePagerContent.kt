@@ -34,20 +34,42 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.aarav.geowav.core.utils.LiveLocationState
+import com.aarav.geowav.data.model.CircleMember
+import com.aarav.geowav.presentation.locationsharing.LocationSharingVM
 
 
 private val LiveGreen = Color(0xFF4CAF50)
 
+private val EmergencyRed       = Color(0xFFC62828)
+private val EmergencyRedLight  = Color(0xFFFFEBEE)
+private val EmergencyAccentBar = Color(0xFFE53935)
+
+private val NavyDeep   = Color(0xFF222C61)
+private val Periwinkle = Color(0xFFBAC3FF)
+
 @Preview(showBackground = true)
 @Composable
-fun AwarenessSnapshotCard() {
+fun AwarenessSnapshotCard(
+    sharingState: LiveLocationState,
+    sharedWith: Set<String>,
+    lovedOnes: List<CircleMember>,
+    modifier: Modifier = Modifier
+) {
+    val isSharing =
+        sharingState is LiveLocationState.Sharing ||
+                sharingState is LiveLocationState.EmergencySharing
+
+    val isEmergency = sharingState is LiveLocationState.EmergencySharing
+
+
     Surface(
-        modifier = Modifier
-            .padding(16.dp)
+        modifier = modifier
             .fillMaxWidth(),
         shape = RoundedCornerShape(20.dp),
         color = MaterialTheme.colorScheme.surfaceContainer,
@@ -56,14 +78,14 @@ fun AwarenessSnapshotCard() {
         Column(
             modifier = Modifier
         ) {
-            GradientBar()
+            GradientBar(isEmergency)
 
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(12.dp)
+                    .padding(16.dp)
             ) {
-                AwarenessCardLabel()
+                AwarenessCardLabel(isEmergency, isSharing)
 
                 Spacer(Modifier.height(12.dp))
 
@@ -81,7 +103,7 @@ fun AwarenessSnapshotCard() {
 
                 Spacer(Modifier.height(8.dp))
 
-                VisibilityMembers()
+                VisibilityMembers(sharedWith, lovedOnes)
 
                 HorizontalDivider(
                     modifier = Modifier.padding(vertical = 8.dp),
@@ -96,15 +118,15 @@ fun AwarenessSnapshotCard() {
 }
 
 @Composable
-fun GradientBar() {
-//    val topBarBrush = if (isEmergency) {
-//        Brush.horizontalGradient(listOf(EmergencyRed, EmergencyAccentBar))
-//    } else {
-//        Brush.horizontalGradient(listOf(NavyDeep, Periwinkle))
-//    }
+fun GradientBar(
+    isEmergency: Boolean
+) {
 
-    val topBarBrush =
-        Brush.horizontalGradient(listOf(MaterialTheme.colorScheme.primary, MaterialTheme.colorScheme.inversePrimary))
+    val topBarBrush = if (isEmergency) {
+        Brush.horizontalGradient(listOf(EmergencyRed, EmergencyAccentBar))
+    } else {
+        Brush.horizontalGradient(listOf(NavyDeep, Periwinkle))
+    }
 
     Box(
         modifier = Modifier
@@ -115,12 +137,19 @@ fun GradientBar() {
 }
 
 @Composable
-fun AwarenessCardLabel() {
+fun AwarenessCardLabel(
+    isEmergency: Boolean,
+    isSharing: Boolean
+) {
 
-    val dotColor = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.4f)
+    val dotColor = when {
+        isEmergency -> EmergencyAccentBar
+        isSharing   -> LiveGreen
+        else        -> MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.4f)
+    }
 
     val animatedDotColor by animateColorAsState(
-        targetValue = LiveGreen,
+        targetValue = dotColor,
         animationSpec = tween(400),
         label = "dotColor",
     )
@@ -161,12 +190,39 @@ fun AwarenessCardLabel() {
 }
 
 @Composable
-private fun AvatarStack() {
+private fun AvatarStack(
+    members: List<CircleMember>
+) {
     Row {
-        repeat(3) { idx ->
-            MemberAvatar(
-                index = idx,
-                modifier = Modifier.offset(x = (-6 * idx).dp),
+        members.take(3).forEachIndexed { index, member ->
+            val (avatarBg, avatarFg) = when (index % 3) {
+                0 -> Pair(
+                    MaterialTheme.colorScheme.primaryContainer,
+                    MaterialTheme.colorScheme.onPrimaryContainer
+                )
+                1 -> Pair(
+                    MaterialTheme.colorScheme.secondaryContainer,
+                    MaterialTheme.colorScheme.onSecondaryContainer
+                )
+                else -> Pair(
+                    MaterialTheme.colorScheme.tertiaryContainer,
+                    MaterialTheme.colorScheme.onTertiaryContainer
+                )
+            }
+
+//            MemberAvatar(
+//                avatar
+//                index = index,
+//                modifier = Modifier.offset(x = (-6 * index).dp),
+//            )
+
+            IdentityAvatar(
+                avatarUrl = member.avatarUrl,
+                displayName = member.alias ?: member.profileName,
+                backgroundColor = avatarBg,
+                contentColor = avatarFg,
+                modifier = Modifier
+                    .size(36.dp).offset(x = (-6 * index).dp)
             )
         }
     }
@@ -174,12 +230,25 @@ private fun AvatarStack() {
 
 @Preview(showBackground = true)
 @Composable
-fun VisibilityMembers() {
+fun VisibilityMembers(
+    sharedWith: Set<String>,
+    lovedOnes: List<CircleMember>
+) {
+
+    val visibleTo = lovedOnes.filter { it.id in sharedWith }
+
+    val label = when (visibleTo.size) {
+        0 -> "Visible to no one"
+        1 -> "Visible to ${visibleTo[0].alias ?: visibleTo[0].profileName}"
+        2 -> "Visible to ${visibleTo[0].alias?.take(1)} & ${visibleTo[0].alias?.take(1)}"
+        else -> "Visible to ${visibleTo[0].alias?.take(1)}, ${visibleTo[0].alias?.take(1)} and ${visibleTo.size - 2} others"
+    }
+
     Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(0.dp)) {
-        AvatarStack()
+        AvatarStack(visibleTo)
 
         Text(
-            text = "Visible to Nitya & Diya",
+            text = label,
             style = MaterialTheme.typography.bodyMedium.copy(
                 fontWeight = FontWeight.Medium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,

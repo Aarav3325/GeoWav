@@ -56,6 +56,7 @@ import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.derivedStateOf
@@ -99,7 +100,9 @@ import com.aarav.geowav.data.model.Place
 import com.aarav.geowav.data.model.User
 import com.aarav.geowav.data.model.UserPlan
 import com.aarav.geowav.presentation.components.AvatarImage
+import com.aarav.geowav.presentation.components.AwarenessSnapshotCard
 import com.aarav.geowav.presentation.components.IdentityAvatar
+import com.aarav.geowav.presentation.locationsharing.LocationSharingVM
 import com.aarav.geowav.presentation.subscription.SubscriptionViewModel
 import com.aarav.geowav.presentation.theme.manrope
 import com.google.accompanist.permissions.ExperimentalPermissionsApi
@@ -116,6 +119,7 @@ fun GeoWavHomeScreen(
     onAddZone: () -> Unit,
     navigateToObserve: () -> Unit,
     homeScreenVM: HomeScreenVM,
+    locationSharingVM: LocationSharingVM,
     subscriptionViewModel: SubscriptionViewModel,
     navigateToSettings: () -> Unit,
     navigateToPaywall: () -> Unit,
@@ -126,6 +130,7 @@ fun GeoWavHomeScreen(
 ) {
 
     val uiState by homeScreenVM.uiState.collectAsState()
+    val locationSharingInfoState by locationSharingVM.uiState.collectAsState()
     val locations by homeScreenVM.locations.collectAsState()
     val activeSharingCount = locations.count { (_, state) ->
         state is ViewerLocationState.NormalSharing ||
@@ -142,7 +147,7 @@ fun GeoWavHomeScreen(
     val activity = context as? Activity
     val lifecycleOwner = LocalLifecycleOwner.current
 
-    androidx.compose.runtime.DisposableEffect(lifecycleOwner) {
+    DisposableEffect(lifecycleOwner) {
         val observer = LifecycleEventObserver { _, event ->
             if (event == Lifecycle.Event.ON_RESUME) {
                 homeScreenVM.refreshPermissionState()
@@ -167,13 +172,9 @@ fun GeoWavHomeScreen(
         )
     }
 
-
-
     LaunchedEffect(Unit) {
         homeScreenVM.loadLovedOnes()
     }
-
-
 
     LaunchedEffect(locations) {
         if (locations.isNotEmpty()) {
@@ -181,12 +182,11 @@ fun GeoWavHomeScreen(
         }
     }
 
-
     val scope = rememberCoroutineScope()
 
     val scroll = rememberScrollState()
 
-    // Switch colors after scrolling 240px
+    // Switch colors after scrolling
     val useDarkIcons by remember {
         derivedStateOf { scroll.value > 60 }
     }
@@ -324,7 +324,7 @@ fun GeoWavHomeScreen(
                             contentScale = ContentScale.FillBounds,
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .height(120.dp)
+                                .height(332.dp)
                         )
 
 
@@ -343,6 +343,14 @@ fun GeoWavHomeScreen(
                                 )
                         )
 
+
+                        AwarenessSnapshotCard(
+                            locationSharingInfoState.sharingState,
+                            locationSharingInfoState.selectedViewerIds,
+                            uiState.lovedOnes,
+                            Modifier.padding(top = 116.dp, start = 12.dp, end = 12.dp, bottom = 12.dp)
+                                .align(Alignment.Center)
+                        )
 
 //                        ProfileCard(
 //                            plan,
@@ -408,7 +416,6 @@ fun GeoWavHomeScreen(
                                 )
                             }
                         }
-
 
 
                         ConnectionsList(

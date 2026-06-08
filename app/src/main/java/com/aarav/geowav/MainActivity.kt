@@ -75,6 +75,7 @@ import com.aarav.geowav.presentation.MainVM
 import com.aarav.geowav.presentation.components.AppDisabled
 import com.aarav.geowav.presentation.components.NotificationDisabledDialog
 import com.aarav.geowav.presentation.components.SnackbarManager
+import com.aarav.geowav.presentation.locationsharing.LocationSharingVM
 import com.aarav.geowav.presentation.navigation.BottomNavigationBar
 import com.aarav.geowav.presentation.navigation.CustomBottomNavigationBar
 import com.aarav.geowav.presentation.navigation.NavGraph
@@ -305,6 +306,7 @@ class MainActivity : ComponentActivity() {
             }
 
             val subscriptionVM: SubscriptionViewModel = hiltViewModel()
+            val locationSharingVM: LocationSharingVM = hiltViewModel()
 
 
             val plan by subscriptionVM.userPlan.collectAsState()
@@ -441,6 +443,7 @@ class MainActivity : ComponentActivity() {
                                 },
                                 navHostController = navController,
                                 subscriptionVM = subscriptionVM,
+                                locationSharingVM = locationSharingVM,
                                 sharedPreferences = sharedPreferences,
                                 location = location1,
                                 permissionState = permissionUiState,
