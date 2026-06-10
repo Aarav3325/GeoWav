@@ -159,19 +159,6 @@ fun LocationSharingScreen(
         }
     }
     Scaffold(
-        topBar = {
-            TopAppBar(
-                title = {
-                    Text(
-                        text = "Live Location Sharing",
-                        fontFamily = manrope,
-                        fontSize = 20.sp,
-                        fontWeight = FontWeight.Bold,
-                        modifier = Modifier
-                    )
-                }
-            )
-        },
         contentWindowInsets = WindowInsets(0, 0, 0, 0),
         containerColor = MaterialTheme.colorScheme.background,
     ) { padding ->
@@ -254,16 +241,26 @@ fun LocationSharingContent(
                 .fillMaxSize()
                 .background(MaterialTheme.colorScheme.background)
         ) {
-//            item {
-//                Text(
-//                    text = "Live Location Sharing",
-//                    fontSize = 24.sp,
-//                    fontFamily = manrope,
-//                    fontWeight = FontWeight.Bold,
-//                    color = MaterialTheme.colorScheme.onBackground,
-//                    modifier = Modifier.padding(top = 54.dp, start = 16.dp, end = 16.dp)
-//                )
-//            }
+            item {
+                Column(
+                    modifier = Modifier.padding(top = 56.dp, start = 16.dp, end = 16.dp, bottom = 8.dp)
+                ) {
+                    Text(
+                        text = "Live Location",
+                        fontSize = 28.sp,
+                        fontFamily = manrope,
+                        fontWeight = FontWeight.ExtraBold,
+                        color = MaterialTheme.colorScheme.onBackground
+                    )
+                    Spacer(modifier = Modifier.height(4.dp))
+                    Text(
+                        text = "Real-time location sharing with loved ones",
+                        fontSize = 13.sp,
+                        fontFamily = manrope,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+            }
 
             item {
                 StatusCard(

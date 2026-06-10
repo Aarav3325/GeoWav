@@ -1674,7 +1674,7 @@ fun ProfileCardV2(
 
             AnimatedVisibility(showLocationText) {
                 Text(
-                    text = locationAddress ?: "Away from saved places",
+                    text = locationAddress ?: "GeoWav",
                     style = MaterialTheme.typography.titleLarge.copy(
                         color = contentColor,
                         fontSize = 20.sp,

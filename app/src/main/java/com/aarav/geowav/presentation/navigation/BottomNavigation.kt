@@ -136,10 +136,9 @@ fun CustomBottomNavigationBar(
     Surface(
         modifier = modifier
             .navigationBarsPadding()
-            .padding(bottom = 0.dp)
             .wrapContentWidth()
             .height(90.dp)
-            .padding(horizontal = 24.dp, vertical = 6.dp)
+            .padding(horizontal = 24.dp, vertical = 8.dp)
             .padding(bottom = 8.dp),
         shape = RoundedCornerShape(40.dp),
         color = MaterialTheme.colorScheme.surfaceContainer,
