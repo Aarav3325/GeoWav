@@ -191,6 +191,10 @@ fun GeoWavHomeScreen(
         derivedStateOf { scroll.value > 60 }
     }
 
+    val showLocationText by remember {
+        derivedStateOf { scroll.value > 150 }
+    }
+
     // Animate colors smoothly
     val textColor by animateColorAsState(
         targetValue =
@@ -231,6 +235,7 @@ fun GeoWavHomeScreen(
                     contentColor = textColor,
                     navigateToPaywall,
                     navigateToSettings,
+                    showLocationText,
                     Modifier
                         .background(backgroundColor)
                         .windowInsetsPadding(TopAppBarDefaults.windowInsets)
@@ -348,7 +353,13 @@ fun GeoWavHomeScreen(
                             locationSharingInfoState.sharingState,
                             locationSharingInfoState.selectedViewerIds,
                             uiState.lovedOnes,
-                            Modifier.padding(top = 116.dp, start = 12.dp, end = 12.dp, bottom = 12.dp)
+                            Modifier
+                                .padding(
+                                    top = 116.dp,
+                                    start = 12.dp,
+                                    end = 12.dp,
+                                    bottom = 12.dp
+                                )
                                 .align(Alignment.Center)
                         )
 
@@ -543,8 +554,10 @@ fun LocationSetupReminderCard(
     val message = when {
         !permissionState.foregroundLocationGranted ->
             "Live movement, emergency sharing, and place alerts need location access before they can run."
+
         !permissionState.backgroundLocationGranted ->
             "Place alerts and active safety sessions need background access to keep working when GeoWav is not open."
+
         else ->
             "Some safety alerts may stay paused until permissions are enabled."
     }
@@ -1351,7 +1364,11 @@ fun AwarenessItem(
 }
 
 @Composable
-fun AlertItem(alert: com.aarav.geowav.data.model.GeoAlert, isDarkThemeEnabled: Boolean, modifier: Modifier = Modifier) {
+fun AlertItem(
+    alert: com.aarav.geowav.data.model.GeoAlert,
+    isDarkThemeEnabled: Boolean,
+    modifier: Modifier = Modifier
+) {
 
     val type = if (alert.type.equals("ENTER", ignoreCase = true)) "enter" else "exit"
 
@@ -1635,43 +1652,62 @@ fun ProfileCardV2(
     contentColor: Color,
     navigateToPaywall: () -> Unit,
     navigateToProfile: () -> Unit,
+    showLocationText: Boolean,
     modifier: Modifier = Modifier
 ) {
     val imageUrl =
         currentUser?.avatar?.takeIf { it.isNotBlank() }
 
     Row(
-        modifier = modifier.fillMaxWidth()
+        modifier = modifier
+            .fillMaxWidth()
             .padding(horizontal = 12.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
+
         Column(
             modifier = Modifier.weight(1f),
         ) {
-            Text(
-                text = buildAnnotatedString {
-                    append("Hello ")
-                    withStyle(
-                        SpanStyle(
-                            color = contentColor,
-                            fontWeight = FontWeight.Bold
-                        )
-                    ) {
-                        append("Aarav,")
-                    }
-                },
-                style = MaterialTheme.typography.bodyLarge,
-                color = contentColor
-            )
 
-            Text(
-                text = "GeoWav",
-                style = MaterialTheme.typography.titleLarge.copy(
-                    color = contentColor
-                ),
-                fontFamily = manrope,
-                fontWeight = FontWeight.Bold
-            )
+            AnimatedVisibility(showLocationText) {
+                Text(
+                    text = "GeoWav",
+                    style = MaterialTheme.typography.headlineSmall.copy(
+                        color = contentColor
+                    ),
+                    fontFamily = manrope,
+                    fontWeight = FontWeight.Bold
+                )
+            }
+
+            AnimatedVisibility(!showLocationText) {
+                Column {
+                    Text(
+                        text = buildAnnotatedString {
+                            append("Hello ")
+                            withStyle(
+                                SpanStyle(
+                                    color = contentColor,
+                                    fontWeight = FontWeight.Bold
+                                )
+                            ) {
+                                append("Aarav,")
+                            }
+                        },
+                        style = MaterialTheme.typography.bodyLarge,
+                        color = contentColor
+                    )
+
+                    Text(
+                        text = "GeoWav",
+                        style = MaterialTheme.typography.titleLarge.copy(
+                            color = contentColor
+                        ),
+                        fontFamily = manrope,
+                        fontWeight = FontWeight.Bold
+                    )
+                }
+            }
         }
 
         IconButton(
