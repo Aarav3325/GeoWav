@@ -78,6 +78,7 @@ import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -238,7 +239,8 @@ fun GeoWavHomeScreen(
                     navigateToPaywall,
                     navigateToSettings,
                     showLocationText,
-                    Modifier
+                    locationAddress = awarenessSnapshotState.currentPlace,
+                    modifier = Modifier
                         .background(backgroundColor)
                         .windowInsetsPadding(TopAppBarDefaults.windowInsets)
                         .padding(TopAppBarDefaults.ContentPadding)
@@ -1653,6 +1655,7 @@ fun ProfileCardV2(
     navigateToPaywall: () -> Unit,
     navigateToProfile: () -> Unit,
     showLocationText: Boolean,
+    locationAddress: String?,
     modifier: Modifier = Modifier
 ) {
     val imageUrl =
@@ -1671,10 +1674,14 @@ fun ProfileCardV2(
 
             AnimatedVisibility(showLocationText) {
                 Text(
-                    text = "GeoWav",
-                    style = MaterialTheme.typography.headlineSmall.copy(
-                        color = contentColor
+                    text = locationAddress ?: "Away from saved places",
+                    style = MaterialTheme.typography.titleLarge.copy(
+                        color = contentColor,
+                        fontSize = 20.sp,
+                        letterSpacing = (-0.5).sp
                     ),
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
                     fontFamily = manrope,
                     fontWeight = FontWeight.Bold
                 )

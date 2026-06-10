@@ -314,7 +314,7 @@ class HomeScreenVM @Inject constructor(
                     val distance = SphericalUtil.computeDistanceBetween(currentLatLng, placeLatLng)
                     distance <= place.radius
                 }
-                insidePlace?.customName?.ifEmpty { insidePlace.placeName } ?: geocodedAddress?.let { "📍 $it" } ?: "Away from saved places"
+                insidePlace?.customName?.ifEmpty { insidePlace.placeName } ?: geocodedAddress?.let { "📍$it" } ?: "Away from saved places"
             }
         }
 
