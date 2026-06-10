@@ -36,6 +36,7 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -53,24 +54,30 @@ private val EmergencyAccentBar = Color(0xFFE53935)
 private val NavyDeep   = Color(0xFF222C61)
 private val Periwinkle = Color(0xFFBAC3FF)
 
-@Preview(showBackground = true)
+data class AwarenessSnapshotUiState(
+    val currentPlace: String?,
+    val isSharing: Boolean,
+    val isEmergency: Boolean,
+    val visibleMembers: List<CircleMember>,
+    val latestActivity: LatestActivity?,
+    val totalLovedOnesCount: Int
+)
+
+data class LatestActivity(
+    val actorName: String,
+    val actorAvatar: String?,
+    val placeName: String,
+    val isArrival: Boolean,
+    val relativeTime: String
+)
+
 @Composable
 fun AwarenessSnapshotCard(
-    sharingState: LiveLocationState,
-    sharedWith: Set<String>,
-    lovedOnes: List<CircleMember>,
+    uiState: AwarenessSnapshotUiState,
     modifier: Modifier = Modifier
 ) {
-    val isSharing =
-        sharingState is LiveLocationState.Sharing ||
-                sharingState is LiveLocationState.EmergencySharing
-
-    val isEmergency = sharingState is LiveLocationState.EmergencySharing
-
-
     Surface(
-        modifier = modifier
-            .fillMaxWidth(),
+        modifier = modifier.fillMaxWidth(),
         shape = RoundedCornerShape(20.dp),
         color = MaterialTheme.colorScheme.surfaceContainer,
         shadowElevation = 0.dp
@@ -78,19 +85,21 @@ fun AwarenessSnapshotCard(
         Column(
             modifier = Modifier
         ) {
-            GradientBar(isEmergency)
+            GradientBar(uiState.isEmergency)
 
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(16.dp)
             ) {
-                AwarenessCardLabel(isEmergency, isSharing)
+                AwarenessCardLabel(uiState.isEmergency, uiState.isSharing)
 
                 Spacer(Modifier.height(12.dp))
 
                 Text(
-                    text = "Home",
+                    text = uiState.currentPlace ?: "Away from saved places",
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
                     style =
                         MaterialTheme.typography.headlineSmall.copy(
                             fontWeight = FontWeight.SemiBold,
@@ -103,7 +112,7 @@ fun AwarenessSnapshotCard(
 
                 Spacer(Modifier.height(8.dp))
 
-                VisibilityMembers(sharedWith, lovedOnes)
+                VisibilityMembers(uiState)
 
                 HorizontalDivider(
                     modifier = Modifier.padding(vertical = 8.dp),
@@ -111,7 +120,10 @@ fun AwarenessSnapshotCard(
                     color = MaterialTheme.colorScheme.outlineVariant,
                 )
 
-                LatestActivitySection()
+                LatestActivitySection(
+                    totalLovedOnesCount = uiState.totalLovedOnesCount,
+                    latestActivity = uiState.latestActivity
+                )
             }
         }
     }
@@ -193,7 +205,9 @@ fun AwarenessCardLabel(
 private fun AvatarStack(
     members: List<CircleMember>
 ) {
-    Row {
+    Row(
+        horizontalArrangement = Arrangement.spacedBy((-8).dp)
+    ) {
         members.take(3).forEachIndexed { index, member ->
             val (avatarBg, avatarFg) = when (index % 3) {
                 0 -> Pair(
@@ -210,42 +224,52 @@ private fun AvatarStack(
                 )
             }
 
-//            MemberAvatar(
-//                avatar
-//                index = index,
-//                modifier = Modifier.offset(x = (-6 * index).dp),
-//            )
-
             IdentityAvatar(
                 avatarUrl = member.avatarUrl,
                 displayName = member.alias ?: member.profileName,
                 backgroundColor = avatarBg,
                 contentColor = avatarFg,
+                borderColor = MaterialTheme.colorScheme.surfaceContainer,
                 modifier = Modifier
-                    .size(36.dp).offset(x = (-6 * index).dp)
+                    .size(36.dp)
             )
         }
     }
 }
 
-@Preview(showBackground = true)
 @Composable
 fun VisibilityMembers(
-    sharedWith: Set<String>,
-    lovedOnes: List<CircleMember>
+    uiState: AwarenessSnapshotUiState
 ) {
+    val visibleTo = uiState.visibleMembers
 
-    val visibleTo = lovedOnes.filter { it.id in sharedWith }
-
-    val label = when (visibleTo.size) {
-        0 -> "Visible to no one"
-        1 -> "Visible to ${visibleTo[0].alias ?: visibleTo[0].profileName}"
-        2 -> "Visible to ${visibleTo[0].alias?.take(1)} & ${visibleTo[0].alias?.take(1)}"
-        else -> "Visible to ${visibleTo[0].alias?.take(1)}, ${visibleTo[0].alias?.take(1)} and ${visibleTo.size - 2} others"
+    val label = when {
+        uiState.isEmergency -> "Emergency sharing active"
+        uiState.isSharing -> when (visibleTo.size) {
+            0 -> "Visible to no one"
+            1 -> {
+                val name = (visibleTo[0].alias ?: visibleTo[0].profileName).split(" ").first()
+                "Visible to $name"
+            }
+            2 -> {
+                val name1 = (visibleTo[0].alias ?: visibleTo[0].profileName).split(" ").first()
+                val name2 = (visibleTo[1].alias ?: visibleTo[1].profileName).split(" ").first()
+                "Visible to $name1 & $name2"
+            }
+            else -> "Visible to ${visibleTo.size} people"
+        }
+        else -> "Visible to no one"
     }
 
     Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(0.dp)) {
-        AvatarStack(visibleTo)
+
+        if(uiState.isSharing || uiState.isEmergency) {
+            AvatarStack(visibleTo)
+        }
+
+        if (visibleTo.isNotEmpty() && (uiState.isSharing || uiState.isEmergency)) {
+            Spacer(Modifier.width(8.dp))
+        }
 
         Text(
             text = label,
@@ -300,40 +324,113 @@ fun MemberAvatar(
     }
 }
 
-@Preview(showBackground = true)
 @Composable
-fun LatestActivitySection() {
-    Row(
-        modifier = Modifier.fillMaxWidth(),
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        MemberAvatar(0)
-
-        Spacer(Modifier.width(12.dp))
-
-        Column(
-            modifier = Modifier.weight(1f)
-        ) {
+fun LatestActivitySection(
+    totalLovedOnesCount: Int,
+    latestActivity: LatestActivity?
+) {
+    if (totalLovedOnesCount == 0) {
+        Column(modifier = Modifier.fillMaxWidth()) {
             Text(
-                "Latest in your circle",
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.55f),
-            )
-
-            Text(
-                text = "Nitya arrived at Home",
+                text = "No circle members yet",
                 style = MaterialTheme.typography.bodyMedium.copy(
-                    fontWeight = FontWeight.Medium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                ),
+                    fontWeight = FontWeight.SemiBold,
+                    color = MaterialTheme.colorScheme.onSurface
+                )
+            )
+            Text(
+                text = "Invite someone to start building awareness together.",
+                style = MaterialTheme.typography.bodySmall.copy(
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
             )
         }
+    } else if (latestActivity == null) {
+        Column(modifier = Modifier.fillMaxWidth()) {
+            Text(
+                text = "No activity yet",
+                style = MaterialTheme.typography.bodyMedium.copy(
+                    fontWeight = FontWeight.SemiBold,
+                    color = MaterialTheme.colorScheme.onSurface
+                )
+            )
+            Text(
+                text = "Recent arrivals and departures will appear here.",
+                style = MaterialTheme.typography.bodySmall.copy(
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            )
+        }
+    } else {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            IdentityAvatar(
+                avatarUrl = latestActivity.actorAvatar,
+                displayName = latestActivity.actorName,
+                backgroundColor = MaterialTheme.colorScheme.primaryContainer,
+                contentColor = MaterialTheme.colorScheme.onPrimaryContainer,
+                modifier = Modifier.size(36.dp)
+            )
 
-        Text(
-            "5 min ago",
-            style = MaterialTheme.typography.bodySmall,
-            modifier = Modifier.padding(start = 8.dp),
-            color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.55f),
-        )
+            Spacer(Modifier.width(12.dp))
+
+            Column(
+                modifier = Modifier.weight(1f)
+            ) {
+                Text(
+                    "Latest in your circle",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.55f),
+                )
+
+                val transitionText = if (latestActivity.isArrival) {
+                    "${latestActivity.actorName} arrived at ${latestActivity.placeName}"
+                } else {
+                    "${latestActivity.actorName} left ${latestActivity.placeName}"
+                }
+
+                Text(
+                    text = transitionText,
+                    style = MaterialTheme.typography.bodyMedium.copy(
+                        fontWeight = FontWeight.Medium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    ),
+                )
+            }
+
+            Text(
+                latestActivity.relativeTime,
+                style = MaterialTheme.typography.bodySmall,
+                modifier = Modifier.padding(start = 8.dp),
+                color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.55f),
+            )
+        }
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+fun AwarenessSnapshotCardPreview() {
+    val mockState = AwarenessSnapshotUiState(
+        currentPlace = "Home",
+        isSharing = true,
+        isEmergency = false,
+        visibleMembers = listOf(
+            CircleMember(id = "1", profileName = "Nitya", alias = "Nitya", selected = true, receiverEmail = "nitya@geowav.com"),
+            CircleMember(id = "2", profileName = "Diya", alias = "Diya", selected = true, receiverEmail = "diya@geowav.com")
+        ),
+        latestActivity = LatestActivity(
+            actorName = "Nitya",
+            actorAvatar = null,
+            placeName = "Home",
+            isArrival = true,
+            relativeTime = "5 min ago"
+        ),
+        totalLovedOnesCount = 2
+    )
+    MaterialTheme {
+        AwarenessSnapshotCard(uiState = mockState)
     }
 }

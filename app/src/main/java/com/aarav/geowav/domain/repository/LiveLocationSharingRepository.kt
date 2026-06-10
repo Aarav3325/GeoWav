@@ -31,4 +31,5 @@ interface LiveLocationSharingRepository {
 
     fun getUpdatedTimestamp(userId: String): Flow<Long>
 
+    fun observeSharingActive(userId: String): Flow<Boolean>
 }

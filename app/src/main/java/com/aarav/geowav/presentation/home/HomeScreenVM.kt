@@ -20,6 +20,17 @@ import com.aarav.geowav.data.repository.CircleActivityFeedRepository
 import com.aarav.geowav.data.repository.PlaceRepositoryImpl
 import com.aarav.geowav.domain.repository.CircleRepository
 import com.aarav.geowav.domain.repository.ViewerLocationRepository
+import com.aarav.geowav.domain.repository.LiveLocationSharingRepository
+import com.aarav.geowav.domain.repository.LocationPermissionRepository
+import com.aarav.geowav.domain.repository.EmergencySharingRepository
+import com.aarav.geowav.platform.LocationManager
+import com.aarav.geowav.presentation.components.AwarenessSnapshotUiState
+import com.aarav.geowav.presentation.components.LatestActivity
+import android.location.Location
+import android.location.Address
+import android.location.Geocoder
+import android.content.Context
+import dagger.hilt.android.qualifiers.ApplicationContext
 import com.google.android.gms.maps.model.LatLng
 import com.google.maps.android.SphericalUtil
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -33,10 +44,19 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.onStart
+import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import javax.inject.Inject
 
+@OptIn(ExperimentalCoroutinesApi::class)
 @HiltViewModel
 class HomeScreenVM @Inject constructor(
     private val googleSignInClient: GoogleSignInClient,
@@ -45,6 +65,11 @@ class HomeScreenVM @Inject constructor(
     private val circleRepository: CircleRepository,
     private val viewerLocationRepository: ViewerLocationRepository,
     private val permissionCoordinator: GeoPermissionCoordinator,
+    private val locationManager: LocationManager,
+    private val liveLocationSharingRepository: LiveLocationSharingRepository,
+    private val locationPermissionRepository: LocationPermissionRepository,
+    private val emergencySharingRepository: EmergencySharingRepository,
+    @ApplicationContext private val context: Context,
 ) : ViewModel() {
 
     private val _uiState: MutableStateFlow<HomeScreenUiState> =
@@ -190,6 +215,146 @@ class HomeScreenVM @Inject constructor(
 
     val awarenessItems = circleActivityFeedRepository.observeRecentActivity()
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
+
+    private val permissionStateFlow = permissionCoordinator.state
+
+    private val userLocationFlow: Flow<Location?> = permissionStateFlow
+        .flatMapLatest { state ->
+            if (state.foregroundLocationGranted) {
+                locationManager.getLocationUpdates()
+                    .map { it as Location? }
+                    .onStart { emit(null) }
+            } else {
+                flowOf(null)
+            }
+        }
+        .onStart { emit(null) }
+
+    private val geocodedAddressFlow: Flow<String?> = userLocationFlow
+        .distinctUntilChanged { old, new ->
+            if (old == null && new == null) true
+            else if (old != null && new != null) {
+                old.distanceTo(new) < 10f
+            } else false
+        }
+        .flatMapLatest { location ->
+            if (location == null) {
+                flowOf<String?>(null)
+            } else {
+                flow {
+                    val address = resolveApproximateAddress(location)
+                    emit(address)
+                }
+            }
+        }
+        .onStart { emit(null) }
+
+    private val isEmergencyFlow: Flow<Boolean> = emergencySharingRepository.observeEmergency(viewerId)
+        .map { it != null }
+        .onStart { emit(false) }
+
+    private val isSharingFlow: Flow<Boolean> = liveLocationSharingRepository.observeSharingActive(viewerId)
+        .onStart { emit(false) }
+
+    private val sharedWithFlow: Flow<Set<String>> = locationPermissionRepository.getAllowedViewers(viewerId)
+        .onStart { emit(emptySet()) }
+
+    private val timeTickerFlow: Flow<Long> = flow {
+        while (true) {
+            emit(System.currentTimeMillis())
+            delay(30_000)
+        }
+    }.onStart { emit(System.currentTimeMillis()) }
+
+    private fun getRelativeTime(timestamp: Long): String {
+        val now = System.currentTimeMillis()
+        val diff = now - timestamp
+        val minutes = diff / 60000
+        val hours = diff / (60000 * 60)
+        return when {
+            minutes < 1 -> "Just now"
+            minutes < 60 -> "$minutes min${if (minutes > 1) "s" else ""} ago"
+            hours < 24 -> "$hours hour${if (hours > 1) "s" else ""} ago"
+            else -> {
+                val df = java.text.SimpleDateFormat("dd MMMM y", java.util.Locale.getDefault())
+                df.format(java.util.Date(timestamp))
+            }
+        }
+    }
+
+    val awarenessSnapshotUiState: StateFlow<AwarenessSnapshotUiState> = combine(
+        allPlaces,
+        userLocationFlow,
+        isSharingFlow,
+        isEmergencyFlow,
+        sharedWithFlow,
+        _uiState.map { it.lovedOnes }.distinctUntilChanged(),
+        awarenessItems,
+        permissionStateFlow,
+        timeTickerFlow,
+        geocodedAddressFlow
+    ) { args ->
+        val places = args[0] as List<Place>
+        val location = args[1] as Location?
+        val isSharing = args[2] as Boolean
+        val isEmergency = args[3] as Boolean
+        val sharedWith = args[4] as Set<String>
+        val lovedOnes = args[5] as List<CircleMember>
+        val activities = args[6] as List<CircleActivityItem>
+        val permissionState = args[7] as GeoPermissionUiState
+        val geocodedAddress = args[9] as String?
+
+        val currentPlace = when {
+            !permissionState.foregroundLocationGranted -> "Location access needed"
+            location == null -> "Away from saved places"
+            else -> {
+                val currentLatLng = LatLng(location.latitude, location.longitude)
+                val insidePlace = places.firstOrNull { place ->
+                    val placeLatLng = LatLng(place.latitude, place.longitude)
+                    val distance = SphericalUtil.computeDistanceBetween(currentLatLng, placeLatLng)
+                    distance <= place.radius
+                }
+                insidePlace?.customName?.ifEmpty { insidePlace.placeName } ?: geocodedAddress?.let { "📍 $it" } ?: "Away from saved places"
+            }
+        }
+
+        val visibleMembers = if (isEmergency) {
+            lovedOnes
+        } else {
+            lovedOnes.filter { it.id in sharedWith }
+        }
+
+        val latestActivity = activities.firstOrNull { it.actorId != viewerId }?.let { newest ->
+            val isArrival = newest.normalizedTransitionType == "ARRIVED"
+            LatestActivity(
+                actorName = newest.actorName,
+                actorAvatar = newest.actorAvatar,
+                placeName = newest.placeName,
+                isArrival = isArrival,
+                relativeTime = getRelativeTime(newest.timestamp)
+            )
+        }
+
+        AwarenessSnapshotUiState(
+            currentPlace = currentPlace,
+            isSharing = isSharing,
+            isEmergency = isEmergency,
+            visibleMembers = visibleMembers,
+            latestActivity = latestActivity,
+            totalLovedOnesCount = lovedOnes.size
+        )
+    }.stateIn(
+        scope = viewModelScope,
+        started = SharingStarted.WhileSubscribed(5_000),
+        initialValue = AwarenessSnapshotUiState(
+            currentPlace = "Away from saved places",
+            isSharing = false,
+            isEmergency = false,
+            visibleMembers = emptyList(),
+            latestActivity = null,
+            totalLovedOnesCount = 0
+        )
+    )
 
     fun loadLovedOnes() {
         if (viewerId.isEmpty()) return
@@ -387,6 +552,38 @@ class HomeScreenVM @Inject constructor(
         }
     }
 
+    @Suppress("DEPRECATION")
+    private suspend fun resolveApproximateAddress(location: Location): String? {
+        return withContext(Dispatchers.IO) {
+            try {
+                if (!Geocoder.isPresent()) return@withContext null
+
+                val geocoder = Geocoder(context, java.util.Locale.getDefault())
+                val address = geocoder.getFromLocation(location.latitude, location.longitude, 1)
+                    ?.firstOrNull()
+
+                address?.toApproximateLabel()
+            } catch (_: Exception) {
+                null
+            }
+        }
+    }
+
+    private fun Address.toApproximateLabel(): String? {
+        val parts = listOfNotNull(
+            subLocality,
+            locality,
+            subAdminArea,
+            adminArea
+        )
+            .map { it.trim() }
+            .filter { it.isNotBlank() }
+            .distinct()
+
+        return parts.take(2).joinToString(", ").ifBlank {
+            getAddressLine(0)?.trim()?.takeIf { it.isNotBlank() }
+        }
+    }
 
 }
 

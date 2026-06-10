@@ -101,6 +101,7 @@ import com.aarav.geowav.data.model.User
 import com.aarav.geowav.data.model.UserPlan
 import com.aarav.geowav.presentation.components.AvatarImage
 import com.aarav.geowav.presentation.components.AwarenessSnapshotCard
+import com.aarav.geowav.presentation.components.AwarenessSnapshotUiState
 import com.aarav.geowav.presentation.components.IdentityAvatar
 import com.aarav.geowav.presentation.locationsharing.LocationSharingVM
 import com.aarav.geowav.presentation.subscription.SubscriptionViewModel
@@ -131,6 +132,7 @@ fun GeoWavHomeScreen(
 
     val uiState by homeScreenVM.uiState.collectAsState()
     val locationSharingInfoState by locationSharingVM.uiState.collectAsState()
+    val awarenessSnapshotState by homeScreenVM.awarenessSnapshotUiState.collectAsState()
     val locations by homeScreenVM.locations.collectAsState()
     val activeSharingCount = locations.count { (_, state) ->
         state is ViewerLocationState.NormalSharing ||
@@ -350,10 +352,8 @@ fun GeoWavHomeScreen(
 
 
                         AwarenessSnapshotCard(
-                            locationSharingInfoState.sharingState,
-                            locationSharingInfoState.selectedViewerIds,
-                            uiState.lovedOnes,
-                            Modifier
+                            uiState = awarenessSnapshotState,
+                            modifier = Modifier
                                 .padding(
                                     top = 116.dp,
                                     start = 12.dp,
