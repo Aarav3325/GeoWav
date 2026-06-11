@@ -104,6 +104,7 @@ import com.aarav.geowav.presentation.components.AvatarImage
 import com.aarav.geowav.presentation.components.AwarenessSnapshotCard
 import com.aarav.geowav.presentation.components.AwarenessSnapshotUiState
 import com.aarav.geowav.presentation.components.IdentityAvatar
+import com.aarav.geowav.presentation.insights.PersonalInsightsViewModel
 import com.aarav.geowav.presentation.locationsharing.LocationSharingVM
 import com.aarav.geowav.presentation.subscription.SubscriptionViewModel
 import com.aarav.geowav.presentation.theme.manrope
@@ -122,6 +123,7 @@ fun GeoWavHomeScreen(
     navigateToObserve: () -> Unit,
     homeScreenVM: HomeScreenVM,
     locationSharingVM: LocationSharingVM,
+    personalInsightsVM: PersonalInsightsViewModel,
     subscriptionViewModel: SubscriptionViewModel,
     navigateToSettings: () -> Unit,
     navigateToPaywall: () -> Unit,
