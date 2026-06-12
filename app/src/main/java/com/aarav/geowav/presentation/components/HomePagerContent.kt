@@ -15,6 +15,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
@@ -40,6 +41,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.aarav.geowav.core.insights.MostVisitedPlaceInsight
 import com.aarav.geowav.core.utils.LiveLocationState
 import com.aarav.geowav.data.model.CircleMember
 import com.aarav.geowav.presentation.locationsharing.LocationSharingVM
@@ -77,20 +79,22 @@ fun AwarenessSnapshotCard(
     modifier: Modifier = Modifier
 ) {
     Surface(
-        modifier = modifier.fillMaxWidth(),
+        modifier = modifier.fillMaxWidth().height(180.dp),
         shape = RoundedCornerShape(20.dp),
         color = MaterialTheme.colorScheme.surfaceContainer,
         shadowElevation = 0.dp
     ) {
         Column(
-            modifier = Modifier
+            modifier = Modifier,
         ) {
             GradientBar(uiState.isEmergency)
 
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(16.dp)
+                    .fillMaxHeight()
+                    .padding(horizontal = 16.dp),
+                verticalArrangement = Arrangement.Center
             ) {
                 AwarenessCardLabel(uiState.isEmergency, uiState.isSharing)
 
@@ -433,4 +437,9 @@ fun AwarenessSnapshotCardPreview() {
     MaterialTheme {
         AwarenessSnapshotCard(uiState = mockState)
     }
+}
+
+@Composable
+fun MostVisitedPlaceInsightCard() {
+
 }

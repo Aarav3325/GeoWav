@@ -47,7 +47,6 @@ fun NavGraph(
     onThemeChange: (ThemeMode) -> Unit,
     navHostController: NavHostController,
     subscriptionVM: SubscriptionViewModel,
-    locationSharingVM: LocationSharingVM,
     sharedPreferences: SharedPreferences,
     location: Pair<Double, Double>?,
     permissionState: GeoPermissionUiState,
@@ -163,7 +162,6 @@ fun NavGraph(
                 isDarkThemeEnabled,
                 navHostController,
                 this,
-                locationSharingVM,
                 subscriptionVM
             )
 
@@ -415,7 +413,6 @@ fun AddHomeScreen(
     isDarkThemeEnabled: Boolean,
     navController: NavController,
     navGraphBuilder: NavGraphBuilder,
-    locationSharingVM: LocationSharingVM,
     subscriptionVM: SubscriptionViewModel
 ) {
     navGraphBuilder.composable(
@@ -449,7 +446,6 @@ fun AddHomeScreen(
                 navController.navigate(NavRoute.ObserveUsers.path)
             },
             homeScreenVM = sharedVM,
-            locationSharingVM = locationSharingVM,
             personalInsightsVM = personalInsightsVM,
             subscriptionViewModel = subscriptionVM,
             navigateToSettings = {

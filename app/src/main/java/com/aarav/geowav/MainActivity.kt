@@ -306,8 +306,6 @@ class MainActivity : ComponentActivity() {
             }
 
             val subscriptionVM: SubscriptionViewModel = hiltViewModel()
-            val locationSharingVM: LocationSharingVM = hiltViewModel()
-
 
             val plan by subscriptionVM.userPlan.collectAsState()
 
@@ -443,7 +441,6 @@ class MainActivity : ComponentActivity() {
                                 },
                                 navHostController = navController,
                                 subscriptionVM = subscriptionVM,
-                                locationSharingVM = locationSharingVM,
                                 sharedPreferences = sharedPreferences,
                                 location = location1,
                                 permissionState = permissionUiState,

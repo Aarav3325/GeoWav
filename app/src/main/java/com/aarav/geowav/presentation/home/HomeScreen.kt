@@ -26,11 +26,13 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.layout.wrapContentHeight
@@ -122,7 +124,6 @@ fun GeoWavHomeScreen(
     onAddZone: () -> Unit,
     navigateToObserve: () -> Unit,
     homeScreenVM: HomeScreenVM,
-    locationSharingVM: LocationSharingVM,
     personalInsightsVM: PersonalInsightsViewModel,
     subscriptionViewModel: SubscriptionViewModel,
     navigateToSettings: () -> Unit,
@@ -134,7 +135,6 @@ fun GeoWavHomeScreen(
 ) {
 
     val uiState by homeScreenVM.uiState.collectAsState()
-    val locationSharingInfoState by locationSharingVM.uiState.collectAsState()
     val awarenessSnapshotState by homeScreenVM.awarenessSnapshotUiState.collectAsState()
     val locations by homeScreenVM.locations.collectAsState()
     val activeSharingCount = locations.count { (_, state) ->
@@ -322,11 +322,8 @@ fun GeoWavHomeScreen(
                     Box(
                         modifier = Modifier
                             .fillMaxWidth()
-
                             .background(MaterialTheme.colorScheme.background)
                     ) {
-
-
                         Image(
                             painter = if (isDarkThemeEnabled) painterResource(R.drawable.dark_bg_geowav_new_2) else painterResource(
                                 R.drawable.light_bg_geowav_new
@@ -335,10 +332,8 @@ fun GeoWavHomeScreen(
                             contentScale = ContentScale.FillBounds,
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .height(332.dp)
+                                .matchParentSize()
                         )
-
-
 
                         Box(
                             modifier = Modifier
@@ -354,30 +349,26 @@ fun GeoWavHomeScreen(
                                 )
                         )
 
+                        Column(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalAlignment = Alignment.CenterHorizontally
+                        ) {
+                            Spacer(
+                                modifier = Modifier
+                                    .windowInsetsPadding(TopAppBarDefaults.windowInsets)
+                                    .height(TopAppBarDefaults.TopAppBarExpandedHeight)
+                            )
 
-                        AwarenessSnapshotCard(
-                            uiState = awarenessSnapshotState,
-                            modifier = Modifier
-                                .padding(
-                                    top = 116.dp,
-                                    start = 12.dp,
-                                    end = 12.dp,
-                                    bottom = 12.dp
-                                )
-                                .align(Alignment.Center)
-                        )
+                            Spacer(modifier = Modifier.height(8.dp))
 
-//                        ProfileCard(
-//                            plan,
-//                            avatar = uiState.userAvatar,
-//                            currentUser = uiState.currentUser,
-//                            userName = uiState.username,
-//                            activeSharingCount = activeSharingCount,
-//                            modifier = Modifier
-//                                .align(Alignment.Center)
-//                                .padding(top = 92.dp),
-//                            isDarkThemeEnabled = isDarkThemeEnabled
-//                        )
+                            AwarenessSnapshotCard(
+                                uiState = awarenessSnapshotState,
+                                modifier = Modifier
+                                    .padding(horizontal = 12.dp)
+                            )
+
+                            Spacer(modifier = Modifier.height(20.dp))
+                        }
                     }
 
                     Column(
@@ -1674,9 +1665,13 @@ fun ProfileCardV2(
             modifier = Modifier.weight(1f),
         ) {
 
+            val address = locationAddress.takeIf {
+                locationAddress != "Location access needed"
+            } ?: "GeoWav"
+
             AnimatedVisibility(showLocationText) {
                 Text(
-                    text = locationAddress ?: "GeoWav",
+                    text = address,
                     style = MaterialTheme.typography.titleLarge.copy(
                         color = contentColor,
                         fontSize = 20.sp,

@@ -138,7 +138,7 @@ fun CustomBottomNavigationBar(
             .navigationBarsPadding()
             .wrapContentWidth()
             .height(90.dp)
-            .padding(horizontal = 24.dp, vertical = 8.dp)
+            .padding(horizontal = 16.dp, vertical = 8.dp)
             .padding(bottom = 8.dp),
         shape = RoundedCornerShape(40.dp),
         color = MaterialTheme.colorScheme.surfaceContainer,
@@ -190,7 +190,7 @@ fun CustomBottomNavItem(
 
     val backgroundColor by animateColorAsState(
         targetValue = if (selected) {
-            MaterialTheme.colorScheme.surfaceBright.copy(0.6f)
+            MaterialTheme.colorScheme.surfaceBright.copy(0.8f)
         } else {
             Color.Transparent
         },
