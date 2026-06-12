@@ -23,6 +23,8 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.pager.HorizontalPager
+import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
@@ -91,6 +93,7 @@ import androidx.lifecycle.compose.LocalLifecycleOwner
 import coil.ImageLoader
 import coil.decode.SvgDecoder
 import com.aarav.geowav.R
+import com.aarav.geowav.core.insights.MostVisitedPlaceInsight
 import com.aarav.geowav.core.permissions.GeoPermissionUiState
 import com.aarav.geowav.core.utils.SubscriptionHelper
 import com.aarav.geowav.core.utils.ViewerLocationState
@@ -106,6 +109,7 @@ import com.aarav.geowav.presentation.components.AvatarImage
 import com.aarav.geowav.presentation.components.AwarenessSnapshotCard
 import com.aarav.geowav.presentation.components.AwarenessSnapshotUiState
 import com.aarav.geowav.presentation.components.IdentityAvatar
+import com.aarav.geowav.presentation.components.MostVisitedPlaceInsightCard
 import com.aarav.geowav.presentation.insights.PersonalInsightsViewModel
 import com.aarav.geowav.presentation.locationsharing.LocationSharingVM
 import com.aarav.geowav.presentation.subscription.SubscriptionViewModel
@@ -190,6 +194,11 @@ fun GeoWavHomeScreen(
     val scope = rememberCoroutineScope()
 
     val scroll = rememberScrollState()
+
+    val pagerState = rememberPagerState(
+        initialPage = 0,
+        pageCount = { 2 }
+    )
 
     // Switch colors after scrolling
     val useDarkIcons by remember {
@@ -316,11 +325,45 @@ fun GeoWavHomeScreen(
 
                             Spacer(modifier = Modifier.height(8.dp))
 
-                            AwarenessSnapshotCard(
-                                uiState = awarenessSnapshotState,
-                                modifier = Modifier
-                                    .padding(horizontal = 12.dp)
-                            )
+                            HorizontalPager(
+                                state = pagerState,
+                                modifier = Modifier.fillMaxWidth()
+                            ) { page ->
+                                when (page) {
+                                    0 -> AwarenessSnapshotCard(
+                                        uiState = awarenessSnapshotState,
+                                        modifier = Modifier.padding(horizontal = 12.dp)
+                                    )
+                                    1 -> MostVisitedPlaceInsightCard(
+                                        heroText = "MOST VISITED PLACE",
+                                        ctaText = "See Insights",
+                                        modifier = Modifier.padding(horizontal = 12.dp)
+                                    )
+                                }
+                            }
+
+                            Spacer(modifier = Modifier.height(8.dp))
+
+                            Row(
+                                horizontalArrangement = Arrangement.Center,
+                                verticalAlignment = Alignment.CenterVertically,
+                                modifier = Modifier.fillMaxWidth()
+                            ) {
+                                repeat(2) { index ->
+                                    val isSelected = pagerState.currentPage == index
+                                    val width = if (isSelected) 16.dp else 6.dp
+                                    val alpha = if (isSelected) 1f else 0.4f
+                                    Box(
+                                        modifier = Modifier
+                                            .padding(horizontal = 3.dp)
+                                            .size(width = width, height = 6.dp)
+                                            .background(
+                                                color = MaterialTheme.colorScheme.onBackground.copy(alpha = alpha),
+                                                shape = CircleShape
+                                            )
+                                    )
+                                }
+                            }
 
                             Spacer(modifier = Modifier.height(20.dp))
                         }

@@ -146,13 +146,6 @@ class MainActivity : ComponentActivity() {
 
         setContent {
 
-            SideEffect {
-                Log.d(
-                    "NAVBAR",
-                    "nav color = ${window.navigationBarColor}"
-                )
-            }
-
             var showAppDisabledState by remember {
                 mutableStateOf(false)
             }

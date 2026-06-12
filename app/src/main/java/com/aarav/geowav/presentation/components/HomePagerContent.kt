@@ -13,6 +13,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
@@ -24,7 +25,11 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.FilledTonalButton
+import androidx.compose.material3.FilledTonalIconButton
 import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -35,12 +40,14 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.aarav.geowav.R
 import com.aarav.geowav.core.insights.MostVisitedPlaceInsight
 import com.aarav.geowav.core.utils.LiveLocationState
 import com.aarav.geowav.data.model.CircleMember
@@ -251,7 +258,7 @@ private fun AvatarStack(
                 contentColor = avatarFg,
                 borderColor = MaterialTheme.colorScheme.surfaceContainer,
                 modifier = Modifier
-                    .size(36.dp)
+                    .size(32.dp)
             )
         }
     }
@@ -391,7 +398,7 @@ fun LatestActivitySection(
                 displayName = latestActivity.actorName,
                 backgroundColor = MaterialTheme.colorScheme.primaryContainer,
                 contentColor = MaterialTheme.colorScheme.onPrimaryContainer,
-                modifier = Modifier.size(36.dp)
+                modifier = Modifier.size(32.dp)
             )
 
             Spacer(Modifier.width(12.dp))
@@ -413,6 +420,8 @@ fun LatestActivitySection(
 
                 Text(
                     text = transitionText,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
                     style = MaterialTheme.typography.bodyMedium.copy(
                         fontWeight = FontWeight.Medium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
@@ -457,10 +466,14 @@ fun AwarenessSnapshotCardPreview() {
 
 @Preview(showBackground = true)
 @Composable
-fun MostVisitedPlaceInsightCard() {
+fun MostVisitedPlaceInsightCard(
+    heroText: String,
+    ctaText: String,
+    modifier: Modifier = Modifier
+) {
     GeoWavTheme(darkTheme = true) {
         Surface(
-            modifier = Modifier.fillMaxWidth().height(180.dp),
+            modifier = modifier.fillMaxWidth().height(180.dp),
             shape = RoundedCornerShape(20.dp),
             color = GeoWavThemeExtras.colors.periwinkleTintedSurface,
             shadowElevation = 0.dp
@@ -502,19 +515,21 @@ fun MostVisitedPlaceInsightCard() {
                         )
                     }
 
-//                    Text(
-//                        text = "MOST VISITED PLACE",
-//                        style = MaterialTheme.typography.labelSmall.copy(
-//                            letterSpacing = 0.08.sp,
-//                            fontWeight = FontWeight.SemiBold,
-//                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-//                        ),
-//                    )
+                    Text(
+                        text = heroText,
+                        style = MaterialTheme.typography.labelSmall.copy(
+                            letterSpacing = 0.08.sp,
+                            fontWeight = FontWeight.SemiBold,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        ),
+                    )
 
-                    Spacer(Modifier.height(16.dp))
+                    Spacer(Modifier.height(8.dp))
 
                     Text(
                         text = "College",
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
                         style = MaterialTheme.typography.headlineMedium.copy(
                             letterSpacing = 0.08.sp,
                             fontWeight = FontWeight.Bold,
@@ -523,11 +538,11 @@ fun MostVisitedPlaceInsightCard() {
                     )
 
 
-                    Spacer(Modifier.height(8.dp))
+                    Spacer(Modifier.height(4.dp))
 
                     Text(
                         text = "23 visits this month",
-                        style = MaterialTheme.typography.titleMedium.copy(
+                        style = MaterialTheme.typography.bodyMedium.copy(
                             letterSpacing = 0.08.sp,
                             fontWeight = FontWeight.SemiBold,
                             color = GeoWavThemeExtras.colors.periwinkle,
@@ -535,16 +550,49 @@ fun MostVisitedPlaceInsightCard() {
                     )
 
 
-                    Spacer(Modifier.height(8.dp))
+//                    Text(
+//                        text = "Your most frequent destination",
+//                        style = MaterialTheme.typography.bodySmall.copy(
+//                            letterSpacing = 0.08.sp,
+//                            fontWeight = FontWeight.SemiBold,
+//                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+//                        ),
+//                    )
 
-                    Text(
-                        text = "Your most frequent destination",
-                        style = MaterialTheme.typography.bodyMedium.copy(
-                            letterSpacing = 0.08.sp,
-                            fontWeight = FontWeight.SemiBold,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        ),
+
+                    HorizontalDivider(
+                        modifier = Modifier.padding(vertical = 8.dp),
+                        thickness = 0.5.dp,
+                        color = GeoWavThemeExtras.colors.periwinkle,
                     )
+
+                    FilledTonalButton(
+                        onClick = {},
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = MaterialTheme.colorScheme.inverseSurface
+                        ),
+                        shape = RoundedCornerShape(999.dp),
+                        contentPadding = PaddingValues(horizontal = 8.dp, vertical = 0.dp),
+                        modifier = Modifier.height(32.dp)
+                    ) {
+                        Text(
+                            text = ctaText,
+                            style = MaterialTheme.typography.bodySmall.copy(
+                                letterSpacing = 0.08.sp,
+                                fontWeight = FontWeight.SemiBold,
+                                color = MaterialTheme.colorScheme.inverseOnSurface,
+                            ),
+                        )
+
+                        Spacer(Modifier.width(4.dp))
+
+                        Icon(
+                            painter = painterResource(R.drawable.caret_right_fill),
+                            contentDescription = null,
+                            modifier = Modifier.size(12.dp),
+                            tint = MaterialTheme.colorScheme.inverseOnSurface,
+                        )
+                    }
                 }
 
             }
