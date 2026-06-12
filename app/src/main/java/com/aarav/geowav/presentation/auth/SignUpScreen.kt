@@ -88,7 +88,6 @@ fun SignupScreen(
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .imePadding()
             .background(MaterialTheme.colorScheme.background)
     ) {
         AuthSpatialBackground()

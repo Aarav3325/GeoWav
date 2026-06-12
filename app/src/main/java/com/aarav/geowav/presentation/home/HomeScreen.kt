@@ -248,51 +248,6 @@ fun GeoWavHomeScreen(
                         .padding(TopAppBarDefaults.ContentPadding)
                         .height(TopAppBarDefaults.TopAppBarExpandedHeight)
                 )
-//                TopAppBar(
-//                    title = {
-//                        Text(
-//                            text = "GeoWav",
-//                            style = MaterialTheme.typography.headlineLarge.copy(
-//                                color = textColor
-//                            ),
-//                            fontFamily = manrope,
-//                            fontWeight = FontWeight.Bold
-//                        )
-//                    },
-//                    actions = {
-//                        IconButton(
-//                            onClick = {
-//                                navigateToPaywall()
-////                            activity?.let {
-////                                homeScreenVM.launchBillingFlow(it, "")
-////                            }
-//                            }
-//                        ) {
-//                            Image(
-//                                painter = painterResource(R.drawable.payment),
-//                                contentDescription = "payment",
-//                                modifier = Modifier.size(28.dp),
-//                                colorFilter = ColorFilter.tint(textColor)
-//                            )
-//                        }
-//
-//                        IconButton(
-//                            onClick = {
-//                                navigateToSettings()
-//                            }
-//                        ) {
-//                            Image(
-//                                painter = painterResource(R.drawable.gear_six),
-//                                contentDescription = "setting",
-//                                modifier = Modifier.size(28.dp),
-//                                colorFilter = ColorFilter.tint(textColor)
-//                            )
-//                        }
-//                    },
-//                    colors = TopAppBarDefaults.topAppBarColors(
-//                        containerColor = backgroundColor
-//                    )
-//                )
             }
         }
 

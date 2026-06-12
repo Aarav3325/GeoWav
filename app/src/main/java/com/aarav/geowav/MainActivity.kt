@@ -140,26 +140,6 @@ class MainActivity : ComponentActivity() {
                 android.graphics.Color.TRANSPARENT
             )
         )
-        ViewCompat.setOnApplyWindowInsetsListener(View(applicationContext)) { v, insets ->
-            val systemBars =
-                insets.getInsets(WindowInsetsCompat.Type.systemBars())
-            v.setPadding(
-                systemBars.left,
-                systemBars.top,
-                systemBars.right,
-                systemBars.bottom
-            )
-            insets
-        }
-
-
-        ViewCompat.setOnApplyWindowInsetsListener(View(applicationContext)) { v, insets ->
-            val systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
-            val ime = insets.getInsets(WindowInsetsCompat.Type.ime())
-            val bottomInset = maxOf(systemBars.bottom, ime.bottom)
-            v.setPadding(systemBars.left, 0, systemBars.right, bottomInset)
-            insets
-        }
 
         fusedClient = LocationServices.getFusedLocationProviderClient(this)
 
