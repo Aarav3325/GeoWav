@@ -52,11 +52,11 @@ import com.aarav.geowav.presentation.theme.GeoWavThemeExtras
 
 private val LiveGreen = Color(0xFF4CAF50)
 
-private val EmergencyRed       = Color(0xFFC62828)
-private val EmergencyRedLight  = Color(0xFFFFEBEE)
+private val EmergencyRed = Color(0xFFC62828)
+private val EmergencyRedLight = Color(0xFFFFEBEE)
 private val EmergencyAccentBar = Color(0xFFE53935)
 
-private val NavyDeep   = Color(0xFF222C61)
+private val NavyDeep = Color(0xFF222C61)
 private val Periwinkle = Color(0xFFBAC3FF)
 
 data class AwarenessSnapshotUiState(
@@ -89,7 +89,9 @@ fun AwarenessSnapshotCard(
     }
 
     Surface(
-        modifier = modifier.fillMaxWidth().height(180.dp),
+        modifier = modifier
+            .fillMaxWidth()
+            .height(180.dp),
         shape = RoundedCornerShape(20.dp),
         color = MaterialTheme.colorScheme.surfaceContainer,
         shadowElevation = 0.dp
@@ -177,8 +179,8 @@ fun AwarenessCardLabel(
 
     val dotColor = when {
         isEmergency -> EmergencyAccentBar
-        isSharing   -> LiveGreen
-        else        -> MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.4f)
+        isSharing -> LiveGreen
+        else -> MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.4f)
     }
 
     val animatedDotColor by animateColorAsState(
@@ -235,10 +237,12 @@ private fun AvatarStack(
                     MaterialTheme.colorScheme.primaryContainer,
                     MaterialTheme.colorScheme.onPrimaryContainer
                 )
+
                 1 -> Pair(
                     MaterialTheme.colorScheme.secondaryContainer,
                     MaterialTheme.colorScheme.onSecondaryContainer
                 )
+
                 else -> Pair(
                     MaterialTheme.colorScheme.tertiaryContainer,
                     MaterialTheme.colorScheme.onTertiaryContainer
@@ -272,19 +276,25 @@ fun VisibilityMembers(
                 val name = (visibleTo[0].alias ?: visibleTo[0].profileName).split(" ").first()
                 "Visible to $name"
             }
+
             2 -> {
                 val name1 = (visibleTo[0].alias ?: visibleTo[0].profileName).split(" ").first()
                 val name2 = (visibleTo[1].alias ?: visibleTo[1].profileName).split(" ").first()
                 "Visible to $name1 & $name2"
             }
+
             else -> "Visible to ${visibleTo.size} people"
         }
+
         else -> "Visible to no one"
     }
 
-    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(0.dp)) {
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(0.dp)
+    ) {
 
-        if(uiState.isSharing || uiState.isEmergency) {
+        if (uiState.isSharing || uiState.isEmergency) {
             AvatarStack(visibleTo)
         }
 
@@ -315,10 +325,12 @@ fun MemberAvatar(
             MaterialTheme.colorScheme.primaryContainer,
             MaterialTheme.colorScheme.onPrimaryContainer
         )
+
         1 -> Pair(
             MaterialTheme.colorScheme.secondaryContainer,
             MaterialTheme.colorScheme.onSecondaryContainer
         )
+
         else -> Pair(
             MaterialTheme.colorScheme.tertiaryContainer,
             MaterialTheme.colorScheme.onTertiaryContainer
@@ -441,8 +453,20 @@ fun AwarenessSnapshotCardPreview() {
         isSharing = true,
         isEmergency = false,
         visibleMembers = listOf(
-            CircleMember(id = "1", profileName = "Nitya", alias = "Nitya", selected = true, receiverEmail = "nitya@geowav.com"),
-            CircleMember(id = "2", profileName = "Diya", alias = "Diya", selected = true, receiverEmail = "diya@geowav.com")
+            CircleMember(
+                id = "1",
+                profileName = "Nitya",
+                alias = "Nitya",
+                selected = true,
+                receiverEmail = "nitya@geowav.com"
+            ),
+            CircleMember(
+                id = "2",
+                profileName = "Diya",
+                alias = "Diya",
+                selected = true,
+                receiverEmail = "diya@geowav.com"
+            )
         ),
         latestActivity = LatestActivity(
             actorName = "Nitya",
@@ -458,17 +482,18 @@ fun AwarenessSnapshotCardPreview() {
     }
 }
 
-@Preview(showBackground = true)
 @Composable
 fun InsightPreviewCard(
     insight: Insights? = null,
+    scope: PersonalInsightScope? = null,
     heroText: String = "MOST VISITED PLACE",
     ctaText: String = "See Insights",
     modifier: Modifier = Modifier
 ) {
-    GeoWavTheme(darkTheme = true) {
         Surface(
-            modifier = modifier.fillMaxWidth().height(180.dp),
+            modifier = modifier
+                .fillMaxWidth()
+                .height(180.dp),
             shape = RoundedCornerShape(20.dp),
             color = GeoWavThemeExtras.colors.periwinkleTintedSurface,
             shadowElevation = 0.dp
@@ -507,12 +532,22 @@ fun InsightPreviewCard(
                                 fontWeight = FontWeight.SemiBold,
                                 color = GeoWavThemeExtras.colors.periwinkle,
                             ),
+                            modifier = Modifier.weight(1f)
+                        )
+
+                        Text(
+                            text = if (scope == PersonalInsightScope.Month) "This month" else "This week",
+                            style = MaterialTheme.typography.labelSmall.copy(
+                                letterSpacing = 0.08.sp,
+                                fontWeight = FontWeight.W600,
+                                color = MaterialTheme.colorScheme.onSurface,
+                            ),
                         )
                     }
 
                     Text(
                         text = heroText,
-                        style = MaterialTheme.typography.labelSmall.copy(
+                        style = MaterialTheme.typography.titleSmall.copy(
                             letterSpacing = 0.08.sp,
                             fontWeight = FontWeight.SemiBold,
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
@@ -521,25 +556,28 @@ fun InsightPreviewCard(
 
                     Spacer(Modifier.height(8.dp))
 
-                    val displayPlace = when (insight) {
+                    val largeDisplay = when (insight) {
                         is Insights.MostVisitedPlaceInsight -> insight.placeName
-                        is Insights.AverageVisitDurationInsight -> insight.placeName
+                        is Insights.AverageVisitDurationInsight -> formatDuration(insight.averageDurationMillis)
                         null -> "No visits recorded"
                     }
 
                     val displaySubtitle = when (insight) {
                         is Insights.MostVisitedPlaceInsight -> {
-                            val scopeText = if (insight.scope == PersonalInsightScope.Month) "this month" else "this week"
-                            "${insight.visitCount} ${if (insight.visitCount == 1) "visit" else "visits"} $scopeText"
+                            val scopeText =
+                                if (insight.scope == PersonalInsightScope.Month) "this month" else "this week"
+                            "Visited ${insight.visitCount} ${if (insight.visitCount == 1) "time" else "times"} $scopeText"
                         }
+
                         is Insights.AverageVisitDurationInsight -> {
-                            "Typical stay: ${formatDuration(insight.averageDurationMillis)}"
+                            "Average time spent at ${insight.placeName} · per visit"
                         }
-                        null -> "Visit places to see insights"
+
+                        null -> "Visit saved places to start building patterns"
                     }
 
                     Text(
-                        text = displayPlace,
+                        text = largeDisplay,
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis,
                         style = MaterialTheme.typography.headlineMedium.copy(
@@ -607,8 +645,6 @@ fun InsightPreviewCard(
                 }
 
             }
-
-        }
     }
 }
 
@@ -621,5 +657,51 @@ private fun formatDuration(durationMillis: Long): String {
         hours > 0L && minutes > 0L -> "${hours}h ${minutes}m"
         hours > 0L -> "${hours}h"
         else -> "${minutes}m"
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+fun InsightPreviewCardPreview() {
+    GeoWavTheme {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(16.dp)
+        ) {
+            // Preview 1: Most Visited Place Insight
+            InsightPreviewCard(
+                insight = Insights.MostVisitedPlaceInsight(
+                    placeName = "Office",
+                    visitCount = 18,
+                    scope = PersonalInsightScope.Month
+                ),
+                scope = PersonalInsightScope.Month,
+                heroText = "MOST VISITED PLACE",
+                ctaText = "See Insights"
+            )
+
+            // Preview 2: Average Visit Duration Insight
+            InsightPreviewCard(
+                insight = Insights.AverageVisitDurationInsight(
+                    placeName = "Gym",
+                    averageDurationMillis = 5400000L, // 1h 30m
+                    sessionCount = 6,
+                    scope = PersonalInsightScope.Week
+                ),
+                scope = PersonalInsightScope.Week,
+                heroText = "AVERAGE TIME SPENT",
+                ctaText = "See Insights"
+            )
+
+            // Preview 3: Null state (No visits recorded)
+            InsightPreviewCard(
+                insight = null,
+                scope = null,
+                heroText = "MOST VISITED PLACE",
+                ctaText = "See Insights"
+            )
+        }
     }
 }
