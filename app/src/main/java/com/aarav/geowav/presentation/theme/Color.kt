@@ -1,5 +1,7 @@
 package com.aarav.geowav.presentation.theme
 
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.graphics.Color
 
 val primaryLight = Color(0xFF515B92)
@@ -219,6 +221,29 @@ val surfaceContainerHighDarkHighContrast = Color(0xFF373C3F)
 val surfaceContainerHighestDarkHighContrast = Color(0xFF42474A)
 
 
-
 val DarkFloatingSurface = Color(0xCC111820)
 val LightFloatingSurface = Color(0xCCEDF1F5)
+
+val PeriwinkleLight = Color(0xFF7F77DD)
+val PeriwinkleDark = Color(0xFFAFA9EC)
+
+val PeriwinkleTintedSurfaceLight = Color(0xFFF4F5FC)
+val PeriwinkleTintedSurfaceDark = Color(0xFF1C2340)
+
+data class ExtendedColors(
+    val periwinkle: Color,
+    val periwinkleTintedSurface: Color
+)
+
+val LocalExtendedColors = staticCompositionLocalOf {
+    ExtendedColors(
+        periwinkle = Color.Unspecified,
+        periwinkleTintedSurface = Color.Unspecified
+    )
+}
+
+object GeoWavThemeExtras {
+    val colors: ExtendedColors
+        @Composable
+        get() = LocalExtendedColors.current
+}

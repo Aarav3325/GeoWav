@@ -45,6 +45,8 @@ import com.aarav.geowav.core.insights.MostVisitedPlaceInsight
 import com.aarav.geowav.core.utils.LiveLocationState
 import com.aarav.geowav.data.model.CircleMember
 import com.aarav.geowav.presentation.locationsharing.LocationSharingVM
+import com.aarav.geowav.presentation.theme.GeoWavTheme
+import com.aarav.geowav.presentation.theme.GeoWavThemeExtras
 
 
 private val LiveGreen = Color(0xFF4CAF50)
@@ -78,6 +80,13 @@ fun AwarenessSnapshotCard(
     uiState: AwarenessSnapshotUiState,
     modifier: Modifier = Modifier
 ) {
+
+    val topBarBrush = if (uiState.isEmergency) {
+        listOf(EmergencyRed, EmergencyAccentBar)
+    } else {
+        listOf(NavyDeep, Periwinkle)
+    }
+
     Surface(
         modifier = modifier.fillMaxWidth().height(180.dp),
         shape = RoundedCornerShape(20.dp),
@@ -87,7 +96,7 @@ fun AwarenessSnapshotCard(
         Column(
             modifier = Modifier,
         ) {
-            GradientBar(uiState.isEmergency)
+            GradientBar(topBarBrush)
 
             Column(
                 modifier = Modifier
@@ -135,20 +144,27 @@ fun AwarenessSnapshotCard(
 
 @Composable
 fun GradientBar(
-    isEmergency: Boolean
+    colors: List<Color>
 ) {
-
-    val topBarBrush = if (isEmergency) {
-        Brush.horizontalGradient(listOf(EmergencyRed, EmergencyAccentBar))
-    } else {
-        Brush.horizontalGradient(listOf(NavyDeep, Periwinkle))
-    }
 
     Box(
         modifier = Modifier
             .fillMaxWidth()
             .height(3.dp)
-            .background(topBarBrush)
+            .background(Brush.horizontalGradient(colors))
+    )
+}
+
+@Composable
+fun SolidBar(
+    solidColor: Color
+) {
+
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(3.dp)
+            .background(solidColor)
     )
 }
 
@@ -439,7 +455,100 @@ fun AwarenessSnapshotCardPreview() {
     }
 }
 
+@Preview(showBackground = true)
 @Composable
 fun MostVisitedPlaceInsightCard() {
+    GeoWavTheme(darkTheme = true) {
+        Surface(
+            modifier = Modifier.fillMaxWidth().height(180.dp),
+            shape = RoundedCornerShape(20.dp),
+            color = GeoWavThemeExtras.colors.periwinkleTintedSurface,
+            shadowElevation = 0.dp
+        ) {
+            Column(
+                modifier = Modifier,
+            ) {
+                SolidBar(
+                    GeoWavThemeExtras.colors.periwinkle
+                )
 
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .fillMaxHeight()
+                        .padding(horizontal = 16.dp),
+                    verticalArrangement = Arrangement.Center
+                ) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Box(
+                            modifier = Modifier
+                                .size(6.dp)
+                                .clip(CircleShape)
+                                .background(GeoWavThemeExtras.colors.periwinkle),
+                        )
+
+                        Spacer(Modifier.width(6.dp))
+
+                        Text(
+                            text = "INSIGHT",
+                            style = MaterialTheme.typography.labelSmall.copy(
+                                letterSpacing = 0.08.sp,
+                                fontWeight = FontWeight.SemiBold,
+                                color = GeoWavThemeExtras.colors.periwinkle,
+                            ),
+                        )
+                    }
+
+//                    Text(
+//                        text = "MOST VISITED PLACE",
+//                        style = MaterialTheme.typography.labelSmall.copy(
+//                            letterSpacing = 0.08.sp,
+//                            fontWeight = FontWeight.SemiBold,
+//                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+//                        ),
+//                    )
+
+                    Spacer(Modifier.height(16.dp))
+
+                    Text(
+                        text = "College",
+                        style = MaterialTheme.typography.headlineMedium.copy(
+                            letterSpacing = 0.08.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.onSurface,
+                        ),
+                    )
+
+
+                    Spacer(Modifier.height(8.dp))
+
+                    Text(
+                        text = "23 visits this month",
+                        style = MaterialTheme.typography.titleMedium.copy(
+                            letterSpacing = 0.08.sp,
+                            fontWeight = FontWeight.SemiBold,
+                            color = GeoWavThemeExtras.colors.periwinkle,
+                        ),
+                    )
+
+
+                    Spacer(Modifier.height(8.dp))
+
+                    Text(
+                        text = "Your most frequent destination",
+                        style = MaterialTheme.typography.bodyMedium.copy(
+                            letterSpacing = 0.08.sp,
+                            fontWeight = FontWeight.SemiBold,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        ),
+                    )
+                }
+
+            }
+
+        }
+    }
 }
