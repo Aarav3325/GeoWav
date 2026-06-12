@@ -1,7 +1,6 @@
 package com.aarav.geowav.presentation.components
 
 import androidx.compose.animation.animateColorAsState
-import androidx.compose.animation.animateContentSize
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.RepeatMode
 import androidx.compose.animation.core.animateFloat
@@ -9,7 +8,6 @@ import androidx.compose.animation.core.infiniteRepeatable
 import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -19,7 +17,6 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -27,7 +24,6 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.FilledTonalButton
-import androidx.compose.material3.FilledTonalIconButton
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -41,17 +37,15 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.aarav.geowav.R
-import com.aarav.geowav.core.insights.MostVisitedPlaceInsight
-import com.aarav.geowav.core.utils.LiveLocationState
+import com.aarav.geowav.core.insights.Insights
+import com.aarav.geowav.core.insights.PersonalInsightScope
 import com.aarav.geowav.data.model.CircleMember
-import com.aarav.geowav.presentation.locationsharing.LocationSharingVM
 import com.aarav.geowav.presentation.theme.GeoWavTheme
 import com.aarav.geowav.presentation.theme.GeoWavThemeExtras
 
@@ -466,9 +460,10 @@ fun AwarenessSnapshotCardPreview() {
 
 @Preview(showBackground = true)
 @Composable
-fun MostVisitedPlaceInsightCard(
-    heroText: String,
-    ctaText: String,
+fun InsightPreviewCard(
+    insight: Insights? = null,
+    heroText: String = "MOST VISITED PLACE",
+    ctaText: String = "See Insights",
     modifier: Modifier = Modifier
 ) {
     GeoWavTheme(darkTheme = true) {
@@ -526,8 +521,25 @@ fun MostVisitedPlaceInsightCard(
 
                     Spacer(Modifier.height(8.dp))
 
+                    val displayPlace = when (insight) {
+                        is Insights.MostVisitedPlaceInsight -> insight.placeName
+                        is Insights.AverageVisitDurationInsight -> insight.placeName
+                        null -> "No visits recorded"
+                    }
+
+                    val displaySubtitle = when (insight) {
+                        is Insights.MostVisitedPlaceInsight -> {
+                            val scopeText = if (insight.scope == PersonalInsightScope.Month) "this month" else "this week"
+                            "${insight.visitCount} ${if (insight.visitCount == 1) "visit" else "visits"} $scopeText"
+                        }
+                        is Insights.AverageVisitDurationInsight -> {
+                            "Typical stay: ${formatDuration(insight.averageDurationMillis)}"
+                        }
+                        null -> "Visit places to see insights"
+                    }
+
                     Text(
-                        text = "College",
+                        text = displayPlace,
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis,
                         style = MaterialTheme.typography.headlineMedium.copy(
@@ -537,11 +549,10 @@ fun MostVisitedPlaceInsightCard(
                         ),
                     )
 
-
                     Spacer(Modifier.height(4.dp))
 
                     Text(
-                        text = "23 visits this month",
+                        text = displaySubtitle,
                         style = MaterialTheme.typography.bodyMedium.copy(
                             letterSpacing = 0.08.sp,
                             fontWeight = FontWeight.SemiBold,
@@ -598,5 +609,17 @@ fun MostVisitedPlaceInsightCard(
             }
 
         }
+    }
+}
+
+private fun formatDuration(durationMillis: Long): String {
+    val totalMinutes = durationMillis / 60_000L
+    val hours = totalMinutes / 60L
+    val minutes = totalMinutes % 60L
+
+    return when {
+        hours > 0L && minutes > 0L -> "${hours}h ${minutes}m"
+        hours > 0L -> "${hours}h"
+        else -> "${minutes}m"
     }
 }

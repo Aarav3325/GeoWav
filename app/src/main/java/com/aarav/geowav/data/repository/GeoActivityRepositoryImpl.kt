@@ -1,8 +1,8 @@
 package com.aarav.geowav.data.repository
 
 import com.aarav.geowav.core.utils.ActivityFilter
-import com.aarav.geowav.core.insights.AverageVisitDurationInsight
-import com.aarav.geowav.core.insights.MostVisitedPlaceInsight
+import com.aarav.geowav.core.insights.Insights.AverageVisitDurationInsight
+import com.aarav.geowav.core.insights.Insights.MostVisitedPlaceInsight
 import com.aarav.geowav.core.insights.PersonalInsightScope
 import com.aarav.geowav.core.insights.averageVisitDurationInsight
 import com.aarav.geowav.core.insights.mostVisitedPlaceInsight

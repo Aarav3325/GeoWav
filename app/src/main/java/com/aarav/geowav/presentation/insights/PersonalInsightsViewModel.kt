@@ -2,8 +2,8 @@ package com.aarav.geowav.presentation.insights
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.aarav.geowav.core.insights.AverageVisitDurationInsight
-import com.aarav.geowav.core.insights.MostVisitedPlaceInsight
+import com.aarav.geowav.core.insights.Insights.AverageVisitDurationInsight
+import com.aarav.geowav.core.insights.Insights.MostVisitedPlaceInsight
 import com.aarav.geowav.core.insights.PersonalInsightScope
 import com.aarav.geowav.domain.repository.GeoActivityRepository
 import dagger.hilt.android.lifecycle.HiltViewModel

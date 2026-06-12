@@ -45,8 +45,8 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.aarav.geowav.R
-import com.aarav.geowav.core.insights.AverageVisitDurationInsight
-import com.aarav.geowav.core.insights.MostVisitedPlaceInsight
+import com.aarav.geowav.core.insights.Insights.AverageVisitDurationInsight
+import com.aarav.geowav.core.insights.Insights.MostVisitedPlaceInsight
 import com.aarav.geowav.core.insights.PersonalInsightScope
 import com.aarav.geowav.presentation.theme.manrope
 

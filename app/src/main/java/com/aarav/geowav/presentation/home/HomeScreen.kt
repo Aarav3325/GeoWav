@@ -28,13 +28,11 @@ import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
-import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.layout.wrapContentHeight
@@ -57,7 +55,6 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
-import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
@@ -93,7 +90,6 @@ import androidx.lifecycle.compose.LocalLifecycleOwner
 import coil.ImageLoader
 import coil.decode.SvgDecoder
 import com.aarav.geowav.R
-import com.aarav.geowav.core.insights.MostVisitedPlaceInsight
 import com.aarav.geowav.core.permissions.GeoPermissionUiState
 import com.aarav.geowav.core.utils.SubscriptionHelper
 import com.aarav.geowav.core.utils.ViewerLocationState
@@ -107,11 +103,9 @@ import com.aarav.geowav.data.model.User
 import com.aarav.geowav.data.model.UserPlan
 import com.aarav.geowav.presentation.components.AvatarImage
 import com.aarav.geowav.presentation.components.AwarenessSnapshotCard
-import com.aarav.geowav.presentation.components.AwarenessSnapshotUiState
 import com.aarav.geowav.presentation.components.IdentityAvatar
-import com.aarav.geowav.presentation.components.MostVisitedPlaceInsightCard
+import com.aarav.geowav.presentation.components.InsightPreviewCard
 import com.aarav.geowav.presentation.insights.PersonalInsightsViewModel
-import com.aarav.geowav.presentation.locationsharing.LocationSharingVM
 import com.aarav.geowav.presentation.subscription.SubscriptionViewModel
 import com.aarav.geowav.presentation.theme.manrope
 import com.google.accompanist.permissions.ExperimentalPermissionsApi
@@ -141,6 +135,7 @@ fun GeoWavHomeScreen(
     val uiState by homeScreenVM.uiState.collectAsState()
     val awarenessSnapshotState by homeScreenVM.awarenessSnapshotUiState.collectAsState()
     val locations by homeScreenVM.locations.collectAsState()
+    val personalInsightsState by personalInsightsVM.uiState.collectAsState()
     val activeSharingCount = locations.count { (_, state) ->
         state is ViewerLocationState.NormalSharing ||
                 state is ViewerLocationState.EmergencySharing
@@ -197,7 +192,7 @@ fun GeoWavHomeScreen(
 
     val pagerState = rememberPagerState(
         initialPage = 0,
-        pageCount = { 2 }
+        pageCount = { 3 }
     )
 
     // Switch colors after scrolling
@@ -334,8 +329,15 @@ fun GeoWavHomeScreen(
                                         uiState = awarenessSnapshotState,
                                         modifier = Modifier.padding(horizontal = 12.dp)
                                     )
-                                    1 -> MostVisitedPlaceInsightCard(
+                                    1 -> InsightPreviewCard(
+                                        insight = personalInsightsState.mostVisitedPlaceInsight,
                                         heroText = "MOST VISITED PLACE",
+                                        ctaText = "See Insights",
+                                        modifier = Modifier.padding(horizontal = 12.dp)
+                                    )
+                                    2 -> InsightPreviewCard(
+                                        insight = personalInsightsState.averageVisitDurationInsight,
+                                        heroText = "AVERAGE TIME SPENT",
                                         ctaText = "See Insights",
                                         modifier = Modifier.padding(horizontal = 12.dp)
                                     )
@@ -349,7 +351,7 @@ fun GeoWavHomeScreen(
                                 verticalAlignment = Alignment.CenterVertically,
                                 modifier = Modifier.fillMaxWidth()
                             ) {
-                                repeat(2) { index ->
+                                repeat(pagerState.pageCount) { index ->
                                     val isSelected = pagerState.currentPage == index
                                     val width = if (isSelected) 16.dp else 6.dp
                                     val alpha = if (isSelected) 1f else 0.4f
