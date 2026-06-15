@@ -8,6 +8,7 @@ import androidx.compose.animation.core.infiniteRepeatable
 import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -488,12 +489,14 @@ fun InsightPreviewCard(
     scope: PersonalInsightScope? = null,
     heroText: String = "MOST VISITED PLACE",
     ctaText: String = "See Insights",
+    onClick: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
         Surface(
             modifier = modifier
                 .fillMaxWidth()
-                .height(180.dp),
+                .height(180.dp)
+                .clickable(onClick = onClick),
             shape = RoundedCornerShape(20.dp),
             color = GeoWavThemeExtras.colors.periwinkleTintedSurface,
             shadowElevation = 0.dp
@@ -616,7 +619,7 @@ fun InsightPreviewCard(
                     )
 
                     FilledTonalButton(
-                        onClick = {},
+                        onClick = onClick,
                         colors = ButtonDefaults.buttonColors(
                             containerColor = MaterialTheme.colorScheme.inverseSurface
                         ),

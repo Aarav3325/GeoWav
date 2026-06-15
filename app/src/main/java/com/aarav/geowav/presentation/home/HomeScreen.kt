@@ -129,6 +129,7 @@ fun GeoWavHomeScreen(
     navigateToCircle: () -> Unit,
     navigateToTimeline: (String, String) -> Unit,
     navigateToActivity: () -> Unit,
+    navigateToInsights: () -> Unit,
     modifier: Modifier = Modifier
 ) {
 
@@ -331,9 +332,9 @@ fun GeoWavHomeScreen(
                                     )
                                     1 -> InsightPreviewCard(
                                         insight = personalInsightsState.mostVisitedPlaceInsight,
-                                        scope = personalInsightsState.mostVisitedPlaceInsight?.scope,
                                         heroText = "MOST VISITED PLACE",
                                         ctaText = "See Insights",
+                                        onClick = navigateToInsights,
                                         modifier = Modifier.padding(horizontal = 12.dp)
                                     )
                                     2 -> InsightPreviewCard(
@@ -341,6 +342,7 @@ fun GeoWavHomeScreen(
                                         scope = personalInsightsState.averageVisitDurationInsight?.scope,
                                         heroText = "AVERAGE TIME SPENT",
                                         ctaText = "See Insights",
+                                        onClick = navigateToInsights,
                                         modifier = Modifier.padding(horizontal = 12.dp)
                                     )
                                 }

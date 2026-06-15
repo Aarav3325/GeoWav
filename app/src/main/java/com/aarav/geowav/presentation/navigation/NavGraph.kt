@@ -468,6 +468,9 @@ fun AddHomeScreen(
                     launchSingleTop = true
                     restoreState = true
                 }
+            },
+            navigateToInsights = {
+                navController.navigate(NavRoute.Insights.path)
             }
         )
     }
