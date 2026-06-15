@@ -203,21 +203,31 @@ fun YourPlacesScreen(
             modifier = Modifier
         ) {
 
-            Text(
-                text = "Your Places",
-                fontSize = 28.sp,
-                fontFamily = manrope,
-                fontWeight = FontWeight.ExtraBold,
-                color = MaterialTheme.colorScheme.onBackground,
-                modifier = Modifier.padding(top = 56.dp, start = 16.dp, end = 16.dp, bottom = 4.dp)
-            )
+            Column(
+                modifier = Modifier.padding(top = 56.dp, start = 16.dp, end = 16.dp, bottom = 8.dp)
+            ) {
+                Text(
+                    text = "Your Places",
+                    fontSize = 28.sp,
+                    fontFamily = manrope,
+                    fontWeight = FontWeight.ExtraBold,
+                    color = MaterialTheme.colorScheme.onBackground
+                )
+                Spacer(modifier = Modifier.height(4.dp))
+                Text(
+                    text = "Awareness zones for circle notifications",
+                    fontSize = 13.sp,
+                    fontFamily = manrope,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
 
             PlacesUsageCard(
                 uiState.placesList.size,
                 plan,
                 modifier = Modifier
                     .padding(horizontal = 12.dp)
-                    .padding(top = 16.dp, bottom = 8.dp)
+                    .padding(top = 8.dp, bottom = 8.dp)
             )
 
             if (uiState.placesList.isEmpty()) {

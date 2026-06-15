@@ -257,4 +257,20 @@ class LiveLocationSharingRepositoryImpl
         awaitClose { ref.removeEventListener(listener) }
     }
 
+    override fun observeSharingActive(userId: String): Flow<Boolean> = callbackFlow {
+        val ref = rootRef.child("live_location").child(userId).child("active")
+        val listener = object : ValueEventListener {
+            override fun onDataChange(snapshot: DataSnapshot) {
+                val active = snapshot.getValue(Boolean::class.java) == true
+                trySend(active)
+            }
+
+            override fun onCancelled(error: DatabaseError) {
+                close(error.toException())
+            }
+        }
+        ref.addValueEventListener(listener)
+        awaitClose { ref.removeEventListener(listener) }
+    }
+
 }

@@ -25,7 +25,9 @@ import com.aarav.geowav.presentation.circle.CircleScreen
 import com.aarav.geowav.presentation.home.GeoWavHomeScreen
 import com.aarav.geowav.presentation.home.HomeScreenVM
 import com.aarav.geowav.presentation.insights.PersonalInsightsScreen
+import com.aarav.geowav.presentation.insights.PersonalInsightsViewModel
 import com.aarav.geowav.presentation.locationsharing.LocationSharingScreen
+import com.aarav.geowav.presentation.locationsharing.LocationSharingVM
 import com.aarav.geowav.presentation.map.MapScreen
 import com.aarav.geowav.presentation.observe.ObserveScreen
 import com.aarav.geowav.presentation.onboard.OnboardingScreen
@@ -146,12 +148,6 @@ fun NavGraph(
             this,
             subscriptionVM
         )
-
-        AddInsightsScreen(
-            navHostController,
-            this
-        )
-
 //        AddObserveScreen(
 //            navHostController,
 //            this
@@ -174,6 +170,12 @@ fun NavGraph(
                 this,
                 location
             )
+
+            AddInsightsScreen(
+                navHostController,
+                this
+            )
+
         }
 
 
@@ -423,6 +425,9 @@ fun AddHomeScreen(
 
         val sharedVM: HomeScreenVM = hiltViewModel(parentEntry)
 
+        val personalInsightsVM: PersonalInsightsViewModel = hiltViewModel(parentEntry)
+
+
         GeoWavHomeScreen(
             isDarkThemeEnabled = isDarkThemeEnabled,
             navigateToYourPlaces = {
@@ -441,6 +446,7 @@ fun AddHomeScreen(
                 navController.navigate(NavRoute.ObserveUsers.path)
             },
             homeScreenVM = sharedVM,
+            personalInsightsVM = personalInsightsVM,
             subscriptionViewModel = subscriptionVM,
             navigateToSettings = {
                 navController.navigate(NavRoute.Settings.path)
@@ -462,6 +468,9 @@ fun AddHomeScreen(
                     launchSingleTop = true
                     restoreState = true
                 }
+            },
+            navigateToInsights = {
+                navController.navigate(NavRoute.Insights.path)
             }
         )
     }
@@ -701,11 +710,19 @@ fun AddInsightsScreen(
     navController: NavController,
     navGraphBuilder: NavGraphBuilder
 ) {
+
     navGraphBuilder.composable(
         route = NavRoute.Insights.path
-    ) {
+    ) { backStackEntry ->
+
+        val parentEntry = remember(backStackEntry) {
+            navController.getBackStackEntry("home_graph")
+        }
+
+        val personalInsightsVM: PersonalInsightsViewModel = hiltViewModel(parentEntry)
+
         PersonalInsightsScreen(
-            viewModel = hiltViewModel(),
+            viewModel = personalInsightsVM,
             back = {
                 navController.popBackStack()
             }

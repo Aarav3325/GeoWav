@@ -14,23 +14,36 @@ enum class PersonalInsightScope {
     Month
 }
 
-data class MostVisitedPlaceInsight(
-    val placeName: String,
-    val visitCount: Int,
-    val scope: PersonalInsightScope
-)
+sealed interface Insights {
+    
+    data class MostVisitedPlaceInsight(
+        val placeName: String,
+        val visitCount: Int,
+        val scope: PersonalInsightScope
+    ): Insights
 
-data class AverageVisitDurationInsight(
-    val placeName: String,
-    val averageDurationMillis: Long,
-    val sessionCount: Int,
-    val scope: PersonalInsightScope
-)
+    data class AverageVisitDurationInsight(
+        val placeName: String,
+        val averageDurationMillis: Long,
+        val sessionCount: Int,
+        val scope: PersonalInsightScope
+    ): Insights
+
+    data class WeeklyAwarenessSummaryInsight(
+        val arrivals: Int,
+        val departures: Int,
+        val placesVisited: Int,
+        val mostActivePlace: String?,
+        val scope: PersonalInsightScope
+    ): Insights
+}
+
+
 
 fun mostVisitedPlaceInsight(
     activities: List<FirebaseActivity>,
     scope: PersonalInsightScope
-): MostVisitedPlaceInsight? {
+): Insights.MostVisitedPlaceInsight? {
     val arrivalsByPlace = activities
         .asSequence()
         .mapNotNull { activity ->
@@ -64,7 +77,7 @@ fun mostVisitedPlaceInsight(
         )
         .firstOrNull() // pick the highest
         ?.let { winner ->
-            MostVisitedPlaceInsight(
+            Insights.MostVisitedPlaceInsight(
                 placeName = winner.placeName,
                 visitCount = winner.visitCount,
                 scope = scope
@@ -77,7 +90,7 @@ fun mostVisitedPlaceInsight(
 fun averageVisitDurationInsight(
     activities: List<FirebaseActivity>,
     scope: PersonalInsightScope
-): AverageVisitDurationInsight? {
+): Insights.AverageVisitDurationInsight? {
     val sessionsByPlace = activities
         .asSequence()
         .mapNotNull { activity ->
@@ -138,7 +151,7 @@ fun averageVisitDurationInsight(
         )
         .firstOrNull()
         ?.let { winner ->
-            AverageVisitDurationInsight(
+            Insights.AverageVisitDurationInsight(
                 placeName = winner.placeName,
                 averageDurationMillis = winner.averageDurationMillis,
                 sessionCount = winner.sessionCount,

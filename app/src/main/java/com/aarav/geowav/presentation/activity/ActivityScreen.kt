@@ -127,15 +127,16 @@ fun ActivityScreen(
 
     ) {
         Column(
-            modifier = Modifier.padding(top = 54.dp, start = 12.dp, end = 12.dp)
+            modifier = Modifier.padding(top = 56.dp, start = 16.dp, end = 16.dp, bottom = 8.dp)
         ) {
             Text(
                 text = "Activity",
-                fontSize = 20.sp,
+                fontSize = 28.sp,
                 fontFamily = manrope,
-                fontWeight = FontWeight.Bold,
+                fontWeight = FontWeight.ExtraBold,
                 color = MaterialTheme.colorScheme.onBackground
             )
+            Spacer(modifier = Modifier.height(4.dp))
             Text(
                 text = "Movement updates from your circle",
                 fontSize = 13.sp,
@@ -157,7 +158,7 @@ fun ActivityScreen(
             onSetRangeClick = {
                 activityViewModel.showDatePicker()
             },
-            modifier = Modifier.padding(top = 8.dp)
+            modifier = Modifier.padding(top = 0.dp)
             )
 
         ActivityContent(

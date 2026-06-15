@@ -10,6 +10,7 @@ import androidx.compose.material3.dynamicDarkColorScheme
 import androidx.compose.material3.dynamicLightColorScheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.Font
 import androidx.compose.ui.text.font.FontFamily
@@ -263,11 +264,20 @@ fun GeoWavTheme(
         else -> lightScheme
     }
 
-    MaterialExpressiveTheme(
-        colorScheme = colorScheme,
-        typography = AppTypography,
-        content = content
+    val extendedColors = ExtendedColors(
+        periwinkle = if (darkTheme) PeriwinkleDark else PeriwinkleLight,
+        periwinkleTintedSurface = if (darkTheme) PeriwinkleTintedSurfaceDark else PeriwinkleTintedSurfaceLight
     )
+
+    CompositionLocalProvider(
+        LocalExtendedColors provides extendedColors
+    ) {
+        MaterialExpressiveTheme(
+            colorScheme = colorScheme,
+            typography = AppTypography,
+            content = content
+        )
+    }
 
 
 }

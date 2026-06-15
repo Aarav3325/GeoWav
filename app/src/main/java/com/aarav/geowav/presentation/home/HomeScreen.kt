@@ -23,6 +23,8 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.pager.HorizontalPager
+import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
@@ -32,6 +34,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
@@ -52,9 +55,9 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
-import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.derivedStateOf
@@ -72,8 +75,13 @@ import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.text.withStyle
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.Lifecycle
@@ -94,7 +102,10 @@ import com.aarav.geowav.data.model.Place
 import com.aarav.geowav.data.model.User
 import com.aarav.geowav.data.model.UserPlan
 import com.aarav.geowav.presentation.components.AvatarImage
+import com.aarav.geowav.presentation.components.AwarenessSnapshotCard
 import com.aarav.geowav.presentation.components.IdentityAvatar
+import com.aarav.geowav.presentation.components.InsightPreviewCard
+import com.aarav.geowav.presentation.insights.PersonalInsightsViewModel
 import com.aarav.geowav.presentation.subscription.SubscriptionViewModel
 import com.aarav.geowav.presentation.theme.manrope
 import com.google.accompanist.permissions.ExperimentalPermissionsApi
@@ -111,17 +122,21 @@ fun GeoWavHomeScreen(
     onAddZone: () -> Unit,
     navigateToObserve: () -> Unit,
     homeScreenVM: HomeScreenVM,
+    personalInsightsVM: PersonalInsightsViewModel,
     subscriptionViewModel: SubscriptionViewModel,
     navigateToSettings: () -> Unit,
     navigateToPaywall: () -> Unit,
     navigateToCircle: () -> Unit,
     navigateToTimeline: (String, String) -> Unit,
     navigateToActivity: () -> Unit,
+    navigateToInsights: () -> Unit,
     modifier: Modifier = Modifier
 ) {
 
     val uiState by homeScreenVM.uiState.collectAsState()
+    val awarenessSnapshotState by homeScreenVM.awarenessSnapshotUiState.collectAsState()
     val locations by homeScreenVM.locations.collectAsState()
+    val personalInsightsState by personalInsightsVM.uiState.collectAsState()
     val activeSharingCount = locations.count { (_, state) ->
         state is ViewerLocationState.NormalSharing ||
                 state is ViewerLocationState.EmergencySharing
@@ -137,7 +152,7 @@ fun GeoWavHomeScreen(
     val activity = context as? Activity
     val lifecycleOwner = LocalLifecycleOwner.current
 
-    androidx.compose.runtime.DisposableEffect(lifecycleOwner) {
+    DisposableEffect(lifecycleOwner) {
         val observer = LifecycleEventObserver { _, event ->
             if (event == Lifecycle.Event.ON_RESUME) {
                 homeScreenVM.refreshPermissionState()
@@ -162,13 +177,9 @@ fun GeoWavHomeScreen(
         )
     }
 
-
-
     LaunchedEffect(Unit) {
         homeScreenVM.loadLovedOnes()
     }
-
-
 
     LaunchedEffect(locations) {
         if (locations.isNotEmpty()) {
@@ -176,13 +187,21 @@ fun GeoWavHomeScreen(
         }
     }
 
-
     val scope = rememberCoroutineScope()
 
     val scroll = rememberScrollState()
 
-    // Switch colors after scrolling 240px
+    val pagerState = rememberPagerState(
+        initialPage = 0,
+        pageCount = { 4 }
+    )
+
+    // Switch colors after scrolling
     val useDarkIcons by remember {
+        derivedStateOf { scroll.value > 60 }
+    }
+
+    val showLocationText by remember {
         derivedStateOf { scroll.value > 150 }
     }
 
@@ -220,50 +239,19 @@ fun GeoWavHomeScreen(
         contentWindowInsets = WindowInsets(0),
         topBar = {
             if (!uiState.username.isNullOrEmpty()) {
-                TopAppBar(
-                    title = {
-                        Text(
-                            text = "GeoWav",
-                            style = MaterialTheme.typography.headlineLarge.copy(
-                                color = textColor
-                            ),
-                            fontFamily = manrope,
-                            fontWeight = FontWeight.Bold
-                        )
-                    },
-                    actions = {
-                        IconButton(
-                            onClick = {
-                                navigateToPaywall()
-//                            activity?.let {
-//                                homeScreenVM.launchBillingFlow(it, "")
-//                            }
-                            }
-                        ) {
-                            Image(
-                                painter = painterResource(R.drawable.payment),
-                                contentDescription = "payment",
-                                modifier = Modifier.size(28.dp),
-                                colorFilter = ColorFilter.tint(textColor)
-                            )
-                        }
-
-                        IconButton(
-                            onClick = {
-                                navigateToSettings()
-                            }
-                        ) {
-                            Image(
-                                painter = painterResource(R.drawable.gear_six),
-                                contentDescription = "setting",
-                                modifier = Modifier.size(28.dp),
-                                colorFilter = ColorFilter.tint(textColor)
-                            )
-                        }
-                    },
-                    colors = TopAppBarDefaults.topAppBarColors(
-                        containerColor = backgroundColor
-                    )
+                ProfileCardV2(
+                    currentUser = uiState.currentUser,
+                    userName = uiState.username,
+                    contentColor = textColor,
+                    navigateToPaywall,
+                    navigateToSettings,
+                    showLocationText,
+                    locationAddress = awarenessSnapshotState.currentPlace,
+                    modifier = Modifier
+                        .background(backgroundColor)
+                        .windowInsetsPadding(TopAppBarDefaults.windowInsets)
+                        .padding(TopAppBarDefaults.ContentPadding)
+                        .height(TopAppBarDefaults.TopAppBarExpandedHeight)
                 )
             }
         }
@@ -294,11 +282,8 @@ fun GeoWavHomeScreen(
                     Box(
                         modifier = Modifier
                             .fillMaxWidth()
-
                             .background(MaterialTheme.colorScheme.background)
                     ) {
-
-
                         Image(
                             painter = if (isDarkThemeEnabled) painterResource(R.drawable.dark_bg_geowav_new_2) else painterResource(
                                 R.drawable.light_bg_geowav_new
@@ -307,10 +292,8 @@ fun GeoWavHomeScreen(
                             contentScale = ContentScale.FillBounds,
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .height(220.dp)
+                                .matchParentSize()
                         )
-
-
 
                         Box(
                             modifier = Modifier
@@ -326,18 +309,78 @@ fun GeoWavHomeScreen(
                                 )
                         )
 
+                        Column(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalAlignment = Alignment.CenterHorizontally
+                        ) {
+                            Spacer(
+                                modifier = Modifier
+                                    .windowInsetsPadding(TopAppBarDefaults.windowInsets)
+                                    .height(TopAppBarDefaults.TopAppBarExpandedHeight)
+                            )
 
-                        ProfileCard(
-                            plan,
-                            avatar = uiState.userAvatar,
-                            currentUser = uiState.currentUser,
-                            userName = uiState.username,
-                            activeSharingCount = activeSharingCount,
-                            modifier = Modifier
-                                .align(Alignment.Center)
-                                .padding(top = 92.dp),
-                            isDarkThemeEnabled = isDarkThemeEnabled
-                        )
+                            Spacer(modifier = Modifier.height(8.dp))
+
+                            HorizontalPager(
+                                state = pagerState,
+                                modifier = Modifier.fillMaxWidth()
+                            ) { page ->
+                                when (page) {
+                                    0 -> AwarenessSnapshotCard(
+                                        uiState = awarenessSnapshotState,
+                                        modifier = Modifier.padding(horizontal = 12.dp)
+                                    )
+                                    1 -> InsightPreviewCard(
+                                        insight = personalInsightsState.mostVisitedPlaceInsight,
+                                        heroText = "MOST VISITED PLACE",
+                                        ctaText = "See Insights",
+                                        onClick = navigateToInsights,
+                                        modifier = Modifier.padding(horizontal = 12.dp)
+                                    )
+                                    2 -> InsightPreviewCard(
+                                        insight = personalInsightsState.averageVisitDurationInsight,
+                                        scope = personalInsightsState.averageVisitDurationInsight?.scope,
+                                        heroText = "AVERAGE TIME SPENT",
+                                        ctaText = "See Insights",
+                                        onClick = navigateToInsights,
+                                        modifier = Modifier.padding(horizontal = 12.dp)
+                                    )
+                                    3 -> InsightPreviewCard(
+                                        insight = personalInsightsState.weeklyAwarenessSummaryInsight,
+                                        scope = personalInsightsState.weeklyAwarenessSummaryInsight?.scope,
+                                        heroText = "WEEKLY AWARENESS SUMMARY",
+                                        ctaText = "See Insights",
+                                        onClick = navigateToInsights,
+                                        modifier = Modifier.padding(horizontal = 12.dp)
+                                    )
+                                }
+                            }
+
+                            Spacer(modifier = Modifier.height(8.dp))
+
+                            Row(
+                                horizontalArrangement = Arrangement.Center,
+                                verticalAlignment = Alignment.CenterVertically,
+                                modifier = Modifier.fillMaxWidth()
+                            ) {
+                                repeat(pagerState.pageCount) { index ->
+                                    val isSelected = pagerState.currentPage == index
+                                    val width = if (isSelected) 16.dp else 6.dp
+                                    val alpha = if (isSelected) 1f else 0.4f
+                                    Box(
+                                        modifier = Modifier
+                                            .padding(horizontal = 3.dp)
+                                            .size(width = width, height = 6.dp)
+                                            .background(
+                                                color = MaterialTheme.colorScheme.onBackground.copy(alpha = alpha),
+                                                shape = CircleShape
+                                            )
+                                    )
+                                }
+                            }
+
+                            Spacer(modifier = Modifier.height(20.dp))
+                        }
                     }
 
                     Column(
@@ -391,7 +434,6 @@ fun GeoWavHomeScreen(
                                 )
                             }
                         }
-
 
 
                         ConnectionsList(
@@ -519,8 +561,10 @@ fun LocationSetupReminderCard(
     val message = when {
         !permissionState.foregroundLocationGranted ->
             "Live movement, emergency sharing, and place alerts need location access before they can run."
+
         !permissionState.backgroundLocationGranted ->
             "Place alerts and active safety sessions need background access to keep working when GeoWav is not open."
+
         else ->
             "Some safety alerts may stay paused until permissions are enabled."
     }
@@ -1327,7 +1371,11 @@ fun AwarenessItem(
 }
 
 @Composable
-fun AlertItem(alert: com.aarav.geowav.data.model.GeoAlert, isDarkThemeEnabled: Boolean, modifier: Modifier = Modifier) {
+fun AlertItem(
+    alert: com.aarav.geowav.data.model.GeoAlert,
+    isDarkThemeEnabled: Boolean,
+    modifier: Modifier = Modifier
+) {
 
     val type = if (alert.type.equals("ENTER", ignoreCase = true)) "enter" else "exit"
 
@@ -1600,6 +1648,110 @@ fun ProfileCard(
 
             }
         }
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+fun ProfileCardV2(
+    currentUser: User?,
+    userName: String?,
+    contentColor: Color,
+    navigateToPaywall: () -> Unit,
+    navigateToProfile: () -> Unit,
+    showLocationText: Boolean,
+    locationAddress: String?,
+    modifier: Modifier = Modifier
+) {
+    val imageUrl =
+        currentUser?.avatar?.takeIf { it.isNotBlank() }
+
+    Row(
+        modifier = modifier
+            .fillMaxWidth()
+            .padding(horizontal = 12.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+
+        Column(
+            modifier = Modifier.weight(1f),
+        ) {
+
+            val address = locationAddress.takeIf {
+                locationAddress != "Location access needed"
+            } ?: "GeoWav"
+
+            AnimatedVisibility(showLocationText) {
+                Text(
+                    text = address,
+                    style = MaterialTheme.typography.titleLarge.copy(
+                        color = contentColor,
+                        fontSize = 20.sp,
+                        letterSpacing = (-0.5).sp
+                    ),
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                    fontFamily = manrope,
+                    fontWeight = FontWeight.Bold
+                )
+            }
+
+            AnimatedVisibility(!showLocationText) {
+                Column {
+                    Text(
+                        text = buildAnnotatedString {
+                            append("Hello ")
+                            withStyle(
+                                SpanStyle(
+                                    color = contentColor,
+                                    fontWeight = FontWeight.Bold
+                                )
+                            ) {
+                                append("Aarav,")
+                            }
+                        },
+                        style = MaterialTheme.typography.bodyLarge,
+                        color = contentColor
+                    )
+
+                    Text(
+                        text = "GeoWav",
+                        style = MaterialTheme.typography.titleLarge.copy(
+                            color = contentColor
+                        ),
+                        fontFamily = manrope,
+                        fontWeight = FontWeight.Bold
+                    )
+                }
+            }
+        }
+
+        IconButton(
+            onClick = navigateToPaywall
+        ) {
+            Image(
+                painter = painterResource(R.drawable.payment),
+                contentDescription = "payment",
+                modifier = Modifier.size(24.dp),
+                colorFilter = ColorFilter.tint(contentColor)
+            )
+        }
+
+        Spacer(Modifier.width(8.dp))
+
+        IdentityAvatar(
+            avatarUrl = imageUrl,
+            displayName = userName ?: "",
+            backgroundColor = MaterialTheme.colorScheme.outline,
+            contentColor = contentColor,
+            borderColor = MaterialTheme.colorScheme.outline.copy(alpha = 0.24f),
+            modifier = Modifier
+                .size(40.dp)
+                .clip(CircleShape)
+                .clickable {
+                    navigateToProfile()
+                }
+        )
     }
 }
 

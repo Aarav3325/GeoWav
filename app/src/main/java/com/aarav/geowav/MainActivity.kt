@@ -75,6 +75,7 @@ import com.aarav.geowav.presentation.MainVM
 import com.aarav.geowav.presentation.components.AppDisabled
 import com.aarav.geowav.presentation.components.NotificationDisabledDialog
 import com.aarav.geowav.presentation.components.SnackbarManager
+import com.aarav.geowav.presentation.locationsharing.LocationSharingVM
 import com.aarav.geowav.presentation.navigation.BottomNavigationBar
 import com.aarav.geowav.presentation.navigation.CustomBottomNavigationBar
 import com.aarav.geowav.presentation.navigation.NavGraph
@@ -139,38 +140,11 @@ class MainActivity : ComponentActivity() {
                 android.graphics.Color.TRANSPARENT
             )
         )
-        ViewCompat.setOnApplyWindowInsetsListener(View(applicationContext)) { v, insets ->
-            val systemBars =
-                insets.getInsets(WindowInsetsCompat.Type.systemBars())
-            v.setPadding(
-                systemBars.left,
-                systemBars.top,
-                systemBars.right,
-                systemBars.bottom
-            )
-            insets
-        }
-
-
-        ViewCompat.setOnApplyWindowInsetsListener(View(applicationContext)) { v, insets ->
-            val systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
-            val ime = insets.getInsets(WindowInsetsCompat.Type.ime())
-            val bottomInset = maxOf(systemBars.bottom, ime.bottom)
-            v.setPadding(systemBars.left, 0, systemBars.right, bottomInset)
-            insets
-        }
 
         fusedClient = LocationServices.getFusedLocationProviderClient(this)
 
 
         setContent {
-
-            SideEffect {
-                Log.d(
-                    "NAVBAR",
-                    "nav color = ${window.navigationBarColor}"
-                )
-            }
 
             var showAppDisabledState by remember {
                 mutableStateOf(false)
@@ -305,7 +279,6 @@ class MainActivity : ComponentActivity() {
             }
 
             val subscriptionVM: SubscriptionViewModel = hiltViewModel()
-
 
             val plan by subscriptionVM.userPlan.collectAsState()
 

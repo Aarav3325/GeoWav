@@ -135,11 +135,10 @@ fun CustomBottomNavigationBar(
 
     Surface(
         modifier = modifier
-            .padding(bottom = 12.dp)
+            .navigationBarsPadding()
             .wrapContentWidth()
             .height(90.dp)
-            .padding(horizontal = 12.dp, vertical = 6.dp)
-            .padding(bottom = 16.dp),
+            .padding(start = 16.dp, top = 8.dp, end = 16.dp, bottom = 16.dp),
         shape = RoundedCornerShape(40.dp),
         color = MaterialTheme.colorScheme.surfaceContainer,
     ) {
@@ -159,7 +158,7 @@ fun CustomBottomNavigationBar(
                 CustomBottomNavItem(
                     navItem = item,
                     selected = selected,
-                    modifier = Modifier.weight(1f),
+                    modifier = Modifier.padding(2.dp).weight(1f),
                     onClick = {
                         if (currentRoute != item.path) {
                             navController.navigate(item.path) {
@@ -190,7 +189,7 @@ fun CustomBottomNavItem(
 
     val backgroundColor by animateColorAsState(
         targetValue = if (selected) {
-            MaterialTheme.colorScheme.primaryContainer
+            MaterialTheme.colorScheme.surfaceBright.copy(0.8f)
         } else {
             Color.Transparent
         },
@@ -237,6 +236,8 @@ fun CustomBottomNavItem(
 //                enter = fadeIn() + expandVertically(),
 //                exit = fadeOut() + shrinkVertically()
 //            ) {
+
+            Spacer(Modifier.height(2.dp))
 
                 Text(
                     text = navItem.name,
