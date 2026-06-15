@@ -3,9 +3,11 @@ package com.aarav.geowav.data.repository
 import com.aarav.geowav.core.utils.ActivityFilter
 import com.aarav.geowav.core.insights.Insights.AverageVisitDurationInsight
 import com.aarav.geowav.core.insights.Insights.MostVisitedPlaceInsight
+import com.aarav.geowav.core.insights.Insights.WeeklyAwarenessSummaryInsight
 import com.aarav.geowav.core.insights.PersonalInsightScope
 import com.aarav.geowav.core.insights.averageVisitDurationInsight
 import com.aarav.geowav.core.insights.mostVisitedPlaceInsight
+import com.aarav.geowav.core.insights.weeklyAwarenessSummaryInsight
 import com.aarav.geowav.core.insights.rangeForPersonalInsightScope
 import com.aarav.geowav.data.mapper.FirebaseActivity
 import com.aarav.geowav.data.mapper.toGeoAlert
@@ -119,6 +121,36 @@ class GeoActivityRepositoryImpl
                 }
 
                 trySend(averageVisitDurationInsight(activities, scope))
+            }
+
+            override fun onCancelled(error: DatabaseError) {
+                close(error.toException())
+            }
+        }
+
+        query.addValueEventListener(listener)
+        awaitClose { query.removeEventListener(listener) }
+    }
+
+    override fun observeWeeklyAwarenessSummary(
+        scope: PersonalInsightScope
+    ): Flow<WeeklyAwarenessSummaryInsight?> = callbackFlow {
+        val userID = uid()
+        val (startMillis, endMillis) = rangeForPersonalInsightScope(scope)
+
+        val query = db.getReference("geofence_activity")
+            .child(userID)
+            .orderByChild("timestamp")
+            .startAt(startMillis.toDouble())
+            .endAt(endMillis.toDouble())
+
+        val listener = object : ValueEventListener {
+            override fun onDataChange(snapshot: DataSnapshot) {
+                val activities = snapshot.children.mapNotNull { snap ->
+                    snap.getValue(FirebaseActivity::class.java)
+                }
+
+                trySend(weeklyAwarenessSummaryInsight(activities, scope))
             }
 
             override fun onCancelled(error: DatabaseError) {
