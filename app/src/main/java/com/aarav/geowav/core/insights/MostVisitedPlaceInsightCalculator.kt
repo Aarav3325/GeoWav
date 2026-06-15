@@ -28,6 +28,14 @@ sealed interface Insights {
         val sessionCount: Int,
         val scope: PersonalInsightScope
     ): Insights
+
+    data class WeeklyAwarenessSummaryInsight(
+        val arrivals: Int,
+        val departures: Int,
+        val placesVisited: Int,
+        val mostActivePlace: String?,
+        val scope: PersonalInsightScope
+    ): Insights
 }
 
 

@@ -562,6 +562,7 @@ fun InsightPreviewCard(
                     val largeDisplay = when (insight) {
                         is Insights.MostVisitedPlaceInsight -> insight.placeName
                         is Insights.AverageVisitDurationInsight -> formatDuration(insight.averageDurationMillis)
+                        is Insights.WeeklyAwarenessSummaryInsight -> "${insight.arrivals} Arr / ${insight.departures} Dep"
                         null -> "No visits recorded"
                     }
 
@@ -574,6 +575,10 @@ fun InsightPreviewCard(
 
                         is Insights.AverageVisitDurationInsight -> {
                             "Average time spent at ${insight.placeName} · per visit"
+                        }
+
+                        is Insights.WeeklyAwarenessSummaryInsight -> {
+                            "${insight.placesVisited} ${if (insight.placesVisited == 1) "place" else "places"} visited · Active: ${insight.mostActivePlace ?: "None"}"
                         }
 
                         null -> "Visit saved places to start building patterns"
@@ -698,7 +703,21 @@ fun InsightPreviewCardPreview() {
                 ctaText = "See Insights"
             )
 
-            // Preview 3: Null state (No visits recorded)
+            // Preview 3: Weekly Awareness Summary Insight
+            InsightPreviewCard(
+                insight = Insights.WeeklyAwarenessSummaryInsight(
+                    arrivals = 12,
+                    departures = 10,
+                    placesVisited = 4,
+                    mostActivePlace = "Office",
+                    scope = PersonalInsightScope.Week
+                ),
+                scope = PersonalInsightScope.Week,
+                heroText = "WEEKLY AWARENESS SUMMARY",
+                ctaText = "See Insights"
+            )
+
+            // Preview 4: Null state (No visits recorded)
             InsightPreviewCard(
                 insight = null,
                 scope = null,
