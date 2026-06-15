@@ -12,5 +12,5 @@ interface GeoActivityRepository {
     fun observeAlerts(filter: ActivityFilter): Flow<List<GeoAlert>>
     fun observeMostVisitedPlace(scope: PersonalInsightScope): Flow<MostVisitedPlaceInsight?>
     fun observeAverageVisitDuration(scope: PersonalInsightScope): Flow<AverageVisitDurationInsight?>
-    fun observeWeeklyAwarenessSummary(scope: PersonalInsightScope): Flow<WeeklyAwarenessSummaryInsight?>
+    fun observeWeeklyAwarenessSummary(): Flow<WeeklyAwarenessSummaryInsight?>
 }

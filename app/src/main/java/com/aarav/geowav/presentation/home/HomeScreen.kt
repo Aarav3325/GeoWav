@@ -193,7 +193,7 @@ fun GeoWavHomeScreen(
 
     val pagerState = rememberPagerState(
         initialPage = 0,
-        pageCount = { 3 }
+        pageCount = { 4 }
     )
 
     // Switch colors after scrolling
@@ -341,6 +341,14 @@ fun GeoWavHomeScreen(
                                         insight = personalInsightsState.averageVisitDurationInsight,
                                         scope = personalInsightsState.averageVisitDurationInsight?.scope,
                                         heroText = "AVERAGE TIME SPENT",
+                                        ctaText = "See Insights",
+                                        onClick = navigateToInsights,
+                                        modifier = Modifier.padding(horizontal = 12.dp)
+                                    )
+                                    3 -> InsightPreviewCard(
+                                        insight = personalInsightsState.weeklyAwarenessSummaryInsight,
+                                        scope = personalInsightsState.weeklyAwarenessSummaryInsight?.scope,
+                                        heroText = "WEEKLY AWARENESS SUMMARY",
                                         ctaText = "See Insights",
                                         onClick = navigateToInsights,
                                         modifier = Modifier.padding(horizontal = 12.dp)
