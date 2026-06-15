@@ -18,7 +18,9 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Card
@@ -45,8 +47,10 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.aarav.geowav.R
+import androidx.compose.ui.text.style.TextOverflow
 import com.aarav.geowav.core.insights.Insights.AverageVisitDurationInsight
 import com.aarav.geowav.core.insights.Insights.MostVisitedPlaceInsight
+import com.aarav.geowav.core.insights.Insights.WeeklyAwarenessSummaryInsight
 import com.aarav.geowav.core.insights.PersonalInsightScope
 import com.aarav.geowav.presentation.theme.manrope
 
@@ -89,6 +93,7 @@ fun PersonalInsightsScreen(
     ) { paddingValues ->
         val mostVisitedPlaceInsight = uiState.mostVisitedPlaceInsight
         val averageVisitDurationInsight = uiState.averageVisitDurationInsight
+        val weeklyAwarenessSummaryInsight = uiState.weeklyAwarenessSummaryInsight
 
         Column(
             modifier = Modifier
@@ -124,29 +129,23 @@ fun PersonalInsightsScreen(
                         verticalArrangement = Arrangement.spacedBy(14.dp),
                         modifier = Modifier.fillMaxWidth()
                     ) {
-                        repeat(2) {
+                        repeat(3) {
                             SkeletonMetricCard()
                         }
                     }
                 }
 
-                mostVisitedPlaceInsight == null && averageVisitDurationInsight == null -> {
-                    Text(
-                        text = "No insights yet",
-                        fontFamily = manrope,
-                        fontSize = 18.sp,
-                        fontWeight = FontWeight.SemiBold,
-                        color = MaterialTheme.colorScheme.onBackground
-                    )
-                    Text(
-                        text = "GeoWav will reflect your patterns after arrivals are recorded.",
-                        fontFamily = manrope,
-                        fontSize = 13.sp,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
+                mostVisitedPlaceInsight == null && averageVisitDurationInsight == null && weeklyAwarenessSummaryInsight == null -> {
+                    EmptyInsightsState()
                 }
 
                 else -> {
+                    weeklyAwarenessSummaryInsight?.let { insight ->
+                        WeeklyAwarenessSummaryInsightCard(
+                            insight = insight
+                        )
+                    }
+
                     averageVisitDurationInsight?.let { insight ->
                         AverageVisitDurationInsightCard(
                             insight = insight,
@@ -476,6 +475,191 @@ private fun SkeletonMetricCard() {
                         .height(14.dp)
                         .clip(RoundedCornerShape(4.dp))
                         .background(MaterialTheme.colorScheme.onSurface.copy(alpha = alpha * 0.08f))
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun WeeklyAwarenessSummaryInsightCard(
+    insight: WeeklyAwarenessSummaryInsight,
+    modifier: Modifier = Modifier
+) {
+    Card(
+        shape = RoundedCornerShape(14.dp),
+        modifier = modifier.fillMaxWidth(),
+        border = BorderStroke(
+            1.dp,
+            MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.22f)
+        ),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surfaceContainerLowest,
+            contentColor = MaterialTheme.colorScheme.onSurface
+        )
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(14.dp),
+            horizontalArrangement = Arrangement.spacedBy(12.dp),
+            verticalAlignment = Alignment.Top
+        ) {
+            Box(
+                modifier = Modifier
+                    .padding(top = 2.dp)
+                    .height(42.dp)
+                    .width(6.dp)
+                    .clip(RoundedCornerShape(50))
+                    .background(MaterialTheme.colorScheme.primary)
+            )
+
+            Column(
+                modifier = Modifier.weight(1f),
+                verticalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                    Text(
+                        text = "Weekly Awareness Summary",
+                        fontFamily = manrope,
+                        fontSize = 13.sp,
+                        fontWeight = FontWeight.SemiBold,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                    Text(
+                        text = "This week",
+                        fontFamily = manrope,
+                        fontSize = 11.sp,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.78f)
+                    )
+                }
+
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    StatBox(
+                        value = "${insight.arrivals}",
+                        label = "Arrivals",
+                        modifier = Modifier.weight(1f)
+                    )
+                    StatBox(
+                        value = "${insight.departures}",
+                        label = "Departures",
+                        modifier = Modifier.weight(1f)
+                    )
+                }
+
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    StatBox(
+                        value = "${insight.placesVisited}",
+                        label = "Places",
+                        modifier = Modifier.weight(1f)
+                    )
+                    StatBox(
+                        value = insight.mostActivePlace ?: "None",
+                        label = "Most Active",
+                        modifier = Modifier.weight(1f)
+                    )
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun StatBox(
+    value: String,
+    label: String,
+    modifier: Modifier = Modifier
+) {
+    Box(
+        modifier = modifier
+            .clip(RoundedCornerShape(10.dp))
+            .background(MaterialTheme.colorScheme.surfaceContainerLow)
+            .padding(horizontal = 10.dp, vertical = 8.dp)
+    ) {
+        Column(
+            verticalArrangement = Arrangement.spacedBy(2.dp)
+        ) {
+            Text(
+                text = value,
+                fontFamily = manrope,
+                fontSize = 16.sp,
+                fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.onSurface,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis
+            )
+            Text(
+                text = label,
+                fontFamily = manrope,
+                fontSize = 10.sp,
+                color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.75f)
+            )
+        }
+    }
+}
+
+@Composable
+private fun EmptyInsightsState(
+    modifier: Modifier = Modifier
+) {
+    Card(
+        shape = RoundedCornerShape(20.dp),
+        modifier = modifier.fillMaxWidth(),
+        border = BorderStroke(
+            1.dp,
+            MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.15f)
+        ),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surfaceContainerLowest
+        )
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(vertical = 40.dp, horizontal = 24.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.spacedBy(16.dp)
+        ) {
+            Box(
+                modifier = Modifier
+                    .size(64.dp)
+                    .clip(CircleShape)
+                    .background(MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.4f)),
+                contentAlignment = Alignment.Center
+            ) {
+                Icon(
+                    painter = painterResource(R.drawable.empty),
+                    contentDescription = null,
+                    modifier = Modifier.size(32.dp),
+                    tint = MaterialTheme.colorScheme.primary
+                )
+            }
+
+            Column(
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                Text(
+                    text = "No insights yet",
+                    fontFamily = manrope,
+                    fontSize = 18.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onBackground,
+                    textAlign = TextAlign.Center
+                )
+                Text(
+                    text = "GeoWav will analyze your movements and generate patterns (like most visited places and staying duration) once you record some activity. Keep visiting your saved zones!",
+                    fontFamily = manrope,
+                    fontSize = 13.sp,
+                    lineHeight = 18.sp,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.8f),
+                    textAlign = TextAlign.Center
                 )
             }
         }
