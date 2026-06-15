@@ -332,6 +332,7 @@ fun GeoWavHomeScreen(
                                     )
                                     1 -> InsightPreviewCard(
                                         insight = personalInsightsState.mostVisitedPlaceInsight,
+                                        scope = personalInsightsState.mostVisitedPlaceInsight?.scope,
                                         heroText = "MOST VISITED PLACE",
                                         ctaText = "See Insights",
                                         onClick = navigateToInsights,
@@ -348,7 +349,7 @@ fun GeoWavHomeScreen(
                                     3 -> InsightPreviewCard(
                                         insight = personalInsightsState.weeklyAwarenessSummaryInsight,
                                         scope = personalInsightsState.weeklyAwarenessSummaryInsight?.scope,
-                                        heroText = "WEEKLY AWARENESS SUMMARY",
+                                        heroText = "WEEKLY SUMMARY",
                                         ctaText = "See Insights",
                                         onClick = navigateToInsights,
                                         modifier = Modifier.padding(horizontal = 12.dp)
