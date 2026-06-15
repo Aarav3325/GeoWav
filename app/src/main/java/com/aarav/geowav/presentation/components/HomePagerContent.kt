@@ -548,63 +548,104 @@ fun InsightPreviewCard(
                         )
                     }
 
-                    Text(
-                        text = heroText,
-                        style = MaterialTheme.typography.titleSmall.copy(
-                            letterSpacing = 0.08.sp,
-                            fontWeight = FontWeight.SemiBold,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        ),
-                    )
+                    if (insight is Insights.WeeklyAwarenessSummaryInsight) {
+                        Text(
+                            text = "${insight.placesVisited} ${if (insight.placesVisited == 1) "place" else "places"} visited",
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis,
+                            style = MaterialTheme.typography.headlineSmall.copy(
+                                fontWeight = FontWeight.Bold,
+                                color = MaterialTheme.colorScheme.onSurface,
+                                fontSize = 18.sp
+                            )
+                        )
 
-                    Spacer(Modifier.height(8.dp))
+                        Spacer(Modifier.height(6.dp))
 
-                    val largeDisplay = when (insight) {
-                        is Insights.MostVisitedPlaceInsight -> insight.placeName
-                        is Insights.AverageVisitDurationInsight -> formatDuration(insight.averageDurationMillis)
-                        is Insights.WeeklyAwarenessSummaryInsight -> "${insight.arrivals} Arr / ${insight.departures} Dep"
-                        null -> "No visits recorded"
+                        Column {
+                            Text(
+                                text = "Visited most often",
+                                style = MaterialTheme.typography.bodySmall.copy(
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f),
+                                    fontSize = 11.sp
+                                )
+                            )
+                            Text(
+                                text = insight.mostActivePlace ?: "None",
+                                style = MaterialTheme.typography.bodyMedium.copy(
+                                    fontWeight = FontWeight.Bold,
+                                    color = MaterialTheme.colorScheme.onSurface,
+                                    fontSize = 14.sp
+                                )
+                            )
+                        }
+
+                        Spacer(Modifier.height(6.dp))
+
+                        Text(
+                            text = "${insight.arrivals} arrivals · ${insight.departures} departures",
+                            style = MaterialTheme.typography.bodyMedium.copy(
+                                fontWeight = FontWeight.SemiBold,
+                                color = GeoWavThemeExtras.colors.periwinkle,
+                                fontSize = 13.sp
+                            )
+                        )
+                    } else {
+                        Text(
+                            text = heroText,
+                            style = MaterialTheme.typography.titleSmall.copy(
+                                letterSpacing = 0.08.sp,
+                                fontWeight = FontWeight.SemiBold,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            ),
+                        )
+
+                        Spacer(Modifier.height(8.dp))
+
+                        val largeDisplay = when (insight) {
+                            is Insights.MostVisitedPlaceInsight -> insight.placeName
+                            is Insights.AverageVisitDurationInsight -> formatDuration(insight.averageDurationMillis)
+                            null -> "No visits recorded"
+                            else -> ""
+                        }
+
+                        val displaySubtitle = when (insight) {
+                            is Insights.MostVisitedPlaceInsight -> {
+                                val scopeText =
+                                    if (insight.scope == PersonalInsightScope.Month) "this month" else "this week"
+                                "Visited ${insight.visitCount} ${if (insight.visitCount == 1) "time" else "times"} $scopeText"
+                            }
+
+                            is Insights.AverageVisitDurationInsight -> {
+                                "Average time spent at ${insight.placeName} · per visit"
+                            }
+
+                            null -> "Visit saved places to start building patterns"
+                            else -> ""
+                        }
+
+                        Text(
+                            text = largeDisplay,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis,
+                            style = MaterialTheme.typography.headlineMedium.copy(
+                                letterSpacing = 0.08.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = MaterialTheme.colorScheme.onSurface,
+                            ),
+                        )
+
+                        Spacer(Modifier.height(4.dp))
+
+                        Text(
+                            text = displaySubtitle,
+                            style = MaterialTheme.typography.bodyMedium.copy(
+                                letterSpacing = 0.08.sp,
+                                fontWeight = FontWeight.SemiBold,
+                                color = GeoWavThemeExtras.colors.periwinkle,
+                            ),
+                        )
                     }
-
-                    val displaySubtitle = when (insight) {
-                        is Insights.MostVisitedPlaceInsight -> {
-                            val scopeText =
-                                if (insight.scope == PersonalInsightScope.Month) "this month" else "this week"
-                            "Visited ${insight.visitCount} ${if (insight.visitCount == 1) "time" else "times"} $scopeText"
-                        }
-
-                        is Insights.AverageVisitDurationInsight -> {
-                            "Average time spent at ${insight.placeName} · per visit"
-                        }
-
-                        is Insights.WeeklyAwarenessSummaryInsight -> {
-                            "${insight.placesVisited} ${if (insight.placesVisited == 1) "place" else "places"} visited · Active: ${insight.mostActivePlace ?: "None"}"
-                        }
-
-                        null -> "Visit saved places to start building patterns"
-                    }
-
-                    Text(
-                        text = largeDisplay,
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis,
-                        style = MaterialTheme.typography.headlineMedium.copy(
-                            letterSpacing = 0.08.sp,
-                            fontWeight = FontWeight.Bold,
-                            color = MaterialTheme.colorScheme.onSurface,
-                        ),
-                    )
-
-                    Spacer(Modifier.height(4.dp))
-
-                    Text(
-                        text = displaySubtitle,
-                        style = MaterialTheme.typography.bodyMedium.copy(
-                            letterSpacing = 0.08.sp,
-                            fontWeight = FontWeight.SemiBold,
-                            color = GeoWavThemeExtras.colors.periwinkle,
-                        ),
-                    )
 
 
 //                    Text(
@@ -633,7 +674,7 @@ fun InsightPreviewCard(
                         modifier = Modifier.height(32.dp)
                     ) {
                         Text(
-                            text = ctaText,
+                            text = if (insight is Insights.WeeklyAwarenessSummaryInsight) "See Insight" else ctaText,
                             style = MaterialTheme.typography.bodySmall.copy(
                                 letterSpacing = 0.08.sp,
                                 fontWeight = FontWeight.SemiBold,
