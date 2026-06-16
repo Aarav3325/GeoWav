@@ -18,6 +18,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
@@ -25,13 +26,10 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
-import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
@@ -40,100 +38,17 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.aarav.geowav.R
-import com.aarav.geowav.presentation.components.CustomBottomSheet
-import com.aarav.geowav.presentation.components.PlaceTextField
-import com.aarav.geowav.presentation.components.RadiusChipGroup
 import com.aarav.geowav.presentation.theme.manrope
-import com.aarav.geowav.presentation.theme.sora
 import kotlin.math.roundToInt
 
 @Composable
 fun PlaceDetailsScreen(
     placeId: String,
     viewModel: PlaceDetailsViewModel,
-    onBackClick: () -> Unit
+    onBackClick: () -> Unit,
+    onEditClick: (com.aarav.geowav.data.model.Place) -> Unit
 ) {
     val uiState by viewModel.uiState.collectAsState()
-    var showEditSheet by remember { mutableStateOf(false) }
-
-    if (showEditSheet) {
-        CustomBottomSheet(
-            onDismissRequest = {
-                showEditSheet = false
-            }
-        ) {
-            var selectedRadius by remember { mutableStateOf(uiState.radius) }
-            var placeName by remember { mutableStateOf(uiState.placeName) }
-
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 16.dp),
-                verticalArrangement = Arrangement.spacedBy(24.dp)
-            ) {
-                Text(
-                    text = "Edit Place",
-                    style = MaterialTheme.typography.titleLarge,
-                    color = MaterialTheme.colorScheme.onSurface,
-                    fontFamily = manrope,
-                    fontWeight = FontWeight.Bold
-                )
-
-                Column(
-                    verticalArrangement = Arrangement.spacedBy(16.dp),
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .background(
-                            MaterialTheme.colorScheme.surfaceContainerHigh,
-                            RoundedCornerShape(20.dp)
-                        )
-                        .padding(16.dp)
-                ) {
-                    PlaceTextField(
-                        placeHolder = "e.g., Home, Work, Gym",
-                        infoText = "Name",
-                        name = placeName,
-                        onValueChange = { placeName = it }
-                    )
-
-                    HorizontalDivider(
-                        modifier = Modifier.padding(vertical = 4.dp),
-                        color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f)
-                    )
-
-                    RadiusChipGroup(
-                        chips = listOf(200f, 300f, 400f, 500f),
-                        selectedRadius = selectedRadius,
-                        onRadiusSelected = { selectedRadius = it }
-                    )
-                }
-
-                androidx.compose.material3.Button(
-                    onClick = {
-                        viewModel.updatePlaceDetails(placeName.trim(), selectedRadius)
-                        showEditSheet = false
-                    },
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(54.dp),
-                    shape = RoundedCornerShape(16.dp),
-                    colors = androidx.compose.material3.ButtonDefaults.buttonColors(
-                        containerColor = MaterialTheme.colorScheme.primary,
-                        contentColor = MaterialTheme.colorScheme.onPrimary
-                    )
-                ) {
-                    Text(
-                        text = "Save Changes",
-                        fontFamily = manrope,
-                        fontWeight = FontWeight.Bold,
-                        fontSize = 16.sp
-                    )
-                }
-
-                Spacer(modifier = Modifier.height(24.dp))
-            }
-        }
-    }
 
     Column(
         modifier = Modifier
@@ -142,7 +57,6 @@ fun PlaceDetailsScreen(
             .statusBarsPadding()
             .navigationBarsPadding()
     ) {
-        // Toolbar
         Row(
             modifier = Modifier
                 .fillMaxWidth()
@@ -209,7 +123,6 @@ fun PlaceDetailsScreen(
                     .verticalScroll(rememberScrollState()),
                 verticalArrangement = Arrangement.spacedBy(32.dp)
             ) {
-                // 1. HERO SECTION (Top 30-40%)
                 Column(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -264,7 +177,7 @@ fun PlaceDetailsScreen(
                         text = uiState.placeName,
                         style = MaterialTheme.typography.headlineLarge.copy(
                             fontWeight = FontWeight.ExtraBold,
-                            fontFamily = sora,
+                            fontFamily = manrope,
                             fontSize = 36.sp,
                             color = MaterialTheme.colorScheme.onBackground
                         ),
@@ -282,7 +195,6 @@ fun PlaceDetailsScreen(
                     )
                 }
 
-                // 2. INSIGHT SUMMARY
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -306,7 +218,6 @@ fun PlaceDetailsScreen(
                     )
                 }
 
-                // 3. PLACE CONTEXT OR EMPTY STATE
                 if (uiState.isEmptyState) {
                     Card(
                         modifier = Modifier
@@ -410,7 +321,6 @@ fun PlaceDetailsScreen(
 
                 Spacer(modifier = Modifier.weight(1f))
 
-                // 4. ACTIONS (at the bottom)
                 Column(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -420,13 +330,13 @@ fun PlaceDetailsScreen(
                 ) {
                     androidx.compose.material3.Button(
                         onClick = {
-                            showEditSheet = true
+                            uiState.place?.let { onEditClick(it) }
                         },
                         modifier = Modifier
                             .fillMaxWidth()
                             .height(54.dp),
                         shape = RoundedCornerShape(16.dp),
-                        colors = androidx.compose.material3.ButtonDefaults.buttonColors(
+                        colors = ButtonDefaults.buttonColors(
                             containerColor = MaterialTheme.colorScheme.primaryContainer,
                             contentColor = MaterialTheme.colorScheme.onPrimaryContainer
                         )
@@ -439,7 +349,7 @@ fun PlaceDetailsScreen(
                         )
                     }
 
-                    androidx.compose.material3.TextButton(
+                    TextButton(
                         onClick = {
                             viewModel.deletePlace(onSuccess = onBackClick)
                         },
@@ -486,7 +396,7 @@ private fun InsightCard(
             text = value,
             style = MaterialTheme.typography.headlineMedium.copy(
                 fontWeight = FontWeight.Bold,
-                fontFamily = sora,
+                fontFamily = manrope,
                 fontSize = 24.sp,
                 color = MaterialTheme.colorScheme.primary
             ),
