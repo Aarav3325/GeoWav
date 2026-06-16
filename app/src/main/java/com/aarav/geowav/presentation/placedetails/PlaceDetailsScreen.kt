@@ -30,6 +30,9 @@ import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
@@ -49,6 +52,57 @@ fun PlaceDetailsScreen(
     onEditClick: (com.aarav.geowav.data.model.Place) -> Unit
 ) {
     val uiState by viewModel.uiState.collectAsState()
+    var showDeleteConfirmation by remember { mutableStateOf(false) }
+
+    if (showDeleteConfirmation) {
+        androidx.compose.material3.AlertDialog(
+            onDismissRequest = { showDeleteConfirmation = false },
+            title = {
+                Text(
+                    text = "Delete Place?",
+                    fontFamily = manrope,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onSurface
+                )
+            },
+            text = {
+                Text(
+                    text = "Are you sure you want to delete this place? This will stop all geofence tracking and notifications for this location.",
+                    fontFamily = manrope,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        showDeleteConfirmation = false
+                        viewModel.deletePlace(onSuccess = onBackClick)
+                    }
+                ) {
+                    Text(
+                        text = "Delete",
+                        fontFamily = manrope,
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.error
+                    )
+                }
+            },
+            dismissButton = {
+                TextButton(
+                    onClick = { showDeleteConfirmation = false }
+                ) {
+                    Text(
+                        text = "Cancel",
+                        fontFamily = manrope,
+                        fontWeight = FontWeight.Medium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+            },
+            shape = RoundedCornerShape(28.dp),
+            containerColor = MaterialTheme.colorScheme.surfaceContainerHigh
+        )
+    }
 
     Column(
         modifier = Modifier
@@ -199,21 +253,16 @@ fun PlaceDetailsScreen(
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(horizontal = 24.dp),
-                    horizontalArrangement = Arrangement.spacedBy(10.dp)
+                    horizontalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
                     InsightCard(
                         value = uiState.visitsValue,
-                        label = uiState.visitsLabel,
+                        label = "Visits this month",
                         modifier = Modifier.weight(1f)
                     )
                     InsightCard(
                         value = uiState.averageStayValue,
-                        label = uiState.averageStayLabel,
-                        modifier = Modifier.weight(1f)
-                    )
-                    InsightCard(
-                        value = uiState.lastSeenValue,
-                        label = uiState.lastSeenLabel,
+                        label = "Average stay",
                         modifier = Modifier.weight(1f)
                     )
                 }
@@ -258,63 +307,63 @@ fun PlaceDetailsScreen(
                             )
                         }
                     }
-                } else {
-                    Card(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(horizontal = 24.dp),
-                        shape = RoundedCornerShape(24.dp),
-                        colors = CardDefaults.cardColors(
-                            containerColor = MaterialTheme.colorScheme.surfaceContainerLow
-                        ),
-                        border = androidx.compose.foundation.BorderStroke(
-                            width = 1.dp,
-                            color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.2f)
-                        )
+                }
+
+                Card(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 24.dp),
+                    shape = RoundedCornerShape(24.dp),
+                    colors = CardDefaults.cardColors(
+                        containerColor = MaterialTheme.colorScheme.surfaceContainerLow
+                    ),
+                    border = androidx.compose.foundation.BorderStroke(
+                        width = 1.dp,
+                        color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.2f)
+                    )
+                ) {
+                    Row(
+                        modifier = Modifier.padding(20.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(16.dp)
                     ) {
-                        Row(
-                            modifier = Modifier.padding(20.dp),
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.spacedBy(16.dp)
+                        Box(
+                            modifier = Modifier
+                                .size(48.dp)
+                                .background(
+                                    color = MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.4f),
+                                    shape = CircleShape
+                                ),
+                            contentAlignment = Alignment.Center
                         ) {
-                            Box(
-                                modifier = Modifier
-                                    .size(48.dp)
-                                    .background(
-                                        color = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.4f),
-                                        shape = CircleShape
-                                    ),
-                                contentAlignment = Alignment.Center
-                            ) {
-                                Icon(
-                                    painter = painterResource(id = R.drawable.navigation_arrow),
-                                    contentDescription = null,
-                                    tint = MaterialTheme.colorScheme.primary,
-                                    modifier = Modifier.size(20.dp)
+                            Icon(
+                                painter = painterResource(id = R.drawable.info),
+                                contentDescription = null,
+                                tint = MaterialTheme.colorScheme.secondary,
+                                modifier = Modifier.size(20.dp)
+                            )
+                        }
+                        Column(
+                            modifier = Modifier.weight(1f),
+                            verticalArrangement = Arrangement.spacedBy(4.dp)
+                        ) {
+                            Text(
+                                text = "About This Place",
+                                style = MaterialTheme.typography.titleMedium.copy(
+                                    fontWeight = FontWeight.Bold,
+                                    fontFamily = manrope,
+                                    color = MaterialTheme.colorScheme.onBackground
                                 )
-                            }
-                            Column(
-                                modifier = Modifier.weight(1f),
-                                verticalArrangement = Arrangement.spacedBy(4.dp)
-                            ) {
-                                Text(
-                                    text = "Awareness Zone",
-                                    style = MaterialTheme.typography.titleMedium.copy(
-                                        fontWeight = FontWeight.Bold,
-                                        fontFamily = manrope,
-                                        color = MaterialTheme.colorScheme.onBackground
-                                    )
-                                )
-                                Text(
-                                    text = "Triggers circle alerts when arrivals or departures are detected within ${uiState.radius.roundToInt()}m.",
-                                    style = MaterialTheme.typography.bodyMedium.copy(
-                                        fontWeight = FontWeight.Medium,
-                                        fontFamily = manrope,
-                                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                                    ),
-                                    lineHeight = 20.sp
-                                )
-                            }
+                            )
+                            Text(
+                                text = "GeoWav detects arrivals and departures within a ${uiState.radius.roundToInt()}m radius and shares awareness updates with your circle.",
+                                style = MaterialTheme.typography.bodyMedium.copy(
+                                    fontWeight = FontWeight.Medium,
+                                    fontFamily = manrope,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                ),
+                                lineHeight = 20.sp
+                            )
                         }
                     }
                 }
@@ -351,7 +400,7 @@ fun PlaceDetailsScreen(
 
                     TextButton(
                         onClick = {
-                            viewModel.deletePlace(onSuccess = onBackClick)
+                            showDeleteConfirmation = true
                         },
                         modifier = Modifier
                             .fillMaxWidth()
@@ -361,7 +410,7 @@ fun PlaceDetailsScreen(
                             text = "Delete Place",
                             fontFamily = manrope,
                             fontWeight = FontWeight.SemiBold,
-                            color = MaterialTheme.colorScheme.error,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f),
                             fontSize = 15.sp
                         )
                     }

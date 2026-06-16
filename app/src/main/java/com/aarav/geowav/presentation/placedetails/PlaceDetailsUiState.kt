@@ -8,7 +8,7 @@ data class PlaceDetailsUiState(
     val radius: Float = 0f,
     val relativeLastSeenText: String = "",
     val lastSeenValue: String = "--",
-    val lastSeenLabel: String = "Last seen",
+    val lastSeenLabel: String = "Last visited",
     val visitsValue: String = "0",
     val visitsLabel: String = "Visits",
     val averageStayValue: String = "--",

@@ -31,7 +31,7 @@ object PlaceActivityMetricsCalculator {
 
         val lastVisitTimestamp = calculateLastVisit(matchingActivities)
         val (relativeText, shortText) = if (lastVisitTimestamp > 0L) {
-            "Last seen ${formatRelativeTime(lastVisitTimestamp)}" to formatGlanceableTime(lastVisitTimestamp)
+            "Last sisited ${formatRelativeTime(lastVisitTimestamp)}" to formatGlanceableTime(lastVisitTimestamp)
         } else {
             "Never visited yet" to "--"
         }
