@@ -129,11 +129,11 @@ fun AddPlaceScreen(
 
                 is PlacesEvent.Success -> {
                     navigateToYourPlaces()
-                    Toast.makeText(
-                        context,
-                        "$placeName added to your places",
-                        Toast.LENGTH_LONG
-                    ).show()
+//                    Toast.makeText(
+//                        context,
+//                        "$placeName added to your places",
+//                        Toast.LENGTH_LONG
+//                    ).show()
                 }
             }
         }

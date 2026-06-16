@@ -560,7 +560,7 @@ fun InsightPreviewCard(
                             )
                         )
 
-                        Spacer(Modifier.height(6.dp))
+                        Spacer(Modifier.height(4.dp))
 
                         Column {
                             Text(
@@ -580,7 +580,7 @@ fun InsightPreviewCard(
                             )
                         }
 
-                        Spacer(Modifier.height(6.dp))
+                        Spacer(Modifier.height(4.dp))
 
                         Text(
                             text = "${insight.arrivals} arrivals · ${insight.departures} departures",
