@@ -42,4 +42,10 @@ sealed class NavRoute(val path: String) {
     object Login : NavRoute("login")
     object OnBoard : NavRoute("onBoard")
     object Settings : NavRoute("settings")
+
+    object PlaceDetails : NavRoute("placeDetails") {
+        fun createRoute(placeId: String): String {
+            return "placeDetails/$placeId"
+        }
+    }
 }

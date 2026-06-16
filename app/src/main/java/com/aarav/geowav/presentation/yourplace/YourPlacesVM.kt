@@ -81,9 +81,14 @@ class YourPlacesVM @Inject constructor(
             )
         }
     }
+
+    fun setPlaceToEdit(place: Place?) {
+        _uiState.update { it.copy(placeToEdit = place) }
+    }
 }
 
 data class YourPlacesUiState(
     val isLoading: Boolean = false,
     val placesList: List<Place> = emptyList(),
+    val placeToEdit: Place? = null
 )

@@ -72,7 +72,8 @@ fun YourPlacesScreen(
     yourPlacesVM: YourPlacesVM,
     subscriptionVM: SubscriptionViewModel,
     navigateToPaywall: () -> Unit,
-    navigateToMap: () -> Unit
+    navigateToMap: () -> Unit,
+    navigateToPlaceDetails: (String) -> Unit = {}
 ) {
     val uiState by yourPlacesVM.uiState.collectAsState()
 
@@ -81,12 +82,12 @@ fun YourPlacesScreen(
 
 
     var upgradeContext by remember { mutableStateOf<UpgradeContext?>(null) }
-    var placeToEdit by remember { mutableStateOf<Place?>(null) }
+    val placeToEdit = uiState.placeToEdit
 
     placeToEdit?.let { place ->
         CustomBottomSheet(
             onDismissRequest = {
-                placeToEdit = null
+                yourPlacesVM.setPlaceToEdit(null)
             }
         ) {
             var selectedRadius by remember { mutableStateOf(place.radius) }
@@ -138,7 +139,7 @@ fun YourPlacesScreen(
                 Button(
                     onClick = {
                         yourPlacesVM.updatePlaceDetails(place, placeName.trim(), selectedRadius)
-                        placeToEdit = null
+                        yourPlacesVM.setPlaceToEdit(null)
                     },
                     modifier = Modifier
                         .fillMaxWidth()
@@ -290,11 +291,8 @@ fun YourPlacesScreen(
                 items(uiState.placesList) { place ->
                     GeofencePlaceCard(
                         place = place,
-                        onDeleteClick = {
-                            yourPlacesVM.deletePlace(place)
-                        },
-                        onEditClick = {
-                            placeToEdit = place
+                        onCardClick = { clickedPlace ->
+                            navigateToPlaceDetails(clickedPlace.placeId)
                         }
                     )
                 }
