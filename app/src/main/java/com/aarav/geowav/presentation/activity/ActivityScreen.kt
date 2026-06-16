@@ -379,6 +379,13 @@ fun ActivityContent(
                     items(uiState.activities) { activity ->
                         ActivityFeedItem(
                             activity = activity,
+                            story = remember(activity, uiState.activities, uiState.hasMore) {
+                                deriveActivityStory(
+                                    activity = activity,
+                                    activities = uiState.activities,
+                                    hasMoreHistoryInFilter = uiState.hasMore
+                                )
+                            },
                             currentUserId = currentUserId,
                             isDarkThemeEnabled = isDarkThemeEnabled,
                             modifier = Modifier.padding(horizontal = 12.dp)
@@ -436,13 +443,13 @@ private fun ActivityFeedSectionHeader(
 @Composable
 private fun ActivityFeedItem(
     activity: CircleActivityItem,
+    story: ActivityStory,
     currentUserId: String,
     isDarkThemeEnabled: Boolean,
     modifier: Modifier = Modifier
 ) {
     val isArrival = activity.normalizedTransitionType == ActivityTransition.ARRIVED.name
     val actorLabel = if (activity.actorId == currentUserId) "You" else activity.actorName.ifBlank { "Someone" }
-    val actionLabel = if (isArrival) "arrived at" else "left"
     val transitionLabel = if (isArrival) "Arrived" else "Left"
     val relativeTime = remember(activity.timestamp) { activityRelativeTime(activity.timestamp) }
     val exactTime = remember(activity.timestamp) { activityExactTime(activity.timestamp) }
@@ -466,7 +473,7 @@ private fun ActivityFeedItem(
             append(actorLabel)
         }
         append(" ")
-        append(actionLabel)
+        append(story.action)
         append(" ")
         withStyle(
             SpanStyle(
@@ -475,6 +482,10 @@ private fun ActivityFeedItem(
             )
         ) {
             append(activity.placeName.ifBlank { "a saved place" })
+        }
+        story.suffix?.let { suffix ->
+            append(" ")
+            append(suffix)
         }
     }
 
@@ -568,6 +579,73 @@ private fun ActivityFeedItem(
             }
         }
     }
+}
+
+private data class ActivityStory(
+    val action: String,
+    val suffix: String? = null,
+    val reason: StoryReason = StoryReason.Original
+)
+
+private enum class StoryReason {
+    Original,
+    BackAfterLeavingSamePlace,
+    FirstActivityOfDay,
+    PreviousArrivalAtPlace
+}
+
+private fun deriveActivityStory(
+    activity: CircleActivityItem,
+    activities: List<CircleActivityItem>,
+    hasMoreHistoryInFilter: Boolean
+): ActivityStory {
+    val transition = ActivityTransition.fromRaw(activity.normalizedTransitionType)
+        ?: return ActivityStory(action = "was at")
+
+    if (transition == ActivityTransition.LEFT) {
+        return ActivityStory(action = "left")
+    }
+
+    val olderActorActivities = activities
+        .filter { item ->
+            item.actorId == activity.actorId &&
+                    item.timestamp < activity.timestamp
+        }
+        .sortedByDescending { it.timestamp }
+
+    val previousActorActivity = olderActorActivities.firstOrNull()
+    if (
+        previousActorActivity?.placeName == activity.placeName &&
+        ActivityTransition.fromRaw(previousActorActivity.normalizedTransitionType) == ActivityTransition.LEFT
+    ) {
+        return ActivityStory(
+            action = "is back at",
+            reason = StoryReason.BackAfterLeavingSamePlace
+        )
+    }
+
+    if (!hasMoreHistoryInFilter && olderActorActivities.none { item ->
+            item.timestamp.toLocalDateInIndia() == activity.timestamp.toLocalDateInIndia()
+        }
+    ) {
+        return ActivityStory(
+            action = "started the day at",
+            reason = StoryReason.FirstActivityOfDay
+        )
+    }
+
+    val hasOlderArrivalAtPlace = olderActorActivities.any { item ->
+        item.placeName == activity.placeName &&
+                ActivityTransition.fromRaw(item.normalizedTransitionType) == ActivityTransition.ARRIVED
+    }
+    if (hasOlderArrivalAtPlace) {
+        return ActivityStory(
+            action = "returned to",
+            reason = StoryReason.PreviousArrivalAtPlace
+        )
+    }
+
+    return ActivityStory(action = "arrived at")
 }
 
 private fun activityRelativeTime(timestamp: Long): String {
