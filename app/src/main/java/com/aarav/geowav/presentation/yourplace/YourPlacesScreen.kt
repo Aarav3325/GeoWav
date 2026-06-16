@@ -291,12 +291,6 @@ fun YourPlacesScreen(
                 items(uiState.placesList) { place ->
                     GeofencePlaceCard(
                         place = place,
-                        onDeleteClick = {
-                            yourPlacesVM.deletePlace(place)
-                        },
-                        onEditClick = {
-                            yourPlacesVM.setPlaceToEdit(place)
-                        },
                         onCardClick = { clickedPlace ->
                             navigateToPlaceDetails(clickedPlace.placeId)
                         }

@@ -49,8 +49,6 @@ import kotlin.math.roundToInt
 @Composable
 fun GeofencePlaceCard(
     place: Place,
-    onDeleteClick: (Place) -> Unit,
-    onEditClick: (Place) -> Unit = {},
     onCardClick: (Place) -> Unit = {}
 ) {
     Card(
@@ -64,70 +62,68 @@ fun GeofencePlaceCard(
             containerColor = MaterialTheme.colorScheme.surfaceContainer
         )
     ) {
-        Column(
+        Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(16.dp)
+                .padding(16.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.SpaceBetween
         ) {
-            Row(
+            Column(
                 modifier = Modifier
-                    .fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
+                    .weight(1f)
+                    .padding(end = 16.dp)
             ) {
-                Surface(
-                    modifier = Modifier.size(36.dp),
-                    color = MaterialTheme.colorScheme.secondaryContainer,
-                    shape = CircleShape,
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Image(
-                        painter = painterResource(id = R.drawable.navigation_arrow),
-                        contentDescription = "navigation arrow",
-                        modifier = Modifier
-                            .size(24.dp)
-                            .padding(7.dp),
-                        colorFilter = ColorFilter.tint(MaterialTheme.colorScheme.onSecondaryContainer)
+                    Surface(
+                        modifier = Modifier.size(36.dp),
+                        color = MaterialTheme.colorScheme.secondaryContainer,
+                        shape = CircleShape,
+                    ) {
+                        Image(
+                            painter = painterResource(id = R.drawable.navigation_arrow),
+                            contentDescription = "navigation arrow",
+                            modifier = Modifier
+                                .size(24.dp)
+                                .padding(7.dp),
+                            colorFilter = ColorFilter.tint(MaterialTheme.colorScheme.onSecondaryContainer)
+                        )
+                    }
+
+                    Text(
+                        text = place.customName.ifBlank { place.placeName },
+                        color = MaterialTheme.colorScheme.onSurface,
+                        fontSize = 18.sp,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                        fontFamily = manrope,
+                        fontWeight = FontWeight.Bold,
+                        modifier = Modifier.padding(horizontal = 12.dp)
                     )
                 }
 
-
-                Text(
-                    text = place.customName.ifBlank { place.placeName },
-                    color = MaterialTheme.colorScheme.onSurface,
-                    fontSize = 16.sp,
-                    maxLines = 2,
-                    overflow = TextOverflow.Ellipsis,
-                    fontFamily = manrope,
-                    fontWeight = FontWeight.Bold,
-                    modifier = Modifier
-                        .padding(horizontal = 12.dp)
-                        .weight(1f)
-                )
-            }
-
-            Spacer(Modifier.height(12.dp))
-
-
-            Column(
-                modifier = Modifier.fillMaxWidth(),
-            ) {
+                Spacer(Modifier.height(8.dp))
 
                 Text(
                     text = place.address.toString(),
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    maxLines = 2,
+                    maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
                     fontSize = 14.sp,
                     fontWeight = FontWeight.Medium,
                     fontFamily = manrope,
+                    modifier = Modifier.padding(start = 48.dp)
                 )
 
-                Spacer(modifier = Modifier.height(8.dp))
+                Spacer(modifier = Modifier.height(6.dp))
 
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.spacedBy(4.dp),
-                    modifier = Modifier.padding(top = 2.dp)
+                    modifier = Modifier.padding(start = 48.dp)
                 ) {
                     Icon(
                         painter = painterResource(id = R.drawable.map_trifold),
@@ -145,40 +141,12 @@ fun GeofencePlaceCard(
                 }
             }
 
-            Spacer(modifier = Modifier.height(12.dp))
-
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.End,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                androidx.compose.material3.TextButton(
-                    onClick = { onDeleteClick(place) }
-                ) {
-                    Text(
-                        text = "Remove",
-                        fontFamily = manrope,
-                        fontWeight = FontWeight.SemiBold,
-                        color = MaterialTheme.colorScheme.error
-                    )
-                }
-                
-                Spacer(modifier = Modifier.width(8.dp))
-                
-                androidx.compose.material3.Button(
-                    onClick = { onEditClick(place) },
-                    colors = androidx.compose.material3.ButtonDefaults.buttonColors(
-                        containerColor = MaterialTheme.colorScheme.primaryContainer,
-                        contentColor = MaterialTheme.colorScheme.onPrimaryContainer
-                    )
-                ) {
-                    Text(
-                        text = "Edit Place",
-                        fontFamily = manrope,
-                        fontWeight = FontWeight.SemiBold
-                    )
-                }
-            }
+            Icon(
+                painter = painterResource(id = R.drawable.right_arrow),
+                contentDescription = "View Details",
+                modifier = Modifier.size(24.dp),
+                tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f)
+            )
         }
     }
 }

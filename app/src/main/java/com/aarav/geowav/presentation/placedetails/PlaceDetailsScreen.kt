@@ -237,12 +237,27 @@ fun PlaceDetailsScreen(
                         ),
                         textAlign = TextAlign.Center
                     )
+                    uiState.place?.address?.let { address ->
+                        if (address.isNotBlank()) {
+                            Spacer(modifier = Modifier.height(6.dp))
+                            Text(
+                                text = address,
+                                style = MaterialTheme.typography.bodyMedium.copy(
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                    fontWeight = FontWeight.Medium,
+                                    fontFamily = manrope
+                                ),
+                                textAlign = TextAlign.Center,
+                                modifier = Modifier.padding(horizontal = 24.dp)
+                            )
+                        }
+                    }
                     Spacer(modifier = Modifier.height(6.dp))
                     Text(
                         text = uiState.relativeLastSeenText,
-                        style = MaterialTheme.typography.bodyMedium.copy(
+                        style = MaterialTheme.typography.bodyLarge.copy(
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            fontWeight = FontWeight.Medium,
+                            fontWeight = FontWeight.SemiBold,
                             fontFamily = manrope
                         ),
                         textAlign = TextAlign.Center
