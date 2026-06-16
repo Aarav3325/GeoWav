@@ -37,6 +37,13 @@ class PersonalInsightsViewModel @Inject constructor(
         observeInsights(scope)
     }
 
+    private data class CombinedInsights(
+        val mostVisited: MostVisitedPlaceInsight?,
+        val averageDuration: AverageVisitDurationInsight?,
+        val awarenessSummary: WeeklyAwarenessSummaryInsight?,
+        val weeklySummary: WeeklyAwarenessSummaryInsight?
+    )
+
     private fun observeInsights(scope: PersonalInsightScope) {
         insightJob?.cancel()
         _uiState.update {
@@ -44,6 +51,7 @@ class PersonalInsightsViewModel @Inject constructor(
                 mostVisitedPlaceScope = scope,
                 mostVisitedPlaceInsight = null,
                 averageVisitDurationInsight = null,
+                awarenessSummaryInsight = null,
                 weeklyAwarenessSummaryInsight = null,
                 isLoading = true,
                 error = null
@@ -54,27 +62,30 @@ class PersonalInsightsViewModel @Inject constructor(
             combine(
                 geoActivityRepository.observeMostVisitedPlace(scope),
                 geoActivityRepository.observeAverageVisitDuration(scope),
-                geoActivityRepository.observeWeeklyAwarenessSummary()
-            ) { mostVisitedPlace, averageVisitDuration, weeklyAwarenessSummary ->
-                Triple(mostVisitedPlace, averageVisitDuration, weeklyAwarenessSummary)
+                geoActivityRepository.observeWeeklyAwarenessSummary(scope),
+                geoActivityRepository.observeWeeklyAwarenessSummary(PersonalInsightScope.Week)
+            ) { mostVisited, avgDuration, awareness, weekly ->
+                CombinedInsights(mostVisited, avgDuration, awareness, weekly)
             }
                 .catch { error ->
                     _uiState.update {
                         it.copy(
                             mostVisitedPlaceInsight = null,
                             averageVisitDurationInsight = null,
+                            awarenessSummaryInsight = null,
                             weeklyAwarenessSummaryInsight = null,
                             isLoading = false,
                             error = error.message
                         )
                     }
                 }
-                .collectLatest { (mostVisitedPlace, averageVisitDuration, weeklyAwarenessSummary) ->
+                .collectLatest { combined ->
                     _uiState.update {
                         it.copy(
-                            mostVisitedPlaceInsight = mostVisitedPlace,
-                            averageVisitDurationInsight = averageVisitDuration,
-                            weeklyAwarenessSummaryInsight = weeklyAwarenessSummary,
+                            mostVisitedPlaceInsight = combined.mostVisited,
+                            averageVisitDurationInsight = combined.averageDuration,
+                            awarenessSummaryInsight = combined.awarenessSummary,
+                            weeklyAwarenessSummaryInsight = combined.weeklySummary,
                             isLoading = false,
                             error = null
                         )
@@ -89,6 +100,7 @@ data class PersonalInsightsUiState(
     val mostVisitedPlaceInsight: MostVisitedPlaceInsight? = null,
     val averageVisitDurationInsight: AverageVisitDurationInsight? = null,
     val weeklyAwarenessSummaryInsight: WeeklyAwarenessSummaryInsight? = null,
+    val awarenessSummaryInsight: WeeklyAwarenessSummaryInsight? = null,
     val isLoading: Boolean = true,
     val error: String? = null
 )

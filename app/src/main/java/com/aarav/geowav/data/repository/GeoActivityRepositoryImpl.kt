@@ -132,9 +132,9 @@ class GeoActivityRepositoryImpl
         awaitClose { query.removeEventListener(listener) }
     }
 
-    override fun observeWeeklyAwarenessSummary(): Flow<WeeklyAwarenessSummaryInsight?> = callbackFlow {
+    override fun observeWeeklyAwarenessSummary(scope: PersonalInsightScope): Flow<WeeklyAwarenessSummaryInsight?> = callbackFlow {
         val userID = uid()
-        val (startMillis, endMillis) = rangeForPersonalInsightScope(PersonalInsightScope.Week)
+        val (startMillis, endMillis) = rangeForPersonalInsightScope(scope)
 
         val query = db.getReference("geofence_activity")
             .child(userID)
@@ -148,7 +148,7 @@ class GeoActivityRepositoryImpl
                     snap.getValue(FirebaseActivity::class.java)
                 }
 
-                trySend(weeklyAwarenessSummaryInsight(activities, PersonalInsightScope.Week))
+                trySend(weeklyAwarenessSummaryInsight(activities, scope))
             }
 
             override fun onCancelled(error: DatabaseError) {

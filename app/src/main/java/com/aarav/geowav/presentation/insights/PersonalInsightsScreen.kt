@@ -93,7 +93,7 @@ fun PersonalInsightsScreen(
     ) { paddingValues ->
         val mostVisitedPlaceInsight = uiState.mostVisitedPlaceInsight
         val averageVisitDurationInsight = uiState.averageVisitDurationInsight
-        val weeklyAwarenessSummaryInsight = uiState.weeklyAwarenessSummaryInsight
+        val awarenessSummaryInsight = uiState.awarenessSummaryInsight
 
         Column(
             modifier = Modifier
@@ -135,12 +135,12 @@ fun PersonalInsightsScreen(
                     }
                 }
 
-                mostVisitedPlaceInsight == null && averageVisitDurationInsight == null && weeklyAwarenessSummaryInsight == null -> {
+                mostVisitedPlaceInsight == null && averageVisitDurationInsight == null && awarenessSummaryInsight == null -> {
                     EmptyInsightsState()
                 }
 
                 else -> {
-                    weeklyAwarenessSummaryInsight?.let { insight ->
+                    awarenessSummaryInsight?.let { insight ->
                         WeeklyAwarenessSummaryInsightCard(
                             insight = insight
                         )
@@ -520,14 +520,14 @@ private fun WeeklyAwarenessSummaryInsightCard(
             ) {
                 Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
                     Text(
-                        text = "Weekly Awareness Summary",
+                        text = "Awareness Summary",
                         fontFamily = manrope,
                         fontSize = 13.sp,
                         fontWeight = FontWeight.SemiBold,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                     Text(
-                        text = "This week",
+                        text = if (insight.scope == PersonalInsightScope.Month) "This month" else "This week",
                         fontFamily = manrope,
                         fontSize = 11.sp,
                         color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.78f)
