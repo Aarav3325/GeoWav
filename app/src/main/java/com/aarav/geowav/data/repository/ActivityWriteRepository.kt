@@ -56,7 +56,6 @@ class ActivityWriteRepository(
 }
 
 internal const val MOVEMENT_DUPLICATE_DEBOUNCE_WINDOW_MS = 2 * 60 * 1000L
-internal const val MOVEMENT_OPPOSITE_STABILIZATION_WINDOW_MS = 5 * 60 * 1000L
 
 internal data class LatestMovementActivityState(
     val normalizedTransitionType: String,
@@ -75,9 +74,6 @@ internal fun shouldSuppressMovementActivity(
     return when {
         latestState.normalizedTransitionType == activity.transition.name ->
             elapsedMs <= MOVEMENT_DUPLICATE_DEBOUNCE_WINDOW_MS
-
-        elapsedMs <= MOVEMENT_OPPOSITE_STABILIZATION_WINDOW_MS ->
-            true
 
         else -> false
     }

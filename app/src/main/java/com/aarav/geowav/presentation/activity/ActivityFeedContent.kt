@@ -48,7 +48,6 @@ import androidx.compose.ui.unit.sp
 import com.aarav.geowav.R
 import com.aarav.geowav.core.utils.ActivityFilter
 import com.aarav.geowav.data.model.ActivityTransition
-import com.aarav.geowav.data.model.CircleActivityItem
 import com.aarav.geowav.presentation.components.IdentityAvatar
 import com.aarav.geowav.presentation.theme.manrope
 
@@ -179,6 +178,12 @@ private fun ActivityFeedList(
     uiState: ActivityUiState,
     onLoadMore: () -> Unit
 ) {
+    val timelineItems = remember(uiState.activities, uiState.hasMore) {
+        transformActivitiesToTimeline(
+            activities = uiState.activities,
+            hasMoreHistoryInFilter = uiState.hasMore
+        )
+    }
     val listState = rememberLazyListState()
     val shouldLoadMore by remember {
         derivedStateOf {
@@ -209,16 +214,12 @@ private fun ActivityFeedList(
             )
         }
 
-        items(uiState.activities) { activity ->
-            ActivityFeedItem(
-                activity = activity,
-                story = remember(activity, uiState.activities, uiState.hasMore) {
-                    deriveActivityStory(
-                        activity = activity,
-                        activities = uiState.activities,
-                        hasMoreHistoryInFilter = uiState.hasMore
-                    )
-                },
+        items(
+            items = timelineItems,
+            key = { item -> item.id }
+        ) { item ->
+            ActivityTimelineRow(
+                item = item,
                 currentUserId = currentUserId,
                 isDarkThemeEnabled = isDarkThemeEnabled,
                 modifier = Modifier.padding(horizontal = 12.dp)
@@ -270,14 +271,40 @@ private fun ActivityFeedSectionHeader(
 }
 
 @Composable
-private fun ActivityFeedItem(
-    activity: CircleActivityItem,
-    story: ActivityStory,
+private fun ActivityTimelineRow(
+    item: ActivityTimelineItem,
     currentUserId: String,
     isDarkThemeEnabled: Boolean,
     modifier: Modifier = Modifier
 ) {
-    val isArrival = activity.normalizedTransitionType == ActivityTransition.ARRIVED.name
+    when (item) {
+        is ActivityTimelineItem.Event -> ActivityEventRow(
+            item = item,
+            currentUserId = currentUserId,
+            isDarkThemeEnabled = isDarkThemeEnabled,
+            modifier = modifier
+        )
+
+        is ActivityTimelineItem.Visit -> ActivityVisitRow(
+            item = item,
+            currentUserId = currentUserId,
+            isDarkThemeEnabled = isDarkThemeEnabled,
+            modifier = modifier
+        )
+    }
+}
+
+@Composable
+private fun ActivityEventRow(
+    item: ActivityTimelineItem.Event,
+    currentUserId: String,
+    isDarkThemeEnabled: Boolean,
+    modifier: Modifier = Modifier
+) {
+    val activity = item.activity
+    val story = item.story
+    val transition = ActivityTransition.fromRaw(activity.normalizedTransitionType)
+    val isArrival = transition == ActivityTransition.ARRIVED
     val actorLabel = if (activity.actorId == currentUserId) "You" else activity.actorName.ifBlank { "Someone" }
     val transitionLabel = if (isArrival) "Arrived" else "Left"
     val relativeTime = remember(activity.timestamp) { activityRelativeTime(activity.timestamp) }
@@ -400,6 +427,146 @@ private fun ActivityFeedItem(
             ) {
                 Text(
                     text = transitionLabel,
+                    modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp),
+                    fontFamily = manrope,
+                    fontWeight = FontWeight.SemiBold,
+                    fontSize = 11.sp
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun ActivityVisitRow(
+    item: ActivityTimelineItem.Visit,
+    currentUserId: String,
+    isDarkThemeEnabled: Boolean,
+    modifier: Modifier = Modifier
+) {
+    val actorLabel = if (item.actorId == currentUserId) "You" else item.actorName.ifBlank { "Someone" }
+    val relativeTime = remember(item.endedAt) { activityRelativeTime(item.endedAt) }
+    val timeRange = remember(item.startedAt, item.endedAt) {
+        activityTimeRange(item.startedAt, item.endedAt)
+    }
+    val duration = remember(item.durationMillis) {
+        activityDuration(item.durationMillis)
+    }
+    val accentColor = MaterialTheme.colorScheme.tertiary
+    val containerColor = if (isDarkThemeEnabled) {
+        MaterialTheme.colorScheme.surfaceContainerHigh.copy(alpha = 0.72f)
+    } else {
+        MaterialTheme.colorScheme.surfaceContainerLowest
+    }
+    val storyText = buildAnnotatedString {
+        withStyle(
+            SpanStyle(
+                fontWeight = FontWeight.ExtraBold,
+                color = MaterialTheme.colorScheme.onSurface
+            )
+        ) {
+            append(actorLabel)
+        }
+        append(" visited ")
+        withStyle(
+            SpanStyle(
+                fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.onSurface
+            )
+        ) {
+            append(item.placeName.ifBlank { "a saved place" })
+        }
+    }
+
+    Card(
+        shape = RoundedCornerShape(12.dp),
+        modifier = modifier.fillMaxWidth(),
+        border = BorderStroke(
+            1.dp,
+            MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.24f)
+        ),
+        colors = CardDefaults.cardColors(
+            containerColor = containerColor,
+            contentColor = MaterialTheme.colorScheme.onSurface
+        )
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 12.dp, vertical = 12.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Box(contentAlignment = Alignment.BottomEnd) {
+                IdentityAvatar(
+                    avatarUrl = item.actorAvatar,
+                    displayName = item.actorName,
+                    backgroundColor = MaterialTheme.colorScheme.outline.copy(alpha = 0.12f),
+                    contentColor = MaterialTheme.colorScheme.outline,
+                    borderColor = MaterialTheme.colorScheme.outline.copy(alpha = 0.24f),
+                    modifier = Modifier.size(48.dp)
+                )
+                Box(
+                    modifier = Modifier
+                        .size(12.dp)
+                        .clip(CircleShape)
+                        .background(accentColor)
+                )
+            }
+
+            Spacer(modifier = Modifier.width(12.dp))
+
+            Column(
+                modifier = Modifier.weight(1f),
+                verticalArrangement = Arrangement.spacedBy(5.dp)
+            ) {
+                Text(
+                    text = storyText,
+                    fontFamily = manrope,
+                    fontSize = 14.sp,
+                    lineHeight = 19.sp,
+                    maxLines = 2,
+                    overflow = TextOverflow.Ellipsis,
+                    color = MaterialTheme.colorScheme.onSurface
+                )
+
+                Text(
+                    text = timeRange,
+                    fontFamily = manrope,
+                    fontSize = 12.sp,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    Text(
+                        text = "Stayed for $duration",
+                        fontFamily = manrope,
+                        fontWeight = FontWeight.SemiBold,
+                        fontSize = 12.sp,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                    Text(
+                        text = relativeTime,
+                        fontFamily = manrope,
+                        fontSize = 11.sp,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.78f),
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
+                    )
+                }
+            }
+
+            Spacer(modifier = Modifier.width(10.dp))
+
+            Surface(
+                color = accentColor.copy(alpha = 0.10f),
+                contentColor = accentColor,
+                shape = RoundedCornerShape(50)
+            ) {
+                Text(
+                    text = "Visit",
                     modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp),
                     fontFamily = manrope,
                     fontWeight = FontWeight.SemiBold,
