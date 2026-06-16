@@ -131,7 +131,7 @@ private fun ActivityHeader() {
         modifier = Modifier.padding(top = 56.dp, start = 16.dp, end = 16.dp, bottom = 8.dp)
     ) {
         Text(
-            text = "Circle activity",
+            text = "Circle Activity",
             fontSize = 28.sp,
             fontFamily = manrope,
             fontWeight = FontWeight.ExtraBold,

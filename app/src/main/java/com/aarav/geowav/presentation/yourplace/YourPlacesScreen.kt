@@ -198,7 +198,6 @@ fun YourPlacesScreen(
             .fillMaxSize()
     ) {
 
-
         Column(
             modifier = Modifier
         ) {
@@ -222,20 +221,13 @@ fun YourPlacesScreen(
                 )
             }
 
-            PlacesUsageCard(
-                uiState.placesList.size,
-                plan,
-                modifier = Modifier
-                    .padding(horizontal = 12.dp)
-                    .padding(top = 8.dp, bottom = 8.dp)
-            )
-
             if (uiState.placesList.isEmpty()) {
                 Box(
-                    modifier = Modifier.fillMaxSize()
+                    modifier = Modifier.fillMaxSize(),
+                    contentAlignment = Alignment.Center
                 ) {
                     Column(
-                        modifier = Modifier.align(Alignment.Center),
+                        modifier = Modifier,
                         horizontalAlignment = Alignment.CenterHorizontally,
                         verticalArrangement = Arrangement.spacedBy(16.dp)
                     ) {
@@ -284,6 +276,17 @@ fun YourPlacesScreen(
                     .padding(top = 8.dp),
                 contentPadding = PaddingValues(bottom = 88.dp)
             ) {
+
+                item {
+                    PlacesUsageCard(
+                        uiState.placesList.size,
+                        plan,
+                        modifier = Modifier
+                            .padding(horizontal = 12.dp)
+                            .padding(top = 8.dp, bottom = 8.dp)
+                    )
+                }
+
                 items(uiState.placesList) { place ->
                     GeofencePlaceCard(
                         place = place,
