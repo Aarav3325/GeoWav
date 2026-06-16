@@ -50,13 +50,15 @@ import kotlin.math.roundToInt
 fun GeofencePlaceCard(
     place: Place,
     onDeleteClick: (Place) -> Unit,
-    onEditClick: (Place) -> Unit = {}
+    onEditClick: (Place) -> Unit = {},
+    onCardClick: (Place) -> Unit = {}
 ) {
     Card(
         modifier = Modifier
             .fillMaxWidth()
             .wrapContentHeight()
-            .padding(vertical = 8.dp, horizontal = 12.dp),
+            .padding(vertical = 8.dp, horizontal = 12.dp)
+            .clickable { onCardClick(place) },
         shape = RoundedCornerShape(16.dp),
         colors = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.surfaceContainer

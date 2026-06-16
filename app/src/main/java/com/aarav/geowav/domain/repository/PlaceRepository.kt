@@ -15,4 +15,6 @@ interface PlaceRepository {
     suspend fun searchPlaces(
         query: String,
     ): Resource<List<AutocompletePrediction>>
+
+    suspend fun getPlaceById(placeId: String): Place?
 }

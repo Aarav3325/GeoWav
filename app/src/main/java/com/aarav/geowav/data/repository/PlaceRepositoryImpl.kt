@@ -112,4 +112,7 @@ class PlaceRepositoryImpl @Inject constructor(
         }
     }
 
+    override suspend fun getPlaceById(placeId: String): Place? {
+        return placesDAO.getPlaceById(placeId)
+    }
 }

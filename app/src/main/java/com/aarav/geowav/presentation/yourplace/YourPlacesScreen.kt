@@ -72,7 +72,8 @@ fun YourPlacesScreen(
     yourPlacesVM: YourPlacesVM,
     subscriptionVM: SubscriptionViewModel,
     navigateToPaywall: () -> Unit,
-    navigateToMap: () -> Unit
+    navigateToMap: () -> Unit,
+    navigateToPlaceDetails: (String) -> Unit = {}
 ) {
     val uiState by yourPlacesVM.uiState.collectAsState()
 
@@ -295,6 +296,9 @@ fun YourPlacesScreen(
                         },
                         onEditClick = {
                             placeToEdit = place
+                        },
+                        onCardClick = { clickedPlace ->
+                            navigateToPlaceDetails(clickedPlace.placeId)
                         }
                     )
                 }

@@ -6,6 +6,7 @@ import com.aarav.geowav.core.insights.Insights.MostVisitedPlaceInsight
 import com.aarav.geowav.core.insights.Insights.WeeklyAwarenessSummaryInsight
 import com.aarav.geowav.core.insights.PersonalInsightScope
 import com.aarav.geowav.data.model.GeoAlert
+import com.aarav.geowav.data.mapper.FirebaseActivity
 import kotlinx.coroutines.flow.Flow
 
 interface GeoActivityRepository {
@@ -13,4 +14,5 @@ interface GeoActivityRepository {
     fun observeMostVisitedPlace(scope: PersonalInsightScope): Flow<MostVisitedPlaceInsight?>
     fun observeAverageVisitDuration(scope: PersonalInsightScope): Flow<AverageVisitDurationInsight?>
     fun observeWeeklyAwarenessSummary(): Flow<WeeklyAwarenessSummaryInsight?>
+    fun observeActivityHistory(): Flow<List<FirebaseActivity>>
 }

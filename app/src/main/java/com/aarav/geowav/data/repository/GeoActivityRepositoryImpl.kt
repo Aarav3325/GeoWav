@@ -160,4 +160,27 @@ class GeoActivityRepositoryImpl
         awaitClose { query.removeEventListener(listener) }
     }
 
+    override fun observeActivityHistory(): Flow<List<FirebaseActivity>> = callbackFlow {
+        val userID = try {
+            uid()
+        } catch (e: Exception) {
+            close(e)
+            return@callbackFlow
+        }
+        val ref = db.getReference("geofence_activity").child(userID)
+        val listener = object : ValueEventListener {
+            override fun onDataChange(snapshot: DataSnapshot) {
+                val activities = snapshot.children.mapNotNull { snap ->
+                    snap.getValue(FirebaseActivity::class.java)
+                }
+                trySend(activities)
+            }
+
+            override fun onCancelled(error: DatabaseError) {
+                close(error.toException())
+            }
+        }
+        ref.addValueEventListener(listener)
+        awaitClose { ref.removeEventListener(listener) }
+    }
 }

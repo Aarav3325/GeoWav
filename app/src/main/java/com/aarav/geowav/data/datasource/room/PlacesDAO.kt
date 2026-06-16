@@ -21,4 +21,7 @@ interface PlacesDAO {
 
     @androidx.room.Update
     suspend fun updatePlace(place: Place)
+
+    @Query("SELECT * FROM places WHERE placeId = :placeId LIMIT 1")
+    suspend fun getPlaceById(placeId: String): Place?
 }

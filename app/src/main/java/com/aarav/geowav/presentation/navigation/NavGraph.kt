@@ -36,6 +36,7 @@ import com.aarav.geowav.presentation.profile.ProfileScreen
 import com.aarav.geowav.presentation.profile.ThemeMode
 import com.aarav.geowav.presentation.subscription.SubscriptionViewModel
 import com.aarav.geowav.presentation.timeline.TimelineMapPreview
+import com.aarav.geowav.presentation.placedetails.PlaceDetailsScreen
 import com.aarav.geowav.presentation.timeline.TimelineScreen
 import com.aarav.geowav.presentation.yourplace.YourPlacesScreen
 import com.google.android.gms.maps.model.LatLng
@@ -87,6 +88,11 @@ fun NavGraph(
             navHostController,
             this,
             subscriptionVM
+        )
+
+        AddPlaceDetailsScreen(
+            navHostController,
+            this
         )
 
         AddSignUpScreen(
@@ -331,6 +337,9 @@ fun AddYourPlacesScreen(
             },
             navigateToMap = {
                 navController.navigate(NavRoute.MapScreen.path)
+            },
+            navigateToPlaceDetails = { placeId ->
+                navController.navigate(NavRoute.PlaceDetails.createRoute(placeId))
             }
         )
     }
@@ -724,6 +733,29 @@ fun AddInsightsScreen(
         PersonalInsightsScreen(
             viewModel = personalInsightsVM,
             back = {
+                navController.popBackStack()
+            }
+        )
+    }
+}
+
+fun AddPlaceDetailsScreen(
+    navController: NavController,
+    navGraphBuilder: NavGraphBuilder
+) {
+    navGraphBuilder.composable(
+        route = NavRoute.PlaceDetails.path.plus("/{placeId}"),
+        arguments = listOf(
+            navArgument("placeId") {
+                type = NavType.StringType
+            }
+        )
+    ) { backStackEntry ->
+        val placeId = backStackEntry.arguments?.getString("placeId").orEmpty()
+        PlaceDetailsScreen(
+            placeId = placeId,
+            viewModel = hiltViewModel(),
+            onBackClick = {
                 navController.popBackStack()
             }
         )
