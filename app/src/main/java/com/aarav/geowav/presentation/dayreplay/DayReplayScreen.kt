@@ -273,27 +273,56 @@ fun DayReplayContent(
         contentPadding = PaddingValues(horizontal = 16.dp, vertical = 12.dp)
     ) {
         item {
-            Column(
+            Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(bottom = 28.dp, top = 12.dp)
+                    .height(IntrinsicSize.Min)
             ) {
-                Text(
-                    text = replay.heroTitle,
-                    fontFamily = manrope,
-                    fontWeight = FontWeight.ExtraBold,
-                    fontSize = 32.sp,
-                    color = MaterialTheme.colorScheme.onBackground
-                )
-                Spacer(modifier = Modifier.height(10.dp))
-                Text(
-                    text = replay.heroNarrative,
-                    fontFamily = manrope,
-                    fontWeight = FontWeight.Medium,
-                    fontSize = 16.sp,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    lineHeight = 24.sp
-                )
+                Column(
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    modifier = Modifier
+                        .width(32.dp)
+                        .fillMaxHeight()
+                ) {
+                    Spacer(modifier = Modifier.height(6.dp))
+                    Box(
+                        modifier = Modifier
+                            .size(8.dp)
+                            .clip(CircleShape)
+                            .background(MaterialTheme.colorScheme.primary)
+                    )
+                    Spacer(modifier = Modifier.height(6.dp))
+                    Box(
+                        modifier = Modifier
+                            .weight(1f)
+                            .width(3.dp)
+                            .background(MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.6f))
+                    )
+                }
+
+                Column(
+                    modifier = Modifier
+                        .weight(1f)
+                        .padding(start = 16.dp, bottom = 28.dp)
+                ) {
+                    Text(
+                        text = replay.heroTitle.uppercase(Locale.getDefault()),
+                        fontFamily = manrope,
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 11.sp,
+                        letterSpacing = 1.5.sp,
+                        color = MaterialTheme.colorScheme.primary.copy(alpha = 0.8f)
+                    )
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Text(
+                        text = replay.heroNarrative,
+                        fontFamily = manrope,
+                        fontWeight = FontWeight.SemiBold,
+                        fontSize = 20.sp,
+                        lineHeight = 28.sp,
+                        color = MaterialTheme.colorScheme.onBackground
+                    )
+                }
             }
         }
 
@@ -354,24 +383,44 @@ fun SectionHeaderItem(
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(start = 32.dp, top = 20.dp, bottom = 12.dp),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(8.dp)
+            .height(IntrinsicSize.Min)
     ) {
-        Icon(
-            painter = painterResource(id = iconRes),
-            contentDescription = null,
-            tint = sectionColor,
-            modifier = Modifier.size(14.dp)
-        )
-        Text(
-            text = section.label.uppercase(Locale.getDefault()),
-            fontFamily = manrope,
-            fontWeight = FontWeight.Bold,
-            fontSize = 11.sp,
-            letterSpacing = 1.2.sp,
-            color = sectionColor
-        )
+        Column(
+            horizontalAlignment = Alignment.CenterHorizontally,
+            modifier = Modifier
+                .width(32.dp)
+                .fillMaxHeight()
+        ) {
+            Box(
+                modifier = Modifier
+                    .fillMaxHeight()
+                    .width(3.dp)
+                    .background(MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.6f))
+            )
+        }
+
+        Row(
+            modifier = Modifier
+                .weight(1f)
+                .padding(start = 16.dp, top = 20.dp, bottom = 12.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            Icon(
+                painter = painterResource(id = iconRes),
+                contentDescription = null,
+                tint = sectionColor,
+                modifier = Modifier.size(14.dp)
+            )
+            Text(
+                text = section.label.uppercase(Locale.getDefault()),
+                fontFamily = manrope,
+                fontWeight = FontWeight.Bold,
+                fontSize = 11.sp,
+                letterSpacing = 1.2.sp,
+                color = sectionColor
+            )
+        }
     }
 }
 
@@ -412,7 +461,12 @@ fun TimelineStopItem(
                 .width(32.dp)
                 .fillMaxHeight()
         ) {
-            Spacer(modifier = Modifier.height(8.dp))
+            Box(
+                modifier = Modifier
+                    .height(8.dp)
+                    .width(3.dp)
+                    .background(MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.6f))
+            )
 
             Box(
                 modifier = Modifier
@@ -589,31 +643,6 @@ fun TimelineStopItem(
                                 )
                             }
                         }
-
-                        Spacer(modifier = Modifier.height(16.dp))
-
-                        OutlinedButton(
-                            onClick = { navigateToPlaceDetails(stop.placeId) },
-                            modifier = Modifier.fillMaxWidth(),
-                            shape = RoundedCornerShape(12.dp),
-                            border = borderStroke(),
-                            colors = ButtonDefaults.outlinedButtonColors(
-                                contentColor = MaterialTheme.colorScheme.primary
-                            )
-                        ) {
-                            Icon(
-                                painter = painterResource(id = R.drawable.map_pin_area),
-                                contentDescription = null,
-                                modifier = Modifier.size(16.dp)
-                            )
-                            Spacer(modifier = Modifier.width(8.dp))
-                            Text(
-                                text = "Open Place Settings",
-                                fontFamily = manrope,
-                                fontWeight = FontWeight.Bold,
-                                fontSize = 13.sp
-                            )
-                        }
                     }
                 }
             }
@@ -630,19 +659,19 @@ fun DetailRow(
     label: String,
     value: String
 ) {
-    Row(
-        modifier = Modifier.fillMaxWidth(),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(12.dp)
+    Column(
+        modifier = Modifier.fillMaxWidth()
     ) {
-        Icon(
-            painter = painterResource(id = iconRes),
-            contentDescription = null,
-            tint = MaterialTheme.colorScheme.primary,
-            modifier = Modifier.size(16.dp)
-        )
-
-        Column(modifier = Modifier.weight(1f)) {
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            Icon(
+                painter = painterResource(id = iconRes),
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.primary,
+                modifier = Modifier.size(16.dp)
+            )
             Text(
                 text = label,
                 fontFamily = manrope,
@@ -650,14 +679,16 @@ fun DetailRow(
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 fontWeight = FontWeight.Medium
             )
-            Text(
-                text = value,
-                fontFamily = manrope,
-                fontSize = 14.sp,
-                color = MaterialTheme.colorScheme.onSurface,
-                fontWeight = FontWeight.Medium
-            )
         }
+        Spacer(modifier = Modifier.height(2.dp))
+        Text(
+            text = value,
+            fontFamily = manrope,
+            fontSize = 14.sp,
+            color = MaterialTheme.colorScheme.onSurface,
+            fontWeight = FontWeight.Medium,
+            modifier = Modifier.padding(start = 24.dp)
+        )
     }
 }
 
