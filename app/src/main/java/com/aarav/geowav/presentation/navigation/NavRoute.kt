@@ -38,6 +38,7 @@ sealed class NavRoute(val path: String) {
 
     object YourPlaces : NavRoute("yourPlaces")
     object Insights : NavRoute("insights")
+    object DayReplay : NavRoute("dayReplay")
     object SignUp : NavRoute("signUp")
     object Login : NavRoute("login")
     object OnBoard : NavRoute("onBoard")
