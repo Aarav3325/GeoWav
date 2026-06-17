@@ -2,6 +2,7 @@ package com.aarav.geowav.presentation.navigation
 
 import android.content.SharedPreferences
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
@@ -26,7 +27,6 @@ import com.aarav.geowav.presentation.home.GeoWavHomeScreen
 import com.aarav.geowav.presentation.home.HomeScreenVM
 import com.aarav.geowav.presentation.insights.PersonalInsightsScreen
 import com.aarav.geowav.presentation.insights.PersonalInsightsViewModel
-import com.aarav.geowav.presentation.dayreplay.DayReplayScreen
 import com.aarav.geowav.presentation.dayreplay.DayReplayViewModel
 import com.aarav.geowav.presentation.locationsharing.LocationSharingScreen
 import com.aarav.geowav.presentation.locationsharing.LocationSharingVM
@@ -504,11 +504,15 @@ fun AddActivityScreen(
         route = NavRoute.ActivityScreen.path
     ) {
         ActivityScreen(
-            isDarkThemeEnabled,
+            isDarkThemeEnabled = isDarkThemeEnabled,
             activityViewModel = hiltViewModel(),
+            dayReplayViewModel = hiltViewModel(),
             subscriptionViewModel = subscriptionVM,
             navigateToPaywall = {
                 navController.navigate(NavRoute.Paywall.path)
+            },
+            navigateToPlaceDetails = { placeId ->
+                navController.navigate(NavRoute.PlaceDetails.createRoute(placeId))
             }
         )
     }
@@ -707,9 +711,7 @@ fun AddProfileScreen(
             navigateToInsights = {
                 navController.navigate(NavRoute.Insights.path)
             },
-            navigateToDayReplay = {
-                navController.navigate(NavRoute.DayReplay.path)
-            },
+
             onLogout = {
                 navController.navigate(NavRoute.Login.path) {
                     popUpTo(0)
@@ -801,15 +803,10 @@ fun AddDayReplayScreen(
     navGraphBuilder.composable(
         route = NavRoute.DayReplay.path
     ) {
-        DayReplayScreen(
-            isDarkThemeEnabled = isDarkThemeEnabled,
-            viewModel = hiltViewModel(),
-            back = {
-                navController.popBackStack()
-            },
-            navigateToPlaceDetails = { placeId ->
-                navController.navigate(NavRoute.PlaceDetails.createRoute(placeId))
+        LaunchedEffect(Unit) {
+            navController.navigate(NavRoute.ActivityScreen.path) {
+                popUpTo(NavRoute.DayReplay.path) { inclusive = true }
             }
-        )
+        }
     }
 }

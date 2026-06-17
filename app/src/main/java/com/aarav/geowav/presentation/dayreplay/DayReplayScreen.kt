@@ -72,10 +72,9 @@ import java.util.Locale
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3ExpressiveApi::class)
 @Composable
-fun DayReplayScreen(
+fun DayReplayTabContent(
     isDarkThemeEnabled: Boolean,
     viewModel: DayReplayViewModel,
-    back: () -> Unit,
     navigateToPlaceDetails: (String) -> Unit
 ) {
     val uiState by viewModel.uiState.collectAsState()
@@ -98,41 +97,12 @@ fun DayReplayScreen(
     val hasPreviousDay = selectedDateIndex > 0
     val hasNextDay = selectedDateIndex < uiState.dates.size - 1
 
-    Scaffold(
-        contentWindowInsets = WindowInsets(0, 0, 0, 0),
-        topBar = {
-            TopAppBar(
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.background
-                ),
-                title = {
-                    Text(
-                        text = "Day Replay",
-                        fontFamily = manrope,
-                        fontWeight = FontWeight.Bold,
-                        fontSize = 20.sp,
-                        color = MaterialTheme.colorScheme.onBackground
-                    )
-                },
-                navigationIcon = {
-                    IconButton(onClick = back) {
-                        Icon(
-                            painter = painterResource(id = R.drawable.back),
-                            contentDescription = "Back",
-                            tint = MaterialTheme.colorScheme.onBackground,
-                            modifier = Modifier.size(24.dp)
-                        )
-                    }
-                }
-            )
-        }
-    ) { paddingValues ->
-        Column(
-            modifier = Modifier
-                .padding(paddingValues)
-                .fillMaxSize()
-                .background(MaterialTheme.colorScheme.background)
-        ) {
+    Column(
+        modifier = Modifier
+            .padding(top = 12.dp)
+            .fillMaxSize()
+            .background(MaterialTheme.colorScheme.background)
+    ) {
             Row(
                 modifier = Modifier
                     .padding(horizontal = 16.dp, vertical = 8.dp)
@@ -243,7 +213,6 @@ fun DayReplayScreen(
             }
         }
     }
-}
 
 @Composable
 fun DayReplayContent(
