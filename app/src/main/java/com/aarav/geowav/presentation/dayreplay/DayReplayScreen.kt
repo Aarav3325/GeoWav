@@ -129,26 +129,30 @@ fun DayReplayScreen(
     ) { paddingValues ->
         Column(
             modifier = Modifier
-                .fillMaxSize()
                 .padding(paddingValues)
+                .fillMaxSize()
                 .background(MaterialTheme.colorScheme.background)
         ) {
             Row(
                 modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 16.dp, vertical = 8.dp),
+                    .padding(horizontal = 16.dp, vertical = 8.dp)
+                    .fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                IconButton(
-                    onClick = {
-                        if (hasPreviousDay) {
-                            scope.launch {
-                                pagerState.animateScrollToPage(selectedDateIndex - 1)
+                Box(
+                    modifier = Modifier
+                        .clip(CircleShape)
+                        .clickable(
+                            enabled = hasPreviousDay,
+                            onClick = {
+                                scope.launch {
+                                    pagerState.animateScrollToPage(selectedDateIndex - 1)
+                                }
                             }
-                        }
-                    },
-                    enabled = hasPreviousDay
+                        )
+                        .padding(8.dp),
+                    contentAlignment = Alignment.Center
                 ) {
                     Icon(
                         painter = painterResource(id = R.drawable.back),
@@ -184,21 +188,27 @@ fun DayReplayScreen(
                     )
                 }
 
-                IconButton(
-                    onClick = {
-                        if (hasNextDay) {
-                            scope.launch {
-                                pagerState.animateScrollToPage(selectedDateIndex + 1)
+                Box(
+                    modifier = Modifier
+                        .clip(CircleShape)
+                        .clickable(
+                            enabled = hasNextDay,
+                            onClick = {
+                                scope.launch {
+                                    pagerState.animateScrollToPage(selectedDateIndex + 1)
+                                }
                             }
-                        }
-                    },
-                    enabled = hasNextDay
+                        )
+                        .padding(8.dp),
+                    contentAlignment = Alignment.Center
                 ) {
                     Icon(
-                        painter = painterResource(id = R.drawable.right_arrow),
+                        painter = painterResource(id = R.drawable.back),
                         contentDescription = "Next Day",
                         tint = if (hasNextDay) MaterialTheme.colorScheme.onBackground.copy(alpha = 0.7f) else MaterialTheme.colorScheme.onBackground.copy(alpha = 0.15f),
-                        modifier = Modifier.size(18.dp)
+                        modifier = Modifier
+                            .size(18.dp)
+                            .rotate(180f)
                     )
                 }
             }
@@ -260,7 +270,7 @@ fun DayReplayContent(
 
     LazyColumn(
         modifier = Modifier.fillMaxSize(),
-        contentPadding = PaddingValues(horizontal = 24.dp, vertical = 12.dp)
+        contentPadding = PaddingValues(horizontal = 16.dp, vertical = 12.dp)
     ) {
         item {
             Column(
@@ -503,7 +513,7 @@ fun TimelineStopItem(
                         ) {
                             if (!isExpanded) {
                                 val durationText = if (stop.stayDurationMillis != null) {
-                                    formatDuration(stop.stayDurationMillis)
+                                    "${formatDuration(stop.stayDurationMillis)}"
                                 } else {
                                     "Currently here"
                                 }
@@ -712,11 +722,11 @@ private fun formatDuration(durationMillis: Long): String {
     val durationMinutes = durationMillis / 60000
     return when {
         durationMinutes < 1 -> "Less than a minute"
-        durationMinutes < 60 -> "${durationMinutes}m"
+        durationMinutes < 60 -> "Stayed ${durationMinutes}m"
         else -> {
             val hours = durationMinutes / 60
             val minutes = durationMinutes % 60
-            if (minutes > 0) "${hours}h ${minutes}m" else "${hours}h"
+            if (minutes > 0) "Stayed ${hours}h ${minutes}m" else "Stayed ${hours}h"
         }
     }
 }
