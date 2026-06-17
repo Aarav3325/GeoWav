@@ -27,8 +27,8 @@ android {
         applicationId = "com.aarav.geowav"
         minSdk = 26
         targetSdk = 36
-        versionCode = 37
-        versionName = "0.9.8"
+        versionCode = 38
+        versionName = "0.9.9"
 
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
