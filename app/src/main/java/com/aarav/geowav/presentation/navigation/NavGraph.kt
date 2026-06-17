@@ -198,6 +198,7 @@ fun NavGraph(
         )
 
         AddDayReplayScreen(
+            isDarkThemeEnabled,
             navHostController,
             this
         )
@@ -793,6 +794,7 @@ fun AddPlaceDetailsScreen(
 }
 
 fun AddDayReplayScreen(
+    isDarkThemeEnabled: Boolean,
     navController: NavController,
     navGraphBuilder: NavGraphBuilder
 ) {
@@ -800,6 +802,7 @@ fun AddDayReplayScreen(
         route = NavRoute.DayReplay.path
     ) {
         DayReplayScreen(
+            isDarkThemeEnabled = isDarkThemeEnabled,
             viewModel = hiltViewModel(),
             back = {
                 navController.popBackStack()

@@ -73,6 +73,7 @@ import java.util.Locale
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 fun DayReplayScreen(
+    isDarkThemeEnabled: Boolean,
     viewModel: DayReplayViewModel,
     back: () -> Unit,
     navigateToPlaceDetails: (String) -> Unit
@@ -221,6 +222,7 @@ fun DayReplayScreen(
                         DayReplayEmptyState()
                     } else {
                         DayReplayContent(
+                            isDarkThemeEnabled = isDarkThemeEnabled,
                             replay = dayReplay,
                             expandedStopIds = uiState.expandedStopIds,
                             onToggleStop = { stopId -> viewModel.toggleStopExpanded(stopId) },
@@ -235,6 +237,7 @@ fun DayReplayScreen(
 
 @Composable
 fun DayReplayContent(
+    isDarkThemeEnabled: Boolean,
     replay: DayReplay,
     expandedStopIds: Set<String>,
     onToggleStop: (String) -> Unit,
@@ -287,7 +290,10 @@ fun DayReplayContent(
         items(uiItems) { item ->
             when (item) {
                 is DayReplayUiItem.SectionHeader -> {
-                    SectionHeaderItem(section = item.section)
+                    SectionHeaderItem(
+                        isDarkThemeEnabled = isDarkThemeEnabled,
+                        section = item.section
+                    )
                 }
                 is DayReplayUiItem.StopItem -> {
                     val stop = item.stop
@@ -317,20 +323,44 @@ fun DayReplayContent(
 }
 
 @Composable
-fun SectionHeaderItem(section: DayReplayTimeSection) {
+fun SectionHeaderItem(
+    isDarkThemeEnabled: Boolean,
+    section: DayReplayTimeSection
+) {
+    val iconRes = when (section) {
+        DayReplayTimeSection.MORNING -> R.drawable.morning
+        DayReplayTimeSection.AFTERNOON -> R.drawable.afternoon
+        DayReplayTimeSection.EVENING -> R.drawable.evening
+        DayReplayTimeSection.NIGHT -> R.drawable.night
+    }
+
+    val sectionColor = when (section) {
+        DayReplayTimeSection.MORNING -> if (isDarkThemeEnabled) Color(0xFFFFB74D) else Color(0xFFE65100)
+        DayReplayTimeSection.AFTERNOON -> if (isDarkThemeEnabled) Color(0xFF81D4FA) else Color(0xFF0288D1)
+        DayReplayTimeSection.EVENING -> if (isDarkThemeEnabled) Color(0xFFFFAB91) else Color(0xFFD84315)
+        DayReplayTimeSection.NIGHT -> if (isDarkThemeEnabled) Color(0xFFB39DDB) else Color(0xFF5E35B1)
+    }
+
     Row(
         modifier = Modifier
             .fillMaxWidth()
             .padding(start = 32.dp, top = 20.dp, bottom = 12.dp),
-        verticalAlignment = Alignment.CenterVertically
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(8.dp)
     ) {
+        Icon(
+            painter = painterResource(id = iconRes),
+            contentDescription = null,
+            tint = sectionColor,
+            modifier = Modifier.size(14.dp)
+        )
         Text(
-            text = "${section.emoji} ${section.label.uppercase(Locale.getDefault())}",
+            text = section.label.uppercase(Locale.getDefault()),
             fontFamily = manrope,
             fontWeight = FontWeight.Bold,
             fontSize = 11.sp,
             letterSpacing = 1.2.sp,
-            color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f)
+            color = sectionColor
         )
     }
 }
