@@ -92,7 +92,6 @@ fun ProfileScreen(
     notificationsEnabled: Boolean,
     navigateToHome: () -> Unit,
     navigateToInsights: () -> Unit,
-    navigateToDayReplay: () -> Unit,
     onLogout: () -> Unit,
     onDeleteAccount: () -> Unit
 ) {
@@ -252,17 +251,10 @@ fun ProfileScreen(
 
                     Section(title = "Personal") {
                         SettingItemNew(
-                            title = "Day Replay",
-                            subtitle = "Where did your day take you?",
-                            index = 0,
-                            count = 2,
-                            onClick = navigateToDayReplay
-                        )
-                        SettingItemNew(
                             title = "Insights",
                             subtitle = "Reflect on your place awareness patterns",
-                            index = 1,
-                            count = 2,
+                            index = 0,
+                            count = 1,
                             onClick = navigateToInsights
                         )
                     }
