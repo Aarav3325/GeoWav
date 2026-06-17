@@ -1,0 +1,659 @@
+package com.aarav.geowav.presentation.dayreplay
+
+import androidx.compose.animation.animateContentSize
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.IntrinsicSize
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.pager.HorizontalPager
+import androidx.compose.foundation.pager.rememberPagerState
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.ContainedLoadingIndicator
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Text
+import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopAppBarDefaults
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.snapshotFlow
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.rotate
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import com.aarav.geowav.R
+import com.aarav.geowav.data.model.DayReplay
+import com.aarav.geowav.data.model.DayReplayStop
+import com.aarav.geowav.data.model.DayReplayTimeSection
+import com.aarav.geowav.data.model.DayReplayUiItem
+import com.aarav.geowav.presentation.theme.manrope
+import kotlinx.coroutines.launch
+import java.time.Instant
+import java.time.LocalDate
+import java.time.ZoneId
+import java.time.format.DateTimeFormatter
+import java.util.Locale
+
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3ExpressiveApi::class)
+@Composable
+fun DayReplayScreen(
+    viewModel: DayReplayViewModel,
+    back: () -> Unit,
+    navigateToPlaceDetails: (String) -> Unit
+) {
+    val uiState by viewModel.uiState.collectAsState()
+    val scope = rememberCoroutineScope()
+
+    val pagerState = rememberPagerState(
+        initialPage = maxOf(0, uiState.dates.size - 1),
+        pageCount = { uiState.dates.size }
+    )
+
+    LaunchedEffect(pagerState) {
+        snapshotFlow { pagerState.currentPage }.collect { page ->
+            if (page in uiState.dates.indices) {
+                viewModel.selectDate(uiState.dates[page])
+            }
+        }
+    }
+
+    val selectedDateIndex = uiState.dates.indexOf(uiState.selectedDate)
+    val hasPreviousDay = selectedDateIndex > 0
+    val hasNextDay = selectedDateIndex < uiState.dates.size - 1
+
+    Scaffold(
+        contentWindowInsets = WindowInsets(0, 0, 0, 0),
+        topBar = {
+            TopAppBar(
+                colors = TopAppBarDefaults.topAppBarColors(
+                    containerColor = MaterialTheme.colorScheme.background
+                ),
+                title = {
+                    Text(
+                        text = "Day Replay",
+                        fontFamily = manrope,
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 20.sp,
+                        color = MaterialTheme.colorScheme.onBackground
+                    )
+                },
+                navigationIcon = {
+                    IconButton(onClick = back) {
+                        Icon(
+                            painter = painterResource(id = R.drawable.back),
+                            contentDescription = "Back",
+                            tint = MaterialTheme.colorScheme.onBackground,
+                            modifier = Modifier.size(24.dp)
+                        )
+                    }
+                }
+            )
+        }
+    ) { paddingValues ->
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(paddingValues)
+                .background(MaterialTheme.colorScheme.background)
+        ) {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp, vertical = 8.dp),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                IconButton(
+                    onClick = {
+                        if (hasPreviousDay) {
+                            scope.launch {
+                                pagerState.animateScrollToPage(selectedDateIndex - 1)
+                            }
+                        }
+                    },
+                    enabled = hasPreviousDay
+                ) {
+                    Icon(
+                        painter = painterResource(id = R.drawable.back),
+                        contentDescription = "Previous Day",
+                        tint = if (hasPreviousDay) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.3f),
+                        modifier = Modifier.size(20.dp)
+                    )
+                }
+
+                Column(
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    val today = LocalDate.now(ZoneId.of("Asia/Kolkata"))
+                    val relativeText = when (uiState.selectedDate) {
+                        today -> "Today"
+                        today.minusDays(1) -> "Yesterday"
+                        else -> uiState.selectedDate.format(DateTimeFormatter.ofPattern("EEEE", Locale.getDefault()))
+                    }
+
+                    Text(
+                        text = relativeText,
+                        fontFamily = manrope,
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 17.sp,
+                        color = MaterialTheme.colorScheme.onBackground
+                    )
+                    Text(
+                        text = uiState.selectedDate.format(DateTimeFormatter.ofPattern("d MMMM yyyy", Locale.getDefault())),
+                        fontFamily = manrope,
+                        fontSize = 12.sp,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+
+                IconButton(
+                    onClick = {
+                        if (hasNextDay) {
+                            scope.launch {
+                                pagerState.animateScrollToPage(selectedDateIndex + 1)
+                            }
+                        }
+                    },
+                    enabled = hasNextDay
+                ) {
+                    Icon(
+                        painter = painterResource(id = R.drawable.right_arrow),
+                        contentDescription = "Next Day",
+                        tint = if (hasNextDay) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.3f),
+                        modifier = Modifier.size(20.dp)
+                    )
+                }
+            }
+
+            if (uiState.isLoading) {
+                Box(
+                    modifier = Modifier.fillMaxSize(),
+                    contentAlignment = Alignment.Center
+                ) {
+                    ContainedLoadingIndicator()
+                }
+            } else {
+                HorizontalPager(
+                    state = pagerState,
+                    modifier = Modifier.weight(1f)
+                ) { page ->
+                    val date = uiState.dates.getOrNull(page)
+                    val dayReplay = uiState.dayReplays[date]
+
+                    if (dayReplay == null || dayReplay.stops.isEmpty()) {
+                        DayReplayEmptyState()
+                    } else {
+                        DayReplayContent(
+                            replay = dayReplay,
+                            expandedStopIds = uiState.expandedStopIds,
+                            onToggleStop = { stopId -> viewModel.toggleStopExpanded(stopId) },
+                            navigateToPlaceDetails = navigateToPlaceDetails
+                        )
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+fun DayReplayContent(
+    replay: DayReplay,
+    expandedStopIds: Set<String>,
+    onToggleStop: (String) -> Unit,
+    navigateToPlaceDetails: (String) -> Unit
+) {
+    val uiItems = remember(replay.stops) {
+        val items = mutableListOf<DayReplayUiItem>()
+        var lastSection: DayReplayTimeSection? = null
+
+        replay.stops.forEach { stop ->
+            val section = DayReplayTimeSection.fromTimestamp(stop.arrivedAt)
+            if (section != lastSection) {
+                items.add(DayReplayUiItem.SectionHeader(section))
+                lastSection = section
+            }
+            items.add(DayReplayUiItem.StopItem(stop))
+        }
+        items
+    }
+
+    LazyColumn(
+        modifier = Modifier.fillMaxSize(),
+        contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp)
+    ) {
+        item {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(vertical = 16.dp)
+                    .background(
+                        color = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.15f),
+                        shape = RoundedCornerShape(20.dp)
+                    )
+                    .padding(20.dp)
+            ) {
+                Text(
+                    text = replay.heroTitle,
+                    fontFamily = manrope,
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 24.sp,
+                    color = MaterialTheme.colorScheme.primary
+                )
+                Text(
+                    text = replay.heroSubtitle,
+                    fontFamily = manrope,
+                    fontSize = 13.sp,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.padding(top = 4.dp)
+                )
+                Spacer(modifier = Modifier.height(12.dp))
+                Text(
+                    text = replay.heroNarrative,
+                    fontFamily = manrope,
+                    fontWeight = FontWeight.Medium,
+                    fontSize = 15.sp,
+                    color = MaterialTheme.colorScheme.onSurface,
+                    lineHeight = 22.sp
+                )
+            }
+        }
+
+        items(uiItems) { item ->
+            when (item) {
+                is DayReplayUiItem.SectionHeader -> {
+                    SectionHeaderItem(section = item.section)
+                }
+                is DayReplayUiItem.StopItem -> {
+                    val stop = item.stop
+                    val stopId = "${stop.placeId}_${stop.arrivedAt}"
+                    val isExpanded = expandedStopIds.contains(stopId)
+
+                    val stopsOnly = replay.stops
+                    val isFirst = stopsOnly.firstOrNull() == stop
+                    val isLast = stopsOnly.lastOrNull() == stop
+
+                    TimelineStopItem(
+                        stop = stop,
+                        isStartOrEnd = isFirst || isLast,
+                        isLast = isLast,
+                        isExpanded = isExpanded,
+                        onToggleExpand = { onToggleStop(stopId) },
+                        navigateToPlaceDetails = navigateToPlaceDetails
+                    )
+                }
+            }
+        }
+
+        item {
+            Spacer(modifier = Modifier.height(48.dp))
+        }
+    }
+}
+
+@Composable
+fun SectionHeaderItem(section: DayReplayTimeSection) {
+    Row(
+        modifier = Modifier.padding(vertical = 12.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Text(
+            text = "${section.emoji} ${section.label}",
+            fontFamily = manrope,
+            fontWeight = FontWeight.Bold,
+            fontSize = 13.sp,
+            color = MaterialTheme.colorScheme.primary,
+            modifier = Modifier
+                .background(
+                    color = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.35f),
+                    shape = RoundedCornerShape(12.dp)
+                )
+                .padding(horizontal = 12.dp, vertical = 6.dp)
+        )
+    }
+}
+
+@Composable
+fun TimelineStopItem(
+    stop: DayReplayStop,
+    isStartOrEnd: Boolean,
+    isLast: Boolean,
+    isExpanded: Boolean,
+    onToggleExpand: () -> Unit,
+    navigateToPlaceDetails: (String) -> Unit
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(IntrinsicSize.Min)
+    ) {
+        Column(
+            horizontalAlignment = Alignment.CenterHorizontally,
+            modifier = Modifier
+                .width(32.dp)
+                .fillMaxHeight()
+        ) {
+            Spacer(modifier = Modifier.height(8.dp))
+
+            Box(
+                modifier = Modifier
+                    .size(14.dp)
+                    .clip(CircleShape)
+                    .background(
+                        if (isStartOrEnd) MaterialTheme.colorScheme.primary else Color.Transparent
+                    )
+                    .border(
+                        width = 2.dp,
+                        color = MaterialTheme.colorScheme.primary,
+                        shape = CircleShape
+                    )
+            )
+
+            if (!isLast) {
+                Spacer(modifier = Modifier.height(8.dp))
+                Box(
+                    modifier = Modifier
+                        .weight(1f)
+                        .width(2.dp)
+                        .background(MaterialTheme.colorScheme.outlineVariant)
+                )
+            } else {
+                Spacer(modifier = Modifier.height(16.dp))
+            }
+        }
+
+        Column(
+            modifier = Modifier
+                .weight(1f)
+                .padding(start = 12.dp, bottom = 20.dp)
+        ) {
+            val rotationState by animateFloatAsState(targetValue = if (isExpanded) 180f else 0f, label = "arrowRotation")
+
+            Card(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clip(RoundedCornerShape(16.dp))
+                    .clickable { onToggleExpand() }
+                    .animateContentSize(),
+                colors = CardDefaults.cardColors(
+                    containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.25f)
+                ),
+                elevation = CardDefaults.cardElevation(0.dp)
+            ) {
+                Column(
+                    modifier = Modifier.padding(16.dp)
+                ) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Column(modifier = Modifier.weight(1f)) {
+                            Text(
+                                text = stop.placeName,
+                                fontFamily = manrope,
+                                fontWeight = FontWeight.Bold,
+                                fontSize = 16.sp,
+                                color = MaterialTheme.colorScheme.onSurface
+                            )
+
+                            Spacer(modifier = Modifier.height(4.dp))
+
+                            val timeInterval = if (stop.departedAt != null) {
+                                "${formatDayTime(stop.arrivedAt)} – ${formatDayTime(stop.departedAt)}"
+                            } else {
+                                "Arrived at ${formatDayTime(stop.arrivedAt)}"
+                            }
+
+                            Text(
+                                text = timeInterval,
+                                fontFamily = manrope,
+                                fontSize = 13.sp,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
+
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            if (!isExpanded) {
+                                val durationText = if (stop.stayDurationMillis != null) {
+                                    formatDuration(stop.stayDurationMillis)
+                                } else {
+                                    "Currently here"
+                                }
+
+                                Text(
+                                    text = durationText,
+                                    fontFamily = manrope,
+                                    fontWeight = FontWeight.SemiBold,
+                                    fontSize = 12.sp,
+                                    color = if (stop.departedAt == null) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                            }
+
+                            Icon(
+                                painter = painterResource(id = R.drawable.down_arrow),
+                                contentDescription = if (isExpanded) "Collapse" else "Expand",
+                                tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                                modifier = Modifier
+                                    .size(16.dp)
+                                    .rotate(rotationState)
+                            )
+                        }
+                    }
+
+                    if (isExpanded) {
+                        Spacer(modifier = Modifier.height(16.dp))
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(1.dp)
+                                .background(MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f))
+                        )
+                        Spacer(modifier = Modifier.height(16.dp))
+
+                        Column(
+                            verticalArrangement = Arrangement.spacedBy(10.dp)
+                        ) {
+                            DetailRow(
+                                iconRes = R.drawable.gps,
+                                label = "Arrival Time",
+                                value = formatDayTime(stop.arrivedAt)
+                            )
+
+                            DetailRow(
+                                iconRes = R.drawable.timeline,
+                                label = "Departure Time",
+                                value = if (stop.departedAt != null) formatDayTime(stop.departedAt) else "Currently here"
+                            )
+
+                            DetailRow(
+                                iconRes = R.drawable.info,
+                                label = "Stay Duration",
+                                value = if (stop.stayDurationMillis != null) formatDuration(stop.stayDurationMillis) else "Current visit"
+                            )
+
+                            DetailRow(
+                                iconRes = R.drawable.ruler,
+                                label = "Awareness Radius",
+                                value = "${stop.radius.toInt()} meters"
+                            )
+
+                            stop.address?.let {
+                                DetailRow(
+                                    iconRes = R.drawable.map_pin,
+                                    label = "Address",
+                                    value = it
+                                )
+                            }
+                        }
+
+                        Spacer(modifier = Modifier.height(16.dp))
+
+                        OutlinedButton(
+                            onClick = { navigateToPlaceDetails(stop.placeId) },
+                            modifier = Modifier.fillMaxWidth(),
+                            shape = RoundedCornerShape(12.dp),
+                            border = borderStroke(),
+                            colors = ButtonDefaults.outlinedButtonColors(
+                                contentColor = MaterialTheme.colorScheme.primary
+                            )
+                        ) {
+                            Icon(
+                                painter = painterResource(id = R.drawable.map_pin_area),
+                                contentDescription = null,
+                                modifier = Modifier.size(16.dp)
+                            )
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Text(
+                                text = "Open Place Settings",
+                                fontFamily = manrope,
+                                fontWeight = FontWeight.Bold,
+                                fontSize = 13.sp
+                            )
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+fun borderStroke() = ButtonDefaults.outlinedButtonBorder.copy()
+
+@Composable
+fun DetailRow(
+    iconRes: Int,
+    label: String,
+    value: String
+) {
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        verticalAlignment = Alignment.Top,
+        horizontalArrangement = Arrangement.spacedBy(12.dp)
+    ) {
+        Icon(
+            painter = painterResource(id = iconRes),
+            contentDescription = null,
+            tint = MaterialTheme.colorScheme.primary,
+            modifier = Modifier
+                .padding(top = 2.dp)
+                .size(16.dp)
+        )
+
+        Column(modifier = Modifier.weight(1f)) {
+            Text(
+                text = label,
+                fontFamily = manrope,
+                fontSize = 11.sp,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                fontWeight = FontWeight.Medium
+            )
+            Text(
+                text = value,
+                fontFamily = manrope,
+                fontSize = 14.sp,
+                color = MaterialTheme.colorScheme.onSurface,
+                fontWeight = FontWeight.Medium
+            )
+        }
+    }
+}
+
+@Composable
+fun DayReplayEmptyState() {
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(32.dp),
+        verticalArrangement = Arrangement.Center,
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        Icon(
+            painter = painterResource(id = R.drawable.timeline),
+            contentDescription = null,
+            tint = MaterialTheme.colorScheme.outlineVariant,
+            modifier = Modifier.size(64.dp)
+        )
+
+        Spacer(modifier = Modifier.height(24.dp))
+
+        Text(
+            text = "No replay yet",
+            style = MaterialTheme.typography.titleMedium,
+            fontFamily = manrope,
+            fontWeight = FontWeight.Bold,
+            color = MaterialTheme.colorScheme.onSurface
+        )
+
+        Spacer(modifier = Modifier.height(8.dp))
+
+        Text(
+            text = "Your daily movements will appear here once GeoWav detects visits to your saved places.",
+            style = MaterialTheme.typography.bodyMedium,
+            fontFamily = manrope,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            textAlign = TextAlign.Center,
+            lineHeight = 20.sp
+        )
+    }
+}
+
+private fun formatDayTime(timestamp: Long): String {
+    val formatter = DateTimeFormatter.ofPattern("h:mm a", Locale.getDefault())
+    return Instant.ofEpochMilli(timestamp)
+        .atZone(ZoneId.of("Asia/Kolkata"))
+        .format(formatter)
+}
+
+private fun formatDuration(durationMillis: Long): String {
+    val durationMinutes = durationMillis / 60000
+    return when {
+        durationMinutes < 1 -> "Less than a minute"
+        durationMinutes < 60 -> "${durationMinutes}m"
+        else -> {
+            val hours = durationMinutes / 60
+            val minutes = durationMinutes % 60
+            if (minutes > 0) "${hours}h ${minutes}m" else "${hours}h"
+        }
+    }
+}

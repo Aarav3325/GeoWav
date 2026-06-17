@@ -26,6 +26,8 @@ import com.aarav.geowav.presentation.home.GeoWavHomeScreen
 import com.aarav.geowav.presentation.home.HomeScreenVM
 import com.aarav.geowav.presentation.insights.PersonalInsightsScreen
 import com.aarav.geowav.presentation.insights.PersonalInsightsViewModel
+import com.aarav.geowav.presentation.dayreplay.DayReplayScreen
+import com.aarav.geowav.presentation.dayreplay.DayReplayViewModel
 import com.aarav.geowav.presentation.locationsharing.LocationSharingScreen
 import com.aarav.geowav.presentation.locationsharing.LocationSharingVM
 import com.aarav.geowav.presentation.map.MapScreen
@@ -191,6 +193,11 @@ fun NavGraph(
             subscriptionVM,
             themeMode,
             onThemeChange,
+            navHostController,
+            this
+        )
+
+        AddDayReplayScreen(
             navHostController,
             this
         )
@@ -699,6 +706,9 @@ fun AddProfileScreen(
             navigateToInsights = {
                 navController.navigate(NavRoute.Insights.path)
             },
+            navigateToDayReplay = {
+                navController.navigate(NavRoute.DayReplay.path)
+            },
             onLogout = {
                 navController.navigate(NavRoute.Login.path) {
                     popUpTo(0)
@@ -753,10 +763,6 @@ fun AddPlaceDetailsScreen(
         )
     ) { backStackEntry ->
         val placeId = backStackEntry.arguments?.getString("placeId").orEmpty()
-        val parentEntry = remember(backStackEntry) {
-            navController.getBackStackEntry(NavRoute.YourPlaces.path)
-        }
-        val yourPlacesVM: YourPlacesVM = hiltViewModel(parentEntry)
 
         PlaceDetailsScreen(
             placeId = placeId,
@@ -765,8 +771,41 @@ fun AddPlaceDetailsScreen(
                 navController.popBackStack()
             },
             onEditClick = { place ->
-                yourPlacesVM.setPlaceToEdit(place)
+                val entry = try {
+                    navController.getBackStackEntry(NavRoute.YourPlaces.path)
+                } catch (e: Exception) {
+                    null
+                }
+                if (entry != null) {
+                    androidx.lifecycle.ViewModelProvider(entry)[YourPlacesVM::class.java].setPlaceToEdit(place)
+                    navController.popBackStack()
+                } else {
+                    navController.navigate(NavRoute.YourPlaces.path)
+                    try {
+                        val newEntry = navController.getBackStackEntry(NavRoute.YourPlaces.path)
+                        androidx.lifecycle.ViewModelProvider(newEntry)[YourPlacesVM::class.java].setPlaceToEdit(place)
+                    } catch (e: Exception) {
+                    }
+                }
+            }
+        )
+    }
+}
+
+fun AddDayReplayScreen(
+    navController: NavController,
+    navGraphBuilder: NavGraphBuilder
+) {
+    navGraphBuilder.composable(
+        route = NavRoute.DayReplay.path
+    ) {
+        DayReplayScreen(
+            viewModel = hiltViewModel(),
+            back = {
                 navController.popBackStack()
+            },
+            navigateToPlaceDetails = { placeId ->
+                navController.navigate(NavRoute.PlaceDetails.createRoute(placeId))
             }
         )
     }

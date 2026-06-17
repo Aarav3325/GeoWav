@@ -1,5 +1,6 @@
 package com.aarav.geowav.di
 
+import com.aarav.geowav.data.repository.DayReplayRepositoryImpl
 import com.aarav.geowav.data.repository.CircleRepositoryImpl
 import com.aarav.geowav.data.repository.EmergencySharingRepositoryImpl
 import com.aarav.geowav.data.repository.GeoActivityRepositoryImpl
@@ -11,6 +12,7 @@ import com.aarav.geowav.data.repository.PlaceRepositoryImpl
 import com.aarav.geowav.data.repository.SessionHistoryRepositoryImpl
 import com.aarav.geowav.data.repository.SubscriptionRepositoryImpl
 import com.aarav.geowav.data.repository.ViewerLocationRepositoryImpl
+import com.aarav.geowav.domain.repository.DayReplayRepository
 import com.aarav.geowav.domain.repository.CircleRepository
 import com.aarav.geowav.domain.repository.EmergencySharingRepository
 import com.aarav.geowav.domain.repository.GeoActivityRepository
@@ -34,6 +36,11 @@ abstract class RepositoryModule {
     abstract fun bindGeoActivityRepository(
         impl: GeoActivityRepositoryImpl
     ): GeoActivityRepository
+
+    @Binds
+    abstract fun bindDayReplayRepository(
+        impl: DayReplayRepositoryImpl
+    ): DayReplayRepository
 
     @Binds
     abstract fun bindPlacesRepository(
