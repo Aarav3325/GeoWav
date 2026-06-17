@@ -184,11 +184,11 @@ class DayReplayRepositoryImpl @Inject constructor(
 
         val narrative = when {
             stops.isEmpty() -> {
-                "No saved places visited."
+                "A quiet day spent away from your saved places."
             }
             else -> {
-                val uniquePlacesCount = stops.map { it.placeId }.distinct().size
-                val placesText = if (uniquePlacesCount == 1) "1 place" else "$uniquePlacesCount places"
+                val uniqueStops = stops.distinctBy { it.placeId }
+                val uniqueNames = uniqueStops.map { it.placeName }
 
                 val longestStay = stops
                     .filter { it.stayDurationMillis != null }
@@ -196,18 +196,35 @@ class DayReplayRepositoryImpl @Inject constructor(
                     .mapValues { (_, stopsForPlace) -> stopsForPlace.sumOf { it.stayDurationMillis ?: 0L } }
                     .maxByOrNull { it.value }
 
-                val placeNameForLongestStay = longestStay?.let { entry ->
+                val longestStayPlaceName = longestStay?.let { entry ->
                     stops.firstOrNull { it.placeId == entry.key }?.placeName
                 }
 
-                if (placeNameForLongestStay != null) {
-                    if (placeNameForLongestStay.equals("Home", ignoreCase = true)) {
-                        "Mostly spent around Home. Visited $placesText."
-                    } else {
-                        "Visited $placesText. Spent most of your day at $placeNameForLongestStay."
+                when {
+                    uniqueNames.size == 1 -> {
+                        val name = uniqueNames[0]
+                        if (name.equals("Home", ignoreCase = true)) {
+                            "A peaceful day spent entirely at Home."
+                        } else {
+                            "You spent the day visiting $name."
+                        }
                     }
-                } else {
-                    "Visited $placesText."
+                    uniqueNames.size == 2 -> {
+                        val first = uniqueNames[0]
+                        val second = uniqueNames[1]
+                        if (longestStayPlaceName != null) {
+                            val other = if (first.equals(longestStayPlaceName, ignoreCase = true)) second else first
+                            "You spent most of your day at $longestStayPlaceName, with a brief visit to $other."
+                        } else {
+                            "A balanced day spent between $first and $second."
+                        }
+                    }
+                    else -> {
+                        val mainPlace = longestStayPlaceName ?: uniqueNames.first()
+                        val otherPlacesCount = uniqueNames.size - 1
+                        val othersText = if (otherPlacesCount == 1) "1 other place" else "$otherPlacesCount other places"
+                        "A journey through $mainPlace and $othersText, spending the majority of your time at $mainPlace."
+                    }
                 }
             }
         }

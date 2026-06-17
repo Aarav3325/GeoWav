@@ -202,7 +202,7 @@ class DayReplayRepositoryTest {
         )
         val replays1 = repository.buildDayReplays(activities1, places)
         val replay1 = replays1.values.first()
-        assertEquals("Mostly spent around Home. Visited 1 place.", replay1.heroNarrative)
+        assertEquals("A peaceful day spent entirely at Home.", replay1.heroNarrative)
 
         val activities2 = listOf(
             FirebaseActivity(geofenceId = "place_home", transitionType = "ARRIVED", timestamp = createTimestamp(7, 0)),
@@ -214,7 +214,7 @@ class DayReplayRepositoryTest {
         )
         val replays2 = repository.buildDayReplays(activities2, places)
         val replay2 = replays2.values.first()
-        assertEquals("Visited 3 places. Spent most of your day at Office.", replay2.heroNarrative)
+        assertEquals("A journey through Office and 2 other places, spending the majority of your time at Office.", replay2.heroNarrative)
     }
 
     private fun createTimestamp(hour: Int, minute: Int): Long {

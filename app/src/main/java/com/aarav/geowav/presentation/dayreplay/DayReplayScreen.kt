@@ -152,8 +152,8 @@ fun DayReplayScreen(
                     Icon(
                         painter = painterResource(id = R.drawable.back),
                         contentDescription = "Previous Day",
-                        tint = if (hasPreviousDay) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.3f),
-                        modifier = Modifier.size(20.dp)
+                        tint = if (hasPreviousDay) MaterialTheme.colorScheme.onBackground.copy(alpha = 0.7f) else MaterialTheme.colorScheme.onBackground.copy(alpha = 0.15f),
+                        modifier = Modifier.size(18.dp)
                     )
                 }
 
@@ -170,15 +170,16 @@ fun DayReplayScreen(
                     Text(
                         text = relativeText,
                         fontFamily = manrope,
-                        fontWeight = FontWeight.Bold,
-                        fontSize = 17.sp,
+                        fontWeight = FontWeight.ExtraBold,
+                        fontSize = 18.sp,
                         color = MaterialTheme.colorScheme.onBackground
                     )
+                    Spacer(modifier = Modifier.height(2.dp))
                     Text(
                         text = uiState.selectedDate.format(DateTimeFormatter.ofPattern("d MMMM yyyy", Locale.getDefault())),
                         fontFamily = manrope,
                         fontSize = 12.sp,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                        color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f)
                     )
                 }
 
@@ -195,8 +196,8 @@ fun DayReplayScreen(
                     Icon(
                         painter = painterResource(id = R.drawable.right_arrow),
                         contentDescription = "Next Day",
-                        tint = if (hasNextDay) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.3f),
-                        modifier = Modifier.size(20.dp)
+                        tint = if (hasNextDay) MaterialTheme.colorScheme.onBackground.copy(alpha = 0.7f) else MaterialTheme.colorScheme.onBackground.copy(alpha = 0.15f),
+                        modifier = Modifier.size(18.dp)
                     )
                 }
             }
@@ -256,41 +257,29 @@ fun DayReplayContent(
 
     LazyColumn(
         modifier = Modifier.fillMaxSize(),
-        contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp)
+        contentPadding = PaddingValues(horizontal = 24.dp, vertical = 12.dp)
     ) {
         item {
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(vertical = 16.dp)
-                    .background(
-                        color = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.15f),
-                        shape = RoundedCornerShape(20.dp)
-                    )
-                    .padding(20.dp)
+                    .padding(bottom = 28.dp, top = 12.dp)
             ) {
                 Text(
                     text = replay.heroTitle,
                     fontFamily = manrope,
-                    fontWeight = FontWeight.Bold,
-                    fontSize = 24.sp,
-                    color = MaterialTheme.colorScheme.primary
+                    fontWeight = FontWeight.ExtraBold,
+                    fontSize = 32.sp,
+                    color = MaterialTheme.colorScheme.onBackground
                 )
-                Text(
-                    text = replay.heroSubtitle,
-                    fontFamily = manrope,
-                    fontSize = 13.sp,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    modifier = Modifier.padding(top = 4.dp)
-                )
-                Spacer(modifier = Modifier.height(12.dp))
+                Spacer(modifier = Modifier.height(10.dp))
                 Text(
                     text = replay.heroNarrative,
                     fontFamily = manrope,
                     fontWeight = FontWeight.Medium,
-                    fontSize = 15.sp,
-                    color = MaterialTheme.colorScheme.onSurface,
-                    lineHeight = 22.sp
+                    fontSize = 16.sp,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    lineHeight = 24.sp
                 )
             }
         }
@@ -330,21 +319,18 @@ fun DayReplayContent(
 @Composable
 fun SectionHeaderItem(section: DayReplayTimeSection) {
     Row(
-        modifier = Modifier.padding(vertical = 12.dp),
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(start = 32.dp, top = 20.dp, bottom = 12.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
         Text(
-            text = "${section.emoji} ${section.label}",
+            text = "${section.emoji} ${section.label.uppercase(Locale.getDefault())}",
             fontFamily = manrope,
             fontWeight = FontWeight.Bold,
-            fontSize = 13.sp,
-            color = MaterialTheme.colorScheme.primary,
-            modifier = Modifier
-                .background(
-                    color = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.35f),
-                    shape = RoundedCornerShape(12.dp)
-                )
-                .padding(horizontal = 12.dp, vertical = 6.dp)
+            fontSize = 11.sp,
+            letterSpacing = 1.2.sp,
+            color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f)
         )
     }
 }
@@ -358,6 +344,23 @@ fun TimelineStopItem(
     onToggleExpand: () -> Unit,
     navigateToPlaceDetails: (String) -> Unit
 ) {
+    val placeIcon = remember(stop.placeName) {
+        val name = stop.placeName.lowercase(Locale.getDefault())
+        when {
+            name.contains("home") || name.contains("house") || name.contains("apartment") || name.contains("residence") -> "🏠"
+            name.contains("work") || name.contains("office") || name.contains("job") || name.contains("studio") || name.contains("tech") -> "💼"
+            name.contains("starbucks") || name.contains("cafe") || name.contains("coffee") -> "☕"
+            name.contains("restaurant") || name.contains("food") || name.contains("eat") || name.contains("diner") || name.contains("pizza") -> "🍴"
+            name.contains("gym") || name.contains("fitness") || name.contains("sport") || name.contains("workout") -> "💪"
+            name.contains("mall") || name.contains("store") || name.contains("shop") || name.contains("market") -> "🛒"
+            name.contains("school") || name.contains("university") || name.contains("college") || name.contains("academy") || name.contains("class") -> "🏫"
+            name.contains("hospital") || name.contains("clinic") || name.contains("medical") || name.contains("doctor") -> "🏥"
+            name.contains("park") || name.contains("garden") || name.contains("forest") -> "🌳"
+            name.contains("airport") || name.contains("station") || name.contains("metro") || name.contains("bus") -> "✈️"
+            else -> "📍"
+        }
+    }
+
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -373,25 +376,31 @@ fun TimelineStopItem(
 
             Box(
                 modifier = Modifier
-                    .size(14.dp)
+                    .size(16.dp)
                     .clip(CircleShape)
-                    .background(
-                        if (isStartOrEnd) MaterialTheme.colorScheme.primary else Color.Transparent
-                    )
+                    .background(MaterialTheme.colorScheme.background)
                     .border(
                         width = 2.dp,
-                        color = MaterialTheme.colorScheme.primary,
+                        color = MaterialTheme.colorScheme.primary.copy(alpha = 0.8f),
                         shape = CircleShape
-                    )
-            )
+                    ),
+                contentAlignment = Alignment.Center
+            ) {
+                Box(
+                    modifier = Modifier
+                        .size(6.dp)
+                        .clip(CircleShape)
+                        .background(MaterialTheme.colorScheme.primary)
+                )
+            }
 
             if (!isLast) {
                 Spacer(modifier = Modifier.height(8.dp))
                 Box(
                     modifier = Modifier
                         .weight(1f)
-                        .width(2.dp)
-                        .background(MaterialTheme.colorScheme.outlineVariant)
+                        .width(3.dp)
+                        .background(MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.6f))
                 )
             } else {
                 Spacer(modifier = Modifier.height(16.dp))
@@ -401,7 +410,7 @@ fun TimelineStopItem(
         Column(
             modifier = Modifier
                 .weight(1f)
-                .padding(start = 12.dp, bottom = 20.dp)
+                .padding(start = 16.dp, bottom = 24.dp)
         ) {
             val rotationState by animateFloatAsState(targetValue = if (isExpanded) 180f else 0f, label = "arrowRotation")
 
@@ -412,12 +421,12 @@ fun TimelineStopItem(
                     .clickable { onToggleExpand() }
                     .animateContentSize(),
                 colors = CardDefaults.cardColors(
-                    containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.25f)
+                    containerColor = if (isExpanded) MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.15f) else Color.Transparent
                 ),
                 elevation = CardDefaults.cardElevation(0.dp)
             ) {
                 Column(
-                    modifier = Modifier.padding(16.dp)
+                    modifier = Modifier.padding(vertical = 8.dp, horizontal = 12.dp)
                 ) {
                     Row(
                         modifier = Modifier.fillMaxWidth(),
@@ -425,13 +434,22 @@ fun TimelineStopItem(
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         Column(modifier = Modifier.weight(1f)) {
-                            Text(
-                                text = stop.placeName,
-                                fontFamily = manrope,
-                                fontWeight = FontWeight.Bold,
-                                fontSize = 16.sp,
-                                color = MaterialTheme.colorScheme.onSurface
-                            )
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(6.dp)
+                            ) {
+                                Text(
+                                    text = placeIcon,
+                                    fontSize = 18.sp
+                                )
+                                Text(
+                                    text = stop.placeName,
+                                    fontFamily = manrope,
+                                    fontWeight = FontWeight.Bold,
+                                    fontSize = 17.sp,
+                                    color = MaterialTheme.colorScheme.onSurface
+                                )
+                            }
 
                             Spacer(modifier = Modifier.height(4.dp))
 
@@ -463,16 +481,22 @@ fun TimelineStopItem(
                                 Text(
                                     text = durationText,
                                     fontFamily = manrope,
-                                    fontWeight = FontWeight.SemiBold,
+                                    fontWeight = FontWeight.Bold,
                                     fontSize = 12.sp,
-                                    color = if (stop.departedAt == null) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant
+                                    color = if (stop.departedAt == null) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.8f),
+                                    modifier = Modifier
+                                        .background(
+                                            color = (if (stop.departedAt == null) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surfaceVariant).copy(alpha = 0.35f),
+                                            shape = RoundedCornerShape(8.dp)
+                                        )
+                                        .padding(horizontal = 8.dp, vertical = 4.dp)
                                 )
                             }
 
                             Icon(
                                 painter = painterResource(id = R.drawable.down_arrow),
                                 contentDescription = if (isExpanded) "Collapse" else "Expand",
-                                tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                                tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f),
                                 modifier = Modifier
                                     .size(16.dp)
                                     .rotate(rotationState)
@@ -486,7 +510,7 @@ fun TimelineStopItem(
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .height(1.dp)
-                                .background(MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f))
+                                .background(MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.3f))
                         )
                         Spacer(modifier = Modifier.height(16.dp))
 
@@ -495,32 +519,32 @@ fun TimelineStopItem(
                         ) {
                             DetailRow(
                                 iconRes = R.drawable.gps,
-                                label = "Arrival Time",
+                                label = "Arrived",
                                 value = formatDayTime(stop.arrivedAt)
                             )
 
                             DetailRow(
                                 iconRes = R.drawable.timeline,
-                                label = "Departure Time",
+                                label = "Left",
                                 value = if (stop.departedAt != null) formatDayTime(stop.departedAt) else "Currently here"
                             )
 
                             DetailRow(
                                 iconRes = R.drawable.info,
-                                label = "Stay Duration",
+                                label = "Time Spent",
                                 value = if (stop.stayDurationMillis != null) formatDuration(stop.stayDurationMillis) else "Current visit"
                             )
 
                             DetailRow(
                                 iconRes = R.drawable.ruler,
-                                label = "Awareness Radius",
+                                label = "Trigger Radius",
                                 value = "${stop.radius.toInt()} meters"
                             )
 
                             stop.address?.let {
                                 DetailRow(
                                     iconRes = R.drawable.map_pin,
-                                    label = "Address",
+                                    label = "Location",
                                     value = it
                                 )
                             }
@@ -568,16 +592,14 @@ fun DetailRow(
 ) {
     Row(
         modifier = Modifier.fillMaxWidth(),
-        verticalAlignment = Alignment.Top,
+        verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(12.dp)
     ) {
         Icon(
             painter = painterResource(id = iconRes),
             contentDescription = null,
             tint = MaterialTheme.colorScheme.primary,
-            modifier = Modifier
-                .padding(top = 2.dp)
-                .size(16.dp)
+            modifier = Modifier.size(16.dp)
         )
 
         Column(modifier = Modifier.weight(1f)) {
@@ -604,36 +626,47 @@ fun DayReplayEmptyState() {
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .padding(32.dp),
+            .padding(horizontal = 40.dp, vertical = 24.dp),
         verticalArrangement = Arrangement.Center,
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        Icon(
-            painter = painterResource(id = R.drawable.timeline),
-            contentDescription = null,
-            tint = MaterialTheme.colorScheme.outlineVariant,
-            modifier = Modifier.size(64.dp)
-        )
+        Box(
+            modifier = Modifier
+                .size(120.dp)
+                .background(
+                    color = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.15f),
+                    shape = CircleShape
+                ),
+            contentAlignment = Alignment.Center
+        ) {
+            Icon(
+                painter = painterResource(id = R.drawable.timeline),
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.primary.copy(alpha = 0.6f),
+                modifier = Modifier.size(48.dp)
+            )
+        }
 
-        Spacer(modifier = Modifier.height(24.dp))
+        Spacer(modifier = Modifier.height(32.dp))
 
         Text(
             text = "No replay yet",
-            style = MaterialTheme.typography.titleMedium,
+            style = MaterialTheme.typography.titleLarge,
             fontFamily = manrope,
             fontWeight = FontWeight.Bold,
-            color = MaterialTheme.colorScheme.onSurface
+            color = MaterialTheme.colorScheme.onSurface,
+            letterSpacing = (-0.5).sp
         )
 
-        Spacer(modifier = Modifier.height(8.dp))
+        Spacer(modifier = Modifier.height(12.dp))
 
         Text(
             text = "Your daily movements will appear here once GeoWav detects visits to your saved places.",
             style = MaterialTheme.typography.bodyMedium,
             fontFamily = manrope,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.8f),
             textAlign = TextAlign.Center,
-            lineHeight = 20.sp
+            lineHeight = 22.sp
         )
     }
 }
