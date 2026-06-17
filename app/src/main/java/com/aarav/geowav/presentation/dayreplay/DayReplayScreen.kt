@@ -534,7 +534,6 @@ fun TimelineStopItem(
                             verticalAlignment = Alignment.CenterVertically,
                             horizontalArrangement = Arrangement.spacedBy(8.dp)
                         ) {
-                            if (!isExpanded) {
                                 val durationText = if (stop.stayDurationMillis != null) {
                                     "${formatDuration(stop.stayDurationMillis)}"
                                 } else {
@@ -554,7 +553,6 @@ fun TimelineStopItem(
                                         )
                                         .padding(horizontal = 8.dp, vertical = 4.dp)
                                 )
-                            }
 
                             Icon(
                                 painter = painterResource(id = R.drawable.down_arrow),
@@ -591,19 +589,7 @@ fun TimelineStopItem(
                                 label = "Left",
                                 value = if (stop.departedAt != null) formatDayTime(stop.departedAt) else "Currently here"
                             )
-
-                            DetailRow(
-                                iconRes = R.drawable.info,
-                                label = "Time Spent",
-                                value = if (stop.stayDurationMillis != null) formatDuration(stop.stayDurationMillis) else "Current visit"
-                            )
-
-                            DetailRow(
-                                iconRes = R.drawable.ruler,
-                                label = "Trigger Radius",
-                                value = "${stop.radius.toInt()} meters"
-                            )
-
+                            
                             stop.address?.let {
                                 DetailRow(
                                     iconRes = R.drawable.map_pin,
