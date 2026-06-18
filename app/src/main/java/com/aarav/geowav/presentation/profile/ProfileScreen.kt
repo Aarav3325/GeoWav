@@ -67,14 +67,16 @@ import androidx.lifecycle.compose.LocalLifecycleOwner
 import com.aarav.geowav.R
 import com.aarav.geowav.data.model.User
 import com.aarav.geowav.presentation.circle.ConnectionUsageCard
+import androidx.browser.customtabs.CustomTabsIntent
+import androidx.compose.foundation.layout.width
 import com.aarav.geowav.presentation.components.AboutDialog
 import com.aarav.geowav.presentation.components.ProfileCard
-import com.aarav.geowav.presentation.components.TermsAndConditionsDialog
 import com.aarav.geowav.presentation.locationsharing.itemShape
 import com.aarav.geowav.presentation.paywall.CurrentPlanCard
 import com.aarav.geowav.presentation.subscription.SubscriptionViewModel
 import com.aarav.geowav.presentation.theme.manrope
 import com.aarav.geowav.presentation.yourplace.PlacesUsageCard
+import androidx.core.net.toUri
 
 
 enum class ThemeMode { SYSTEM, LIGHT, DARK }
@@ -108,9 +110,7 @@ fun ProfileScreen(
         subscriptionViewModel.fetchSubscriptionStatus()
     }
 
-    var tc by remember {
-        mutableStateOf(false)
-    }
+
     var showPermissionEducation by remember {
         mutableStateOf(false)
     }
@@ -140,12 +140,7 @@ fun ProfileScreen(
         }
     }
 
-    TermsAndConditionsDialog(
-        showDialog = tc,
-        onAcceptClick = {
-            tc = false
-        }
-    )
+
 
 
 
@@ -325,11 +320,22 @@ fun ProfileScreen(
                         )
 
                         SettingItemNew(
-                            title = "Terms & Privacy Policy",
+                            title = "Privacy Policy",
+                            subtitle = "Learn how GeoWav protects your data",
                             index = 2,
                             count = 3,
+                            trailingIcon = {
+                                Icon(
+                                    painter = painterResource(R.drawable.redirect),
+                                    contentDescription = "Open in browser",
+                                    tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f),
+                                    modifier = Modifier.size(24.dp)
+                                )
+                            },
                             onClick = {
-                                tc = true
+                                val url = "https://aarav3325.github.io/geowav-privacy-policy/"
+                                val customTabsIntent = CustomTabsIntent.Builder().build()
+                                customTabsIntent.launchUrl(context, url.toUri())
                             }
                         )
                     }
@@ -738,6 +744,7 @@ fun SettingItemNew(
     index: Int,
     count: Int,
     titleColor: Color = MaterialTheme.colorScheme.onSurface,
+    trailingIcon: (@Composable () -> Unit)? = null,
     onClick: (() -> Unit)? = null
 ) {
     val shape = itemShape(index, count)
@@ -747,16 +754,16 @@ fun SettingItemNew(
             .padding(vertical = 1.5.dp)
             .fillMaxWidth()
             .clip(shape)
-            .background(MaterialTheme.colorScheme.surfaceContainer),
-        verticalAlignment = Alignment.CenterVertically
+            .background(MaterialTheme.colorScheme.surfaceContainer)
+            .then(
+                if (onClick != null && enabled) Modifier.clickable { onClick() } else Modifier
+            )
+            .padding(vertical = 16.dp, horizontal = 16.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.SpaceBetween
     ) {
         Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .then(
-                    if (onClick != null && enabled) Modifier.clickable { onClick() } else Modifier
-                )
-                .padding(vertical = 16.dp, horizontal = 16.dp)
+            modifier = Modifier.weight(1f)
         ) {
             Text(
                 text = title,
@@ -774,6 +781,10 @@ fun SettingItemNew(
                     modifier = Modifier.padding(top = 4.dp)
                 )
             }
+        }
+        if (trailingIcon != null) {
+            Spacer(modifier = Modifier.width(8.dp))
+            trailingIcon()
         }
     }
 }
