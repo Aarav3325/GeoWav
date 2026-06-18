@@ -2,8 +2,8 @@ package com.aarav.geowav.presentation.paywall
 
 import android.app.Activity
 import android.content.Intent
-import android.icu.util.LocaleData
 import android.util.Log
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -11,6 +11,7 @@ import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
@@ -80,6 +81,7 @@ import com.aarav.geowav.presentation.subscription.SubscriptionViewModel
 import com.aarav.geowav.presentation.theme.manrope
 import com.aarav.geowav.presentation.theme.onSecondaryDark
 import com.aarav.geowav.presentation.theme.secondaryContainerDark
+import com.aarav.geowav.presentation.theme.GeoWavThemeExtras
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -96,8 +98,8 @@ data class PlanColors(
 
 @Composable
 fun freePlanColors() = PlanColors(
-    bg = MaterialTheme.colorScheme.surfaceContainer,
-    border = MaterialTheme.colorScheme.outlineVariant,
+    bg = MaterialTheme.colorScheme.surfaceContainerLow,
+    border = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f),
     text = MaterialTheme.colorScheme.onSurfaceVariant,
     buttonBg = MaterialTheme.colorScheme.surfaceContainerHigh,
     buttonTextColor = MaterialTheme.colorScheme.onSurfaceVariant,
@@ -106,12 +108,12 @@ fun freePlanColors() = PlanColors(
 
 @Composable
 fun premiumPlanColors() = PlanColors(
-    bg = MaterialTheme.colorScheme.onPrimary,
-    border = MaterialTheme.colorScheme.primaryContainer,
-    text = MaterialTheme.colorScheme.primary,
-    buttonBg = MaterialTheme.colorScheme.primary,
-    buttonTextColor = MaterialTheme.colorScheme.onPrimary,
-    checkTint = MaterialTheme.colorScheme.primary,
+    bg = GeoWavThemeExtras.colors.periwinkleTintedSurface,
+    border = GeoWavThemeExtras.colors.periwinkle.copy(alpha = 0.5f),
+    text = GeoWavThemeExtras.colors.periwinkle,
+    buttonBg = GeoWavThemeExtras.colors.periwinkle,
+    buttonTextColor = GeoWavThemeExtras.colors.periwinkleTintedSurface,
+    checkTint = GeoWavThemeExtras.colors.periwinkle,
 )
 
 @Composable
@@ -237,43 +239,27 @@ fun PaywallScreen(
                 title = {
                     Text(
                         text = "Upgrade your plan",
-                        style = MaterialTheme.typography.titleMedium,
+                        style = MaterialTheme.typography.titleLarge,
                         fontWeight = FontWeight.Bold,
                         fontFamily = manrope,
-                        lineHeight = 20.sp
+                        color = MaterialTheme.colorScheme.onSurface,
+                        lineHeight = 24.sp
                     )
                 },
                 scrollBehavior = TopAppBarDefaults.pinnedScrollBehavior(),
                 colors = TopAppBarDefaults.topAppBarColors(
-                    // containerColor = Color(0xFF0F172A)
-                    containerColor = MaterialTheme.colorScheme.surface
+                    containerColor = Color.Transparent,
+                    scrolledContainerColor = Color.Transparent
                 ),
                 navigationIcon = {
                     IconButton(onClick = back) {
                         Icon(
                             painter = painterResource(R.drawable.back),
                             contentDescription = "back",
-                            modifier = Modifier.size(IconButtonDefaults.smallIconSize)
+                            modifier = Modifier.size(IconButtonDefaults.smallIconSize),
+                            tint = MaterialTheme.colorScheme.onSurface
                         )
                     }
-                },
-                actions = {
-//                    Surface(
-//                        shape = CircleShape,
-//                        color = MaterialTheme.colorScheme.primary,
-//                        modifier = Modifier
-//                            .padding(end = 8.dp)
-//                            .size(42.dp)
-//                    ) {
-//                        Icon(
-//                            painter = painterResource(R.drawable.credit_card),
-//                            contentDescription = "card",
-//                            tint = MaterialTheme.colorScheme.onPrimary,
-//                            modifier = Modifier
-//                                .size(24.dp)
-//                                .padding(8.dp)
-//                        )
-//                    }
                 }
             )
         },
@@ -287,7 +273,7 @@ fun PaywallScreen(
             modifier = Modifier
                 .padding(it)
                 .fillMaxSize()
-                .background(MaterialTheme.colorScheme.surface)
+                .background(MaterialTheme.colorScheme.background)
         ) {
             Box(
                 modifier = Modifier
@@ -297,7 +283,7 @@ fun PaywallScreen(
                     .background(
                         brush = Brush.verticalGradient(
                             colors = listOf(
-                                MaterialTheme.colorScheme.primary.copy(alpha = 0.12f),
+                                MaterialTheme.colorScheme.primary.copy(alpha = 0.08f),
                                 Color.Transparent
                             )
                         )
@@ -307,17 +293,17 @@ fun PaywallScreen(
                 modifier = Modifier
                     .fillMaxSize()
                     .verticalScroll(rememberScrollState())
-                    .padding(horizontal = 12.dp)
-                    .padding(top = 12.dp, bottom = if (availablePlans.isEmpty()) 36.dp else 104.dp)
+                    .padding(horizontal = 16.dp)
+                    .padding(top = 16.dp, bottom = if (availablePlans.isEmpty()) 36.dp else 104.dp)
             ) {
 
                 PaywallHeader()
 
-                Spacer(Modifier.height(16.dp))
+                Spacer(Modifier.height(8.dp))
 
                 CurrentPlanCard(subscriptionState)
 
-                Spacer(Modifier.height(16.dp))
+                Spacer(Modifier.height(20.dp))
 
                 if (availablePlans.contains(UserPlan.PREMIUM)) {
                     PlanCard(
@@ -339,7 +325,7 @@ fun PaywallScreen(
                         onClick = onPremiumClick
                     )
 
-                    Spacer(Modifier.height(12.dp))
+                    Spacer(Modifier.height(16.dp))
                 }
 
                 if (availablePlans.contains(UserPlan.PRO)) {
@@ -365,7 +351,7 @@ fun PaywallScreen(
                 }
 
                 if (availablePlans.isEmpty()) {
-                    Spacer(Modifier.height(12.dp))
+                    Spacer(Modifier.height(16.dp))
 
                     ProFeaturesCard()
                 }
@@ -380,11 +366,11 @@ fun PaywallScreen(
 //                    }
 //                }
 
-                Spacer(Modifier.height(24.dp))
+                Spacer(Modifier.height(28.dp))
 
                 ComparisonTable()
 
-                Spacer(Modifier.height(8.dp))
+                Spacer(Modifier.height(12.dp))
 
                 Text(
                     text = "Restore Purchases",
@@ -436,56 +422,55 @@ fun PaywallScreen(
 
 @Composable
 fun ProFeaturesCard() {
-
-    val colors = proPlanColors()
-
     val plan = getPlanContent(UserPlan.PRO)
+    val colors = proPlanColors()
 
     Card(
         modifier = Modifier
             .fillMaxWidth()
-            .border(1.dp, colors.border, RoundedCornerShape(18.dp)),
-        shape = RoundedCornerShape(18.dp),
+            .border(
+                width = 1.5.dp,
+                color = colors.border,
+                shape = RoundedCornerShape(20.dp)
+            ),
+        shape = RoundedCornerShape(20.dp),
         colors = CardDefaults.cardColors(containerColor = colors.bg),
         elevation = CardDefaults.cardElevation(0.dp)
     ) {
-
         Column(
-            modifier = Modifier.padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(14.dp)
+            modifier = Modifier.padding(20.dp),
+            verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-
             Row(
                 verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(10.dp)
+                horizontalArrangement = Arrangement.spacedBy(12.dp)
             ) {
-
                 Box(
                     modifier = Modifier
-                        .size(36.dp)
+                        .size(40.dp)
                         .clip(CircleShape)
-                        .background(colors.text.copy(alpha = 0.12f)),
+                        .background(colors.checkTint.copy(alpha = 0.1f)),
                     contentAlignment = Alignment.Center
                 ) {
                     Icon(
-                        painter = painterResource(R.drawable.check),
+                        painter = painterResource(R.drawable.geowav_pro_badge),
                         contentDescription = null,
-                        tint = colors.text,
-                        modifier = Modifier.size(18.dp)
+                        tint = Color.Unspecified,
+                        modifier = Modifier.matchParentSize()
                     )
                 }
 
                 Column {
                     Text(
-                        text = "Pro unlocked",
-                        fontWeight = FontWeight.SemiBold,
-                        fontSize = 15.sp,
+                        text = "GeoWav Pro Active",
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 16.sp,
                         fontFamily = manrope,
                         color = colors.text
                     )
 
                     Text(
-                        text = "You now have full access",
+                        text = "You now have full access to all features",
                         fontSize = 12.sp,
                         fontFamily = manrope,
                         color = colors.text.copy(alpha = 0.7f)
@@ -494,54 +479,44 @@ fun ProFeaturesCard() {
             }
 
             HorizontalDivider(
-                color = colors.border.copy(alpha = 0.8f),
-                thickness = 0.8.dp
+                color = colors.border.copy(alpha = 0.1f),
+                thickness = 1.dp
             )
 
             Column(
                 verticalArrangement = Arrangement.spacedBy(10.dp)
             ) {
-
                 plan.features.forEach {
-                    ProFeatureItem(it, colors)
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(10.dp)
+                    ) {
+                        Box(
+                            modifier = Modifier
+                                .size(18.dp)
+                                .clip(CircleShape)
+                                .background(colors.checkTint.copy(alpha = 0.1f)),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Icon(
+                                painter = painterResource(R.drawable.check),
+                                contentDescription = null,
+                                tint = colors.checkTint,
+                                modifier = Modifier.size(10.dp)
+                            )
+                        }
+
+                        Text(
+                            text = it,
+                            fontSize = 14.sp,
+                            fontWeight = FontWeight.SemiBold,
+                            fontFamily = manrope,
+                            color = colors.text.copy(alpha = 0.9f)
+                        )
+                    }
                 }
             }
         }
-    }
-}
-
-@Composable
-fun ProFeatureItem(
-    text: String,
-    colors: PlanColors
-) {
-    Row(
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(10.dp)
-    ) {
-
-        Box(
-            modifier = Modifier
-                .size(20.dp)
-                .clip(RoundedCornerShape(50))
-                .background(colors.checkTint.copy(alpha = 0.15f)),
-            contentAlignment = Alignment.Center
-        ) {
-            Icon(
-                painter = painterResource(R.drawable.check),
-                contentDescription = null,
-                tint = colors.checkTint,
-                modifier = Modifier.size(12.dp)
-            )
-        }
-
-        Text(
-            text = text,
-            fontSize = 14.sp,
-            fontWeight = FontWeight.Medium,
-            fontFamily = manrope,
-            color = colors.text.copy(alpha = 0.9f)
-        )
     }
 }
 
@@ -563,20 +538,7 @@ fun CurrentPlanCard(
         UserPlan.PRO -> "GeoWav Pro"
     }
 
-    val colors = when (plan) {
-        UserPlan.FREE -> freePlanColors()
-        UserPlan.PREMIUM -> premiumPlanColors()
-        UserPlan.PRO -> proPlanColors()
-    }
-
     val status = subscription?.let { getSubscriptionStatus(it) }
-
-    val formattedPurchaseDate = remember(subscription?.purchaseTime) {
-        subscription?.purchaseTime?.let {
-            SimpleDateFormat("dd MMM, hh:mm a", Locale.getDefault())
-                .format(Date(it))
-        } ?: ""
-    }
 
     val formattedExpiryDate = remember(subscription?.expiryTime) {
         subscription?.expiryTime?.let {
@@ -602,112 +564,123 @@ fun CurrentPlanCard(
     Card(
         modifier = modifier
             .fillMaxWidth()
-            .border(1.dp, colors.border, RoundedCornerShape(16.dp)),
+            .border(
+                width = 1.dp,
+                color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.35f),
+                shape = RoundedCornerShape(16.dp)
+            ),
         shape = RoundedCornerShape(16.dp),
-        colors = CardDefaults.cardColors(containerColor = colors.bg),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surfaceContainerLow
+        ),
         elevation = CardDefaults.cardElevation(0.dp)
     ) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(12.dp),
+                .padding(16.dp),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
 
-            Column {
+            Column(modifier = Modifier.weight(1f)) {
                 Text(
-                    text = "Current Plan",
-                    color = MaterialTheme.colorScheme.outline,
-                    fontSize = 12.sp,
-                    fontWeight = FontWeight.Medium,
+                    text = "CURRENT PLAN",
+                    color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f),
+                    fontSize = 10.sp,
+                    fontWeight = FontWeight.Bold,
                     fontFamily = manrope,
-                    letterSpacing = 0.8.sp
+                    letterSpacing = 1.5.sp
                 )
+
+                Spacer(Modifier.height(6.dp))
+
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    Text(
+                        text = planText,
+                        color = MaterialTheme.colorScheme.onSurface,
+                        fontSize = 18.sp,
+                        fontWeight = FontWeight.Bold,
+                        fontFamily = manrope,
+                    )
+
+                    if (plan != UserPlan.FREE) {
+                        val label = when {
+                            status?.isExpired == true -> "Expired"
+                            status?.isCancelled == true -> "Ending"
+                            status?.active == true -> "Active"
+                            else -> "Free"
+                        }
+
+                        val badgeColor = when {
+                            status?.isExpired == true -> MaterialTheme.colorScheme.error
+                            status?.isCancelled == true -> MaterialTheme.colorScheme.error
+                            else -> MaterialTheme.colorScheme.primary
+                        }
+
+                        Surface(
+                            shape = RoundedCornerShape(6.dp),
+                            color = badgeColor.copy(alpha = 0.08f)
+                        ) {
+                            Text(
+                                text = label.uppercase(Locale.getDefault()),
+                                color = badgeColor,
+                                fontSize = 9.sp,
+                                fontWeight = FontWeight.Bold,
+                                fontFamily = manrope,
+                                modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp),
+                                letterSpacing = 0.5.sp
+                            )
+                        }
+                    }
+                }
 
                 Spacer(Modifier.height(4.dp))
-
-                Text(
-                    text = planText,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    fontSize = 16.sp,
-                    fontWeight = FontWeight.SemiBold,
-                    fontFamily = manrope,
-                )
-
-                Spacer(Modifier.height(2.dp))
 
                 Text(
                     text = subtitle,
                     color = if (status?.isExpired == true)
                         MaterialTheme.colorScheme.error
                     else
-                        MaterialTheme.colorScheme.outline,
-                    fontSize = 12.sp,
+                        MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f),
+                    fontSize = 13.sp,
                     fontFamily = manrope,
+                    fontWeight = FontWeight.Medium
                 )
 
-                Spacer(Modifier.height(20.dp))
+                Spacer(Modifier.height(16.dp))
 
                 val context = LocalContext.current
 
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.End
+                    modifier = Modifier.clickable(
+                        interactionSource = remember { MutableInteractionSource() },
+                        indication = null
+                    ) {
+                        val intent = Intent(Intent.ACTION_VIEW).apply {
+                            data = "https://play.google.com/store/account/subscriptions".toUri()
+                        }
+                        context.startActivity(intent)
+                    }
                 ) {
                     Text(
                         text = "Manage Subscription",
                         fontFamily = manrope,
-                        color = colors.text,
-                        fontSize = 14.sp,
-                        fontWeight = FontWeight.SemiBold,
-                        modifier = Modifier.clickable(
-                            interactionSource = remember { MutableInteractionSource() },
-                            indication = null
-                        ) {
-                            val intent = Intent(Intent.ACTION_VIEW).apply {
-                                data = "https://play.google.com/store/account/subscriptions".toUri()
-                            }
-                            context.startActivity(intent)
-                        }
+                        color = MaterialTheme.colorScheme.primary,
+                        fontSize = 13.sp,
+                        fontWeight = FontWeight.Bold,
                     )
-                }
-            }
-
-            if (plan != UserPlan.FREE) {
-
-                val label = when {
-                    status?.isExpired == true -> "Expired"
-                    status?.isCancelled == true -> "Ending"
-                    status?.active == true -> "Active"
-                    else -> "Free"
-                }
-
-                Surface(
-                    shape = RoundedCornerShape(25),
-                    color = colors.text
-                ) {
-                    Row(
-                        modifier = Modifier.padding(horizontal = 10.dp, vertical = 5.dp),
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(6.dp)
-                    ) {
-
-                        Box(
-                            modifier = Modifier
-                                .size(6.dp)
-                                .clip(CircleShape)
-                                .background(colors.buttonTextColor)
-                        )
-
-                        Text(
-                            text = label,
-                            color = colors.buttonTextColor,
-                            fontSize = 12.sp,
-                            fontWeight = FontWeight.Medium,
-                            fontFamily = manrope,
-                        )
-                    }
+                    Spacer(Modifier.width(4.dp))
+                    Icon(
+                        painter = painterResource(R.drawable.right_arrow),
+                        contentDescription = null,
+                        tint = MaterialTheme.colorScheme.primary,
+                        modifier = Modifier.size(12.dp)
+                    )
                 }
             }
         }
@@ -716,52 +689,52 @@ fun CurrentPlanCard(
 
 @Composable
 fun PaywallHeader() {
-    Row(
+    Column(
         modifier = Modifier
-            .fillMaxWidth(),
-        verticalAlignment = Alignment.Top
+            .fillMaxWidth()
+            .padding(vertical = 28.dp, horizontal = 16.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Center
     ) {
-        Column(
-            modifier = Modifier.weight(1f)
-        ) {
-            Text(
-                text = "Unlock smarter\ntracking",
-                color = MaterialTheme.colorScheme.onSurface,
-                fontSize = 24.sp,
-                fontWeight = FontWeight.SemiBold,
-                fontFamily = manrope,
-                lineHeight = 32.sp
-            )
-
-            Spacer(Modifier.height(8.dp))
-
-            Text(
-                text = "Replay journeys, track longer, share with your people.",
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                style = MaterialTheme.typography.bodySmall,
-                fontFamily = manrope,
-                lineHeight = 20.sp
-            )
-        }
-
-        Spacer(Modifier.width(12.dp))
-
-        Surface(
-            shape = CircleShape,
-            color = MaterialTheme.colorScheme.primary,
+        Box(
             modifier = Modifier
-                .size(42.dp)
+                .size(48.dp)
+                .clip(CircleShape)
+                .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.08f)),
+            contentAlignment = Alignment.Center
         ) {
             Icon(
                 painter = painterResource(R.drawable.credit_card),
-                contentDescription = "card",
-                tint = MaterialTheme.colorScheme.onPrimary,
-                modifier = Modifier
-                    .size(24.dp)
-                    .padding(8.dp)
+                contentDescription = "Premium Icon",
+                tint = MaterialTheme.colorScheme.primary,
+                modifier = Modifier.size(22.dp)
             )
         }
 
+        Spacer(Modifier.height(16.dp))
+
+        Text(
+            text = "Unlock smarter tracking",
+            color = MaterialTheme.colorScheme.onSurface,
+            fontSize = 28.sp,
+            fontWeight = FontWeight.ExtraBold,
+            fontFamily = manrope,
+            textAlign = TextAlign.Center,
+            lineHeight = 34.sp
+        )
+
+        Spacer(Modifier.height(8.dp))
+
+        Text(
+            text = "Replay journeys, track longer, and share with your inner circle.",
+            color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.8f),
+            fontSize = 14.sp,
+            fontFamily = manrope,
+            fontWeight = FontWeight.Medium,
+            textAlign = TextAlign.Center,
+            lineHeight = 22.sp,
+            modifier = Modifier.fillMaxWidth(0.9f)
+        )
     }
 }
 
@@ -780,68 +753,98 @@ fun PlanCard(
     badge: Int,
     onClick: () -> Unit
 ) {
+    val isPro = title.contains("Pro", ignoreCase = true)
+
+    val cardBgColor = colors.bg
+
+    val cardBorderColor = if (isFeatured || isPro) {
+        colors.border
+    } else {
+        MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.35f)
+    }
+
+    val titleColor = colors.text
+    val priceColor = colors.text
+    val featureTextColor = colors.text.copy(alpha = 0.85f)
+    val checkIconColor = colors.checkTint
+    val checkBgColor = colors.checkTint.copy(alpha = 0.08f)
+
     Card(
         modifier = Modifier
             .fillMaxWidth()
             .border(
-                width = if (isFeatured) 2.dp else 1.dp,
-                color = colors.border,
+                width = if (isPro || isFeatured) 1.5.dp else 1.dp,
+                color = cardBorderColor,
                 shape = RoundedCornerShape(20.dp)
             ),
-        shape = RoundedCornerShape(16.dp),
-        colors = CardDefaults.cardColors(containerColor = colors.bg),
+        shape = RoundedCornerShape(20.dp),
+        colors = CardDefaults.cardColors(containerColor = cardBgColor),
         elevation = CardDefaults.cardElevation(0.dp)
     ) {
         Column(
-            modifier = Modifier
-                .padding(16.dp)
+            modifier = Modifier.padding(20.dp)
         ) {
-
-
-//            if (isFeatured) {
-//                Surface(
-//                    shape = RoundedCornerShape(6.dp),
-//                    color = MaterialTheme.colorScheme.primaryContainer
-//                ) {
-//                    Row(
-//                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
-//                        verticalAlignment = Alignment.CenterVertically,
-//                        horizontalArrangement = Arrangement.spacedBy(4.dp)
-//                    ) {
-//                        Icon(
-//                            painter = painterResource(R.drawable.heart_fill),
-//                            contentDescription = null,
-//                            tint = MaterialTheme.colorScheme.onPrimaryContainer,
-//                            modifier = Modifier.size(11.dp)
-//                        )
-//                        Text(
-//                            text = "Most popular",
-//                            color = MaterialTheme.colorScheme.onPrimaryContainer,
-//                            fontSize = 12.sp,
-//                            fontWeight = FontWeight.SemiBold,
-//                            fontFamily = manrope,
-//                        )
-//                    }
-//                }
-//                Spacer(Modifier.height(12.dp))
-//            }
+            if (isPro) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Surface(
+                        shape = RoundedCornerShape(50),
+                        color = colors.checkTint.copy(alpha = 0.08f),
+                        border = BorderStroke(1.dp, colors.border)
+                    ) {
+                        Text(
+                            text = "MOST VALUE",
+                            color = colors.text,
+                            fontSize = 9.sp,
+                            fontWeight = FontWeight.Bold,
+                            fontFamily = manrope,
+                            modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp),
+                            letterSpacing = 1.sp
+                        )
+                    }
+                }
+                Spacer(Modifier.height(12.dp))
+            } else if (isFeatured) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Surface(
+                        shape = RoundedCornerShape(50),
+                        color = colors.checkTint.copy(alpha = 0.08f)
+                    ) {
+                        Text(
+                            text = "POPULAR",
+                            color = colors.text,
+                            fontSize = 9.sp,
+                            fontWeight = FontWeight.Bold,
+                            fontFamily = manrope,
+                            modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp),
+                            letterSpacing = 1.sp
+                        )
+                    }
+                }
+                Spacer(Modifier.height(12.dp))
+            }
 
             Row(
                 verticalAlignment = Alignment.Top,
-                modifier = Modifier
-                    .padding(top = 6.dp, bottom = 0.dp)
+                modifier = Modifier.fillMaxWidth()
             ) {
-
-                Column(
-                    modifier = Modifier.weight(1f)
-                ) {
+                Column(modifier = Modifier.weight(1f)) {
                     Text(
                         text = title,
-                        color = colors.text,
-                        fontSize = 17.sp,
-                        fontWeight = FontWeight.SemiBold,
+                        color = titleColor,
+                        fontSize = 20.sp,
+                        fontWeight = FontWeight.ExtraBold,
                         fontFamily = manrope,
                     )
+
+                    Spacer(Modifier.height(6.dp))
 
                     Row(
                         verticalAlignment = Alignment.Bottom
@@ -849,11 +852,7 @@ fun PlanCard(
                         Text(
                             text = if (offerPrice != null) {
                                 buildAnnotatedString {
-                                    withStyle(
-                                        SpanStyle(
-                                            textDecoration = TextDecoration.LineThrough
-                                        )
-                                    ) {
+                                    withStyle(SpanStyle(textDecoration = TextDecoration.LineThrough)) {
                                         append(price)
                                     }
                                     append(" ")
@@ -864,50 +863,81 @@ fun PlanCard(
                                     append(price)
                                 }
                             },
-                            color = colors.text,
-                            fontSize = 30.sp,
-                            fontWeight = FontWeight.Bold,
+                            color = priceColor,
+                            fontSize = 32.sp,
+                            fontWeight = FontWeight.Black,
                             fontFamily = manrope,
                         )
                         Text(
                             text = billingLabel,
                             color = colors.text.copy(alpha = 0.6f),
-                            fontSize = 13.sp,
+                            fontSize = 14.sp,
                             fontFamily = manrope,
-                            modifier = Modifier
-                                .padding(bottom = 4.dp, start = 3.dp)
+                            fontWeight = FontWeight.Medium,
+                            modifier = Modifier.padding(bottom = 6.dp, start = 4.dp)
                         )
                     }
                 }
-
 
                 Icon(
                     painter = painterResource(badge),
                     contentDescription = "badge",
                     tint = Color.Unspecified,
-                    modifier = Modifier.size(48.dp)
-                )
-            }
-
-
-
-            features.forEach { feature ->
-                FeatureRow(
-                    text = feature,
-                    checkTint = colors.checkTint,
-                    textColor = colors.text.copy(alpha = 0.8f)
+                    modifier = Modifier.size(52.dp)
                 )
             }
 
             Spacer(Modifier.height(16.dp))
+            HorizontalDivider(
+                color = colors.border.copy(alpha = 0.2f),
+                thickness = 1.dp
+            )
+            Spacer(Modifier.height(16.dp))
 
+            Column(
+                verticalArrangement = Arrangement.spacedBy(10.dp)
+            ) {
+                features.forEach { feature ->
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(10.dp)
+                    ) {
+                        Box(
+                            modifier = Modifier
+                                .size(18.dp)
+                                .clip(CircleShape)
+                                .background(checkBgColor),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Icon(
+                                painter = painterResource(R.drawable.check),
+                                contentDescription = null,
+                                tint = checkIconColor,
+                                modifier = Modifier.size(10.dp)
+                            )
+                        }
+
+                        Text(
+                            text = feature,
+                            color = featureTextColor,
+                            fontSize = 14.sp,
+                            fontFamily = manrope,
+                            fontWeight = FontWeight.SemiBold,
+                            lineHeight = 20.sp
+                        )
+                    }
+                }
+            }
+
+            Spacer(Modifier.height(20.dp))
 
             Button(
                 onClick = onClick,
                 enabled = !isCurrentPlan,
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(46.dp),
+                    .height(48.dp),
                 shape = RoundedCornerShape(50),
                 colors = ButtonDefaults.buttonColors(
                     containerColor = colors.buttonBg,
@@ -919,7 +949,7 @@ fun PlanCard(
                 Text(
                     text = buttonText,
                     fontWeight = FontWeight.Bold,
-                    fontSize = 14.sp,
+                    fontSize = 15.sp,
                     fontFamily = manrope,
                 )
             }
@@ -972,7 +1002,7 @@ private data class CompareRow(
 fun ComparisonTable() {
     val rows = listOf(
         CompareRow("Playback", "–", "✓", "✓"),
-        CompareRow("Live Location Sharing", "up to 30 minutes", "Unlimited", "Unlimited"),
+        CompareRow("Live Location Sharing", "up to 30 mins", "Unlimited", "Unlimited"),
         CompareRow("Session History", "Today", "2 days", "Full"),
         CompareRow("Places", "2", "10", "Unlimited"),
         CompareRow("Connections", "1", "5", "Unlimited"),
@@ -981,112 +1011,140 @@ fun ComparisonTable() {
     )
 
     Column(
-        modifier = Modifier.padding(
-            bottom = 16.dp
-        )
+        modifier = Modifier.padding(bottom = 24.dp)
     ) {
         Text(
             text = "Compare Plans",
             color = MaterialTheme.colorScheme.onBackground,
-            fontSize = 16.sp,
-            letterSpacing = 0.8.sp,
-            fontWeight = FontWeight.SemiBold,
+            fontSize = 18.sp,
+            fontWeight = FontWeight.Bold,
             fontFamily = manrope,
-            modifier = Modifier.padding(bottom = 12.dp)
+            modifier = Modifier.padding(bottom = 16.dp)
         )
 
-
-        Row(
+        Card(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(bottom = 8.dp)
+                .border(
+                    width = 1.dp,
+                    color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.35f),
+                    shape = RoundedCornerShape(16.dp)
+                ),
+            shape = RoundedCornerShape(16.dp),
+            colors = CardDefaults.cardColors(
+                containerColor = MaterialTheme.colorScheme.surfaceContainerLowest
+            ),
+            elevation = CardDefaults.cardElevation(0.dp)
         ) {
-            Text(
-                "Features",
-                modifier = Modifier.weight(1f),
-                fontFamily = manrope,
-                fontSize = 14.sp,
-                color = MaterialTheme.colorScheme.onBackground,
-                fontWeight = FontWeight.SemiBold
-            )
-            listOf(
-                "Free" to MaterialTheme.colorScheme.onSurfaceVariant,
-                "Premium" to MaterialTheme.colorScheme.primary,
-                "Pro" to MaterialTheme.colorScheme.secondary
-            ).forEach { (label, color) ->
-                Text(
-                    text = label,
-                    color = color,
-                    fontSize = 14.sp,
-                    fontWeight = FontWeight.Bold,
-                    fontFamily = manrope,
-                    textAlign = TextAlign.Center,
-                    letterSpacing = 0.3.sp,
-                    modifier = Modifier.weight(1f)
-                )
-            }
-        }
-
-        HorizontalDivider(
-            color = MaterialTheme.colorScheme.outlineVariant,
-            thickness = 0.5.dp
-        )
-
-        rows.forEachIndexed { index, row ->
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(vertical = 10.dp),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Text(
-                    text = row.feature,
-                    color = MaterialTheme.colorScheme.onSurface,
-                    fontSize = 14.sp,
-                    fontWeight = FontWeight.SemiBold,
-                    fontFamily = manrope,
-                    modifier = Modifier.weight(1f)
-                )
-                listOf(
-                    row.free to MaterialTheme.colorScheme.onSurfaceVariant,
-                    row.premium to MaterialTheme.colorScheme.primary,
-                    row.pro to MaterialTheme.colorScheme.secondary
-                ).forEach { (value, color) ->
-                    if (value == "✓") {
-                        Box(
-                            modifier = Modifier
-                                .weight(1f)
-                                .size(24.dp)
-                                .clip(RoundedCornerShape(50))
-                                .background(MaterialTheme.colorScheme.surface.copy(alpha = 0.15f)),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            Icon(
-                                painter = painterResource(R.drawable.check),
-                                contentDescription = null,
-                                tint = color,
-                                modifier = Modifier.size(11.dp)
-                            )
-                        }
-                    } else {
+            Column {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .background(MaterialTheme.colorScheme.surfaceContainerLow)
+                        .padding(horizontal = 12.dp, vertical = 12.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(
+                        text = "Features",
+                        modifier = Modifier.weight(1.3f),
+                        fontFamily = manrope,
+                        fontSize = 12.sp,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f),
+                        fontWeight = FontWeight.Bold,
+                        letterSpacing = 0.5.sp
+                    )
+                    listOf(
+                        "Free" to MaterialTheme.colorScheme.onSurfaceVariant,
+                        "Premium" to GeoWavThemeExtras.colors.periwinkle,
+                        "Pro" to MaterialTheme.colorScheme.secondary
+                    ).forEach { (label, color) ->
                         Text(
-                            text = value,
+                            text = label,
                             color = color,
-                            fontSize = 14.sp,
-                            fontWeight = FontWeight.Normal,
+                            fontSize = 12.sp,
+                            fontWeight = FontWeight.Bold,
                             fontFamily = manrope,
                             textAlign = TextAlign.Center,
-                            modifier = Modifier.weight(1f)
+                            modifier = Modifier.weight(1f),
+                            letterSpacing = 0.5.sp
                         )
                     }
                 }
-            }
 
-            if (index != rows.size - 1) {
                 HorizontalDivider(
-                    color = MaterialTheme.colorScheme.outlineVariant,
-                    thickness = 0.5.dp
+                    color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.35f),
+                    thickness = 1.dp
                 )
+
+                rows.forEachIndexed { index, row ->
+                    val rowBg = if (index % 2 == 0) {
+                        Color.Transparent
+                    } else {
+                        MaterialTheme.colorScheme.surfaceContainerLowest.copy(alpha = 0.3f)
+                    }
+
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .background(rowBg)
+                            .padding(horizontal = 12.dp, vertical = 12.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(
+                            text = row.feature,
+                            color = MaterialTheme.colorScheme.onSurface,
+                            fontSize = 13.sp,
+                            fontWeight = FontWeight.SemiBold,
+                            fontFamily = manrope,
+                            modifier = Modifier.weight(1.3f)
+                        )
+
+                        listOf(
+                            row.free to MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f),
+                            row.premium to GeoWavThemeExtras.colors.periwinkle,
+                            row.pro to MaterialTheme.colorScheme.secondary
+                        ).forEach { (value, color) ->
+                            Box(
+                                modifier = Modifier
+                                    .weight(1f),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                if (value == "✓") {
+                                    Box(
+                                        modifier = Modifier
+                                            .size(20.dp)
+                                            .clip(CircleShape)
+                                            .background(color.copy(alpha = 0.08f)),
+                                        contentAlignment = Alignment.Center
+                                    ) {
+                                        Icon(
+                                            painter = painterResource(R.drawable.check),
+                                            contentDescription = null,
+                                            tint = color,
+                                            modifier = Modifier.size(10.dp)
+                                        )
+                                    }
+                                } else {
+                                    Text(
+                                        text = value,
+                                        color = color,
+                                        fontSize = 13.sp,
+                                        fontWeight = FontWeight.Medium,
+                                        fontFamily = manrope,
+                                        textAlign = TextAlign.Center
+                                    )
+                                }
+                            }
+                        }
+                    }
+
+                    if (index != rows.size - 1) {
+                        HorizontalDivider(
+                            color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.2f),
+                            thickness = 0.8.dp
+                        )
+                    }
+                }
             }
         }
     }
@@ -1101,96 +1159,66 @@ fun StickyUpgradeCTA(
     isEnabled: Boolean,
     targetPlan: UserPlan
 ) {
-
+    val surfaceColor = MaterialTheme.colorScheme.surface
     Column(
         modifier = modifier
             .fillMaxWidth()
-            .background(MaterialTheme.colorScheme.surface)
-            .padding(horizontal = 12.dp, vertical = 12.dp),
+            .background(surfaceColor)
+            .padding(horizontal = 16.dp)
+            .padding(top = 16.dp, bottom = 12.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        if (targetPlan == UserPlan.PRO) {
+        HorizontalDivider(
+            color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.35f),
+            thickness = 0.8.dp,
+            modifier = Modifier.padding(bottom = 12.dp)
+        )
 
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(52.dp)
-                    .clip(RoundedCornerShape(50))
-                    .background(
-                        Brush.horizontalGradient(
-                            listOf(
-                                onSecondaryDark,
-                                secondaryContainerDark
-                            )
-                        )
-                    )
-            ) {
-                Button(
-                    onClick = onClick,
-                    enabled = isEnabled,
-                    modifier = Modifier.fillMaxSize(),
-                    shape = RoundedCornerShape(50),
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = Color.Transparent,
-                        contentColor = Color.White
-                    ),
-                    elevation = ButtonDefaults.buttonElevation(0.dp)
-                ) {
-                    Text(
-                        text = label,
-                        fontWeight = FontWeight.SemiBold,
-                        fontSize = 15.sp,
-                        fontFamily = manrope,
-                        color = Color.White
-                    )
-                }
-            }
-
+        val buttonBgColor = if (targetPlan == UserPlan.PRO) {
+            proPlanColors().buttonBg
         } else {
+            premiumPlanColors().buttonBg
+        }
 
-            val colors = premiumPlanColors()
+        val buttonTextColor = if (targetPlan == UserPlan.PRO) {
+            proPlanColors().buttonTextColor
+        } else {
+            premiumPlanColors().buttonTextColor
+        }
 
-            Button(
-                onClick = onClick,
-                enabled = isEnabled,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(52.dp),
-                shape = RoundedCornerShape(50),
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = colors.buttonBg,
-                    contentColor = colors.buttonTextColor
-                )
-            ) {
-                Text(
-                    text = label,
-                    fontWeight = FontWeight.SemiBold,
-                    fontSize = 15.sp,
-                    fontFamily = manrope,
-                )
-            }
+        Button(
+            onClick = onClick,
+            enabled = isEnabled,
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(52.dp),
+            shape = RoundedCornerShape(50),
+            colors = ButtonDefaults.buttonColors(
+                containerColor = buttonBgColor,
+                contentColor = buttonTextColor
+            )
+        ) {
+            Text(
+                text = label,
+                fontWeight = FontWeight.Bold,
+                fontSize = 16.sp,
+                fontFamily = manrope,
+            )
         }
 
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(vertical = 6.dp),
+                .padding(vertical = 8.dp),
             horizontalArrangement = Arrangement.Center,
             verticalAlignment = Alignment.CenterVertically
         ) {
             Text(
-                text = "Cancel anytime ",
+                text = "Cancel anytime · Secure payment",
                 color = MaterialTheme.colorScheme.outline,
                 fontSize = 11.sp,
                 fontFamily = manrope,
-                textAlign = TextAlign.Center
-            )
-
-            Text(
-                text = "· Secure payment",
-                color = MaterialTheme.colorScheme.outline,
-                fontSize = 11.sp,
-                fontFamily = manrope,
+                fontWeight = FontWeight.Medium,
                 textAlign = TextAlign.Center
             )
 
@@ -1200,9 +1228,8 @@ fun StickyUpgradeCTA(
                 tint = MaterialTheme.colorScheme.outline,
                 modifier = Modifier
                     .padding(start = 4.dp)
-                    .size(14.dp)
+                    .size(13.dp)
             )
-
         }
     }
 }
