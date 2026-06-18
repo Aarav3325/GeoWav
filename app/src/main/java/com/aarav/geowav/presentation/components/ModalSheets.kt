@@ -567,10 +567,10 @@ fun FeatureItem(text: String, colors: PlanColors, index: Int, total: Int) {
         verticalAlignment = Alignment.CenterVertically,
         modifier = Modifier
             .fillMaxWidth()
-            .padding(vertical = 1.5.dp)
+            .padding(vertical = 1.dp)
             .clip(shape)
             .background(MaterialTheme.colorScheme.surfaceContainerHigh)
-            .padding(vertical = 16.dp, horizontal = 16.dp)
+            .padding(vertical = 12.dp, horizontal = 16.dp)
 
     ) {
         Icon(
@@ -660,9 +660,9 @@ fun PurchaseSuccessBottomSheet(
                         contentAlignment = Alignment.Center
                     ) {
                         Icon(
-                            painter = painterResource(badge),
+                            painter = painterResource(R.drawable.check),
                             contentDescription = null,
-                            tint = Color.Unspecified,
+                            tint = Color.White,
                             modifier = Modifier.size(32.dp)
                         )
                     }
@@ -745,10 +745,10 @@ fun PurchaseSuccessBottomSheet(
                 }
 
                 Icon(
-                    painter = painterResource(R.drawable.check),
+                    painter = painterResource(badge),
                     contentDescription = null,
-                    tint = MaterialTheme.colorScheme.primary,
-                    modifier = Modifier.size(28.dp)
+                    tint = Color.Unspecified,
+                    modifier = Modifier.size(42.dp)
                 )
             }
         }
@@ -756,6 +756,9 @@ fun PurchaseSuccessBottomSheet(
         Spacer(Modifier.height(20.dp))
 
         Card(
+            colors = CardDefaults.cardColors(
+                containerColor = Color.Transparent
+            ),
             modifier = Modifier
                 .padding(horizontal = 20.dp)
                 .fillMaxWidth(),
@@ -793,6 +796,38 @@ fun PurchaseSuccessBottomSheet(
         }
 
         Spacer(Modifier.height(12.dp))
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+fun PurchaseSuccessPremiumBottomSheetPreview() {
+    MaterialTheme {
+        PurchaseSuccessBottomSheet(
+            result = PurchaseResult.Success(
+                plan = UserPlan.PREMIUM,
+                purchaseToken = "dummy_token",
+                orderId = "GPA.1234-5678-9012-34567",
+                purchaseTime = System.currentTimeMillis()
+            ),
+            onExplore = {}
+        )
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+fun PurchaseSuccessProBottomSheetPreview() {
+    MaterialTheme {
+        PurchaseSuccessBottomSheet(
+            result = PurchaseResult.Success(
+                plan = UserPlan.PRO,
+                purchaseToken = "dummy_token",
+                orderId = "GPA.1234-5678-9012-34568",
+                purchaseTime = System.currentTimeMillis()
+            ),
+            onExplore = {}
+        )
     }
 }
 
