@@ -12,7 +12,7 @@ plugins {
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.compose)
 
-    id("kotlin-kapt")
+    id("com.google.devtools.ksp")
     id("com.google.dagger.hilt.android")
     id("com.google.gms.google-services")
     id("com.google.firebase.crashlytics")
@@ -21,12 +21,12 @@ plugins {
 
 android {
     namespace = "com.aarav.geowav"
-    compileSdk = 36
+    compileSdk = 37
 
     defaultConfig {
         applicationId = "com.aarav.geowav"
         minSdk = 26
-        targetSdk = 36
+        targetSdk = 37
         versionCode = 38
         versionName = "0.9.9"
 
@@ -86,12 +86,12 @@ android {
         compose = true
         buildConfig = true
     }
-    kapt {
-        correctErrorTypes = true
-        arguments {
-            arg("room.schemaLocation", "$projectDir/schemas")
-        }
-    }
+//    kapt {
+//        correctErrorTypes = true
+//        arguments {
+//            arg("room.schemaLocation", "$projectDir/schemas")
+//        }
+//    }
 }
 
 dependencies {
@@ -139,7 +139,7 @@ dependencies {
     implementation(libs.androidx.compose.material3)
     implementation(libs.androidx.animation.core)
     implementation(libs.androidx.compose.ui.text)
-    kapt(libs.hilt.android.compiler)
+    ksp(libs.hilt.android.compiler)
     implementation(libs.hilt.navigation.compose)
 
     // Navigation
@@ -153,13 +153,13 @@ dependencies {
     implementation(libs.androidx.work.runtime.ktx)
     // Room
     implementation(libs.room.runtime)
-    kapt(libs.room.compiler)
+    ksp(libs.room.compiler)
     implementation(libs.room.ktx)
 
     implementation(platform(libs.firebase.bom))
 
     implementation(libs.hilt.work)
-    kapt(libs.hilt.compiler)
+    ksp(libs.hilt.compiler)
 
     implementation(libs.maps.compose)
     implementation(libs.play.services.maps)
