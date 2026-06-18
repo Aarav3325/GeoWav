@@ -134,6 +134,13 @@ class LiveLocationService : Service() {
 
         Log.i("SERVICE", "started")
 
+        if (!googleSignInClient.isLoggedIn()) {
+            stopSelf()
+            return
+        }
+
+        setSharingState(ServiceState.STARTING)
+
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
             startForeground(
                 3,
@@ -143,13 +150,6 @@ class LiveLocationService : Service() {
         } else {
             startForeground(3, createNotification())
         }
-
-        if (!googleSignInClient.isLoggedIn()) {
-            stopSelf()
-            return
-        }
-
-        setSharingState(ServiceState.STARTING)
 
         serviceScope.launch {
             sendLastKnownLocation()
@@ -331,7 +331,7 @@ class LiveLocationService : Service() {
 
         serviceScope.cancel()
 
-        kotlinx.coroutines.runBlocking {
+        CoroutineScope(Dispatchers.IO + NonCancellable).launch {
 
 
             googleSignInClient.getUserId()?.let {
