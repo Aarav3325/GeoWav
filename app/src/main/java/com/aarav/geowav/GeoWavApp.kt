@@ -48,7 +48,7 @@ class GeoWavApp : Application(), Configuration.Provider {
     override fun onCreate() {
         super.onCreate()
 
-//       androidx.work.WorkManager.initialize(this, workManagerConfiguration)
+       androidx.work.WorkManager.initialize(this, workManagerConfiguration)
 
         applicationContext.createGeoWavChannels()
 

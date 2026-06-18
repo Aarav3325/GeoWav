@@ -35,6 +35,9 @@ class NotificationRepositoryImpl @Inject constructor(
     // Access circle
     private var circleEventRef: DatabaseReference? = null
 
+    private var inviteListener: ChildEventListener? = null
+    private var circleListener: ChildEventListener? = null
+
     // Store user and listener references preventing duplicate listener to avoid memory leaks
     private val listenerMap = mutableMapOf<String, ValueEventListener>()
     private val geofenceListenerMap = mutableMapOf<String, ChildEventListener>()
@@ -140,7 +143,7 @@ class NotificationRepositoryImpl @Inject constructor(
     private fun listenToInvites(userId: String) {
         inviteRef = firebaseDatabase.getReference("circle_requests").child(userId)
 
-        inviteRef?.addChildEventListener(object : ChildEventListener {
+        val listener = object : ChildEventListener {
             override fun onChildAdded(
                 snapshot: DataSnapshot,
                 previousChildName: String?
@@ -182,13 +185,15 @@ class NotificationRepositoryImpl @Inject constructor(
 
             }
 
-        })
+        }
+        inviteListener = listener
+        inviteRef?.addChildEventListener(listener)
     }
 
     private fun listenToCircle(userId: String) {
         circleEventRef = firebaseDatabase.getReference("circle").child(userId)
 
-        circleEventRef?.addChildEventListener(object : ChildEventListener {
+        val listener = object : ChildEventListener {
             override fun onChildAdded(
                 snapshot: DataSnapshot,
                 previousChildName: String?
@@ -231,7 +236,9 @@ class NotificationRepositoryImpl @Inject constructor(
 
             }
 
-        })
+        }
+        circleListener = listener
+        circleEventRef?.addChildEventListener(listener)
     }
 
 //    private fun listenToSharing(userId: String) {
@@ -454,11 +461,36 @@ class NotificationRepositoryImpl @Inject constructor(
                 .child(memberId)
                 .removeEventListener(listener)
         }
-
-        geofenceListenerMap.clear()
         listenerMap.clear()
+
+        geofenceListenerMap.forEach { (memberId, listener) ->
+            firebaseDatabase.getReference("geofence_activity")
+                .child(memberId)
+                .removeEventListener(listener)
+        }
+        geofenceListenerMap.clear()
+
+        emergencyListenerMap.forEach { (memberId, listener) ->
+            firebaseDatabase.getReference("emergency_sharing")
+                .child(memberId)
+                .removeEventListener(listener)
+        }
         emergencyListenerMap.clear()
+
+        inviteListener?.let { listener ->
+            inviteRef?.removeEventListener(listener)
+        }
+        inviteListener = null
+        inviteRef = null
+
+        circleListener?.let { listener ->
+            circleEventRef?.removeEventListener(listener)
+        }
+        circleListener = null
+        circleEventRef = null
+
         sharingStateCache.clear()
+        emergencyStateCache.clear()
         repositoryScope.cancel()
     }
 }
