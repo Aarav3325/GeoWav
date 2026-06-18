@@ -25,7 +25,7 @@ import com.aarav.geowav.platform.LiveLocationService
 import com.aarav.geowav.platform.NotificationService
 import com.aarav.geowav.platform.getAppVersionInfo
 import dagger.hilt.android.lifecycle.HiltViewModel
-import jakarta.inject.Inject
+import javax.inject.Inject
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow

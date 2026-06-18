@@ -10,7 +10,7 @@ import com.aarav.geowav.data.authentication.GoogleSignInClient
 import com.aarav.geowav.domain.repository.PaymentRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
-import jakarta.inject.Inject
+import javax.inject.Inject
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow

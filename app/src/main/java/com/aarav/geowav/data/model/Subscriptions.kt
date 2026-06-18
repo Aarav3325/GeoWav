@@ -28,7 +28,8 @@ sealed class PurchaseResult {
         val plan: UserPlan,
         val purchaseToken: String,
         val orderId: String?,
-        val purchaseTime: Long
+        val purchaseTime: Long,
+        val expiryTime: Long
     ) : PurchaseResult()
 
     data class Error(val message: String) : PurchaseResult()

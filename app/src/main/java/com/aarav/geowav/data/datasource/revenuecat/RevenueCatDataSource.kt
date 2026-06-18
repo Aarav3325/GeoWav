@@ -114,7 +114,8 @@ class RevenueCatDataSource @Inject constructor() {
                 plan = plan,
                 purchaseToken = result.storeTransaction.purchaseToken ?: "",
                 orderId = result.storeTransaction.orderId,
-                purchaseTime = result.storeTransaction.purchaseTime ?: System.currentTimeMillis()
+                purchaseTime = result.storeTransaction.purchaseTime ?: System.currentTimeMillis(),
+                expiryTime = getExpiryTime(result.customerInfo)
             )
         }
         catch (e: com.revenuecat.purchases.PurchasesException) {

@@ -60,7 +60,7 @@ class PaymentRepositoryImpl @Inject constructor(
         val result = revenueCatDataSource.purchase(activity, rcPackage, plan)
 
         if (result is PurchaseResult.Success) {
-            val expiryTime = result.purchaseTime + getPlanDuration(plan)
+            val expiryTime = result.expiryTime
             savePurchase(
                 plan = plan.name,
                 token = result.purchaseToken,
@@ -142,7 +142,8 @@ class PaymentRepositoryImpl @Inject constructor(
                 plan = plan,
                 purchaseToken = "restored",
                 orderId = null,
-                purchaseTime = purchaseTime
+                purchaseTime = purchaseTime,
+                expiryTime = expiryTime
             )
         } else {
             savePurchase("FREE", "", 0L, 0L, false, false)

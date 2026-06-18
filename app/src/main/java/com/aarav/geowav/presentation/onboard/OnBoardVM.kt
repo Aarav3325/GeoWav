@@ -3,7 +3,7 @@ package com.aarav.geowav.presentation.onboard
 import androidx.lifecycle.ViewModel
 import com.aarav.geowav.core.permissions.GeoPermissionCoordinator
 import dagger.hilt.android.lifecycle.HiltViewModel
-import jakarta.inject.Inject
+import javax.inject.Inject
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow

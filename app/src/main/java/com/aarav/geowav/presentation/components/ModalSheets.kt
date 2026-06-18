@@ -808,7 +808,8 @@ fun PurchaseSuccessPremiumBottomSheetPreview() {
                 plan = UserPlan.PREMIUM,
                 purchaseToken = "dummy_token",
                 orderId = "GPA.1234-5678-9012-34567",
-                purchaseTime = System.currentTimeMillis()
+                purchaseTime = System.currentTimeMillis(),
+                expiryTime = System.currentTimeMillis() + 30L * 24 * 60 * 60 * 1000
             ),
             onExplore = {}
         )
@@ -824,7 +825,8 @@ fun PurchaseSuccessProBottomSheetPreview() {
                 plan = UserPlan.PRO,
                 purchaseToken = "dummy_token",
                 orderId = "GPA.1234-5678-9012-34568",
-                purchaseTime = System.currentTimeMillis()
+                purchaseTime = System.currentTimeMillis(),
+                expiryTime = System.currentTimeMillis() + 30L * 24 * 60 * 60 * 1000
             ),
             onExplore = {}
         )
