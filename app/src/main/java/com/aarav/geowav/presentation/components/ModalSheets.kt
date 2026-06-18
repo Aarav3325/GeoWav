@@ -835,6 +835,7 @@ fun PurchaseSuccessProBottomSheetPreview() {
 @Composable
 fun UpgradeConfirmBottomSheet(
     plan: UserPlan,
+    currentPlan: UserPlan = UserPlan.FREE,
     onConfirm: () -> Unit
 ) {
 
@@ -842,7 +843,7 @@ fun UpgradeConfirmBottomSheet(
 
     val price = when (plan) {
         UserPlan.PREMIUM -> "₹99/month"
-        UserPlan.PRO -> "₹199/month"
+        UserPlan.PRO -> if (currentPlan == UserPlan.PREMIUM) "₹149/month" else "₹199/month"
         else -> ""
     }
 

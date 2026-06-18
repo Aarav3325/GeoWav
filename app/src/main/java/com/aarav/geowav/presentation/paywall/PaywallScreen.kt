@@ -36,6 +36,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.IconButtonDefaults
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -181,6 +182,7 @@ fun PaywallScreen(
         ) {
             UpgradeConfirmBottomSheet(
                 plan = selectedPlan!!,
+                currentPlan = plan,
                 onConfirm = {
                     showUpgradeConfirm = false
                     if (selectedPlan != null) {
@@ -294,7 +296,7 @@ fun PaywallScreen(
                     .fillMaxSize()
                     .verticalScroll(rememberScrollState())
                     .padding(horizontal = 16.dp)
-                    .padding(top = 16.dp, bottom = if (availablePlans.isEmpty()) 36.dp else 104.dp)
+                    .padding(top = 16.dp, bottom = if (availablePlans.isEmpty()) 48.dp else 140.dp)
             ) {
 
                 PaywallHeader()
@@ -370,19 +372,33 @@ fun PaywallScreen(
 
                 ComparisonTable()
 
-                Spacer(Modifier.height(12.dp))
+                Spacer(Modifier.height(16.dp))
 
-                Text(
-                    text = "Restore Purchases",
+                OutlinedButton(
+                    onClick = { subscriptionViewModel.restorePurchases() },
                     modifier = Modifier
-                        .fillMaxWidth()
-                        .clickable { subscriptionViewModel.restorePurchases() },
-                    textAlign = TextAlign.Center,
-                    color = MaterialTheme.colorScheme.outline,
-                    fontSize = 13.sp,
-                    fontFamily = manrope,
-                    fontWeight = FontWeight.Medium
-                )
+                        .align(Alignment.CenterHorizontally),
+                    shape = RoundedCornerShape(50),
+                    border = BorderStroke(
+                        width = 1.dp,
+                        color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.4f)
+                    ),
+                    colors = ButtonDefaults.outlinedButtonColors(
+                        containerColor = Color.Transparent,
+                        contentColor = MaterialTheme.colorScheme.onSurfaceVariant
+                    ),
+                    contentPadding = PaddingValues(horizontal = 24.dp, vertical = 10.dp)
+                ) {
+                    Text(
+                        text = "Restore Purchases",
+                        fontFamily = manrope,
+                        fontWeight = FontWeight.SemiBold,
+                        fontSize = 13.sp,
+                        letterSpacing = 0.25.sp
+                    )
+                }
+
+                Spacer(Modifier.height(20.dp))
             }
 
             val nextPlan = when (plan) {
@@ -462,7 +478,7 @@ fun ProFeaturesCard() {
 
                 Column {
                     Text(
-                        text = "GeoWav Pro Active",
+                        text = "GeoWav Pro is active",
                         fontWeight = FontWeight.Bold,
                         fontSize = 16.sp,
                         fontFamily = manrope,
@@ -479,7 +495,7 @@ fun ProFeaturesCard() {
             }
 
             HorizontalDivider(
-                color = colors.border.copy(alpha = 0.1f),
+                color = colors.border.copy(alpha = 0.5f),
                 thickness = 1.dp
             )
 
