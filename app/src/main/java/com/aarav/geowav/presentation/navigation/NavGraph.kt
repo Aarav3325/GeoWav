@@ -34,6 +34,7 @@ import com.aarav.geowav.presentation.map.MapScreen
 import com.aarav.geowav.presentation.observe.ObserveScreen
 import com.aarav.geowav.presentation.onboard.OnboardingScreen
 import com.aarav.geowav.presentation.paywall.PaywallScreen
+import com.aarav.geowav.presentation.profile.AboutScreen
 import com.aarav.geowav.presentation.profile.ProfileScreen
 import com.aarav.geowav.presentation.profile.ThemeMode
 import com.aarav.geowav.presentation.subscription.SubscriptionViewModel
@@ -193,6 +194,11 @@ fun NavGraph(
             subscriptionVM,
             themeMode,
             onThemeChange,
+            navHostController,
+            this
+        )
+
+        AddAboutScreen(
             navHostController,
             this
         )
@@ -711,6 +717,9 @@ fun AddProfileScreen(
             navigateToInsights = {
                 navController.navigate(NavRoute.Insights.path)
             },
+            navigateToAbout = {
+                navController.navigate(NavRoute.About.path)
+            },
 
             onLogout = {
                 navController.navigate(NavRoute.Login.path) {
@@ -808,5 +817,20 @@ fun AddDayReplayScreen(
                 popUpTo(NavRoute.DayReplay.path) { inclusive = true }
             }
         }
+    }
+}
+
+fun AddAboutScreen(
+    navController: NavController,
+    navGraphBuilder: NavGraphBuilder
+) {
+    navGraphBuilder.composable(
+        route = NavRoute.About.path
+    ) {
+        AboutScreen(
+            onBack = {
+                navController.popBackStack()
+            }
+        )
     }
 }

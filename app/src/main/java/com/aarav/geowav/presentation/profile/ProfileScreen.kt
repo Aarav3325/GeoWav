@@ -9,6 +9,7 @@ import android.content.Intent
 import android.net.Uri
 import android.provider.Settings
 import android.util.Log
+import androidx.activity.compose.BackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
@@ -92,6 +93,7 @@ fun ProfileScreen(
     notificationsEnabled: Boolean,
     navigateToHome: () -> Unit,
     navigateToInsights: () -> Unit,
+    navigateToAbout: () -> Unit,
     onLogout: () -> Unit,
     onDeleteAccount: () -> Unit
 ) {
@@ -106,9 +108,6 @@ fun ProfileScreen(
         subscriptionViewModel.fetchSubscriptionStatus()
     }
 
-    var showAboutDialog by remember {
-        mutableStateOf(false)
-    }
     var tc by remember {
         mutableStateOf(false)
     }
@@ -148,16 +147,7 @@ fun ProfileScreen(
         }
     )
 
-    AboutDialog(
-        showAboutDialog = showAboutDialog,
-        confirmButtonText = "Close",
-        onConfirmClick = {
-            showAboutDialog = false
-        },
-        icon = R.drawable.new_logo,
-        title = "GeoWav",
-        message = "GeoWav is a mobile application that helps users stay connected with their loved ones by sharing meaningful updates in a simple and reliable way. The app focuses on personal communication, supports offline usage, and securely synchronizes data using cloud services, providing a smooth and dependable user experience.",
-    )
+
 
 
     Scaffold(
@@ -331,9 +321,7 @@ fun ProfileScreen(
                             title = "About GeoWav",
                             index = 1,
                             count = 3,
-                            onClick = {
-                                showAboutDialog = true
-                            }
+                            onClick = navigateToAbout
                         )
 
                         SettingItemNew(
