@@ -11,8 +11,6 @@ import com.google.android.gms.location.GeofencingClient
 import com.google.android.gms.location.LocationServices
 import com.google.android.libraries.places.api.Places
 import com.google.android.libraries.places.api.net.PlacesClient
-import com.google.firebase.remoteconfig.FirebaseRemoteConfig
-import com.google.firebase.remoteconfig.remoteConfigSettings
 import com.google.firebase.storage.FirebaseStorage
 import dagger.Module
 import dagger.Provides
@@ -122,22 +120,6 @@ object ServiceModule {
         return context.getSharedPreferences("geowav", Context.MODE_PRIVATE)
     }
 
-    @Singleton
-    @Provides
-    fun provideRemoteConfig(): FirebaseRemoteConfig {
-        return FirebaseRemoteConfig.getInstance().apply {
-            val configSettings = remoteConfigSettings {
-                minimumFetchIntervalInSeconds = 0
-            }
 
-            setConfigSettingsAsync(configSettings)
-
-            setDefaultsAsync(
-                mapOf(
-                    "app_enabled" to true
-                )
-            )
-        }
-    }
 
 }

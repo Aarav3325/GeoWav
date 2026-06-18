@@ -7,7 +7,6 @@ import androidx.work.WorkerParameters
 import com.aarav.geowav.data.model.ActivityTransition
 import com.aarav.geowav.data.model.MovementActivityRecord
 import com.aarav.geowav.data.repository.ActivityWriteRepository
-import com.google.firebase.remoteconfig.FirebaseRemoteConfig
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -18,7 +17,6 @@ class GeofenceWorker(
 ) : Worker(context, workerParams) {
 
     override fun doWork(): Result {
-
 
         Log.i("MYTAG", "worker called")
 
@@ -33,13 +31,6 @@ class GeofenceWorker(
 
         val latitude = inputData.getDouble("latitude", 0.0)
         val longitude = inputData.getDouble("longitude", 0.0)
-
-
-
-        if (!FirebaseRemoteConfig.getInstance().getBoolean("app_enabled")) {
-            return Result.success()
-        }
-
 
         val activity = MovementActivityRecord(
             placeName = geofenceId,

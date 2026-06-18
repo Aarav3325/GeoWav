@@ -14,7 +14,6 @@ import android.util.Log
 import androidx.core.app.NotificationCompat
 import androidx.core.content.edit
 import com.aarav.geowav.R
-import com.aarav.geowav.core.managers.KillSwitchManager
 import com.aarav.geowav.core.tracking.StayPointTracker
 import com.aarav.geowav.core.utils.FeatureAccess
 import com.aarav.geowav.core.utils.ServiceState
@@ -57,9 +56,6 @@ class LiveLocationService : Service() {
 
     @Inject
     lateinit var liveLocationSharingRepository: LiveLocationSharingRepository
-
-    @Inject
-    lateinit var killSwitchManager: KillSwitchManager
 
 
     @Inject
@@ -137,44 +133,27 @@ class LiveLocationService : Service() {
         super.onCreate()
 
         Log.i("SERVICE", "started")
+
+        if (!googleSignInClient.isLoggedIn()) {
+            stopSelf()
+            return
+        }
+
+        setSharingState(ServiceState.STARTING)
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+            startForeground(
+                3,
+                createNotification(),
+                android.content.pm.ServiceInfo.FOREGROUND_SERVICE_TYPE_LOCATION
+            )
+        } else {
+            startForeground(3, createNotification())
+        }
+
         serviceScope.launch {
-
-            killSwitchManager.fetchAndActivate()
-
-            if (!killSwitchManager.isAppEnabled()) {
-                stopSelf()
-                return@launch
-            }
-
-            if (!googleSignInClient.isLoggedIn()) {
-                stopSelf()
-                return@launch
-            }
-
-
-
-            setSharingState(ServiceState.STARTING)
-
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-                startForeground(
-                    3,
-                    createNotification(),
-                    android.content.pm.ServiceInfo.FOREGROUND_SERVICE_TYPE_LOCATION
-                )
-            } else {
-                startForeground(3, createNotification())
-            }
-
-
             sendLastKnownLocation()
             startLocationUpdates()
-
-            killSwitchManager.observeAppEnabled()
-                .collect { enabled ->
-                    if (!enabled) {
-                        shutdownService()
-                    }
-                }
         }
     }
 
@@ -274,12 +253,6 @@ class LiveLocationService : Service() {
 
         locationCallback = object : LocationCallback() {
             override fun onLocationResult(result: LocationResult) {
-                if (!killSwitchManager
-                        .isAppEnabled()
-                ) {
-                    return
-                }
-
                 val location = result.lastLocation ?: return
 
                 serviceScope.launch {

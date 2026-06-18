@@ -63,7 +63,6 @@ import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
-import com.aarav.geowav.core.managers.KillSwitchManager
 import com.aarav.geowav.core.permissions.GeoPermissionCoordinator
 import com.aarav.geowav.data.authentication.GoogleSignInClient
 import com.aarav.geowav.platform.GeofenceBroadcastReceiver
@@ -97,9 +96,6 @@ import javax.inject.Inject
 
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
-
-    @Inject
-    lateinit var killSwitchManager: KillSwitchManager
 
     @Inject
     lateinit var googleSignInClient: GoogleSignInClient
@@ -145,10 +141,6 @@ class MainActivity : ComponentActivity() {
 
 
         setContent {
-
-            var showAppDisabledState by remember {
-                mutableStateOf(false)
-            }
 
             var showDialog by remember {
                 mutableStateOf(false)
@@ -202,33 +194,6 @@ class MainActivity : ComponentActivity() {
                         showDialog = false
                     }
                 )
-            }
-
-            LaunchedEffect(userId) {
-                if (!isLoggedIn) {
-                    showAppDisabledState = false
-                    return@LaunchedEffect
-                }
-
-                killSwitchManager.fetchAndActivate()
-                killSwitchManager.observeAppEnabled()
-                    .collect { enabled ->
-                        if (!enabled) {
-
-                            Log.i("KILL", "app in kill mode")
-                            stopAllCriticalServices()
-                            showAppDisabledState = true
-                        } else {
-                            showAppDisabledState = false
-                            Log.i("KILL", "app not in kill mode")
-                        }
-                    }
-            }
-
-
-            if (showAppDisabledState) {
-                AppDisabled()
-                return@setContent
             }
 
             var location by remember {
@@ -337,9 +302,7 @@ class MainActivity : ComponentActivity() {
 
                     LaunchedEffect(permissionsGranted && isLoggedIn) {
 
-                        val enabled = killSwitchManager.isAppEnabled()
-
-                        if (permissionsGranted && enabled && isLoggedIn) {
+                        if (permissionsGranted && isLoggedIn) {
 
                             val intent = Intent(context, GeofenceForegroundService::class.java)
 

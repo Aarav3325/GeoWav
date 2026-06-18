@@ -15,7 +15,6 @@ import androidx.core.app.ActivityCompat
 import androidx.core.app.NotificationCompat
 import androidx.core.content.PermissionChecker
 import com.aarav.geowav.R
-import com.aarav.geowav.core.managers.KillSwitchManager
 import com.aarav.geowav.data.authentication.GoogleSignInClient
 import com.aarav.geowav.data.model.Place
 import com.aarav.geowav.data.repository.GeofenceRepositoryImpl
@@ -52,9 +51,6 @@ class GeofenceForegroundService : Service() {
     @Inject
     lateinit var placeRepositoryImpl: PlaceRepositoryImpl
 
-    @Inject
-    lateinit var killSwitchManager: KillSwitchManager
-
 
     override fun onBind(intent: Intent?): IBinder? {
         return null
@@ -63,44 +59,15 @@ class GeofenceForegroundService : Service() {
     override fun onCreate() {
         super.onCreate()
 
-        scope.launch {
-
-
-
-            killSwitchManager.fetchAndActivate()
-
-            val isEnabled = killSwitchManager.isAppEnabled()
-
-            if (!isEnabled) {
-                stopGeofenceCompletely()
-                stopSelf()
-                return@launch
-            }
-
-            // Start only once
-            if (ActivityCompat.checkSelfPermission(
-                    this@GeofenceForegroundService,
-                    Manifest.permission.ACCESS_FINE_LOCATION
-                ) == PackageManager.PERMISSION_GRANTED
-            ) {
-                startForegroundService()
-            }
-
-//            if (googleSignInClient.isLoggedIn()) {
-//                observePlaces()
-//            }
-
-            observePlaces()
-
-            // Now only observe for shutdown, not restart
-            killSwitchManager.observeAppEnabled()
-                .collect { enabled ->
-                    if (!enabled) {
-                        stopGeofenceCompletely()
-                        stopSelf()
-                    }
-                }
+        if (ActivityCompat.checkSelfPermission(
+                this,
+                Manifest.permission.ACCESS_FINE_LOCATION
+            ) == PackageManager.PERMISSION_GRANTED
+        ) {
+            startForegroundService()
         }
+
+        observePlaces()
     }
 
     private fun stopGeofenceCompletely() {
