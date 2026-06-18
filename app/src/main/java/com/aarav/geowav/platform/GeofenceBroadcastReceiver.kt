@@ -5,6 +5,7 @@ import android.content.Context
 import android.content.Intent
 import android.util.Log
 import androidx.work.OneTimeWorkRequestBuilder
+import androidx.work.OutOfQuotaPolicy
 import androidx.work.WorkManager
 import androidx.work.workDataOf
 import com.google.android.gms.location.Geofence
@@ -37,6 +38,7 @@ class GeofenceBroadcastReceiver : BroadcastReceiver() {
 
             val workRequest = OneTimeWorkRequestBuilder<GeofenceWorker>()
                 .setInputData(inputData)
+                .setExpedited(OutOfQuotaPolicy.RUN_AS_NON_EXPEDITED_WORK_REQUEST)
                 .build()
             Log.i("MYTAG", "Enqueueing GeofenceWorker for ${geofence.requestId}")
             WorkManager.getInstance(context).enqueue(workRequest)

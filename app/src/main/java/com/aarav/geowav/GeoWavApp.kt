@@ -48,8 +48,9 @@ class GeoWavApp : Application(), Configuration.Provider {
     override fun onCreate() {
         super.onCreate()
 
+//       androidx.work.WorkManager.initialize(this, workManagerConfiguration)
+
         applicationContext.createGeoWavChannels()
-        //StrictModeHelper.enable()
 
         if(!Places.isInitialized()){
             Places.initializeWithNewPlacesApiEnabled(applicationContext, BuildConfig.GOOGLE_MAPS_API_KEY)
@@ -62,19 +63,6 @@ class GeoWavApp : Application(), Configuration.Provider {
                 apiKey = BuildConfig.REVENUE_CAT_API_KEY
             ).build()
         )
-
-//        Log.i(TAG, "Before customer info")
-//
-//        Purchases.sharedInstance.getCustomerInfoWith(
-//            onSuccess = {
-//                Log.i(TAG, "Customer info success")
-//            },
-//            onError = {
-//                Log.e(TAG, "Customer info error")
-//            }
-//        )
-//
-//        Log.i(TAG, "After customer info")
     }
 
     fun Context.createGeoWavChannels() {

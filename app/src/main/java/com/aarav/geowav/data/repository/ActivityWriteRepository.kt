@@ -17,13 +17,17 @@ class ActivityWriteRepository(
         val rootRef = firebaseDatabase.reference
 
         val stateKey = movementStatePlaceKey(activity.placeName)
-        val latestStateSnapshot = Tasks.await(
-            rootRef.child("latest_activity_state").child(actorId).child(stateKey).get()
-        )
+        val stateTask = rootRef.child("latest_activity_state").child(actorId).child(stateKey).get()
+        val userTask = rootRef.child("users").child(actorId).get()
+        val circleTask = rootRef.child("circle").child(actorId).get()
+
+        Tasks.await(Tasks.whenAll(stateTask, userTask, circleTask))
+
+        val latestStateSnapshot = stateTask.result
         val latestState = latestStateSnapshot.toLatestMovementActivityState()
         if (shouldSuppressMovementActivity(activity, latestState)) return
 
-        val userSnapshot = Tasks.await(rootRef.child("users").child(actorId).get())
+        val userSnapshot = userTask.result
         val actorName = userSnapshot.child("username").getValue(String::class.java)
             ?.takeIf { it.isNotBlank() }
             ?: actor.displayName?.takeIf { it.isNotBlank() }
@@ -32,7 +36,7 @@ class ActivityWriteRepository(
             ?.takeIf { it.isNotBlank() }
             ?: actor.photoUrl?.toString()?.takeIf { it.isNotBlank() }
 
-        val circleSnapshot = Tasks.await(rootRef.child("circle").child(actorId).get())
+        val circleSnapshot = circleTask.result
         val viewerIds = circleSnapshot.children.mapNotNull { member ->
             val isAccepted = member.child("status").getValue(String::class.java) == "accepted"
             member.key?.takeIf { isAccepted }

@@ -19,9 +19,14 @@ import com.aarav.geowav.data.authentication.GoogleSignInClient
 import com.aarav.geowav.data.model.Place
 import com.aarav.geowav.data.repository.GeofenceRepositoryImpl
 import com.aarav.geowav.data.repository.PlaceRepositoryImpl
+import com.google.android.gms.location.FusedLocationProviderClient
 import com.google.android.gms.location.Geofence
 import com.google.android.gms.location.GeofencingClient
 import com.google.android.gms.location.GeofencingRequest
+import com.google.android.gms.location.LocationCallback
+import com.google.android.gms.location.LocationRequest
+import com.google.android.gms.location.LocationResult
+import com.google.android.gms.location.Priority
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -50,6 +55,11 @@ class GeofenceForegroundService : Service() {
 
     @Inject
     lateinit var placeRepositoryImpl: PlaceRepositoryImpl
+ 
+    @Inject
+    lateinit var fusedLocationProviderClient: FusedLocationProviderClient
+ 
+    private var locationCallback: LocationCallback? = null
 
 
     override fun onBind(intent: Intent?): IBinder? {
@@ -65,6 +75,7 @@ class GeofenceForegroundService : Service() {
             ) == PackageManager.PERMISSION_GRANTED
         ) {
             startForegroundService()
+            startLocationUpdates()
         }
 
         observePlaces()
@@ -189,10 +200,34 @@ class GeofenceForegroundService : Service() {
         }
     }
 
+    @Suppress("MissingPermission")
+    private fun startLocationUpdates() {
+        val request = LocationRequest.Builder(
+            Priority.PRIORITY_HIGH_ACCURACY,
+            30_000L
+        )
+            .setMinUpdateIntervalMillis(10_000L)
+            .build()
+
+        locationCallback = object : LocationCallback() {
+            override fun onLocationResult(result: LocationResult) {
+                val location = result.lastLocation ?: return
+                Log.d("GeofenceService", "Periodic background location ping: ${location.latitude}, ${location.longitude}")
+            }
+        }
+
+        fusedLocationProviderClient.requestLocationUpdates(
+            request,
+            locationCallback!!,
+            mainLooper
+        )
+    }
+
     override fun onDestroy() {
+        locationCallback?.let {
+            fusedLocationProviderClient.removeLocationUpdates(it)
+        }
         super.onDestroy()
         job.cancel()
     }
-
-
 }
