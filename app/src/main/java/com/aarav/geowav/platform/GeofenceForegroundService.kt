@@ -197,6 +197,9 @@ class GeofenceForegroundService : Service() {
                 Log.i("SERVICE", "geofence: started")
                 startForeground(1, notification)
             }
+        } else {
+            Log.w("SERVICE", "geofence: started with fallback (no permissions)")
+            startForeground(1, notification)
         }
     }
 
@@ -227,6 +230,7 @@ class GeofenceForegroundService : Service() {
         locationCallback?.let {
             fusedLocationProviderClient.removeLocationUpdates(it)
         }
+        stopGeofenceCompletely()
         super.onDestroy()
         job.cancel()
     }

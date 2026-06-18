@@ -56,7 +56,7 @@
         <receiver
             android:name=".platform.GeofenceBroadcastReceiver"
             android:enabled="true"
-            android:exported="true" />
+            android:exported="false" />
 
         <meta-data
             android:name="com.google.android.geo.API_KEY"

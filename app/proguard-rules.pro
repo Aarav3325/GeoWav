@@ -28,3 +28,7 @@
     public static int i(...);
     public static int w(...);
 }
+
+# Keep Firebase Realtime Database deserialization models to prevent R8 from obfuscating fields/methods
+-keep class com.aarav.geowav.data.model.** { *; }
+-keep class com.aarav.geowav.data.mapper.** { *; }
