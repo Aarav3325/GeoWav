@@ -3,6 +3,7 @@ package com.aarav.geowav.domain.repository
 import com.aarav.geowav.data.model.Place
 import com.aarav.geowav.core.utils.Resource
 import com.google.android.libraries.places.api.model.AutocompletePrediction
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.Flow
 
 interface PlaceRepository {
@@ -10,6 +11,15 @@ interface PlaceRepository {
     fun getPlaces(): Flow<List<Place>>
     suspend fun deletePlace(place: Place)
     suspend fun updatePlace(place: Place)
+
+    fun startRealtimeSync(
+        scope: CoroutineScope
+    )
+    fun stopRealtimeSync()
+
+    suspend fun migratePlacesIfNeeded()
+
+
 
     suspend fun fetchPlace(placeId: String): Resource<com.google.android.libraries.places.api.model.Place>
     suspend fun searchPlaces(

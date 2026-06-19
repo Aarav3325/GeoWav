@@ -228,9 +228,10 @@ class MainActivity : ComponentActivity() {
 
             LaunchedEffect(userId) {
                 if (isLoggedIn) {
-                    mainVM.fetchUser()
+                    mainVM.initializeUserSession()
                 } else {
                     mainVM.clearCurrentUser()
+                    mainVM.stopPlaceSync()
                 }
             }
 

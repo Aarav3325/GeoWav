@@ -8,7 +8,7 @@ import com.aarav.geowav.data.model.GeoConnection
 import com.aarav.geowav.data.model.Place
 import com.aarav.geowav.data.model.SessionHistory
 
-@Database(entities = [Place::class], version = 9)
+@Database(entities = [Place::class], version = 10)
 abstract class PlaceDatabase : RoomDatabase() {
 
     abstract val placeDao : PlacesDAO

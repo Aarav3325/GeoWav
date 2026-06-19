@@ -19,7 +19,7 @@ data class Place(
     val longitude: Double = 0.0,
 
     @androidx.room.ColumnInfo(name = "address")
-    val address: String?,
+    val address: String? = "",
 
     @androidx.room.ColumnInfo(name = "radius")
     val radius: Float = 200f,
