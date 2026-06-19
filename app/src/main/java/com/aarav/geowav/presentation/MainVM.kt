@@ -13,6 +13,7 @@ import androidx.lifecycle.viewModelScope
 import com.aarav.geowav.data.authentication.GoogleSignInClient
 import com.aarav.geowav.data.model.User
 import com.aarav.geowav.domain.repository.PaymentRepository
+import com.aarav.geowav.domain.repository.PlaceRepository
 import com.aarav.geowav.presentation.components.SnackbarManager
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.collectLatest
@@ -23,6 +24,7 @@ import kotlinx.coroutines.launch
 @HiltViewModel
 class MainVM @Inject constructor(
     private val prefs: SharedPreferences,
+    private val placeRepository: PlaceRepository,
     private val googleSignInClient: GoogleSignInClient,
     private val paymentRepository: PaymentRepository,
 
@@ -33,6 +35,8 @@ class MainVM @Inject constructor(
 
     private val _currentUser = MutableStateFlow<User?>(null)
     val currentUser = _currentUser.asStateFlow()
+
+    private var restored = false
 
 //
 //    init {
@@ -80,5 +84,16 @@ class MainVM @Inject constructor(
 
     fun clearCurrentUser() {
         _currentUser.value = null
+    }
+
+
+    fun restorePlaces() {
+        if (restored) return
+
+        restored = true
+
+        viewModelScope.launch {
+            placeRepository.restorePlaces()
+        }
     }
 }

@@ -3,10 +3,13 @@ package com.aarav.geowav.data.repository
 import android.Manifest
 import android.util.Log
 import androidx.annotation.RequiresPermission
-import com.aarav.geowav.data.model.Place
-import com.aarav.geowav.data.datasource.room.PlacesDAO
-import com.aarav.geowav.domain.repository.PlaceRepository
+import androidx.room.withTransaction
 import com.aarav.geowav.core.utils.Resource
+import com.aarav.geowav.data.datasource.remote.PlaceRemoteDataSource
+import com.aarav.geowav.data.datasource.room.PlaceDatabase
+import com.aarav.geowav.data.datasource.room.PlacesDAO
+import com.aarav.geowav.data.model.Place
+import com.aarav.geowav.domain.repository.PlaceRepository
 import com.google.android.libraries.places.api.model.AutocompletePrediction
 import com.google.android.libraries.places.api.model.AutocompleteSessionToken
 import com.google.android.libraries.places.api.net.FetchPlaceRequest
@@ -18,14 +21,13 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.tasks.await
 import kotlinx.coroutines.withTimeout
 import java.io.IOException
-import java.text.SimpleDateFormat
-import java.util.Date
-import java.util.Locale
 import javax.inject.Inject
 import kotlin.coroutines.cancellation.CancellationException
 
 class PlaceRepositoryImpl @Inject constructor(
+    private val remote: PlaceRemoteDataSource,
     private val placesDAO: PlacesDAO,
+    private val database: PlaceDatabase,
     private val placesClient: Lazy<PlacesClient>
 ) : PlaceRepository {
 
@@ -33,14 +35,79 @@ class PlaceRepositoryImpl @Inject constructor(
     @RequiresPermission(Manifest.permission.ACCESS_FINE_LOCATION)
     override suspend fun addPlace(place: Place) {
         placesDAO.insertPlace(place)
+
+        try {
+            remote.uploadPlace(place)
+
+        } catch (e: Exception) {
+
+            Log.w(
+                "PlaceRepository",
+                "Unable to upload place",
+                e
+            )
+        }
     }
 
     override suspend fun deletePlace(place: Place) {
         placesDAO.deletePlace(place)
+
+        try {
+            remote.deletePlace(place.placeId)
+        } catch (e: Exception) {
+
+            Log.w(
+                "PlaceRepository",
+                "Unable to delete cloud place",
+                e
+            )
+        }
+    }
+
+    override suspend fun restorePlaces() {
+
+        try {
+
+            val cloudPlaces = remote.fetchPlaces()
+
+            if (cloudPlaces.isEmpty()) {
+
+                val localPlaces = placesDAO.getAllPlacesOnce()
+
+                localPlaces.forEach {
+                    remote.uploadPlace(it)
+                }
+
+                return
+            }
+
+            database.withTransaction {
+
+                placesDAO.clear()
+
+                placesDAO.insertPlaces(cloudPlaces)
+
+            }
+
+        } catch (e: Exception) {
+
+            Log.e("PlaceRepository", "Failed to restore places", e)
+        }
     }
 
     override suspend fun updatePlace(place: Place) {
         placesDAO.updatePlace(place)
+
+        try {
+            remote.updatePlace(place)
+        } catch (e: Exception) {
+
+            Log.w(
+                "PlaceRepository",
+                "Unable to update cloud place",
+                e
+            )
+        }
     }
 
     override fun getPlaces(): Flow<List<Place>> {
@@ -68,8 +135,7 @@ class PlaceRepositoryImpl @Inject constructor(
             }
         } catch (e: TimeoutCancellationException) {
             Resource.Error(message = "Request timed out. Check your internet connection.")
-        }
-        catch (e: CancellationException) {
+        } catch (e: CancellationException) {
             Log.i("PlacesAPI", e.message.toString())
             return Resource.Error(message = e.message ?: "no connection found")
             throw e
@@ -103,11 +169,9 @@ class PlaceRepositoryImpl @Inject constructor(
             val response = client.fetchPlace(request).await()
 
             Resource.Success(response.place)
-        }
-        catch (e: CancellationException) {
+        } catch (e: CancellationException) {
             throw e
-        }
-        catch (e: Exception){
+        } catch (e: Exception) {
             return Resource.Error(message = e.message ?: "Unable to fetch place details")
         }
     }

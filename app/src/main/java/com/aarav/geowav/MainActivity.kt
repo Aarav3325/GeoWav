@@ -228,6 +228,8 @@ class MainActivity : ComponentActivity() {
 
             LaunchedEffect(userId) {
                 if (isLoggedIn) {
+
+                    mainVM.restorePlaces()
                     mainVM.fetchUser()
                 } else {
                     mainVM.clearCurrentUser()
