@@ -17,6 +17,9 @@ interface PlaceRepository {
     )
     fun stopRealtimeSync()
 
+    suspend fun migratePlacesIfNeeded()
+
+
 
     suspend fun fetchPlace(placeId: String): Resource<com.google.android.libraries.places.api.model.Place>
     suspend fun searchPlaces(

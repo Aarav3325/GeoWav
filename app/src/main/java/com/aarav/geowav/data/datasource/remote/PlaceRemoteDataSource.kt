@@ -30,6 +30,19 @@ class PlaceRemoteDataSource @Inject constructor(
             .await()
     }
 
+    suspend fun uploadPlaces(places: List<Place>) {
+
+        val updates = hashMapOf<String, Any>()
+
+        places.forEach {
+
+            updates[it.placeId] = it
+
+        }
+
+        placeRef().updateChildren(updates).await()
+    }
+
     suspend fun updatePlace(place: Place) {
 
         placeRef()
@@ -44,6 +57,17 @@ class PlaceRemoteDataSource @Inject constructor(
             .child(placeId)
             .removeValue()
             .await()
+    }
+
+
+    suspend fun fetchPlaces(): List<Place> {
+
+        val snapshot = placeRef().get().await()
+
+        return snapshot.children.mapNotNull {
+
+            it.getValue(Place::class.java)
+        }
     }
 
 

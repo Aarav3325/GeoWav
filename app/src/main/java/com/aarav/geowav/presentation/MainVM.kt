@@ -104,11 +104,14 @@ class MainVM @Inject constructor(
 
         isSyncStarted = true
 
-        placeRepository.startRealtimeSync(
-            viewModelScope
-        )
-    }
+        viewModelScope.launch {
 
+            placeRepository.migratePlacesIfNeeded()
+
+            placeRepository.startRealtimeSync(viewModelScope)
+
+        }
+    }
     fun stopPlaceSync() {
         placeRepository.stopRealtimeSync()
 

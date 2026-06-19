@@ -38,6 +38,8 @@ class PlaceRepositoryImpl @Inject constructor(
 
     private var syncJob: Job? = null
 
+    private var initialSync = true
+
     override fun startRealtimeSync(
         scope: CoroutineScope
     ) {
@@ -50,24 +52,20 @@ class PlaceRepositoryImpl @Inject constructor(
                 .distinctUntilChanged()
                 .collectLatest { remotePlaces ->
 
-                    val localPlaces = placesDAO.getAllPlacesOnce()
+                    val localPlaces = placesDAO
+                        .getAllPlacesOnce()
+                        .sortedBy { it.placeId }
 
-                    if (localPlaces == remotePlaces) {
+                    val remoteSorted = remotePlaces
+                        .sortedBy { it.placeId }
+
+                    if (localPlaces == remoteSorted) {
                         return@collectLatest
                     }
 
-                    database.withTransaction {
-
-                        placesDAO.clear()
-
-                        placesDAO.insertPlaces(remotePlaces)
-
-                    }
-
+                    replaceRoom(remotePlaces)
                 }
-
         }
-
     }
 
     override fun stopRealtimeSync() {
@@ -181,4 +179,29 @@ class PlaceRepositoryImpl @Inject constructor(
     override suspend fun getPlaceById(placeId: String): Place? {
         return placesDAO.getPlaceById(placeId)
     }
+
+    private suspend fun replaceRoom(
+        places: List<Place>
+    ) {
+        database.withTransaction {
+
+            placesDAO.clear()
+
+            placesDAO.insertPlaces(places)
+        }
+    }
+
+    override suspend fun migratePlacesIfNeeded() {
+
+        val localPlaces = placesDAO.getAllPlacesOnce()
+
+        if (localPlaces.isEmpty()) return
+
+        val remotePlaces = remote.fetchPlaces()
+
+        if (remotePlaces.isNotEmpty()) return
+
+        remote.uploadPlaces(localPlaces)
+    }
+
 }
