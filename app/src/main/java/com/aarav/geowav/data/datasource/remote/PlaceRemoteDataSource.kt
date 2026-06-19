@@ -2,7 +2,13 @@ package com.aarav.geowav.data.datasource.remote
 
 import com.aarav.geowav.data.model.Place
 import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.database.DataSnapshot
+import com.google.firebase.database.DatabaseError
 import com.google.firebase.database.FirebaseDatabase
+import com.google.firebase.database.ValueEventListener
+import kotlinx.coroutines.channels.awaitClose
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.tasks.await
 import javax.inject.Inject
 
@@ -41,13 +47,31 @@ class PlaceRemoteDataSource @Inject constructor(
     }
 
 
-    suspend fun fetchPlaces(): List<Place> {
+    fun observePlaces(): Flow<List<Place>> = callbackFlow {
 
-        val snapshot = placeRef().get().await()
+        val listener = object : ValueEventListener {
 
-        return snapshot.children.mapNotNull {
+            override fun onDataChange(snapshot: DataSnapshot) {
 
-            it.getValue(Place::class.java)
+                val places = snapshot.children.mapNotNull {
+                    it.getValue(Place::class.java)
+                }
+
+                trySend(places)
+            }
+
+            override fun onCancelled(error: DatabaseError) {
+
+                close(error.toException())
+
+            }
+        }
+
+        placeRef().addValueEventListener(listener)
+
+        awaitClose {
+            placeRef().removeEventListener(listener)
+
         }
     }
 }

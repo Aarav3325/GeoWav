@@ -16,8 +16,13 @@ import com.google.android.libraries.places.api.net.FetchPlaceRequest
 import com.google.android.libraries.places.api.net.FindAutocompletePredictionsRequest
 import com.google.android.libraries.places.api.net.PlacesClient
 import dagger.Lazy
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.TimeoutCancellationException
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.tasks.await
 import kotlinx.coroutines.withTimeout
 import java.io.IOException
@@ -31,6 +36,44 @@ class PlaceRepositoryImpl @Inject constructor(
     private val placesClient: Lazy<PlacesClient>
 ) : PlaceRepository {
 
+    private var syncJob: Job? = null
+
+    override fun startRealtimeSync(
+        scope: CoroutineScope
+    ) {
+
+        syncJob?.cancel()
+
+        syncJob = scope.launch {
+
+            remote.observePlaces()
+                .distinctUntilChanged()
+                .collectLatest { remotePlaces ->
+
+                    val localPlaces = placesDAO.getAllPlacesOnce()
+
+                    if (localPlaces == remotePlaces) {
+                        return@collectLatest
+                    }
+
+                    database.withTransaction {
+
+                        placesDAO.clear()
+
+                        placesDAO.insertPlaces(remotePlaces)
+
+                    }
+
+                }
+
+        }
+
+    }
+
+    override fun stopRealtimeSync() {
+        syncJob?.cancel()
+        syncJob = null
+    }
 
     @RequiresPermission(Manifest.permission.ACCESS_FINE_LOCATION)
     override suspend fun addPlace(place: Place) {
@@ -42,9 +85,7 @@ class PlaceRepositoryImpl @Inject constructor(
         } catch (e: Exception) {
 
             Log.w(
-                "PlaceRepository",
-                "Unable to upload place",
-                e
+                "PlaceRepository", "Unable to upload place", e
             )
         }
     }
@@ -57,41 +98,8 @@ class PlaceRepositoryImpl @Inject constructor(
         } catch (e: Exception) {
 
             Log.w(
-                "PlaceRepository",
-                "Unable to delete cloud place",
-                e
+                "PlaceRepository", "Unable to delete cloud place", e
             )
-        }
-    }
-
-    override suspend fun restorePlaces() {
-
-        try {
-
-            val cloudPlaces = remote.fetchPlaces()
-
-            if (cloudPlaces.isEmpty()) {
-
-                val localPlaces = placesDAO.getAllPlacesOnce()
-
-                localPlaces.forEach {
-                    remote.uploadPlace(it)
-                }
-
-                return
-            }
-
-            database.withTransaction {
-
-                placesDAO.clear()
-
-                placesDAO.insertPlaces(cloudPlaces)
-
-            }
-
-        } catch (e: Exception) {
-
-            Log.e("PlaceRepository", "Failed to restore places", e)
         }
     }
 
@@ -103,9 +111,7 @@ class PlaceRepositoryImpl @Inject constructor(
         } catch (e: Exception) {
 
             Log.w(
-                "PlaceRepository",
-                "Unable to update cloud place",
-                e
+                "PlaceRepository", "Unable to update cloud place", e
             )
         }
     }
@@ -122,14 +128,10 @@ class PlaceRepositoryImpl @Inject constructor(
                 val token = AutocompleteSessionToken.newInstance()
                 val client = placesClient.get()
 
-                val request = FindAutocompletePredictionsRequest.builder()
-                    .setQuery(query)
-                    .setSessionToken(token)
-                    .build()
+                val request = FindAutocompletePredictionsRequest.builder().setQuery(query)
+                    .setSessionToken(token).build()
 
-                val response = client
-                    .findAutocompletePredictions(request)
-                    .await()
+                val response = client.findAutocompletePredictions(request).await()
 
                 Resource.Success(response.autocompletePredictions)
             }

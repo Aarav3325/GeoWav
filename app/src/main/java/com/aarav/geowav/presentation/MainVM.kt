@@ -1,25 +1,22 @@
 package com.aarav.geowav.presentation
 
 import android.content.SharedPreferences
-import android.util.Log
-import androidx.lifecycle.ViewModel
-import com.aarav.geowav.presentation.profile.ThemeMode
-import dagger.hilt.android.lifecycle.HiltViewModel
-import javax.inject.Inject
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.asStateFlow
 import androidx.core.content.edit
+import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.aarav.geowav.data.authentication.GoogleSignInClient
 import com.aarav.geowav.data.model.User
 import com.aarav.geowav.domain.repository.PaymentRepository
 import com.aarav.geowav.domain.repository.PlaceRepository
 import com.aarav.geowav.presentation.components.SnackbarManager
-import kotlinx.coroutines.flow.catch
+import com.aarav.geowav.presentation.profile.ThemeMode
+import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.distinctUntilChanged
-import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import javax.inject.Inject
 
 @HiltViewModel
 class MainVM @Inject constructor(
@@ -28,7 +25,7 @@ class MainVM @Inject constructor(
     private val googleSignInClient: GoogleSignInClient,
     private val paymentRepository: PaymentRepository,
 
-) : ViewModel() {
+    ) : ViewModel() {
 
     private val _themeMode = MutableStateFlow(loadTheme())
     val themeMode = _themeMode.asStateFlow()
@@ -37,6 +34,7 @@ class MainVM @Inject constructor(
     val currentUser = _currentUser.asStateFlow()
 
     private var restored = false
+    private var isSyncStarted = false
 
 //
 //    init {
@@ -50,13 +48,13 @@ class MainVM @Inject constructor(
             googleSignInClient.getUserIdFlow()
                 .distinctUntilChanged()
                 .collectLatest { uid ->
-                if(uid.isNotEmpty()) {
-                    paymentRepository.initializeUser(uid)
-                }
+                    if (uid.isNotEmpty()) {
+                        paymentRepository.initializeUser(uid)
+                    }
 //                else {
 //                    paymentRepository.clear()
 //                }
-            }
+                }
         }
     }
 
@@ -75,6 +73,20 @@ class MainVM @Inject constructor(
         }
     }
 
+    fun initializeUserSession() {
+        viewModelScope.launch {
+
+            launch {
+                startPlaceSync()
+            }
+
+            launch {
+                fetchUser()
+            }
+
+        }
+    }
+
     fun fetchUser() {
         viewModelScope.launch {
             val user = googleSignInClient.fetchCurrentUser()
@@ -86,14 +98,20 @@ class MainVM @Inject constructor(
         _currentUser.value = null
     }
 
+    fun startPlaceSync() {
 
-    fun restorePlaces() {
-        if (restored) return
+        if (isSyncStarted) return
 
-        restored = true
+        isSyncStarted = true
 
-        viewModelScope.launch {
-            placeRepository.restorePlaces()
-        }
+        placeRepository.startRealtimeSync(
+            viewModelScope
+        )
+    }
+
+    fun stopPlaceSync() {
+        placeRepository.stopRealtimeSync()
+
+        isSyncStarted = false
     }
 }
