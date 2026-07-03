@@ -16,6 +16,7 @@ env:
 
 jobs:
   build-test:
+    if: "!contains(github.event.head_commit.message, '[skip-build]')"
     runs-on: ubuntu-latest
     env:
       FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
@@ -92,6 +93,7 @@ jobs:
         run: |
           echo "GOOGLE_MAPS_API_KEY=${{ secrets.GOOGLE_MAPS_API_KEY }}" > local.properties
           echo "META_ACCESS_TOEKN=${{ secrets.META_ACCESS_TOEKN }}" >> local.properties
+          echo "REVENUE_CAT_API_KEY=${{ secrets.REVENUE_CAT_API_KEY }}" >> local.properties
 
       - name: Create google-services.json
         env:
