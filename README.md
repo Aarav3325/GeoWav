@@ -134,28 +134,6 @@ GeoWav is optimized for smooth real-time location experiences.
 
 ---
 
-## Getting Started
-
-### Requirements
-
-- Android Studio
-- JDK 17
-- Android SDK
-- Google Maps API Key
-- Firebase Project
-
-### Setup
-
-```bash
-git clone https://github.com/Aarav3325/GeoWav.git
-```
-
-1. Create a Firebase project.
-2. Add your `google-services.json`.
-3. Configure your Google Maps API key.
-4. Build and run the project.
-
----
 
 ## Roadmap
 
