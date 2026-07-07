@@ -1,107 +1,168 @@
 # GeoWav
 
-GeoWav is a real-time location awareness app that helps you stay connected with the people who matter most.
+GeoWav is a modern Android application for real-time location awareness that helps friends, families and trusted groups stay connected without sacrificing privacy.
 
-Built with modern Android technologies, GeoWav combines live location sharing, place awareness, movement activity tracking, and session-based location history into a privacy-focused awareness platform.
+Designed around the idea of awareness rather than surveillance, GeoWav combines live location sharing, intelligent place awareness, movement history and timeline replay into a seamless experience powered by Jetpack Compose and Firebase.
 
 ---
 
-## Core Features
-
-### Live Location Sharing
-
-* Real-time location sharing with selected circle members
-* Smooth animated location updates
-* Live path visualization on Google Maps
-* Session-based sharing controls
-* Privacy-focused audience selection
+## Features
 
 ### Place Awareness
 
-* Create awareness places using Google Places API
-* Drop custom pins anywhere on the map
-* Configurable awareness radius
-* Automatic arrival and departure detection
-* Background geofence monitoring
+- Create awareness places using Google Places or custom map locations
+- Configurable awareness radius
+- Automatic arrival and departure detection
+- Background geofence monitoring
+- Real-time place notifications
 
-### Circle Activity Feed
+### Live Location Sharing
 
-* Unified awareness timeline across your circle
-* Arrival and departure activity updates
-* People-first activity cards with member avatars
-* Activity filtering and pagination
-* Real-time awareness highlights
+- Share your location with trusted circle members in real time
+- Smooth animated location updates
+- Live route visualization on Google Maps
+- Session-based location sharing
+- Audience-controlled visibility
+- Automatic session lifecycle management
 
 ### Observe Mode
 
-* View a member's live location in real time
-* Follow movement with timeline replay
-* Path visualization and map context
-* Presence-aware member tracking
+- Watch a member's live movement in real time
+- Multi-member observe experience
+- Timeline playback with interactive controls
+- Animated avatar markers
+- Stay point visualization
+- Stable camera tracking for smoother map interaction
 
-### Session History
 
-* Automatic session recording
-* Timeline-based location history
-* Route visualization
-* Reverse geocoded addresses
-* Session duration tracking
-* Privacy-aware access control
+### Activity Feed
 
-### Emergency Sharing
+- Unified awareness feed across your circle
+- Arrival and departure events
+- Live activity updates
+- Session summaries
+- People-first activity cards
 
-* Dedicated emergency sharing mode
-* Elevated visibility for trusted contacts
-* Emergency state indicators
-* Time-bound emergency sessions
+### Session Timeline
 
----
+- Automatic movement history
+- Interactive timeline replay
+- Route visualization
+- Reverse geocoded locations
+- Stay point detection
+- Distance and duration tracking
 
-## Privacy First
+### Emergency Mode
 
-GeoWav is built around user-controlled sharing.
+- Dedicated emergency location sharing
+- High-visibility emergency indicators
+- Trusted contact notifications
+- Time-bound emergency sessions
 
-* Audience-controlled live sharing
-* Session-level visibility control
-* No retroactive access to historical sessions
-* Privacy-preserving location history
-* Explicit sharing relationships
+### Privacy Controls
+
+- Share only with selected people
+- Session-level visibility
+- User-controlled location sharing
+- No retroactive access to previous sessions
+- Privacy-first architecture
 
 ---
 
 ## Architecture
 
-* MVVM Architecture
-* Clean Architecture principles
-* Repository Pattern
-* StateFlow-based state management
-* Firebase Realtime Database
-* Reactive location and awareness systems
+GeoWav follows modern Android development practices.
+
+- MVVM Architecture
+- Clean Architecture
+- Repository Pattern
+- StateFlow & Kotlin Flow
+- Dependency Injection with Hilt
+- Reactive UI with Jetpack Compose
+- Modular and scalable project structure
 
 ---
 
 ## Tech Stack
 
-* Kotlin
-* Jetpack Compose
-* Google Maps Compose
-* Firebase Realtime Database
-* Coroutines & Flow
-* Hilt
-* Google Places API
-* Android Geofencing API
-* WorkManager
-* Geocoder API
+### Android
+
+- Kotlin
+- Jetpack Compose
+- Material 3
+- Navigation Compose
+- Coroutines
+- StateFlow
+- Hilt
+- WorkManager
+
+### Maps & Location
+
+- Google Maps Compose
+- Google Maps SDK
+- Google Places API
+- Android Geofencing API
+- Fused Location Provider
+- Geocoder API
+
+### Backend
+
+- Firebase Authentication
+- Firebase Realtime Database
+- Firebase Cloud Messaging
+
+### Libraries
+
+- Coil
+- Kotlin Serialization
+- RevenueCat
+- Timber
 
 ---
 
-## Future Improvements
+## Performance Optimizations
 
-* Offline-first architecture
-* Presence reliability indicators
-* Enhanced route analytics
-* Circle insights and statistics
-* Additional awareness automation
+GeoWav is optimized for smooth real-time location experiences.
+
+- Animated marker interpolation
+- Stable camera updates
+- Marker bitmap caching
+- Reduced unnecessary recompositions
+- Optimized Firebase synchronization
+- Efficient StateFlow-based UI updates
+- Smart location update handling
+
+---
+
+## Getting Started
+
+### Requirements
+
+- Android Studio
+- JDK 17
+- Android SDK
+- Google Maps API Key
+- Firebase Project
+
+### Setup
+
+```bash
+git clone https://github.com/Aarav3325/GeoWav.git
+```
+
+1. Create a Firebase project.
+2. Add your `google-services.json`.
+3. Configure your Google Maps API key.
+4. Build and run the project.
+
+---
+
+## Roadmap
+
+- Offline-first support
+- Battery optimization improvements
+- Enhanced place intelligence
+- Richer movement insights
 
 ---
 
@@ -109,5 +170,6 @@ GeoWav is built around user-controlled sharing.
 
 **Aarav Halvadiya**
 
-* GitHub: https://github.com/Aarav3325
-* LinkedIn: https://www.linkedin.com/in/aaravhalvadiya
+GitHub: https://github.com/Aarav3325
+
+LinkedIn: https://www.linkedin.com/in/aaravhalvadiya
