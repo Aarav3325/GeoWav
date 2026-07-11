@@ -1,34 +1,28 @@
 package com.aarav.geowav.presentation.navigation
 
-import android.util.Log
-import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.animateFloatAsState
-import androidx.compose.animation.expandHorizontally
-import androidx.compose.animation.expandVertically
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
-import androidx.compose.animation.shrinkHorizontally
-import androidx.compose.animation.shrinkVertically
+import androidx.compose.animation.core.spring
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.defaultMinSize
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.navigationBarsPadding
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.layout.wrapContentSize
-import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -44,40 +38,32 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.compose.currentBackStackEntryAsState
-import com.aarav.geowav.R
 import com.aarav.geowav.presentation.theme.manrope
-import com.aarav.geowav.presentation.theme.sora
 
 @Composable
 fun BottomNavigationBar(
-    navController: NavController, modifier: Modifier = Modifier
+    navController: NavController,
+    modifier: Modifier = Modifier
 ) {
-
     val navBackStackEntry by navController.currentBackStackEntryAsState()
-
     val currentRoute = navBackStackEntry?.destination?.route
-
-
-    val navItems =
-        listOf(NavItem.Home, NavItem.LocationSharing, NavItem.Activity, NavItem.YourPlaces)
-
+    val navItems = listOf(NavItem.Home, NavItem.LocationSharing, NavItem.Activity, NavItem.YourPlaces)
 
     NavigationBar(
         modifier = modifier,
         containerColor = MaterialTheme.colorScheme.surfaceContainer,
         tonalElevation = 8.dp,
     ) {
-
-
-        navItems.forEachIndexed { index, destination ->
+        navItems.forEach { destination ->
             val isSelected = currentRoute?.startsWith(destination.path) == true
 
             NavigationBarItem(
@@ -91,13 +77,12 @@ fun BottomNavigationBar(
                                 saveState = true
                             }
                         }
-
                     }
                 },
                 icon = {
                     Icon(
                         painter = painterResource(destination.icon),
-                        contentDescription = "icon",
+                        contentDescription = destination.name,
                         modifier = Modifier.size(24.dp)
                     )
                 },
@@ -123,6 +108,7 @@ fun CustomBottomNavigationBar(
 ) {
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = navBackStackEntry?.destination?.route
+    val colorScheme = MaterialTheme.colorScheme
 
     val navItems = remember {
         listOf(
@@ -132,48 +118,105 @@ fun CustomBottomNavigationBar(
             NavItem.YourPlaces
         )
     }
+    val selectedIndex = navItems.indexOfFirst { item ->
+        currentRoute?.startsWith(item.path) == true
+    }.coerceAtLeast(0)
+    val barShape = RoundedCornerShape(34.dp)
 
     Surface(
         modifier = modifier
             .navigationBarsPadding()
-            .wrapContentWidth()
-            .height(90.dp)
+            .fillMaxWidth()
+            .height(96.dp)
             .padding(start = 16.dp, top = 8.dp, end = 16.dp, bottom = 16.dp),
-        shape = RoundedCornerShape(40.dp),
-        color = MaterialTheme.colorScheme.surfaceContainer,
+        shape = barShape,
+        color = Color.Transparent,
+        tonalElevation = 0.dp,
+        shadowElevation = 22.dp,
+        border = BorderStroke(
+            width = 1.dp,
+            brush = Brush.verticalGradient(
+                colors = listOf(
+                    Color.White.copy(alpha = 0.46f),
+                    colorScheme.outlineVariant.copy(alpha = 0.26f),
+                    colorScheme.primary.copy(alpha = 0.16f)
+                )
+            )
+        )
     ) {
-        Row(
+        BoxWithConstraints(
             modifier = Modifier
-                .fillMaxWidth()
-                .padding(3.dp),
-            verticalAlignment = Alignment.CenterVertically
+                .fillMaxSize()
+                .clip(barShape)
+                .background(
+                    Brush.verticalGradient(
+                        colors = listOf(
+                            colorScheme.surfaceBright.copy(alpha = 0.88f),
+                            colorScheme.surfaceContainer.copy(alpha = 0.78f),
+                            colorScheme.surfaceContainerLow.copy(alpha = 0.70f)
+                        )
+                    )
+                )
+                .background(
+                    Brush.horizontalGradient(
+                        colors = listOf(
+                            colorScheme.primary.copy(alpha = 0.10f),
+                            Color.Transparent,
+                            colorScheme.secondary.copy(alpha = 0.08f)
+                        )
+                    )
+                )
+                .padding(4.dp)
         ) {
+            val itemWidth = maxWidth / navItems.size
+            val indicatorOffset by animateDpAsState(
+                targetValue = itemWidth * selectedIndex,
+                animationSpec = spring(
+                    dampingRatio = 0.76f,
+                    stiffness = 420f
+                ),
+                label = "bottomNavIndicatorOffset"
+            )
 
-            navItems.forEach { item ->
+            Box(
+                modifier = Modifier
+                    .offset(x = indicatorOffset)
+                    .width(itemWidth)
+                    .fillMaxHeight()
+                    .padding(2.dp)
+                    .clip(RoundedCornerShape(30.dp))
+                    .background(colorScheme.primaryContainer.copy(alpha = 0.74f))
+            )
 
-                val selected =
-                    currentRoute?.startsWith(item.path) == true
+            Row(
+                modifier = Modifier.fillMaxSize(),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                navItems.forEach { item ->
+                    val selected = currentRoute?.startsWith(item.path) == true
 
+                    CustomBottomNavItem(
+                        navItem = item,
+                        selected = selected,
+                        modifier = Modifier
+                            .fillMaxHeight()
+                            .weight(1f),
+                        onClick = {
+                            if (currentRoute != item.path) {
+                                navController.navigate(item.path) {
+                                    launchSingleTop = true
+                                    restoreState = true
 
-                CustomBottomNavItem(
-                    navItem = item,
-                    selected = selected,
-                    modifier = Modifier.padding(2.dp).weight(1f),
-                    onClick = {
-                        if (currentRoute != item.path) {
-                            navController.navigate(item.path) {
-                                launchSingleTop = true
-                                restoreState = true
-
-                                popUpTo(
-                                    navController.graph.findStartDestination().id
-                                ) {
-                                    saveState = true
+                                    popUpTo(
+                                        navController.graph.findStartDestination().id
+                                    ) {
+                                        saveState = true
+                                    }
                                 }
                             }
                         }
-                    }
-                )
+                    )
+                }
             }
         }
     }
@@ -186,67 +229,71 @@ fun CustomBottomNavItem(
     onClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-
-    val backgroundColor by animateColorAsState(
-        targetValue = if (selected) {
-            MaterialTheme.colorScheme.surfaceBright.copy(0.8f)
-        } else {
-            Color.Transparent
-        },
-        label = ""
-    )
-
     val contentColor by animateColorAsState(
         targetValue = if (selected) {
-            MaterialTheme.colorScheme.primary
+            MaterialTheme.colorScheme.onPrimaryContainer
         } else {
-            MaterialTheme.colorScheme.onSurfaceVariant
+            MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.78f)
         },
-        label = ""
+        label = "bottomNavContentColor"
+    )
+    val iconScale by animateFloatAsState(
+        targetValue = if (selected) 1.08f else 0.96f,
+        animationSpec = spring(dampingRatio = 0.78f, stiffness = 520f),
+        label = "bottomNavIconScale"
+    )
+    val itemAlpha by animateFloatAsState(
+        targetValue = if (selected) 1f else 0.72f,
+        animationSpec = spring(dampingRatio = 0.9f, stiffness = 500f),
+        label = "bottomNavItemAlpha"
+    )
+    val labelOffset by animateDpAsState(
+        targetValue = if (selected) 0.dp else 2.dp,
+        animationSpec = spring(dampingRatio = 0.8f, stiffness = 520f),
+        label = "bottomNavLabelOffset"
     )
 
-    Surface(
+    Box(
         modifier = modifier
-            .fillMaxHeight()
-            .clip(RoundedCornerShape(32.dp))
+            .clip(RoundedCornerShape(30.dp))
             .clickable(
-            interactionSource = remember { MutableInteractionSource() },
-            indication = ripple(),
-            onClick = onClick
-        ),
-        shape = RoundedCornerShape(32.dp),
-        color = backgroundColor
+                interactionSource = remember { MutableInteractionSource() },
+                indication = ripple(bounded = true),
+                onClick = onClick
+            )
     ) {
-
         Column(
-            modifier = Modifier.fillMaxSize(),
+            modifier = Modifier
+                .fillMaxSize()
+                .graphicsLayer {
+                    alpha = itemAlpha
+                },
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center
         ) {
-
             Icon(
                 painter = painterResource(navItem.icon),
                 contentDescription = navItem.name,
                 tint = contentColor,
-                modifier = Modifier.size(24.dp)
+                modifier = Modifier
+                    .size(24.dp)
+                    .graphicsLayer {
+                        scaleX = iconScale
+                        scaleY = iconScale
+                        translationY = if (selected) -1.5f else 0f
+                    }
             )
-
-//            AnimatedVisibility(
-//                visible = selected,
-//                enter = fadeIn() + expandVertically(),
-//                exit = fadeOut() + shrinkVertically()
-//            ) {
 
             Spacer(Modifier.height(2.dp))
 
-                Text(
-                    text = navItem.name,
-                    color = contentColor,
-                    fontFamily = manrope,
-                    fontWeight = FontWeight.SemiBold,
-                    style = MaterialTheme.typography.labelMedium
-                )
-           // }
+            Text(
+                text = navItem.name,
+                color = contentColor,
+                fontFamily = manrope,
+                fontWeight = if (selected) FontWeight.Bold else FontWeight.SemiBold,
+                style = MaterialTheme.typography.labelMedium,
+                modifier = Modifier.offset(y = labelOffset)
+            )
         }
     }
 }
