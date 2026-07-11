@@ -132,7 +132,7 @@ fun CustomBottomNavigationBar(
         shape = barShape,
         color = Color.Transparent,
         tonalElevation = 0.dp,
-        shadowElevation = 22.dp,
+        shadowElevation = 0.dp,
         border = BorderStroke(
             width = 1.dp,
             brush = Brush.verticalGradient(
@@ -233,7 +233,7 @@ fun CustomBottomNavItem(
         targetValue = if (selected) {
             MaterialTheme.colorScheme.onPrimaryContainer
         } else {
-            MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.78f)
+            MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.86f)
         },
         label = "bottomNavContentColor"
     )
@@ -243,7 +243,7 @@ fun CustomBottomNavItem(
         label = "bottomNavIconScale"
     )
     val itemAlpha by animateFloatAsState(
-        targetValue = if (selected) 1f else 0.72f,
+        targetValue = if (selected) 1f else 0.86f,
         animationSpec = spring(dampingRatio = 0.9f, stiffness = 500f),
         label = "bottomNavItemAlpha"
     )
@@ -257,8 +257,8 @@ fun CustomBottomNavItem(
         modifier = modifier
             .clip(RoundedCornerShape(30.dp))
             .clickable(
-                interactionSource = remember { MutableInteractionSource() },
-                indication = ripple(bounded = true),
+                interactionSource = null,
+                indication = null,
                 onClick = onClick
             )
     ) {
