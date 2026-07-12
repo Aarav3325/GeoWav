@@ -1,20 +1,18 @@
 package com.aarav.geowav.presentation.auth
 
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.TextFieldDefaults
+import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
 
 @Composable
-internal fun authTextFieldColors() = TextFieldDefaults.colors(
-    focusedContainerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
-    unfocusedContainerColor = MaterialTheme.colorScheme.surfaceContainer,
-    errorContainerColor = MaterialTheme.colorScheme.surfaceContainer,
-    disabledContainerColor = MaterialTheme.colorScheme.surfaceContainerLow,
-    focusedIndicatorColor = MaterialTheme.colorScheme.primary,
-    unfocusedIndicatorColor = MaterialTheme.colorScheme.outlineVariant,
-    errorIndicatorColor = MaterialTheme.colorScheme.error,
-    disabledIndicatorColor = Color.Transparent,
+internal fun authTextFieldColors() = OutlinedTextFieldDefaults.colors(
+    focusedContainerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.55f),
+    unfocusedContainerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.35f),
+    errorContainerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.35f),
+    focusedBorderColor = MaterialTheme.colorScheme.primary,
+    unfocusedBorderColor = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.8f),
+    errorBorderColor = MaterialTheme.colorScheme.error,
     focusedLabelColor = MaterialTheme.colorScheme.primary,
     unfocusedLabelColor = MaterialTheme.colorScheme.onSurfaceVariant,
     errorLabelColor = MaterialTheme.colorScheme.error,

@@ -33,7 +33,7 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
-import androidx.compose.material3.TextField
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -206,7 +206,7 @@ fun SignupScreen(
                 Spacer(modifier = Modifier.height(12.dp))
             }
 
-            TextField(
+            OutlinedTextField(
                 value = uiState.username,
                 onValueChange = { signUpVM.updateUsername(it) },
                 label = {
@@ -225,8 +225,8 @@ fun SignupScreen(
                 },
                 enabled = !uiState.isLoading,
                 isError = uiState.usernameError != null,
-                supportingText = {
-                    if (uiState.usernameError != null) {
+                supportingText = if (uiState.usernameError != null) {
+                    {
                         Text(
                             text = uiState.usernameError.toString(),
                             style = TextStyle(
@@ -237,7 +237,7 @@ fun SignupScreen(
                             )
                         )
                     }
-                },
+                } else null,
                 keyboardOptions = KeyboardOptions(
                     keyboardType = KeyboardType.Text,
                     imeAction = ImeAction.Next
@@ -250,12 +250,12 @@ fun SignupScreen(
                     .padding(horizontal = 24.dp),
                 singleLine = true,
                 colors = authTextFieldColors(),
-                shape = RoundedCornerShape(12.dp)
+                shape = RoundedCornerShape(16.dp)
             )
 
-            Spacer(modifier = Modifier.height(12.dp))
+            Spacer(modifier = Modifier.height(8.dp))
 
-            TextField(
+            OutlinedTextField(
                 value = uiState.email,
                 onValueChange = { signUpVM.updateEmail(it) },
                 label = {
@@ -274,8 +274,8 @@ fun SignupScreen(
                 },
                 enabled = !uiState.isLoading,
                 isError = uiState.emailError != null,
-                supportingText = {
-                    if (uiState.emailError != null) {
+                supportingText = if (uiState.emailError != null) {
+                    {
                         Text(
                             text = uiState.emailError.toString(),
                             style = TextStyle(
@@ -286,7 +286,7 @@ fun SignupScreen(
                             )
                         )
                     }
-                },
+                } else null,
                 keyboardOptions = KeyboardOptions(
                     keyboardType = KeyboardType.Email,
                     imeAction = ImeAction.Next
@@ -300,12 +300,12 @@ fun SignupScreen(
                     .padding(horizontal = 24.dp),
                 singleLine = true,
                 colors = authTextFieldColors(),
-                shape = RoundedCornerShape(12.dp)
+                shape = RoundedCornerShape(16.dp)
             )
 
-            Spacer(modifier = Modifier.height(12.dp))
+            Spacer(modifier = Modifier.height(8.dp))
 
-            TextField(
+            OutlinedTextField(
                 value = uiState.password,
                 onValueChange = { signUpVM.updatePassword(it) },
                 enabled = !uiState.isLoading,
@@ -355,8 +355,8 @@ fun SignupScreen(
                     )
                 },
                 isError = uiState.passwordError != null,
-                supportingText = {
-                    if (uiState.passwordError != null) {
+                supportingText = if (uiState.passwordError != null) {
+                    {
                         Text(
                             text = uiState.passwordError.toString(),
                             style = TextStyle(
@@ -367,7 +367,7 @@ fun SignupScreen(
                             )
                         )
                     }
-                },
+                } else null,
                 modifier = Modifier
                     .fillMaxWidth()
                     .focusRequester(passwordFocusRequester)
@@ -388,11 +388,10 @@ fun SignupScreen(
                     }
                 ),
                 colors = authTextFieldColors(),
-                shape = RoundedCornerShape(12.dp)
+                shape = RoundedCornerShape(16.dp)
             )
 
-
-            Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(24.dp))
 
 
             Button(
@@ -438,7 +437,7 @@ fun SignupScreen(
                 modifier = Modifier.padding(horizontal = 24.dp)
             )
 
-            Spacer(modifier = Modifier.height(12.dp))
+            Spacer(modifier = Modifier.height(6.dp))
 
             Row(
                 verticalAlignment = Alignment.CenterVertically,

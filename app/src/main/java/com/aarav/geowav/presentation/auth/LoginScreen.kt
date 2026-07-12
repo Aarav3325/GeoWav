@@ -35,7 +35,7 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
-import androidx.compose.material3.TextField
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -211,7 +211,7 @@ fun LoginScreen(
             }
 
 
-            TextField(
+            OutlinedTextField(
                 value = uiState.email, onValueChange = { loginVM.updateEmail(it) }, label = {
                     Text(
                         "Email",
@@ -221,8 +221,8 @@ fun LoginScreen(
                 },
                 enabled = !uiState.isLoading,
                 isError = uiState.emailError != null,
-                supportingText = {
-                    if (uiState.emailError != null) {
+                supportingText = if (uiState.emailError != null) {
+                    {
                         Text(
                             text = uiState.emailError.toString(),
                             style = TextStyle(
@@ -233,7 +233,7 @@ fun LoginScreen(
                             )
                         )
                     }
-                },
+                } else null,
                 keyboardOptions = KeyboardOptions(
                     keyboardType = KeyboardType.Email,
                     imeAction = ImeAction.Next
@@ -249,12 +249,12 @@ fun LoginScreen(
                         contentDescription = "email icon",
                         modifier = Modifier.size(24.dp)
                     )
-                }, colors = authTextFieldColors(), shape = RoundedCornerShape(12.dp)
+                }, colors = authTextFieldColors(), shape = RoundedCornerShape(16.dp)
             )
 
-            Spacer(modifier = Modifier.height(12.dp))
+            Spacer(modifier = Modifier.height(8.dp))
 
-            TextField(
+            OutlinedTextField(
                 value = uiState.password,
                 onValueChange = { loginVM.updatePassword(it) },
                 enabled = !uiState.isLoading,
@@ -297,8 +297,8 @@ fun LoginScreen(
                     )
                 },
                 isError = uiState.passwordError != null,
-                supportingText = {
-                    if (uiState.passwordError != null) {
+                supportingText = if (uiState.passwordError != null) {
+                    {
                         Text(
                             text = uiState.passwordError.toString(),
                             style = TextStyle(
@@ -309,7 +309,7 @@ fun LoginScreen(
                             )
                         )
                     }
-                },
+                } else null,
                 keyboardOptions = KeyboardOptions(
                     keyboardType = KeyboardType.Password,
                     imeAction = ImeAction.Done
@@ -335,12 +335,10 @@ fun LoginScreen(
                 },
                 singleLine = true,
                 colors = authTextFieldColors(),
-                shape = RoundedCornerShape(12.dp)
+                shape = RoundedCornerShape(16.dp)
             )
 
-            Spacer(modifier = Modifier.height(16.dp))
-
-
+            Spacer(modifier = Modifier.height(24.dp))
 
             Button(
                 onClick = {
@@ -384,7 +382,7 @@ fun LoginScreen(
                 modifier = Modifier.padding(horizontal = 24.dp)
             )
 
-            Spacer(modifier = Modifier.height(12.dp))
+            Spacer(modifier = Modifier.height(6.dp))
 
             Row(
                 verticalAlignment = Alignment.CenterVertically,
