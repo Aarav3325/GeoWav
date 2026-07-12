@@ -18,11 +18,12 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
+
 @HiltViewModel
 class ActivityViewModel
 @Inject constructor(
     private val circleActivityFeedRepository: CircleActivityFeedRepository,
-    googleSignInClient: GoogleSignInClient
+    googleSignInClient: GoogleSignInClient,
 ) : ViewModel() {
     private val _uiState = MutableStateFlow(ActivityUiState())
     val uiState: StateFlow<ActivityUiState> = _uiState.asStateFlow()

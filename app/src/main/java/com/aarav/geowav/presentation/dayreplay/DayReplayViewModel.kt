@@ -17,7 +17,7 @@ import javax.inject.Inject
 
 @HiltViewModel
 class DayReplayViewModel @Inject constructor(
-    private val dayReplayRepository: DayReplayRepository
+    private val dayReplayRepository: DayReplayRepository,
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(DayReplayUiState())
@@ -27,6 +27,7 @@ class DayReplayViewModel @Inject constructor(
         val today = LocalDate.now(ZoneId.of("Asia/Kolkata"))
         val dateList = (0..29).map { today.minusDays(it.toLong()) }.reversed()
         _uiState.update { it.copy(dates = dateList, selectedDate = today) }
+
 
         viewModelScope.launch {
             dayReplayRepository.observeDayReplays().collectLatest { replays ->
@@ -66,5 +67,6 @@ data class DayReplayUiState(
     val dayReplays: Map<LocalDate, DayReplay> = emptyMap(),
     val selectedDate: LocalDate = LocalDate.now(ZoneId.of("Asia/Kolkata")),
     val expandedStopIds: Set<String> = emptySet(),
-    val dates: List<LocalDate> = emptyList()
+    val dates: List<LocalDate> = emptyList(),
+    val error: String? = null
 )

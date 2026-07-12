@@ -4,6 +4,7 @@ import android.content.SharedPreferences
 import androidx.core.content.edit
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.aarav.geowav.core.utils.NetworkConnectivityObserver
 import com.aarav.geowav.data.authentication.GoogleSignInClient
 import com.aarav.geowav.data.model.User
 import com.aarav.geowav.domain.repository.PaymentRepository
@@ -12,9 +13,12 @@ import com.aarav.geowav.presentation.components.SnackbarManager
 import com.aarav.geowav.presentation.profile.ThemeMode
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
@@ -24,8 +28,12 @@ class MainVM @Inject constructor(
     private val placeRepository: PlaceRepository,
     private val googleSignInClient: GoogleSignInClient,
     private val paymentRepository: PaymentRepository,
+    private val networkConnectivityObserver: NetworkConnectivityObserver
+) : ViewModel() {
 
-    ) : ViewModel() {
+    /** Global connectivity state — the single collector in the entire app. */
+    val isOnline: StateFlow<Boolean> = networkConnectivityObserver.isOnlineFlow
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), true)
 
     private val _themeMode = MutableStateFlow(loadTheme())
     val themeMode = _themeMode.asStateFlow()

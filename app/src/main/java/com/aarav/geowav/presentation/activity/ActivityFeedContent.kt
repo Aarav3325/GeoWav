@@ -30,6 +30,7 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import com.aarav.geowav.presentation.components.AppStateView
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
@@ -58,7 +59,8 @@ fun ActivityContent(
     isDarkThemeEnabled: Boolean,
     currentUserId: String,
     uiState: ActivityUiState,
-    onLoadMore: () -> Unit
+    onLoadMore: () -> Unit,
+    onRetry: () -> Unit
 ) {
     Box(
         modifier = Modifier.fillMaxSize(),
@@ -70,7 +72,7 @@ fun ActivityContent(
             }
 
             uiState.error != null -> {
-                ActivityErrorState(error = uiState.error)
+                ActivityErrorState(error = uiState.error, onRetry = onRetry)
             }
 
             uiState.activities.isEmpty() -> {
@@ -116,25 +118,15 @@ private fun ActivityLoadingState() {
 }
 
 @Composable
-private fun ActivityErrorState(error: String) {
-    Column(
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.spacedBy(8.dp),
-        modifier = Modifier.fillMaxWidth()
-    ) {
-        Text(
-            text = "Something went wrong",
-            style = MaterialTheme.typography.bodyLarge.copy(
-                fontWeight = FontWeight.SemiBold
-            ),
-            color = MaterialTheme.colorScheme.error
-        )
-        Text(
-            text = error,
-            style = MaterialTheme.typography.bodySmall,
-            color = MaterialTheme.colorScheme.onBackground
-        )
-    }
+private fun ActivityErrorState(error: String, onRetry: () -> Unit) {
+    val isNoInternet = error.contains("internet", ignoreCase = true)
+    AppStateView(
+        iconRes = if (isNoInternet) R.drawable.link_break else null,
+        title = if (isNoInternet) "No internet connection" else "Couldn't load activity feed",
+        description = if (isNoInternet) "Please check your network settings and try again." else error,
+        primaryCtaText = "Retry",
+        onPrimaryCtaClick = onRetry
+    )
 }
 
 @Composable

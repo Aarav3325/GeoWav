@@ -22,7 +22,7 @@ import javax.inject.Inject
 class TimelineViewModel
 @Inject constructor(
     val googleSignInClient: GoogleSignInClient,
-    val sessionHistoryRepository: SessionHistoryRepository
+    val sessionHistoryRepository: SessionHistoryRepository,
 ) : ViewModel() {
 
 
@@ -32,6 +32,8 @@ class TimelineViewModel
     val currentUserId = googleSignInClient.getUserId()
 
     private var observeJob: Job? = null
+
+
 
 
     fun getMySessions(
@@ -125,5 +127,6 @@ data class TimelineUiState(
     val sessions: List<TimelineItem> = emptyList(),
     val mySessions: List<TimelineItem> = emptyList(),
     val showDatePicker: Boolean = false,
-    val currentFilter: ActivityFilter = ActivityFilter.Today
+    val currentFilter: ActivityFilter = ActivityFilter.Today,
+    val error: String? = null
 )

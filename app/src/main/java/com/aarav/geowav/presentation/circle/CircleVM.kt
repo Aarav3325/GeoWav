@@ -24,13 +24,16 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
+
 @HiltViewModel
 class CircleVM
 @Inject constructor(
     val circleRepository: CircleRepository,
     val firebaseAuth: FirebaseAuth,
-    val googleSignInClient: GoogleSignInClient
+    val googleSignInClient: GoogleSignInClient,
 ) : ViewModel() {
+
+
 
     private val currentUserId: String
         get() = firebaseAuth.currentUser?.uid.orEmpty()

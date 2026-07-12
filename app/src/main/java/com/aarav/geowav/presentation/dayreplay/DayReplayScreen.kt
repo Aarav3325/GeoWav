@@ -43,6 +43,7 @@ import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
+import com.aarav.geowav.presentation.components.AppStateView
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -183,7 +184,19 @@ fun DayReplayTabContent(
                 }
             }
 
-            if (uiState.isLoading) {
+            val error = uiState.error
+            if (error != null) {
+                val isNoInternet = error.contains("internet", ignoreCase = true)
+                AppStateView(
+                    iconRes = if (isNoInternet) R.drawable.link_break else null,
+                    title = if (isNoInternet) "No internet connection" else "Couldn't load replay",
+                    description = if (isNoInternet) "Please check your network settings and try again." else error,
+                    primaryCtaText = "Retry",
+                    onPrimaryCtaClick = {
+                        viewModel.selectDate(uiState.selectedDate)
+                    }
+                )
+            } else if (uiState.isLoading) {
                 Column(
                     modifier = Modifier.fillMaxSize(),
                     horizontalAlignment = Alignment.CenterHorizontally,

@@ -38,6 +38,7 @@ import androidx.compose.material3.ToggleButtonDefaults
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import com.aarav.geowav.presentation.components.AppStateView
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -229,6 +230,20 @@ fun TimelineScreen(
             }
 
             when {
+                uiState.error != null -> {
+                    val isNoInternet = uiState.error!!.contains("internet", ignoreCase = true)
+                    AppStateView(
+                        iconRes = if (isNoInternet) R.drawable.link_break else null,
+                        title = if (isNoInternet) "No internet connection" else "Couldn't load timeline",
+                        description = if (isNoInternet) "Please check your network settings and try again." else uiState.error!!,
+                        primaryCtaText = "Retry",
+                        onPrimaryCtaClick = {
+                            timelineViewModel.observeForFilter(uiState.currentFilter, userId, plan)
+                            timelineViewModel.getMySessions(uiState.currentFilter, plan)
+                        }
+                    )
+                }
+
                 uiState.isLoading -> {
                     Column(
                         modifier = Modifier.fillMaxSize(),

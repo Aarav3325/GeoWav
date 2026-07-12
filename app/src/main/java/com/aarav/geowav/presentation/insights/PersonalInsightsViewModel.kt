@@ -19,9 +19,10 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
+
 @HiltViewModel
 class PersonalInsightsViewModel @Inject constructor(
-    private val geoActivityRepository: GeoActivityRepository
+    private val geoActivityRepository: GeoActivityRepository,
 ) : ViewModel() {
     private val _uiState = MutableStateFlow(PersonalInsightsUiState())
     val uiState: StateFlow<PersonalInsightsUiState> = _uiState.asStateFlow()
