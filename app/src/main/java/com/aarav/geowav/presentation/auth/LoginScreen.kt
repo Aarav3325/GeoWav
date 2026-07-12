@@ -1,6 +1,7 @@
 package com.aarav.geowav.presentation.auth
 
 import android.app.Activity
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -8,6 +9,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -15,6 +17,7 @@ import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardActions
@@ -44,6 +47,7 @@ import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.res.painterResource
@@ -94,53 +98,59 @@ fun LoginScreen(
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(24.dp)
                 .imePadding()
                 .verticalScroll(rememberScrollState()),
-            verticalArrangement = Arrangement.Center,
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            // Logo or App Name
-            Text(
-                text = "GeoWav",
-                fontSize = 36.sp,
-                fontWeight = FontWeight.ExtraBold,
-                fontFamily = manrope,
-                color = MaterialTheme.colorScheme.onBackground
-            )
 
-            Spacer(modifier = Modifier.height(8.dp))
+            Box(
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Image(
+                    painter = painterResource(R.drawable.prism),
+                    contentDescription = "bg",
+                    contentScale = ContentScale.FillBounds,
+                    modifier = Modifier.matchParentSize()
+                )
 
-            Text(
-                text = "Sign in to keep trusted movement sharing within reach.",
-                fontSize = 15.sp,
-                fontFamily = manrope,
-                fontWeight = FontWeight.Medium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                textAlign = TextAlign.Center
-            )
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(start = 24.dp, end = 24.dp, top = 128.dp, bottom = 36.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    // Logo or App Name
+                    Text(
+                        text = "GeoWav",
+                        fontSize = 36.sp,
+                        fontWeight = FontWeight.ExtraBold,
+                        fontFamily = manrope,
+                        color = Color(0xFF111111)
+                    )
 
-            Spacer(modifier = Modifier.height(12.dp))
+                    Spacer(modifier = Modifier.height(8.dp))
 
-            Text(
-                text = "Your location stays private until you choose to share it.",
-                fontSize = 13.sp,
-                lineHeight = 18.sp,
-                fontFamily = manrope,
-                fontWeight = FontWeight.Normal,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                textAlign = TextAlign.Center,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 12.dp)
-            )
+                    Text(
+                        text = "Sign in to keep trusted movement sharing within reach.",
+                        fontSize = 15.sp,
+                        fontFamily = manrope,
+                        fontWeight = FontWeight.SemiBold,
+                        color = Color(0xFF1F1F1F),
+                        textAlign = TextAlign.Center
+                    )
+
+                }
+            }
 
             Spacer(modifier = Modifier.height(32.dp))
+
+
 
             // Google Login Button
             Card(
                 modifier = Modifier
                     .fillMaxWidth()
+                    .padding(horizontal = 24.dp)
                     .height(56.dp)
                     .alpha(if (uiState.isLoading) 0.64f else 1f)
                     .clickable(enabled = !uiState.isLoading) {
@@ -183,7 +193,8 @@ fun LoginScreen(
                 fontSize = 14.sp,
                 fontWeight = FontWeight.Medium,
                 fontFamily = manrope,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.padding(horizontal = 24.dp)
             )
 
             Spacer(modifier = Modifier.height(16.dp))
@@ -191,7 +202,8 @@ fun LoginScreen(
             AuthErrorMessage(
                 visible = uiState.showErrorDialog,
                 message = uiState.error ?: "An unknown error occurred",
-                onDismiss = { loginVM.clearError() }
+                onDismiss = { loginVM.clearError() },
+                modifier = Modifier.padding(horizontal = 24.dp)
             )
 
             if (uiState.showErrorDialog) {
@@ -231,7 +243,7 @@ fun LoginScreen(
                 ),
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(), singleLine = true, leadingIcon = {
+                    .padding(horizontal = 24.dp), singleLine = true, leadingIcon = {
                     Icon(
                         painter = painterResource(R.drawable.email),
                         contentDescription = "email icon",
@@ -313,7 +325,7 @@ fun LoginScreen(
                 modifier = Modifier
                     .fillMaxWidth()
                     .focusRequester(passwordFocusRequester)
-                    .padding(),
+                    .padding(horizontal = 24.dp),
                 leadingIcon = {
                     Icon(
                         painter = painterResource(R.drawable.password),
@@ -341,6 +353,7 @@ fun LoginScreen(
                 enabled = !uiState.isLoading,
                 modifier = Modifier
                     .fillMaxWidth()
+                    .padding(horizontal = 24.dp)
                     .height(52.dp),
                 shape = RoundedCornerShape(14.dp),
                 colors = ButtonDefaults.buttonColors(
@@ -367,14 +380,18 @@ fun LoginScreen(
 
             AuthLoadingNote(
                 visible = uiState.isLoading,
-                text = "Checking your sign-in securely..."
+                text = "Checking your sign-in securely...",
+                modifier = Modifier.padding(horizontal = 24.dp)
             )
 
             Spacer(modifier = Modifier.height(12.dp))
 
             Row(
                 verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.Center
+                horizontalArrangement = Arrangement.Center,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 24.dp)
             ) {
 
                 Text(

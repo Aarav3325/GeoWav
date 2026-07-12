@@ -1,6 +1,7 @@
 package com.aarav.geowav.presentation.auth
 
 import android.app.Activity
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -44,6 +45,7 @@ import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.res.painterResource
@@ -96,45 +98,47 @@ fun SignupScreen(
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(24.dp)
                 .imePadding()
                 .verticalScroll(rememberScrollState()),
-            verticalArrangement = Arrangement.Center,
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            Text(
-                text = "GeoWav",
-                fontSize = 36.sp,
-                fontWeight = FontWeight.ExtraBold,
-                fontFamily = manrope,
-                color = MaterialTheme.colorScheme.onBackground
-            )
+            Box(
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Image(
+                    painter = painterResource(R.drawable.prism),
+                    contentDescription = "bg",
+                    contentScale = ContentScale.FillBounds,
+                    modifier = Modifier.matchParentSize()
+                )
 
-            Spacer(modifier = Modifier.height(8.dp))
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(start = 24.dp, end = 24.dp, top = 128.dp, bottom = 36.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    // Logo or App Name
+                    Text(
+                        text = "GeoWav",
+                        fontSize = 36.sp,
+                        fontWeight = FontWeight.ExtraBold,
+                        fontFamily = manrope,
+                        color = Color(0xFF111111)
+                    )
 
-            Text(
-                text = "Create a calm space for trusted movement sharing.",
-                fontSize = 15.sp,
-                fontFamily = manrope,
-                fontWeight = FontWeight.Medium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                textAlign = TextAlign.Center
-            )
+                    Spacer(modifier = Modifier.height(8.dp))
 
-            Spacer(modifier = Modifier.height(12.dp))
-
-            Text(
-                text = "GeoWav only shares location when you allow it.",
-                fontSize = 13.sp,
-                lineHeight = 18.sp,
-                fontFamily = manrope,
-                fontWeight = FontWeight.Normal,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                textAlign = TextAlign.Center,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 12.dp)
-            )
+                    Text(
+                        text = "Create a calm space for trusted movement sharing.",
+                        fontSize = 15.sp,
+                        fontFamily = manrope,
+                        fontWeight = FontWeight.SemiBold,
+                        color = Color(0xFF1F1F1F),
+                        textAlign = TextAlign.Center
+                    )
+                }
+            }
 
             Spacer(modifier = Modifier.height(32.dp))
 
@@ -142,6 +146,7 @@ fun SignupScreen(
             Card(
                 modifier = Modifier
                     .fillMaxWidth()
+                    .padding(horizontal = 24.dp)
                     .height(56.dp)
                     .alpha(if (uiState.isLoading) 0.64f else 1f)
                     .clickable(enabled = !uiState.isLoading) {
@@ -184,7 +189,8 @@ fun SignupScreen(
                 fontSize = 14.sp,
                 fontWeight = FontWeight.Medium,
                 fontFamily = manrope,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.padding(horizontal = 24.dp)
             )
 
             Spacer(modifier = Modifier.height(16.dp))
@@ -192,7 +198,8 @@ fun SignupScreen(
             AuthErrorMessage(
                 visible = uiState.showErrorDialog,
                 message = uiState.error ?: "An unknown error occurred",
-                onDismiss = { signUpVM.clearError() }
+                onDismiss = { signUpVM.clearError() },
+                modifier = Modifier.padding(horizontal = 24.dp)
             )
 
             if (uiState.showErrorDialog) {
@@ -238,7 +245,9 @@ fun SignupScreen(
                 keyboardActions = KeyboardActions(
                     onNext = { emailFocusRequester.requestFocus() }
                 ),
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 24.dp),
                 singleLine = true,
                 colors = authTextFieldColors(),
                 shape = RoundedCornerShape(12.dp)
@@ -287,7 +296,8 @@ fun SignupScreen(
                 ),
                 modifier = Modifier
                     .fillMaxWidth()
-                    .focusRequester(emailFocusRequester),
+                    .focusRequester(emailFocusRequester)
+                    .padding(horizontal = 24.dp),
                 singleLine = true,
                 colors = authTextFieldColors(),
                 shape = RoundedCornerShape(12.dp)
@@ -360,7 +370,8 @@ fun SignupScreen(
                 },
                 modifier = Modifier
                     .fillMaxWidth()
-                    .focusRequester(passwordFocusRequester),
+                    .focusRequester(passwordFocusRequester)
+                    .padding(horizontal = 24.dp),
                 singleLine = true,
                 keyboardOptions = KeyboardOptions(
                     keyboardType = KeyboardType.Password,
@@ -396,6 +407,7 @@ fun SignupScreen(
                 enabled = !uiState.isLoading,
                 modifier = Modifier
                     .fillMaxWidth()
+                    .padding(horizontal = 24.dp)
                     .height(52.dp),
                 shape = RoundedCornerShape(14.dp),
                 colors = ButtonDefaults.buttonColors(
@@ -422,14 +434,18 @@ fun SignupScreen(
 
             AuthLoadingNote(
                 visible = uiState.isLoading,
-                text = "Creating your account securely..."
+                text = "Creating your account securely...",
+                modifier = Modifier.padding(horizontal = 24.dp)
             )
 
             Spacer(modifier = Modifier.height(12.dp))
 
             Row(
                 verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.Center
+                horizontalArrangement = Arrangement.Center,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 24.dp)
             ) {
                 Text(
                     text = "Already have an account?",
