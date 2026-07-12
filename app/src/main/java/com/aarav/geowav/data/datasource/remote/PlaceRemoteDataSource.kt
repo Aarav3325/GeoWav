@@ -72,30 +72,33 @@ class PlaceRemoteDataSource @Inject constructor(
 
 
     fun observePlaces(): Flow<List<Place>> = callbackFlow {
+        val userId = auth.currentUser?.uid
+        if (userId == null) {
+            close(IllegalStateException("User not logged in"))
+            return@callbackFlow
+        }
+        val currentPlaceRef = database.reference
+            .child("users")
+            .child(userId)
+            .child("places")
 
         val listener = object : ValueEventListener {
-
             override fun onDataChange(snapshot: DataSnapshot) {
-
                 val places = snapshot.children.mapNotNull {
                     it.getValue(Place::class.java)
                 }
-
                 trySend(places)
             }
 
             override fun onCancelled(error: DatabaseError) {
-
                 close(error.toException())
-
             }
         }
 
-        placeRef().addValueEventListener(listener)
+        currentPlaceRef.addValueEventListener(listener)
 
         awaitClose {
-            placeRef().removeEventListener(listener)
-
+            currentPlaceRef.removeEventListener(listener)
         }
     }
 }
