@@ -6,14 +6,19 @@ import androidx.compose.animation.core.infiniteRepeatable
 import androidx.compose.animation.core.keyframes
 import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.aspectRatio
+import androidx.compose.foundation.layout.statusBarsPadding
+import com.aarav.geowav.presentation.timeline.SessionPreviewTopBar
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -41,6 +46,10 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -58,38 +67,15 @@ import com.aarav.geowav.presentation.theme.manrope
 @Composable
 fun PersonalInsightsScreen(
     viewModel: PersonalInsightsViewModel,
-    back: () -> Unit
+    back: () -> Unit,
+    navigateToMap: () -> Unit
 ) {
     val uiState by viewModel.uiState.collectAsState()
 
     Scaffold(
+        contentWindowInsets = WindowInsets(0, 0, 0, 0),
         modifier = Modifier.fillMaxSize(),
-        containerColor = MaterialTheme.colorScheme.background,
-        topBar = {
-            TopAppBar(
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.background
-                ),
-                title = {
-                    Text(
-                        text = "Insights",
-                        fontSize = 20.sp,
-                        fontFamily = manrope,
-                        fontWeight = FontWeight.SemiBold,
-                        color = MaterialTheme.colorScheme.onBackground
-                    )
-                },
-                navigationIcon = {
-                    IconButton(onClick = back) {
-                        Icon(
-                            painter = painterResource(R.drawable.back),
-                            contentDescription = "back arrow",
-                            tint = MaterialTheme.colorScheme.onBackground
-                        )
-                    }
-                }
-            )
-        }
+        containerColor = MaterialTheme.colorScheme.background
     ) { paddingValues ->
         val mostVisitedPlaceInsight = uiState.mostVisitedPlaceInsight
         val averageVisitDurationInsight = uiState.averageVisitDurationInsight
@@ -100,69 +86,90 @@ fun PersonalInsightsScreen(
                 .fillMaxSize()
                 .padding(paddingValues)
                 .background(MaterialTheme.colorScheme.background)
-                .verticalScroll(rememberScrollState())
-                .padding(horizontal = 12.dp, vertical = 12.dp),
-            verticalArrangement = Arrangement.spacedBy(14.dp)
+                .verticalScroll(rememberScrollState()),
+            verticalArrangement = Arrangement.Top
         ) {
-            InsightsIntroCard(
-                selectedScope = uiState.mostVisitedPlaceScope
-            )
+            Box(
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                InsightsIntroCard(
+                    selectedScope = uiState.mostVisitedPlaceScope
+                )
 
-            InsightScopeSelector(
-                selectedScope = uiState.mostVisitedPlaceScope,
-                onScopeSelected = viewModel::onScopeChanged
-            )
+                SessionPreviewTopBar(
+                    screenTitle = "Insights",
+                    onBack = back,
+                    modifier = Modifier
+                        .align(Alignment.TopStart)
+                        .statusBarsPadding()
+                        .padding(start = 16.dp, top = 10.dp)
+                )
+            }
 
-            when {
-                uiState.error != null -> {
-                    Text(
-                        text = "Insights are unavailable right now.",
-                        fontFamily = manrope,
-                        fontSize = 14.sp,
-                        fontWeight = FontWeight.SemiBold,
-                        color = MaterialTheme.colorScheme.error
-                    )
-                }
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(start = 12.dp, end = 12.dp, bottom = 12.dp, top = 20.dp),
+                verticalArrangement = Arrangement.spacedBy(14.dp)
+            ) {
+                InsightScopeSelector(
+                    selectedScope = uiState.mostVisitedPlaceScope,
+                    onScopeSelected = viewModel::onScopeChanged
+                )
 
-                uiState.isLoading -> {
-                    Column(
-                        verticalArrangement = Arrangement.spacedBy(14.dp),
-                        modifier = Modifier.fillMaxWidth()
-                    ) {
-                        repeat(3) {
-                            SkeletonMetricCard()
+                when {
+                    uiState.error != null -> {
+                        Text(
+                            text = "Insights are unavailable right now.",
+                            fontFamily = manrope,
+                            fontSize = 14.sp,
+                            fontWeight = FontWeight.SemiBold,
+                            color = MaterialTheme.colorScheme.error
+                        )
+                    }
+
+                    uiState.isLoading -> {
+                        Column(
+                            verticalArrangement = Arrangement.spacedBy(14.dp),
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            repeat(3) {
+                                SkeletonMetricCard()
+                            }
+                        }
+                    }
+
+                    mostVisitedPlaceInsight == null && averageVisitDurationInsight == null && awarenessSummaryInsight == null -> {
+                        EmptyInsightsState(
+                            navigateToMap = navigateToMap
+                        )
+                    }
+
+                    else -> {
+                        awarenessSummaryInsight?.let { insight ->
+                            WeeklyAwarenessSummaryInsightCard(
+                                insight = insight
+                            )
+                        }
+
+                        averageVisitDurationInsight?.let { insight ->
+                            AverageVisitDurationInsightCard(
+                                insight = insight,
+                                selectedScope = uiState.mostVisitedPlaceScope
+                            )
+                        }
+
+                        mostVisitedPlaceInsight?.let { insight ->
+                            MostVisitedPlaceInsightCard(
+                                insight = insight,
+                                selectedScope = uiState.mostVisitedPlaceScope
+                            )
                         }
                     }
                 }
 
-                mostVisitedPlaceInsight == null && averageVisitDurationInsight == null && awarenessSummaryInsight == null -> {
-                    EmptyInsightsState()
-                }
-
-                else -> {
-                    awarenessSummaryInsight?.let { insight ->
-                        WeeklyAwarenessSummaryInsightCard(
-                            insight = insight
-                        )
-                    }
-
-                    averageVisitDurationInsight?.let { insight ->
-                        AverageVisitDurationInsightCard(
-                            insight = insight,
-                            selectedScope = uiState.mostVisitedPlaceScope
-                        )
-                    }
-
-                    mostVisitedPlaceInsight?.let { insight ->
-                        MostVisitedPlaceInsightCard(
-                            insight = insight,
-                            selectedScope = uiState.mostVisitedPlaceScope
-                        )
-                    }
-                }
+                Spacer(modifier = Modifier.height(32.dp))
             }
-
-            Spacer(modifier = Modifier.height(32.dp))
         }
     }
 }
@@ -171,35 +178,14 @@ fun PersonalInsightsScreen(
 private fun InsightsIntroCard(
     selectedScope: PersonalInsightScope
 ) {
-    Surface(
-        modifier = Modifier.fillMaxWidth(),
-        color = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.48f),
-        contentColor = MaterialTheme.colorScheme.onPrimaryContainer,
-        shape = RoundedCornerShape(14.dp)
-    ) {
-        Column(
-            modifier = Modifier.padding(14.dp),
-            verticalArrangement = Arrangement.spacedBy(6.dp)
-        ) {
-            Text(
-                text = "Your place rhythm",
-                fontFamily = manrope,
-                fontSize = 18.sp,
-                fontWeight = FontWeight.Bold
-            )
-            Text(
-                text = if (selectedScope == PersonalInsightScope.Month) {
-                    "A quiet look at the places that shaped this month."
-                } else {
-                    "A quiet look at the places that shaped this week."
-                },
-                fontFamily = manrope,
-                fontSize = 13.sp,
-                lineHeight = 18.sp,
-                color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.82f)
-            )
-        }
-    }
+    Image(
+        painter = painterResource(R.drawable.glass),
+        contentDescription = "bg",
+        contentScale = ContentScale.FillWidth,
+        modifier = Modifier
+            .fillMaxWidth()
+            .aspectRatio(16f / 9f)
+    )
 }
 
 @Composable
@@ -278,14 +264,14 @@ private fun InsightMetricCard(
     modifier: Modifier = Modifier
 ) {
     Card(
-        shape = RoundedCornerShape(14.dp),
+        shape = RoundedCornerShape(16.dp),
         modifier = modifier.fillMaxWidth(),
         border = BorderStroke(
             1.dp,
             MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.22f)
         ),
         colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceContainerLowest,
+            containerColor = MaterialTheme.colorScheme.surfaceContainerLow,
             contentColor = MaterialTheme.colorScheme.onSurface
         )
     ) {
@@ -414,14 +400,14 @@ private fun SkeletonMetricCard() {
     )
 
     Card(
-        shape = RoundedCornerShape(14.dp),
+        shape = RoundedCornerShape(16.dp),
         modifier = Modifier.fillMaxWidth(),
         border = BorderStroke(
             1.dp,
             MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.22f)
         ),
         colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceContainerLowest
+            containerColor = MaterialTheme.colorScheme.surfaceContainerLow
         )
     ) {
         Row(
@@ -487,14 +473,14 @@ private fun WeeklyAwarenessSummaryInsightCard(
     modifier: Modifier = Modifier
 ) {
     Card(
-        shape = RoundedCornerShape(14.dp),
+        shape = RoundedCornerShape(16.dp),
         modifier = modifier.fillMaxWidth(),
         border = BorderStroke(
             1.dp,
             MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.22f)
         ),
         colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceContainerLowest,
+            containerColor = MaterialTheme.colorScheme.surfaceContainerLow,
             contentColor = MaterialTheme.colorScheme.onSurface
         )
     ) {
@@ -606,60 +592,86 @@ private fun StatBox(
 
 @Composable
 private fun EmptyInsightsState(
+    navigateToMap: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     Card(
-        shape = RoundedCornerShape(20.dp),
+        shape = RoundedCornerShape(16.dp),
         modifier = modifier.fillMaxWidth(),
         border = BorderStroke(
             1.dp,
-            MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.15f)
+            MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.18f)
         ),
         colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceContainerLowest
+            containerColor = MaterialTheme.colorScheme.surfaceContainer
         )
     ) {
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(vertical = 40.dp, horizontal = 24.dp),
+                .padding(vertical = 28.dp, horizontal = 20.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.spacedBy(16.dp)
+            verticalArrangement = Arrangement.spacedBy(14.dp)
         ) {
             Box(
                 modifier = Modifier
-                    .size(64.dp)
+                    .size(56.dp)
                     .clip(CircleShape)
-                    .background(MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.4f)),
+                    .background(MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.35f)),
                 contentAlignment = Alignment.Center
             ) {
                 Icon(
-                    painter = painterResource(R.drawable.empty),
+                    painter = painterResource(R.drawable.map_trifold),
                     contentDescription = null,
-                    modifier = Modifier.size(32.dp),
+                    modifier = Modifier.size(26.dp),
                     tint = MaterialTheme.colorScheme.primary
                 )
             }
 
             Column(
                 horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.spacedBy(8.dp)
+                verticalArrangement = Arrangement.spacedBy(6.dp)
             ) {
                 Text(
                     text = "No insights yet",
                     fontFamily = manrope,
-                    fontSize = 18.sp,
+                    fontSize = 17.sp,
                     fontWeight = FontWeight.Bold,
                     color = MaterialTheme.colorScheme.onBackground,
                     textAlign = TextAlign.Center
                 )
                 Text(
-                    text = "GeoWav will analyze your movements and generate patterns (like most visited places and staying duration) once you record some activity. Keep visiting your saved zones!",
+                    text = "Keep exploring. GeoWav will quietly transform your movements into meaningful insights.",
                     fontFamily = manrope,
                     fontSize = 13.sp,
                     lineHeight = 18.sp,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.8f),
+                    color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.85f),
                     textAlign = TextAlign.Center
+                )
+            }
+
+            OutlinedButton(
+                onClick = navigateToMap,
+                shape = RoundedCornerShape(50),
+                border = BorderStroke(
+                    1.dp,
+                    MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.45f)
+                ),
+                colors = ButtonDefaults.outlinedButtonColors(
+                    contentColor = MaterialTheme.colorScheme.primary
+                )
+            ) {
+                Icon(
+                    painter = painterResource(R.drawable.map_pin),
+                    contentDescription = null,
+                    modifier = Modifier.size(16.dp)
+                )
+                Spacer(modifier = Modifier.width(8.dp))
+                Text(
+                    text = "Explore Map",
+                    fontFamily = manrope,
+                    fontSize = 12.sp,
+                    fontWeight = FontWeight.SemiBold
                 )
             }
         }

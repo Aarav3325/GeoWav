@@ -345,7 +345,7 @@ class MainActivity : ComponentActivity() {
                     SideEffect {
                         WindowCompat.getInsetsController(window, view).apply {
 
-                            isAppearanceLightStatusBars = if(currentRoute == NavRoute.HomeScreen.path) true else !isDark
+                            isAppearanceLightStatusBars = if(currentRoute == NavRoute.HomeScreen.path || currentRoute == NavRoute.Insights.path) true else !isDark
                             isAppearanceLightNavigationBars = !isDark
                         }
                     }

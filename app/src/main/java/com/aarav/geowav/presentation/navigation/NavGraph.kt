@@ -757,6 +757,9 @@ fun AddInsightsScreen(
             viewModel = personalInsightsVM,
             back = {
                 navController.popBackStack()
+            },
+            navigateToMap = {
+                navController.navigate(NavRoute.MapScreen.path)
             }
         )
     }

@@ -134,7 +134,7 @@ fun CustomBottomNavigationBar(
         tonalElevation = 0.dp,
         shadowElevation = 0.dp,
         border = BorderStroke(
-            width = 1.dp,
+            width = 0.5.dp,
             brush = Brush.verticalGradient(
                 colors = listOf(
                     Color.White.copy(alpha = 0.46f),
