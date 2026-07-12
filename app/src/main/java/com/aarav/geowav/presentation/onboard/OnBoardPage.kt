@@ -17,6 +17,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -115,14 +116,13 @@ fun OnboardingScreen(
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = 16.dp)
-                .padding(bottom = 36.dp),
+                .padding(horizontal = 16.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Row(
-
-
                 modifier = Modifier
+                    .navigationBarsPadding()
+                    .padding(bottom = 6.dp)
                     .fillMaxWidth()
                     .wrapContentHeight(),
                 verticalAlignment = Alignment.CenterVertically
@@ -259,8 +259,8 @@ private fun PermissionSetupSheet(
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = 20.dp)
-                .padding(top = 18.dp, bottom = 28.dp),
+                .padding(horizontal = 16.dp)
+                .padding(top = 18.dp, bottom = 0.dp),
             verticalArrangement = Arrangement.spacedBy(14.dp)
         ) {
             Text(

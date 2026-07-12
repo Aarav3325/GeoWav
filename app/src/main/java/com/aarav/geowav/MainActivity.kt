@@ -51,6 +51,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalView
+import androidx.compose.ui.unit.dp
 import androidx.core.app.NotificationManagerCompat
 import androidx.core.content.ContextCompat
 import androidx.core.view.ViewCompat
@@ -356,7 +357,11 @@ class MainActivity : ComponentActivity() {
 
                     Scaffold(
                         snackbarHost = {
-                            SnackbarHost(snackbarHostState)
+                            SnackbarHost(snackbarHostState,
+                                modifier = if(isBottomBarVisible)
+                                    Modifier.navigationBarsPadding()
+                                        .padding(bottom = 78.dp) else Modifier.padding(bottom = 12.dp)
+                            )
                         },
                         modifier = Modifier.fillMaxSize(),
                         contentWindowInsets = WindowInsets(0, 0, 0, 0),

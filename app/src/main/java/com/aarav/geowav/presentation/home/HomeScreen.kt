@@ -1705,7 +1705,7 @@ fun ProfileCardV2(
                                     fontWeight = FontWeight.Bold
                                 )
                             ) {
-                                append("Aarav,")
+                                append("$userName,")
                             }
                         },
                         style = MaterialTheme.typography.bodyLarge,
