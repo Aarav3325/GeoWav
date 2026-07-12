@@ -59,6 +59,7 @@ import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
@@ -84,6 +85,7 @@ import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.core.view.WindowCompat
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
@@ -106,6 +108,7 @@ import com.aarav.geowav.presentation.components.AwarenessSnapshotCard
 import com.aarav.geowav.presentation.components.IdentityAvatar
 import com.aarav.geowav.presentation.components.InsightPreviewCard
 import com.aarav.geowav.presentation.insights.PersonalInsightsViewModel
+import com.aarav.geowav.presentation.navigation.NavRoute
 import com.aarav.geowav.presentation.subscription.SubscriptionViewModel
 import com.aarav.geowav.presentation.theme.manrope
 import com.google.accompanist.permissions.ExperimentalPermissionsApi
@@ -211,11 +214,7 @@ fun GeoWavHomeScreen(
 
             if (hideTopBar) Color.Transparent
             else if (useDarkIcons) {
-                if (isDarkThemeEnabled) {
-                    Color.White
-                } else {
-                    Color.Black
-                }
+               Color.White
             } else {
                 Color.Black
             },
@@ -227,7 +226,7 @@ fun GeoWavHomeScreen(
         targetValue =
             if (hideTopBar) Color.Transparent
             else if (useDarkIcons)
-                MaterialTheme.colorScheme.primaryContainer
+                Color(0xFF5654A2)
             else
                 Color.Transparent,
         animationSpec = tween(durationMillis = 500),
@@ -285,9 +284,7 @@ fun GeoWavHomeScreen(
                             .background(MaterialTheme.colorScheme.background)
                     ) {
                         Image(
-                            painter = if (isDarkThemeEnabled) painterResource(R.drawable.dark_bg_geowav_new_2) else painterResource(
-                                R.drawable.light_bg_geowav_new
-                            ),
+                            painter = painterResource(R.drawable.haze),
                             contentDescription = "bg",
                             contentScale = ContentScale.FillBounds,
                             modifier = Modifier

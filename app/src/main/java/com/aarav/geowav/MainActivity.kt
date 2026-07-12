@@ -272,12 +272,6 @@ class MainActivity : ComponentActivity() {
                     darkTheme = isDark
                 ) {
 
-                    SideEffect {
-                        WindowCompat.getInsetsController(window, view).apply {
-                            isAppearanceLightStatusBars = !isDark
-                            isAppearanceLightNavigationBars = !isDark
-                        }
-                    }
 
 //                    val controller = WindowInsetsControllerCompat(
 //                        window,
@@ -344,6 +338,15 @@ class MainActivity : ComponentActivity() {
 
                     val snackbarHostState = remember {
                         SnackbarHostState()
+                    }
+
+
+                    SideEffect {
+                        WindowCompat.getInsetsController(window, view).apply {
+
+                            isAppearanceLightStatusBars = if(currentRoute == NavRoute.HomeScreen.path) true else !isDark
+                            isAppearanceLightNavigationBars = !isDark
+                        }
                     }
 
                     LaunchedEffect(snackbarHostState) {
