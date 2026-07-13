@@ -7,7 +7,9 @@ import com.aarav.geowav.core.permissions.GeoPermissionCoordinator
 import com.aarav.geowav.core.permissions.GeoPermissionUiState
 import com.aarav.geowav.core.utils.Resource
 import com.aarav.geowav.core.utils.ViewerLocationState
+import com.aarav.geowav.core.utils.failure
 import com.aarav.geowav.core.utils.formatRemainingForEmergency
+import com.aarav.geowav.core.utils.messageFor
 import com.aarav.geowav.data.authentication.GoogleSignInClient
 import com.aarav.geowav.data.model.CircleActivityItem
 import com.aarav.geowav.data.model.CircleMember
@@ -42,6 +44,7 @@ import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.flow.distinctUntilChanged
@@ -50,6 +53,7 @@ import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -88,7 +92,8 @@ class HomeScreenVM @Inject constructor(
     private val _liveStayPoints = MutableStateFlow<Map<String, List<StayPoint>>>(emptyMap())
     val liveStayPoints: StateFlow<Map<String, List<StayPoint>>> = _liveStayPoints.asStateFlow()
 
-    val viewerId = googleSignInClient.getUserId()
+    val viewerId: String
+        get() = googleSignInClient.getUserId()
 
     private val observerJobs = mutableMapOf<String, Job>()
 
@@ -249,14 +254,25 @@ class HomeScreenVM @Inject constructor(
         }
         .onStart { emit(null) }
 
-    private val isEmergencyFlow: Flow<Boolean> = emergencySharingRepository.observeEmergency(viewerId)
-        .map { it != null }
+    private val isEmergencyFlow: Flow<Boolean> = googleSignInClient.getUserIdFlow()
+        .flatMapLatest { uid ->
+            if (uid.isEmpty()) flowOf(false)
+            else emergencySharingRepository.observeEmergency(uid).map { it != null }
+        }
         .onStart { emit(false) }
 
-    private val isSharingFlow: Flow<Boolean> = liveLocationSharingRepository.observeSharingActive(viewerId)
+    private val isSharingFlow: Flow<Boolean> = googleSignInClient.getUserIdFlow()
+        .flatMapLatest { uid ->
+            if (uid.isEmpty()) flowOf(false)
+            else liveLocationSharingRepository.observeSharingActive(uid)
+        }
         .onStart { emit(false) }
 
-    private val sharedWithFlow: Flow<Set<String>> = locationPermissionRepository.getAllowedViewers(viewerId)
+    private val sharedWithFlow: Flow<Set<String>> = googleSignInClient.getUserIdFlow()
+        .flatMapLatest { uid ->
+            if (uid.isEmpty()) flowOf(emptySet())
+            else locationPermissionRepository.getAllowedViewers(uid)
+        }
         .onStart { emit(emptySet()) }
 
     private val timeTickerFlow: Flow<Long> = flow {
@@ -359,22 +375,41 @@ class HomeScreenVM @Inject constructor(
     fun loadLovedOnes() {
         if (viewerId.isEmpty()) return
 
+        _uiState.update {
+            it.copy(
+                isLovedOnesLoading = true,
+                lovedOnesError = null
+            )
+        }
+
         viewModelScope.launch {
-
-
             when (val result =
                 circleRepository.getAcceptedLovedOnes(viewerId)
             ) {
                 is Resource.Success -> {
                     _uiState.update {
-
                         it.copy(
                             lovedOnes = result.data ?: emptyList(),
+                            isLovedOnesLoading = false,
+                            lovedOnesError = null
                         )
                     }
                 }
 
-                else -> {}
+                is Resource.NoInternet,
+                is Resource.Timeout,
+                is Resource.ServerError,
+                is Resource.UnknownError,
+                is Resource.Error -> {
+                    _uiState.update {
+                        it.copy(
+                            isLovedOnesLoading = false,
+                            lovedOnesError = result.failure.messageFor("your circle", result.message)
+                        )
+                    }
+                }
+
+                is Resource.Loading -> Unit
             }
         }
     }
@@ -415,20 +450,71 @@ class HomeScreenVM @Inject constructor(
     }
 
 
-    init {
-        fetchUser()
+    private var activityObserveJob: Job? = null
 
-        viewModelScope.launch {
-            combine(allPlaces, awarenessItems) { places, activities ->
-                Pair(places, activities)
-            }.collect { (places, activities) ->
+    private fun observeRecentActivityFeed(uid: String) {
+        activityObserveJob?.cancel()
+
+        _uiState.update {
+            it.copy(
+                isAwarenessLoading = true,
+                awarenessError = null
+            )
+        }
+
+        activityObserveJob = viewModelScope.launch {
+            val flow = circleActivityFeedRepository.observeRecentActivity()
+            flow.collect { activities ->
                 _uiState.update {
                     it.copy(
-                        placesList = places,
-                        awarenessItems = activities
+                        awarenessItems = activities,
+                        isAwarenessLoading = false,
+                        awarenessError = null
                     )
                 }
             }
+        }
+    }
+
+    init {
+        // Pre-populate user from FirebaseAuth immediately if available
+        val firebaseUser = googleSignInClient.firebaseAuth.currentUser
+        if (firebaseUser != null) {
+            val fallbackUser = User(
+                userId = firebaseUser.uid,
+                username = firebaseUser.displayName ?: firebaseUser.email?.substringBefore("@") ?: "User",
+                email = firebaseUser.email ?: ""
+            )
+            _uiState.update { state ->
+                state.copy(
+                    currentUser = fallbackUser,
+                    username = fallbackUser.username
+                )
+            }
+        }
+
+        fetchUser()
+
+        viewModelScope.launch {
+            placeRepository.getPlaces().collect { places ->
+                _uiState.update {
+                    it.copy(
+                        placesList = places,
+                        isPlacesLoading = false
+                    )
+                }
+            }
+        }
+
+        viewModelScope.launch {
+            googleSignInClient.getUserIdFlow()
+                .distinctUntilChanged()
+                .collectLatest { uid ->
+                    if (uid.isNotEmpty()) {
+                        loadLovedOnes()
+                        observeRecentActivityFeed(uid)
+                    }
+                }
         }
 
         getUserProfile()
@@ -603,5 +689,10 @@ data class HomeScreenUiState(
     val username: String? = null,
     val viewerState: ViewerLocationState? = ViewerLocationState.Blocked,
     val remainingTime: String? = null,
-    val permissionState: GeoPermissionUiState = GeoPermissionUiState()
+    val permissionState: GeoPermissionUiState = GeoPermissionUiState(),
+    val isLovedOnesLoading: Boolean = true,
+    val isPlacesLoading: Boolean = true,
+    val isAwarenessLoading: Boolean = true,
+    val lovedOnesError: String? = null,
+    val awarenessError: String? = null
 )

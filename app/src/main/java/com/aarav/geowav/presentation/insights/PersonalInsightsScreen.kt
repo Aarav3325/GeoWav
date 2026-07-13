@@ -41,6 +41,7 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
+import com.aarav.geowav.presentation.components.AppStateView
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -61,6 +62,7 @@ import com.aarav.geowav.core.insights.Insights.AverageVisitDurationInsight
 import com.aarav.geowav.core.insights.Insights.MostVisitedPlaceInsight
 import com.aarav.geowav.core.insights.Insights.WeeklyAwarenessSummaryInsight
 import com.aarav.geowav.core.insights.PersonalInsightScope
+import com.aarav.geowav.core.utils.NetworkFailure
 import com.aarav.geowav.presentation.theme.manrope
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -119,12 +121,24 @@ fun PersonalInsightsScreen(
 
                 when {
                     uiState.error != null -> {
-                        Text(
-                            text = "Insights are unavailable right now.",
-                            fontFamily = manrope,
-                            fontSize = 14.sp,
-                            fontWeight = FontWeight.SemiBold,
-                            color = MaterialTheme.colorScheme.error
+                        AppStateView(
+                            iconRes = if (uiState.failure == NetworkFailure.NoInternet) R.drawable.link_break else null,
+                            title = when (uiState.failure) {
+                                NetworkFailure.NoInternet -> "No internet connection"
+                                NetworkFailure.Timeout -> "Taking longer than expected"
+                                NetworkFailure.ServerError -> "Couldn't load insights"
+                                NetworkFailure.Unknown, null -> "Couldn't load insights"
+                            },
+                            description = when (uiState.failure) {
+                                NetworkFailure.NoInternet -> "Please check your network settings and try again."
+                                NetworkFailure.Timeout -> "We're still loading your insights. Please try again."
+                                NetworkFailure.ServerError -> "We couldn't load insights right now."
+                                NetworkFailure.Unknown, null -> uiState.error!!
+                            },
+                            primaryCtaText = "Retry",
+                            onPrimaryCtaClick = {
+                                viewModel.onScopeChanged(uiState.mostVisitedPlaceScope)
+                            }
                         )
                     }
 

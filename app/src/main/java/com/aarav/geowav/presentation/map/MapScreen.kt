@@ -53,6 +53,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.aarav.geowav.R
+import com.aarav.geowav.core.utils.NetworkFailure
 import com.aarav.geowav.presentation.components.MyAlertDialog
 import com.aarav.geowav.presentation.components.PermissionRequiredContent
 import com.aarav.geowav.presentation.components.PlaceModalSheet
@@ -134,8 +135,8 @@ fun MapScreen(
     MyAlertDialog(
         shouldShowDialog = uiState.showErrorDialog,
         onDismissRequest = { mapViewModel.clearError() },
-        title = "Error",
-        message = uiState.error ?: "Unable to fetch place details",
+        title = uiState.failure.toMapErrorTitle(),
+        message = uiState.failure.toMapErrorMessage(uiState.error),
         confirmButtonText = "Dismiss"
     ) {
         mapViewModel.clearError()
@@ -376,6 +377,24 @@ fun MapScreen(
 
         }
 
+    }
+}
+
+private fun NetworkFailure?.toMapErrorTitle(): String {
+    return when (this) {
+        NetworkFailure.NoInternet -> "No internet connection"
+        NetworkFailure.Timeout -> "Taking longer than expected"
+        NetworkFailure.ServerError -> "Couldn't load places"
+        NetworkFailure.Unknown, null -> "Couldn't load places"
+    }
+}
+
+private fun NetworkFailure?.toMapErrorMessage(fallback: String?): String {
+    return when (this) {
+        NetworkFailure.NoInternet -> "Please check your network settings and try again."
+        NetworkFailure.Timeout -> "We couldn't find matching places right now. Please try again."
+        NetworkFailure.ServerError -> "The places service is unavailable right now. Please try again."
+        NetworkFailure.Unknown, null -> fallback ?: "Unable to fetch place details"
     }
 }
 

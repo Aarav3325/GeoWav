@@ -6,6 +6,8 @@ import androidx.lifecycle.viewModelScope
 import com.aarav.geowav.core.utils.FeatureAccess
 import com.aarav.geowav.core.utils.Resource
 import com.aarav.geowav.core.utils.encodeEmail
+import com.aarav.geowav.core.utils.failure
+import com.aarav.geowav.core.utils.messageFor
 import com.aarav.geowav.data.authentication.GoogleSignInClient
 import com.aarav.geowav.data.model.CircleMember
 import com.aarav.geowav.data.model.PendingInvite
@@ -24,13 +26,16 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
+
 @HiltViewModel
 class CircleVM
 @Inject constructor(
     val circleRepository: CircleRepository,
     val firebaseAuth: FirebaseAuth,
-    val googleSignInClient: GoogleSignInClient
+    val googleSignInClient: GoogleSignInClient,
 ) : ViewModel() {
+
+
 
     private val currentUserId: String
         get() = firebaseAuth.currentUser?.uid.orEmpty()
@@ -113,13 +118,17 @@ class CircleVM
                     }
                 }
 
+                is Resource.NoInternet,
+                is Resource.Timeout,
+                is Resource.ServerError,
+                is Resource.UnknownError,
                 is Resource.Error -> {
                     _uiState.update {
                         it.copy(
                             isLoading = false
                         )
                     }
-                    emitError(result.message ?: "Failed to load your loved ones")
+                    emitError(result.failure.messageFor("your circle", result.message))
                 }
 
                 else -> {}
@@ -248,9 +257,13 @@ class CircleVM
                     _events.emit(CircleUiEvent.InviteSent)
                 }
 
+                is Resource.NoInternet,
+                is Resource.Timeout,
+                is Resource.ServerError,
+                is Resource.UnknownError,
                 is Resource.Error -> {
                     _uiState.update { it.copy(sendingRequest = false) }
-                    emitError(result.message ?: "Failed to send invite")
+                    emitError(result.failure.messageFor("the invite", result.message ?: "Failed to send invite"))
                 }
 
                 else -> Unit
@@ -305,9 +318,13 @@ class CircleVM
                     _events.emit(CircleUiEvent.InviteAccepted)
                 }
 
+                is Resource.NoInternet,
+                is Resource.Timeout,
+                is Resource.ServerError,
+                is Resource.UnknownError,
                 is Resource.Error -> {
                     _uiState.update { it.copy(acceptingInviteId = null) }
-                    emitError(result.message ?: "Failed to accept invite")
+                    emitError(result.failure.messageFor("the invite", result.message ?: "Failed to accept invite"))
                 }
 
                 else -> Unit
@@ -344,9 +361,13 @@ class CircleVM
                     )
                 }
 
+                is Resource.NoInternet,
+                is Resource.Timeout,
+                is Resource.ServerError,
+                is Resource.UnknownError,
                 is Resource.Error -> {
                     _uiState.update { it.copy(rejectingInviteId = null) }
-                    emitError(result.message ?: "Failed to reject invite")
+                    emitError(result.failure.messageFor("the invite", result.message ?: "Failed to reject invite"))
                 }
 
                 else -> Unit
@@ -371,8 +392,12 @@ class CircleVM
                         _events.emit(CircleUiEvent.MemberDeleted)
                     }
 
+                    is Resource.NoInternet,
+                    is Resource.Timeout,
+                    is Resource.ServerError,
+                    is Resource.UnknownError,
                     is Resource.Error -> {
-                        emitError(result.message ?: "Failed to delete member")
+                        emitError(result.failure.messageFor("the circle member", result.message ?: "Failed to delete member"))
                     }
 
                     else -> Unit
@@ -450,4 +475,3 @@ sealed class CircleUiEvent {
 
     data class ShowError(val message: String) : CircleUiEvent()
 }
-

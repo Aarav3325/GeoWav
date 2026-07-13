@@ -237,7 +237,10 @@ fun CircleActivityContent(
             isDarkThemeEnabled = isDarkThemeEnabled,
             currentUserId = activityViewModel.viewerId,
             uiState = uiState,
-            onLoadMore = activityViewModel::loadMore
+            onLoadMore = activityViewModel::loadMore,
+            onRetry = {
+                activityViewModel.observeForFilter(uiState.currentFilter)
+            }
         )
 
         if (uiState.showDatePicker) {

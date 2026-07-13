@@ -5,6 +5,7 @@ import android.content.Context
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.aarav.geowav.core.utils.Resource
 import com.aarav.geowav.data.authentication.GoogleSignInClient
 import com.aarav.geowav.data.model.PurchaseResult
 import com.aarav.geowav.data.model.UserPlan
@@ -73,15 +74,48 @@ class SubscriptionViewModel
         Log.i("SUBSCRIPTION", "Offerings loading")
         viewModelScope.launch {
             _offeringState.update { it.copy(isLoading = true, error = null) }
-            val allPackages = subscriptionRepository.fetchAllPackages()
-            _offeringState.update {
-                it.copy(
-                    allPackages = allPackages ?: emptyList(),
-                    isLoading = false,
-                    error = if (it.allPackages.isEmpty()) "Offerings unavailable" else null
-                )
+            when (val result = subscriptionRepository.fetchAllPackages()) {
+                is Resource.Success -> {
+                    val allPackages = result.data.orEmpty()
+                    _offeringState.update {
+                        it.copy(
+                            allPackages = allPackages,
+                            isLoading = false,
+                            error = if (allPackages.isEmpty()) "Offerings unavailable" else null
+                        )
+                    }
+                    Log.i("SUBSCRIPTION", "Offerings loaded: ${allPackages}")
+                }
+
+                is Resource.NoInternet -> {
+                    _offeringState.update {
+                        it.copy(isLoading = false, error = "No internet connection")
+                    }
+                }
+
+                is Resource.Timeout -> {
+                    _offeringState.update {
+                        it.copy(
+                            isLoading = false,
+                            error = "We're still loading plans. Please try again."
+                        )
+                    }
+                }
+
+                is Resource.ServerError -> {
+                    _offeringState.update {
+                        it.copy(isLoading = false, error = "We couldn't load plans right now.")
+                    }
+                }
+
+                is Resource.UnknownError, is Resource.Error -> {
+                    _offeringState.update {
+                        it.copy(isLoading = false, error = result.message ?: "Offerings unavailable")
+                    }
+                }
+
+                is Resource.Loading -> Unit
             }
-            Log.i("SUBSCRIPTION", "Offerings loaded: ${allPackages}")
         }
     }
 

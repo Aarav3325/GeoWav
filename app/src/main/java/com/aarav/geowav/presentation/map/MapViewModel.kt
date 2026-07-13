@@ -6,7 +6,10 @@ import android.location.Geocoder
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.aarav.geowav.domain.repository.PlaceRepository
+import com.aarav.geowav.core.utils.NetworkFailure
 import com.aarav.geowav.core.utils.Resource
+import com.aarav.geowav.core.utils.failure
+import com.aarav.geowav.core.utils.messageFor
 import com.google.android.gms.maps.model.LatLng
 import com.google.android.libraries.places.api.model.AutocompletePrediction
 import com.google.android.libraries.places.api.model.Place
@@ -50,6 +53,7 @@ class MapViewModel @Inject constructor(application: Application,
             it.copy(
                 isLoading = true,
                 error = null,
+                failure = null,
                 showErrorDialog = false
             )
         }
@@ -65,16 +69,24 @@ class MapViewModel @Inject constructor(application: Application,
                             isLoading = false,
                             isBottomSheetShowing = true,
                             isSearchExpanded = false,
-                            predictions = emptyList()
+                            predictions = emptyList(),
+                            failure = null,
+                            error = null
                         )
                     }
                 }
 
+                is Resource.NoInternet,
+                is Resource.Timeout,
+                is Resource.ServerError,
+                is Resource.UnknownError,
                 is Resource.Error -> {
                     _uiState.update {
+                        val failure = result.failure
                         it.copy(
                             isLoading = false,
-                            error = result.message,
+                            error = failure.messageFor("place details", result.message),
+                            failure = failure,
                             showErrorDialog = true
                         )
                     }
@@ -101,6 +113,7 @@ class MapViewModel @Inject constructor(application: Application,
                 it.copy(
                     isLoading = true,
                     error = null,
+                    failure = null,
                     predictions = emptyList()
                 )
             }
@@ -110,18 +123,29 @@ class MapViewModel @Inject constructor(application: Application,
                     _uiState.update {
                         it.copy(
                             isLoading = false,
-                            predictions = result.data ?: emptyList()
+                            predictions = result.data ?: emptyList(),
+                            failure = null,
+                            error = null
                         )
                     }
                 }
 
+                is Resource.NoInternet,
+                is Resource.Timeout,
+                is Resource.ServerError,
+                is Resource.UnknownError,
                 is Resource.Error -> {
                     _uiState
                         .update {
+                            val failure = result.failure
                             it.copy(
                                 isLoading = false,
                                 showErrorDialog = true,
-                                error = result.message ?: "Unable to find matching places"
+                                failure = failure,
+                                error = failure.messageFor(
+                                    subject = "matching places",
+                                    fallback = result.message ?: "Unable to find matching places"
+                                )
                             )
                         }
                 }
@@ -154,6 +178,7 @@ class MapViewModel @Inject constructor(application: Application,
                 isSearchExpanded = false,
                 predictions = emptyList(),
                 error = null,
+                failure = null,
                 showErrorDialog = false
             )
         }
@@ -198,6 +223,7 @@ class MapViewModel @Inject constructor(application: Application,
         _uiState.update {
             it.copy(
                 error = null,
+                failure = null,
                 showErrorDialog = false
             )
         }
@@ -251,5 +277,6 @@ data class MapScreenUiState(
     val showErrorDialog: Boolean = false,
     val isLoading: Boolean = false,
     val error: String? = null,
+    val failure: NetworkFailure? = null,
     val predictions: List<AutocompletePrediction> = emptyList()
 )

@@ -30,6 +30,7 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import com.aarav.geowav.presentation.components.AppStateView
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
@@ -41,12 +42,14 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.aarav.geowav.R
 import com.aarav.geowav.core.utils.ActivityFilter
+import com.aarav.geowav.core.utils.NetworkFailure
 import com.aarav.geowav.data.model.ActivityTransition
 import com.aarav.geowav.presentation.components.IdentityAvatar
 import com.aarav.geowav.presentation.theme.manrope
@@ -57,7 +60,8 @@ fun ActivityContent(
     isDarkThemeEnabled: Boolean,
     currentUserId: String,
     uiState: ActivityUiState,
-    onLoadMore: () -> Unit
+    onLoadMore: () -> Unit,
+    onRetry: () -> Unit
 ) {
     Box(
         modifier = Modifier.fillMaxSize(),
@@ -69,7 +73,11 @@ fun ActivityContent(
             }
 
             uiState.error != null -> {
-                ActivityErrorState(error = uiState.error)
+                ActivityErrorState(
+                    error = uiState.error,
+                    failure = uiState.failure,
+                    onRetry = onRetry
+                )
             }
 
             uiState.activities.isEmpty() -> {
@@ -115,25 +123,28 @@ private fun ActivityLoadingState() {
 }
 
 @Composable
-private fun ActivityErrorState(error: String) {
-    Column(
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.spacedBy(8.dp),
-        modifier = Modifier.fillMaxWidth()
-    ) {
-        Text(
-            text = "Something went wrong",
-            style = MaterialTheme.typography.bodyLarge.copy(
-                fontWeight = FontWeight.SemiBold
-            ),
-            color = MaterialTheme.colorScheme.error
-        )
-        Text(
-            text = error,
-            style = MaterialTheme.typography.bodySmall,
-            color = MaterialTheme.colorScheme.onBackground
-        )
-    }
+private fun ActivityErrorState(
+    error: String,
+    failure: NetworkFailure?,
+    onRetry: () -> Unit
+) {
+    AppStateView(
+        iconRes = if (failure == NetworkFailure.NoInternet) R.drawable.link_break else null,
+        title = when (failure) {
+            NetworkFailure.NoInternet -> "No internet connection"
+            NetworkFailure.Timeout -> "Taking longer than expected"
+            NetworkFailure.ServerError -> "Couldn't load activity feed"
+            NetworkFailure.Unknown, null -> "Couldn't load activity feed"
+        },
+        description = when (failure) {
+            NetworkFailure.NoInternet -> "Please check your network settings and try again."
+            NetworkFailure.Timeout -> "We're still trying to load your activity. Please try again."
+            NetworkFailure.ServerError -> "We couldn't load your activity right now."
+            NetworkFailure.Unknown, null -> error
+        },
+        primaryCtaText = "Retry",
+        onPrimaryCtaClick = onRetry
+    )
 }
 
 @Composable
@@ -166,6 +177,7 @@ private fun ActivityEmptyState() {
             text = "When someone arrives at or leaves a saved place, GeoWav will show it here.",
             style = MaterialTheme.typography.bodySmall,
             fontFamily = manrope,
+            textAlign = TextAlign.Center,
             color = MaterialTheme.colorScheme.onSurfaceVariant
         )
     }

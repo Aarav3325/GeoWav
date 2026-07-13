@@ -26,6 +26,7 @@ import androidx.compose.animation.Crossfade
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.navigationBarsPadding
@@ -74,6 +75,7 @@ import com.aarav.geowav.platform.NotificationService
 import com.aarav.geowav.presentation.MainVM
 import com.aarav.geowav.presentation.components.AppDisabled
 import com.aarav.geowav.presentation.components.NotificationDisabledDialog
+import com.aarav.geowav.presentation.components.OfflineBanner
 import com.aarav.geowav.presentation.components.SnackbarManager
 import com.aarav.geowav.presentation.locationsharing.LocationSharingVM
 import com.aarav.geowav.presentation.navigation.BottomNavigationBar
@@ -217,6 +219,7 @@ class MainActivity : ComponentActivity() {
             val mainVM: MainVM = hiltViewModel()
             val themeMode by mainVM.themeMode.collectAsState()
             val currentUser by mainVM.currentUser.collectAsState()
+            val isOnline by mainVM.isOnline.collectAsState()
 
             Log.i("MYTAG", "theme $themeMode")
 
@@ -366,9 +369,6 @@ class MainActivity : ComponentActivity() {
                         modifier = Modifier.fillMaxSize(),
                         contentWindowInsets = WindowInsets(0, 0, 0, 0),
                         containerColor = Color.Transparent,
-//                        bottomBar = {
-//
-//                        }
                     ) {
                         val location1 =
                             location?.let { it.latitude to it.longitude }
@@ -378,20 +378,26 @@ class MainActivity : ComponentActivity() {
                             modifier = Modifier.fillMaxSize()
                                 .padding(it)
                         ) {
-                            NavGraph(
-                                isDarkThemeEnabled = isDark,
-                                themeMode = themeMode,
-                                onThemeChange = { newMode ->
-                                    mainVM.setThemeMode(newMode)
-                                },
-                                navHostController = navController,
-                                subscriptionVM = subscriptionVM,
-                                sharedPreferences = sharedPreferences,
-                                location = location1,
-                                permissionState = permissionUiState,
-                                googleSignInClient = googleSignInClient,
-                                modifier = Modifier
-                            )
+                            Column(modifier = Modifier.fillMaxSize()) {
+                                OfflineBanner(isOnline = isOnline)
+
+                                Box(modifier = Modifier.weight(1f)) {
+                                    NavGraph(
+                                        isDarkThemeEnabled = isDark,
+                                        themeMode = themeMode,
+                                        onThemeChange = { newMode ->
+                                            mainVM.setThemeMode(newMode)
+                                        },
+                                        navHostController = navController,
+                                        subscriptionVM = subscriptionVM,
+                                        sharedPreferences = sharedPreferences,
+                                        location = location1,
+                                        permissionState = permissionUiState,
+                                        googleSignInClient = googleSignInClient,
+                                        modifier = Modifier
+                                    )
+                                }
+                            }
 
                             AnimatedVisibility(isBottomBarVisible, Modifier.align(Alignment.BottomCenter)) {
                                 CustomBottomNavigationBar(navController, Modifier)

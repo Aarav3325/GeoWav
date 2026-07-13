@@ -1,6 +1,7 @@
 package com.aarav.geowav.data.repository
 
 import android.util.Log
+import com.aarav.geowav.core.utils.Resource
 import com.aarav.geowav.data.authentication.GoogleSignInClient
 import com.aarav.geowav.data.datasource.revenuecat.RevenueCatDataSource
 import com.aarav.geowav.data.model.UserPlan
@@ -123,7 +124,7 @@ class SubscriptionRepositoryImpl
         }
     }
 
-    override suspend fun fetchAllPackages(): List<Package>? {
+    override suspend fun fetchAllPackages(): Resource<List<Package>> {
         return revenueCatDataSource.fetchAllPackages()
     }
 }

@@ -237,7 +237,6 @@ fun GeoWavHomeScreen(
         modifier = Modifier.fillMaxSize(),
         contentWindowInsets = WindowInsets(0),
         topBar = {
-            if (!uiState.username.isNullOrEmpty()) {
                 ProfileCardV2(
                     currentUser = uiState.currentUser,
                     userName = uiState.username,
@@ -252,7 +251,6 @@ fun GeoWavHomeScreen(
                         .padding(TopAppBarDefaults.ContentPadding)
                         .height(TopAppBarDefaults.TopAppBarExpandedHeight)
                 )
-            }
         }
 
     ) { innerPadding ->
@@ -437,6 +435,8 @@ fun GeoWavHomeScreen(
                         ConnectionsList(
                             title = "People",
                             connections = uiState.lovedOnes,
+                            isLoading = uiState.isLovedOnesLoading,
+                            error = uiState.lovedOnesError,
                             locationStates = locations,
                             onManage = navigateToCircle,
                             navigateToTimeline = navigateToTimeline
@@ -444,6 +444,7 @@ fun GeoWavHomeScreen(
 
                         ActiveZonesSection(
                             zones = uiState.placesList,
+                            isLoading = uiState.isPlacesLoading,
                             onZoneClick = {},
                             onViewAllClick = {
                                 navigateToYourPlaces()
@@ -486,6 +487,8 @@ fun GeoWavHomeScreen(
 
                         RecentAlertsList(
                             activities = uiState.awarenessItems,
+                            isLoading = uiState.isAwarenessLoading,
+                            error = uiState.awarenessError,
                             currentUserId = uiState.currentUser?.userId ?: homeScreenVM.viewerId,
                             isDarkThemeEnabled = isDarkThemeEnabled
                         )
@@ -638,10 +641,13 @@ fun LocationSetupReminderCard(
     }
 }
 
+@OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 fun ConnectionsList(
     title: String,
     connections: List<CircleMember>,
+    isLoading: Boolean = false,
+    error: String? = null,
     locationStates: Map<String, ViewerLocationState>,
     onManage: () -> Unit,
     navigateToTimeline: (String, String) -> Unit
@@ -686,8 +692,28 @@ fun ConnectionsList(
         Column(
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
-
-            if (connections.isEmpty()) {
+            if (isLoading) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(vertical = 12.dp),
+                    contentAlignment = Alignment.Center
+                ) {
+                    ContainedLoadingIndicator()
+                }
+            } else if (error != null) {
+                val isNoInternet = error.contains("internet", ignoreCase = true) ||
+                                   error.contains("connection", ignoreCase = true)
+                val msg = if (isNoInternet) "Couldn't load circle. Check connection." else "Circle details currently unavailable."
+                Text(
+                    text = msg,
+                    style = MaterialTheme.typography.bodySmall.copy(
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        fontFamily = manrope
+                    ),
+                    modifier = Modifier.padding(vertical = 8.dp)
+                )
+            } else if (connections.isEmpty()) {
                 Column(
                     modifier = Modifier
                         .fillMaxWidth(),
@@ -971,9 +997,11 @@ fun ConnectionStatusCard(
     }
 }
 
+@OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 fun ActiveZonesSection(
     zones: List<Place>,
+    isLoading: Boolean = false,
     onZoneClick: (com.aarav.geowav.data.model.Place) -> Unit,
     onViewAllClick: () -> Unit
 ) {
@@ -1011,7 +1039,16 @@ fun ActiveZonesSection(
 
         Spacer(modifier = Modifier.height(6.dp))
         Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
-            if (zones.isNotEmpty()) {
+            if (isLoading) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(vertical = 12.dp),
+                    contentAlignment = Alignment.Center
+                ) {
+                    ContainedLoadingIndicator()
+                }
+            } else if (zones.isNotEmpty()) {
                 zones.forEach { zone ->
                     ZoneCard(
                         zone = zone,
@@ -1200,9 +1237,12 @@ fun QuickActionButton(
     }
 }
 
+@OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 fun RecentAlertsList(
     activities: List<CircleActivityItem>,
+    isLoading: Boolean = false,
+    error: String? = null,
     currentUserId: String,
     isDarkThemeEnabled: Boolean
 ) {
@@ -1214,7 +1254,28 @@ fun RecentAlertsList(
             .fillMaxWidth()
             .padding(vertical = 8.dp)
     ) {
-        if (activities.isEmpty()) {
+        if (isLoading) {
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(vertical = 12.dp),
+                contentAlignment = Alignment.Center
+            ) {
+                ContainedLoadingIndicator()
+            }
+        } else if (error != null) {
+            val isNoInternet = error.contains("internet", ignoreCase = true) ||
+                               error.contains("connection", ignoreCase = true)
+            val msg = if (isNoInternet) "Couldn't load updates. Check connection." else "Activity log currently unavailable."
+            Text(
+                text = msg,
+                style = MaterialTheme.typography.bodySmall.copy(
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    fontFamily = manrope
+                ),
+                modifier = Modifier.padding(vertical = 8.dp)
+            )
+        } else if (activities.isEmpty()) {
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -1695,22 +1756,26 @@ fun ProfileCardV2(
             }
 
             AnimatedVisibility(!showLocationText) {
-                Column {
-                    Text(
-                        text = buildAnnotatedString {
-                            append("Hello ")
-                            withStyle(
-                                SpanStyle(
-                                    color = contentColor,
-                                    fontWeight = FontWeight.Bold
-                                )
-                            ) {
-                                append("$userName,")
-                            }
-                        },
-                        style = MaterialTheme.typography.bodyLarge,
-                        color = contentColor
-                    )
+                Column(
+                    verticalArrangement = Arrangement.Center
+                ) {
+                    if(!userName.isNullOrEmpty()) {
+                        Text(
+                            text = buildAnnotatedString {
+                                append("Hello ")
+                                withStyle(
+                                    SpanStyle(
+                                        color = contentColor,
+                                        fontWeight = FontWeight.Bold
+                                    )
+                                ) {
+                                    append("$userName,")
+                                }
+                            },
+                            style = MaterialTheme.typography.bodyLarge,
+                            color = contentColor
+                        )
+                    }
 
                     Text(
                         text = "GeoWav",

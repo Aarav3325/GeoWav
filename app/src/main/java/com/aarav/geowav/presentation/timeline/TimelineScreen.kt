@@ -38,6 +38,7 @@ import androidx.compose.material3.ToggleButtonDefaults
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import com.aarav.geowav.presentation.components.AppStateView
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -60,6 +61,7 @@ import androidx.compose.ui.unit.sp
 import com.aarav.geowav.R
 import com.aarav.geowav.core.utils.ActivityFilter
 import com.aarav.geowav.core.utils.FeatureAccess
+import com.aarav.geowav.core.utils.NetworkFailure
 import com.aarav.geowav.core.utils.toLocalDateInIndia
 import com.aarav.geowav.data.model.TimelineItem
 import com.aarav.geowav.data.model.UpgradeContext
@@ -229,12 +231,43 @@ fun TimelineScreen(
             }
 
             when {
+                uiState.error != null -> {
+                    AppStateView(
+                        iconRes = if (uiState.failure == NetworkFailure.NoInternet) R.drawable.link_break else null,
+                        title = when (uiState.failure) {
+                            NetworkFailure.NoInternet -> "No internet connection"
+                            NetworkFailure.Timeout -> "Taking longer than expected"
+                            NetworkFailure.ServerError -> "Couldn't load timeline"
+                            NetworkFailure.Unknown, null -> "Couldn't load timeline"
+                        },
+                        description = when (uiState.failure) {
+                            NetworkFailure.NoInternet -> "Please check your network settings and try again."
+                            NetworkFailure.Timeout -> "We're still loading your timeline. Please try again."
+                            NetworkFailure.ServerError -> "We couldn't load your timeline right now."
+                            NetworkFailure.Unknown, null -> uiState.error!!
+                        },
+                        primaryCtaText = "Retry",
+                        onPrimaryCtaClick = {
+                            timelineViewModel.observeForFilter(uiState.currentFilter, userId, plan)
+                            timelineViewModel.getMySessions(uiState.currentFilter, plan)
+                        }
+                    )
+                }
+
                 uiState.isLoading -> {
-                    Box(
+                    Column(
                         modifier = Modifier.fillMaxSize(),
-                        contentAlignment = Alignment.Center
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.Center
                     ) {
                         ContainedLoadingIndicator()
+                        Spacer(modifier = Modifier.height(16.dp))
+                        Text(
+                            text = "Preparing your timeline...",
+                            fontFamily = manrope,
+                            fontWeight = FontWeight.SemiBold,
+                            color = MaterialTheme.colorScheme.onBackground
+                        )
                     }
                 }
 //                uiState.sessions.isEmpty() -> {
@@ -614,6 +647,5 @@ enum class TimelineOptions(val label: String) {
     OTHERS_TIMELINE("Timeline"),
     MY_TIMELINE("My Timeline")
 }
-
 
 

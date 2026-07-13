@@ -12,6 +12,8 @@ import androidx.lifecycle.viewModelScope
 import com.aarav.geowav.core.utils.LiveLocationState
 import com.aarav.geowav.core.utils.Resource
 import com.aarav.geowav.core.utils.ServiceState
+import com.aarav.geowav.core.utils.failure
+import com.aarav.geowav.core.utils.messageFor
 import com.aarav.geowav.data.model.CircleMember
 import com.aarav.geowav.data.model.UserPlan
 import com.aarav.geowav.domain.repository.CircleRepository
@@ -541,10 +543,15 @@ class LocationSharingVM
                     }
                 }
 
+                is Resource.NoInternet,
+                is Resource.Timeout,
+                is Resource.ServerError,
+                is Resource.UnknownError,
                 is Resource.Error -> {
                     _uiState.update {
                         it.copy(
-                            isInitialLoading = false
+                            isInitialLoading = false,
+                            error = result.failure.messageFor("your circle", result.message)
                         )
                     }
                 }
@@ -624,7 +631,8 @@ data class LiveLocationUiState(
     val remaining: String? = null,
     val lastUpdatedAt: String? = null,
     val isEmergencyLoading: Boolean = false,
-    val showStoppedDialog: Boolean = false
+    val showStoppedDialog: Boolean = false,
+    val error: String? = null
 )
 
 sealed class LiveLocationUiEvent {
