@@ -7,7 +7,9 @@ import com.aarav.geowav.core.permissions.GeoPermissionCoordinator
 import com.aarav.geowav.core.permissions.GeoPermissionUiState
 import com.aarav.geowav.core.utils.Resource
 import com.aarav.geowav.core.utils.ViewerLocationState
+import com.aarav.geowav.core.utils.failure
 import com.aarav.geowav.core.utils.formatRemainingForEmergency
+import com.aarav.geowav.core.utils.messageFor
 import com.aarav.geowav.data.authentication.GoogleSignInClient
 import com.aarav.geowav.data.model.CircleActivityItem
 import com.aarav.geowav.data.model.CircleMember
@@ -394,14 +396,20 @@ class HomeScreenVM @Inject constructor(
                     }
                 }
 
-                else -> {
+                is Resource.NoInternet,
+                is Resource.Timeout,
+                is Resource.ServerError,
+                is Resource.UnknownError,
+                is Resource.Error -> {
                     _uiState.update {
                         it.copy(
                             isLovedOnesLoading = false,
-                            lovedOnesError = (result as? Resource.Error)?.message ?: "Failed to load circle members"
+                            lovedOnesError = result.failure.messageFor("your circle", result.message)
                         )
                     }
                 }
+
+                is Resource.Loading -> Unit
             }
         }
     }

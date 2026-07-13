@@ -3,6 +3,7 @@ package com.aarav.geowav.data.repository
 import android.util.Log
 import com.aarav.geowav.core.utils.Resource
 import com.aarav.geowav.core.utils.encodeEmail
+import com.aarav.geowav.core.utils.withNetworkTimeout
 import com.aarav.geowav.data.model.CircleMember
 import com.aarav.geowav.data.model.PendingInvite
 import com.aarav.geowav.domain.repository.CircleRepository
@@ -44,7 +45,7 @@ class CircleRepositoryImpl
         receiverUid: String,
         alias: String
     ): Resource<Unit> {
-        return try {
+        return withNetworkTimeout {
             val timestamp = System.currentTimeMillis()
             val senderAvatarUrl = getUserAvatarUrl(senderUid)
             val receiverAvatarUrl = getUserAvatarUrl(receiverUid)
@@ -74,12 +75,7 @@ class CircleRepositoryImpl
 
             rootRef.updateChildren(updates).await()
 
-            Resource.Success(Unit)
-
-        } catch (e: Exception) {
-            Resource.Error(
-                message = "Failed to send invite"
-            )
+            Unit
         }
     }
 
@@ -90,7 +86,7 @@ class CircleRepositoryImpl
         senderProfileName: String,
         receiverProfileName: String
     ): Resource<Unit> {
-        return try {
+        return withNetworkTimeout {
             val timestamp = System.currentTimeMillis()
             val senderAvatarUrl = getUserAvatarUrl(senderUid)
             val receiverAvatarUrl = getUserAvatarUrl(receiverUid)
@@ -111,10 +107,7 @@ class CircleRepositoryImpl
             )
 
             rootRef.updateChildren(updates).await()
-            Resource.Success(Unit)
-
-        } catch (e: Exception) {
-            Resource.Error("Failed to accept invite")
+            Unit
         }
     }
 
@@ -122,7 +115,7 @@ class CircleRepositoryImpl
         receiverUid: String,
         senderUid: String
     ): Resource<Unit> {
-        return try {
+        return withNetworkTimeout {
 
             val updates = mapOf(
                 "circle_requests/$receiverUid/$senderUid" to null,
@@ -131,17 +124,14 @@ class CircleRepositoryImpl
 
             rootRef.updateChildren(updates).await()
 
-            Resource.Success(Unit)
-
-        } catch (e: Exception) {
-            Resource.Error("Failed to reject invite")
+            Unit
         }
     }
 
     override suspend fun getAcceptedLovedOnes(
         userId: String
     ): Resource<List<CircleMember>> {
-        return try {
+        return withNetworkTimeout {
 
             val snapshot = rootRef
                 .child("circle")
@@ -172,10 +162,7 @@ class CircleRepositoryImpl
                 } else null
             }
 
-            Resource.Success(lovedOnes)
-
-        } catch (e: Exception) {
-            Resource.Error("Failed to load loved ones")
+            lovedOnes
         }
     }
 
@@ -218,7 +205,7 @@ class CircleRepositoryImpl
         userId: String,
         circleMemberId: String
     ): Resource<Unit> {
-        return try {
+        return withNetworkTimeout {
             val ref = rootRef.child("circle")
 
             val updates = mapOf(
@@ -229,9 +216,7 @@ class CircleRepositoryImpl
 
             ref.updateChildren(updates).await()
 
-            Resource.Success(Unit)
-        } catch (e: Exception) {
-            Resource.Error("Failed to delete circle member")
+            Unit
         }
     }
 

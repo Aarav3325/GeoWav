@@ -49,6 +49,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.aarav.geowav.R
 import com.aarav.geowav.core.utils.ActivityFilter
+import com.aarav.geowav.core.utils.NetworkFailure
 import com.aarav.geowav.data.model.ActivityTransition
 import com.aarav.geowav.presentation.components.IdentityAvatar
 import com.aarav.geowav.presentation.theme.manrope
@@ -72,7 +73,11 @@ fun ActivityContent(
             }
 
             uiState.error != null -> {
-                ActivityErrorState(error = uiState.error, onRetry = onRetry)
+                ActivityErrorState(
+                    error = uiState.error,
+                    failure = uiState.failure,
+                    onRetry = onRetry
+                )
             }
 
             uiState.activities.isEmpty() -> {
@@ -118,12 +123,25 @@ private fun ActivityLoadingState() {
 }
 
 @Composable
-private fun ActivityErrorState(error: String, onRetry: () -> Unit) {
-    val isNoInternet = error.contains("internet", ignoreCase = true)
+private fun ActivityErrorState(
+    error: String,
+    failure: NetworkFailure?,
+    onRetry: () -> Unit
+) {
     AppStateView(
-        iconRes = if (isNoInternet) R.drawable.link_break else null,
-        title = if (isNoInternet) "No internet connection" else "Couldn't load activity feed",
-        description = if (isNoInternet) "Please check your network settings and try again." else error,
+        iconRes = if (failure == NetworkFailure.NoInternet) R.drawable.link_break else null,
+        title = when (failure) {
+            NetworkFailure.NoInternet -> "No internet connection"
+            NetworkFailure.Timeout -> "Taking longer than expected"
+            NetworkFailure.ServerError -> "Couldn't load activity feed"
+            NetworkFailure.Unknown, null -> "Couldn't load activity feed"
+        },
+        description = when (failure) {
+            NetworkFailure.NoInternet -> "Please check your network settings and try again."
+            NetworkFailure.Timeout -> "We're still trying to load your activity. Please try again."
+            NetworkFailure.ServerError -> "We couldn't load your activity right now."
+            NetworkFailure.Unknown, null -> error
+        },
         primaryCtaText = "Retry",
         onPrimaryCtaClick = onRetry
     )

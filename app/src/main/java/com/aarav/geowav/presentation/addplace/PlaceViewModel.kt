@@ -5,6 +5,8 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.aarav.geowav.core.utils.FeatureAccess
 import com.aarav.geowav.core.utils.Resource
+import com.aarav.geowav.core.utils.failure
+import com.aarav.geowav.core.utils.messageFor
 import com.aarav.geowav.data.model.Place
 import com.aarav.geowav.data.model.UpgradeContext
 import com.aarav.geowav.data.model.UpgradeEvents
@@ -136,11 +138,15 @@ class PlaceViewModel @Inject constructor(
                     }
                 }
 
+                is Resource.NoInternet,
+                is Resource.Timeout,
+                is Resource.ServerError,
+                is Resource.UnknownError,
                 is Resource.Error -> {
                     _uiState.update {
                         it.copy(
                             isLoading = false,
-                            error = result.message,
+                            error = result.failure.messageFor("place details", result.message),
                             showErrorDialog = true
                         )
                     }

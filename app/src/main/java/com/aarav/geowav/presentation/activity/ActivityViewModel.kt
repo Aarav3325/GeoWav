@@ -3,6 +3,9 @@ package com.aarav.geowav.presentation.activity
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.aarav.geowav.core.utils.ActivityFilter
+import com.aarav.geowav.core.utils.InitialLoadEvent
+import com.aarav.geowav.core.utils.NetworkFailure
+import com.aarav.geowav.core.utils.withInitialLoadTimeout
 import com.aarav.geowav.data.authentication.GoogleSignInClient
 import com.aarav.geowav.data.model.CircleActivityItem
 import com.aarav.geowav.data.repository.CircleActivityFeedRepository
@@ -45,39 +48,63 @@ class ActivityViewModel
         observeJob?.cancel()
 
         _uiState.update {
+            val keepExistingContent = it.currentFilter == filter && it.activities.isNotEmpty()
             it.copy(
                 currentFilter = filter,
-                activities = emptyList(),
-                isLoading = true,
+                activities = if (keepExistingContent) it.activities else emptyList(),
+                isLoading = !keepExistingContent,
                 isLoadingMore = false,
                 hasMore = true,
-                error = null
+                error = null,
+                failure = null
             )
         }
         olderPageItems = emptyList()
 
         observeJob = viewModelScope.launch {
             circleActivityFeedRepository.observeActivityPage(filter)
+                .withInitialLoadTimeout()
                 .catch { e ->
                     _uiState.update {
+                        val hasContent = it.activities.isNotEmpty()
                         it.copy(
                             isLoading = false,
                             isLoadingMore = false,
-                            error = e.message,
-                            activities = emptyList()
+                            error = if (hasContent) it.error else "We couldn't load your activity right now.",
+                            failure = if (hasContent) null else NetworkFailure.ServerError
                         )
                     }
                 }
-                .collectLatest { activities ->
-                    val mergedActivities = mergeActivities(activities, olderPageItems)
-                    _uiState.update {
-                        it.copy(
-                            activities = mergedActivities,
-                            oldestLoadedTimestamp = mergedActivities.minOfOrNull { item -> item.timestamp },
-                            hasMore = activities.size == ACTIVITY_PAGE_SIZE,
-                            isLoading = false,
-                            error = null
-                        )
+                .collectLatest { event ->
+                    when (event) {
+                        InitialLoadEvent.TimedOut -> {
+                            _uiState.update {
+                                if (it.activities.isNotEmpty()) {
+                                    it.copy(isLoading = false)
+                                } else {
+                                    it.copy(
+                                        isLoading = false,
+                                        error = "We're still trying to load your activity. Please try again.",
+                                        failure = NetworkFailure.Timeout
+                                    )
+                                }
+                            }
+                        }
+
+                        is InitialLoadEvent.Value -> {
+                            val activities = event.value
+                            val mergedActivities = mergeActivities(activities, olderPageItems)
+                            _uiState.update {
+                                it.copy(
+                                    activities = mergedActivities,
+                                    oldestLoadedTimestamp = mergedActivities.minOfOrNull { item -> item.timestamp },
+                                    hasMore = activities.size == ACTIVITY_PAGE_SIZE,
+                                    isLoading = false,
+                                    error = null,
+                                    failure = null
+                                )
+                            }
+                        }
                     }
                 }
         }
@@ -162,6 +189,7 @@ data class ActivityUiState(
     val hasMore: Boolean = true,
     val oldestLoadedTimestamp: Long? = null,
     val error: String? = null,
+    val failure: NetworkFailure? = null,
     val loadMoreError: String? = null,
     val showDatePicker: Boolean = false,
     val currentFilter: ActivityFilter = ActivityFilter.Today

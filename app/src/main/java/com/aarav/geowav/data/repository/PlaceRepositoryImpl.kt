@@ -5,6 +5,7 @@ import android.util.Log
 import androidx.annotation.RequiresPermission
 import androidx.room.withTransaction
 import com.aarav.geowav.core.utils.Resource
+import com.aarav.geowav.core.utils.withNetworkTimeout
 import com.aarav.geowav.data.datasource.remote.PlaceRemoteDataSource
 import com.aarav.geowav.data.datasource.room.PlaceDatabase
 import com.aarav.geowav.data.datasource.room.PlacesDAO
@@ -18,14 +19,11 @@ import com.google.android.libraries.places.api.net.PlacesClient
 import dagger.Lazy
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
-import kotlinx.coroutines.TimeoutCancellationException
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.tasks.await
-import kotlinx.coroutines.withTimeout
-import java.io.IOException
 import javax.inject.Inject
 import kotlin.coroutines.cancellation.CancellationException
 
@@ -121,8 +119,7 @@ class PlaceRepositoryImpl @Inject constructor(
     override suspend fun searchPlaces(
         query: String,
     ): Resource<List<AutocompletePrediction>> {
-        return try {
-            withTimeout(5_000) { // 5 seconds
+        return withNetworkTimeout {
                 val token = AutocompleteSessionToken.newInstance()
                 val client = placesClient.get()
 
@@ -131,30 +128,14 @@ class PlaceRepositoryImpl @Inject constructor(
 
                 val response = client.findAutocompletePredictions(request).await()
 
-                Resource.Success(response.autocompletePredictions)
-            }
-        } catch (e: TimeoutCancellationException) {
-            Resource.Error(message = "Request timed out. Check your internet connection.")
-        } catch (e: CancellationException) {
-            Log.i("PlacesAPI", e.message.toString())
-            return Resource.Error(message = e.message ?: "no connection found")
-            throw e
-        } catch (e: IOException) {
-
-            Log.i("PlacesAPI", e.message.toString())
-            return Resource.Error(message = "No internet connection")
-        } catch (e: Exception) {
-            Log.i("PlacesAPI", e.message.toString())
-
-            return Resource.Error(message = e.message ?: "Failed to search places")
+                response.autocompletePredictions
         }
-
     }
 
     override suspend fun fetchPlace(
         placeId: String
     ): Resource<com.google.android.libraries.places.api.model.Place> {
-        return try {
+        return withNetworkTimeout {
             val fields = listOf(
                 com.google.android.libraries.places.api.model.Place.Field.ID,
                 com.google.android.libraries.places.api.model.Place.Field.DISPLAY_NAME,
@@ -168,11 +149,7 @@ class PlaceRepositoryImpl @Inject constructor(
 
             val response = client.fetchPlace(request).await()
 
-            Resource.Success(response.place)
-        } catch (e: CancellationException) {
-            throw e
-        } catch (e: Exception) {
-            return Resource.Error(message = e.message ?: "Unable to fetch place details")
+            response.place
         }
     }
 
@@ -197,7 +174,14 @@ class PlaceRepositoryImpl @Inject constructor(
 
         if (localPlaces.isEmpty()) return
 
-        val remotePlaces = remote.fetchPlaces()
+        val remotePlaces = try {
+            remote.fetchPlaces()
+        } catch (e: CancellationException) {
+            throw e
+        } catch (e: Exception) {
+            Log.w("PlaceRepository", "Unable to fetch cloud places", e)
+            return
+        }
 
         if (remotePlaces.isNotEmpty()) return
 

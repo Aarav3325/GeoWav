@@ -62,6 +62,7 @@ import com.aarav.geowav.core.insights.Insights.AverageVisitDurationInsight
 import com.aarav.geowav.core.insights.Insights.MostVisitedPlaceInsight
 import com.aarav.geowav.core.insights.Insights.WeeklyAwarenessSummaryInsight
 import com.aarav.geowav.core.insights.PersonalInsightScope
+import com.aarav.geowav.core.utils.NetworkFailure
 import com.aarav.geowav.presentation.theme.manrope
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -120,11 +121,20 @@ fun PersonalInsightsScreen(
 
                 when {
                     uiState.error != null -> {
-                        val isNoInternet = uiState.error!!.contains("internet", ignoreCase = true)
                         AppStateView(
-                            iconRes = if (isNoInternet) R.drawable.link_break else null,
-                            title = if (isNoInternet) "No internet connection" else "Couldn't load insights",
-                            description = if (isNoInternet) "Please check your network settings and try again." else uiState.error!!,
+                            iconRes = if (uiState.failure == NetworkFailure.NoInternet) R.drawable.link_break else null,
+                            title = when (uiState.failure) {
+                                NetworkFailure.NoInternet -> "No internet connection"
+                                NetworkFailure.Timeout -> "Taking longer than expected"
+                                NetworkFailure.ServerError -> "Couldn't load insights"
+                                NetworkFailure.Unknown, null -> "Couldn't load insights"
+                            },
+                            description = when (uiState.failure) {
+                                NetworkFailure.NoInternet -> "Please check your network settings and try again."
+                                NetworkFailure.Timeout -> "We're still loading your insights. Please try again."
+                                NetworkFailure.ServerError -> "We couldn't load insights right now."
+                                NetworkFailure.Unknown, null -> uiState.error!!
+                            },
                             primaryCtaText = "Retry",
                             onPrimaryCtaClick = {
                                 viewModel.onScopeChanged(uiState.mostVisitedPlaceScope)

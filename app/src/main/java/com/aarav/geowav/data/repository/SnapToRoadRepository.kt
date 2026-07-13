@@ -2,11 +2,14 @@ package com.aarav.geowav.data.repository
 
 import android.util.Log
 import com.aarav.geowav.core.utils.Resource
+import com.aarav.geowav.core.utils.toNetworkResource
+import com.aarav.geowav.core.utils.withNetworkTimeout
 import com.aarav.geowav.data.datasource.retrofit.RoadsApi
 import com.aarav.geowav.data.model.SnappedPoint
 import com.google.android.gms.maps.model.LatLng
 import javax.inject.Inject
 import javax.inject.Singleton
+import kotlin.coroutines.cancellation.CancellationException
 
 @Singleton
 class SnapToRoadRepository @Inject constructor(
@@ -20,13 +23,12 @@ class SnapToRoadRepository @Inject constructor(
         path: List<LatLng>,
         interpolate: Boolean
     ): Resource<List<SnappedPoint>> {
+        sessionCache[sessionId]?.let {
+            Log.i("SNAP", "cache hit")
+            return Resource.Success(it)
+        }
+
         return try {
-
-            sessionCache[sessionId]?.let {
-                Log.i("SNAP", "cache hit")
-                return Resource.Success(it)
-            }
-
             val snapped = mutableListOf<SnappedPoint>()
 
             val chunks = path.chunked(100)
@@ -39,10 +41,22 @@ class SnapToRoadRepository @Inject constructor(
                     "${it.latitude},${it.longitude}"
                 }
 
-                val response = roadsApi.snapToRoads(
-                    path = pathString,
-                    interpolate = interpolate
-                )
+                val responseResult = withNetworkTimeout {
+                    roadsApi.snapToRoads(
+                        path = pathString,
+                        interpolate = interpolate
+                    )
+                }
+
+                val response = when (responseResult) {
+                    is Resource.Success -> responseResult.data
+                    is Resource.NoInternet -> return Resource.NoInternet(responseResult.message ?: "No internet connection")
+                    is Resource.Timeout -> return Resource.Timeout(responseResult.message ?: "Taking longer than expected")
+                    is Resource.ServerError -> return Resource.ServerError(responseResult.message ?: "Server error")
+                    is Resource.UnknownError -> return Resource.UnknownError(responseResult.message ?: "Unable to snap route")
+                    is Resource.Error -> return Resource.UnknownError(responseResult.message ?: "Unable to snap route")
+                    is Resource.Loading -> return Resource.UnknownError("Unable to snap route")
+                } ?: return Resource.UnknownError("Unable to snap route")
 
                 if (!response.isSuccessful) {
 
@@ -53,13 +67,13 @@ class SnapToRoadRepository @Inject constructor(
                     Log.e("SNAP", "API ERROR: $error")
                     Log.e("SNAP", "HTTP CODE: ${response.code()}")
 
-                    return Resource.Error(response.message())
+                    return Resource.ServerError(response.message())
                 }
 
 
                 val data = response.body()?.snappedPoints ?: emptyList()
 
-                if(data.isEmpty()) return Resource.Error("This session does not include enough route data")
+                if(data.isEmpty()) return Resource.UnknownError("This session does not include enough route data")
 
                 snapped.addAll(
                     if (index == 0) data
@@ -73,12 +87,14 @@ class SnapToRoadRepository @Inject constructor(
 
             Resource.Success(snapped)
 
+        } catch (t: CancellationException) {
+            throw t
         } catch (t: Throwable) {
 
             Log.e("SNAP", "Throwable caught: ${t.message}")
             t.printStackTrace()
 
-            Resource.Error(t.message ?: "Unknown error")
+            t.toNetworkResource("Unable to snap route")
         }
     }
 }

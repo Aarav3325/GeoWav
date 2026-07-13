@@ -5,6 +5,8 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.aarav.geowav.core.utils.Resource
 import com.aarav.geowav.core.utils.ViewerLocationState
+import com.aarav.geowav.core.utils.failure
+import com.aarav.geowav.core.utils.messageFor
 import com.aarav.geowav.data.authentication.GoogleSignInClient
 import com.aarav.geowav.data.model.CircleMember
 import com.aarav.geowav.data.model.User
@@ -56,7 +58,17 @@ class ObserveViewModel
                     }
                 }
 
-                else -> {}
+                is Resource.NoInternet,
+                is Resource.Timeout,
+                is Resource.ServerError,
+                is Resource.UnknownError,
+                is Resource.Error -> {
+                    _uiState.update {
+                        it.copy(error = result.failure.messageFor("your circle", result.message))
+                    }
+                }
+
+                is Resource.Loading -> Unit
             }
         }
     }
@@ -143,4 +155,5 @@ data class ObserveScreenUiState(
     val locations: Map<String, ViewerLocationState> = emptyMap(),
     val currentViewers: List<User> = emptyList(),
     val viewerState: ViewerLocationState? = ViewerLocationState.Blocked,
+    val error: String? = null
 )

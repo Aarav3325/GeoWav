@@ -6,6 +6,8 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.aarav.geowav.core.utils.FeatureAccess
 import com.aarav.geowav.core.utils.Resource
+import com.aarav.geowav.core.utils.failure
+import com.aarav.geowav.core.utils.messageFor
 import com.aarav.geowav.data.model.SnappedPoint
 import com.aarav.geowav.data.model.StayPoint
 import com.aarav.geowav.data.model.TimelineItem
@@ -91,9 +93,13 @@ class TimelineMapPreviewVM @Inject constructor(
                     }
                 }
 
+                is Resource.NoInternet,
+                is Resource.Timeout,
+                is Resource.ServerError,
+                is Resource.UnknownError,
                 is Resource.Error -> {
                     _events.emit(TimelineEvents.NotEnoughData)
-                    Log.e("SNAP", "error: ${result.message}")
+                    Log.e("SNAP", "error: ${result.failure.messageFor("route data", result.message)}")
                 }
 
                 else -> Unit

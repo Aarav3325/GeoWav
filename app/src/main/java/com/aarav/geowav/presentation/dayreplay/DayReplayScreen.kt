@@ -59,6 +59,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.aarav.geowav.R
+import com.aarav.geowav.core.utils.NetworkFailure
 import com.aarav.geowav.data.model.DayReplay
 import com.aarav.geowav.data.model.DayReplayStop
 import com.aarav.geowav.data.model.DayReplayTimeSection
@@ -186,14 +187,23 @@ fun DayReplayTabContent(
 
             val error = uiState.error
             if (error != null) {
-                val isNoInternet = error.contains("internet", ignoreCase = true)
                 AppStateView(
-                    iconRes = if (isNoInternet) R.drawable.link_break else null,
-                    title = if (isNoInternet) "No internet connection" else "Couldn't load replay",
-                    description = if (isNoInternet) "Please check your network settings and try again." else error,
+                    iconRes = if (uiState.failure == NetworkFailure.NoInternet) R.drawable.link_break else null,
+                    title = when (uiState.failure) {
+                        NetworkFailure.NoInternet -> "No internet connection"
+                        NetworkFailure.Timeout -> "Taking longer than expected"
+                        NetworkFailure.ServerError -> "Couldn't load replay"
+                        NetworkFailure.Unknown, null -> "Couldn't load replay"
+                    },
+                    description = when (uiState.failure) {
+                        NetworkFailure.NoInternet -> "Please check your network settings and try again."
+                        NetworkFailure.Timeout -> "We're still loading your replay. Please try again."
+                        NetworkFailure.ServerError -> "We couldn't load your replay right now."
+                        NetworkFailure.Unknown, null -> error
+                    },
                     primaryCtaText = "Retry",
                     onPrimaryCtaClick = {
-                        viewModel.selectDate(uiState.selectedDate)
+                        viewModel.retry()
                     }
                 )
             } else if (uiState.isLoading) {

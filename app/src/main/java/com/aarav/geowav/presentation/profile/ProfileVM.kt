@@ -10,6 +10,8 @@ import androidx.lifecycle.application
 import androidx.lifecycle.viewModelScope
 import com.aarav.geowav.core.utils.Resource
 import com.aarav.geowav.core.utils.UploadResult
+import com.aarav.geowav.core.utils.failure
+import com.aarav.geowav.core.utils.messageFor
 import com.aarav.geowav.core.permissions.GeoPermissionCoordinator
 import com.aarav.geowav.core.permissions.GeoPermissionUiState
 import com.aarav.geowav.data.authentication.GoogleSignInClient
@@ -84,10 +86,14 @@ class ProfileVM @Inject constructor(
                     }
                 }
 
+                is Resource.NoInternet,
+                is Resource.Timeout,
+                is Resource.ServerError,
+                is Resource.UnknownError,
                 is Resource.Error -> {
                     _uiState.update {
                         it.copy(
-                            lovedOnesError = result.message
+                            lovedOnesError = result.failure.messageFor("your circle", result.message)
                         )
                     }
                 }
@@ -279,4 +285,3 @@ data class SettingsUiState(
     val showDeleteDialog: Boolean = false,
     val permissionState: GeoPermissionUiState = GeoPermissionUiState()
 )
-

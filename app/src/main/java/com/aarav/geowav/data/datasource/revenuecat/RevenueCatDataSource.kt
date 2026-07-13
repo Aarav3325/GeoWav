@@ -2,6 +2,8 @@ package com.aarav.geowav.data.datasource.revenuecat
 
 import android.app.Activity
 import android.util.Log
+import com.aarav.geowav.core.utils.Resource
+import com.aarav.geowav.core.utils.withNetworkTimeout
 import com.aarav.geowav.data.model.PurchaseResult
 import com.aarav.geowav.data.model.UserPlan
 import com.revenuecat.purchases.CustomerInfo
@@ -81,15 +83,12 @@ class RevenueCatDataSource @Inject constructor() {
         }
     }
 
-    suspend fun fetchAllPackages(): List<Package>? {
-        if(!isInitialized()) return null
+    suspend fun fetchAllPackages(): Resource<List<Package>> {
+        if(!isInitialized()) return Resource.UnknownError("Offerings unavailable")
         Log.i(TAG, "Offerings loading...")
-        return try {
+        return withNetworkTimeout {
             val offerings = Purchases.sharedInstance.awaitOfferings()
-            offerings.current?.availablePackages
-        } catch (e: Exception) {
-            Log.e(TAG, "Offerings error: ${e.message}")
-            null
+            offerings.current?.availablePackages.orEmpty()
         }
     }
 
