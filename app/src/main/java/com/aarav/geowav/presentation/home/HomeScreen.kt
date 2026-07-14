@@ -151,7 +151,7 @@ fun GeoWavHomeScreen(
 
     val plan by subscriptionViewModel.userPlan.collectAsState()
     val paywallConfig by subscriptionViewModel.paywallConfig.collectAsState()
-    var hasShownPromoPopup by rememberSaveable { mutableStateOf(false) }
+    val hasShownPromoPopup by subscriptionViewModel.hasShownPromoPopup.collectAsState()
 
 
     val hideTopBar = uiState.currentUser == null
@@ -510,9 +510,9 @@ fun GeoWavHomeScreen(
     TrialOfferDialog(
         showDialog = paywallConfig.launchOfferEnabled && plan != UserPlan.PRO && !hasShownPromoPopup,
         config = paywallConfig,
-        onDismiss = { hasShownPromoPopup = true },
+        onDismiss = { subscriptionViewModel.setPromoPopupShown(true) },
         onClaim = {
-            hasShownPromoPopup = true
+            subscriptionViewModel.setPromoPopupShown(true)
             navigateToPaywall()
         }
     )

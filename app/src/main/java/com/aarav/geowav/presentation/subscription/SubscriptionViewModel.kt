@@ -62,6 +62,13 @@ class SubscriptionViewModel
     private val _offeringState = MutableStateFlow(OfferingState())
     val offeringState: StateFlow<OfferingState> = _offeringState.asStateFlow()
 
+    private val _hasShownPromoPopup = MutableStateFlow(false)
+    val hasShownPromoPopup: StateFlow<Boolean> = _hasShownPromoPopup.asStateFlow()
+
+    fun setPromoPopupShown(shown: Boolean) {
+        _hasShownPromoPopup.value = shown
+    }
+
 
     private var purchaseJob: Job? = null
     private var listeningJob: Job? = null

@@ -57,6 +57,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -744,48 +745,100 @@ fun PaywallHeader(config: PaywallConfig, showTrialMessage: Boolean) {
         if (config.launchOfferEnabled && config.showLaunchBadge && config.launchBadgeText.isNotBlank()) {
             Surface(
                 shape = RoundedCornerShape(50),
-                color = MaterialTheme.colorScheme.primary.copy(alpha = 0.1f),
-                border = BorderStroke(1.dp, MaterialTheme.colorScheme.primary.copy(alpha = 0.3f)),
-                modifier = Modifier.padding(bottom = 12.dp)
+                color = MaterialTheme.colorScheme.primary.copy(alpha = 0.08f),
+                border = BorderStroke(1.dp, Brush.linearGradient(
+                    colors = listOf(
+                        MaterialTheme.colorScheme.primary.copy(alpha = 0.4f),
+                        MaterialTheme.colorScheme.secondary.copy(alpha = 0.2f)
+                    )
+                )),
+                modifier = Modifier.padding(bottom = 14.dp)
             ) {
                 Text(
-                    text = config.launchBadgeText,
+                    text = config.launchBadgeText.uppercase(),
                     color = MaterialTheme.colorScheme.primary,
                     fontSize = 11.sp,
-                    fontWeight = FontWeight.Bold,
+                    fontWeight = FontWeight.ExtraBold,
                     fontFamily = manrope,
-                    modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
-                    letterSpacing = 0.5.sp
+                    modifier = Modifier.padding(horizontal = 14.dp, vertical = 6.dp),
+                    letterSpacing = 1.sp
                 )
             }
         }
 
         Box(
             modifier = Modifier
-                .size(48.dp)
-                .clip(CircleShape)
-                .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.08f)),
+                .size(72.dp)
+                .background(
+                    brush = Brush.radialGradient(
+                        colors = listOf(
+                            MaterialTheme.colorScheme.primary.copy(alpha = 0.15f),
+                            Color.Transparent
+                        )
+                    )
+                ),
             contentAlignment = Alignment.Center
         ) {
-            Icon(
-                painter = painterResource(R.drawable.credit_card),
-                contentDescription = "Premium Icon",
-                tint = MaterialTheme.colorScheme.primary,
-                modifier = Modifier.size(22.dp)
-            )
+            Box(
+                modifier = Modifier
+                    .size(48.dp)
+                    .clip(CircleShape)
+                    .background(
+                        brush = Brush.linearGradient(
+                            colors = listOf(
+                                MaterialTheme.colorScheme.primary.copy(alpha = 0.12f),
+                                MaterialTheme.colorScheme.secondary.copy(alpha = 0.04f)
+                            )
+                        )
+                    )
+                    .border(
+                        width = 1.dp,
+                        color = MaterialTheme.colorScheme.primary.copy(alpha = 0.2f),
+                        shape = CircleShape
+                    ),
+                contentAlignment = Alignment.Center
+            ) {
+                Icon(
+                    painter = painterResource(R.drawable.credit_card),
+                    contentDescription = "Premium Icon",
+                    tint = MaterialTheme.colorScheme.primary,
+                    modifier = Modifier.size(22.dp)
+                )
+            }
         }
 
-        Spacer(Modifier.height(16.dp))
+        Spacer(Modifier.height(12.dp))
 
-        Text(
-            text = title,
-            color = MaterialTheme.colorScheme.onSurface,
-            fontSize = 28.sp,
-            fontWeight = FontWeight.ExtraBold,
-            fontFamily = manrope,
-            textAlign = TextAlign.Center,
-            lineHeight = 34.sp
-        )
+        if (config.launchOfferEnabled) {
+            Text(
+                text = title,
+                style = TextStyle(
+                    brush = Brush.linearGradient(
+                        colors = listOf(
+                            MaterialTheme.colorScheme.primary,
+                            MaterialTheme.colorScheme.secondary
+                        )
+                    )
+                ),
+                fontSize = 28.sp,
+                fontWeight = FontWeight.Black,
+                fontFamily = manrope,
+                textAlign = TextAlign.Center,
+                lineHeight = 34.sp,
+                modifier = Modifier.fillMaxWidth(0.95f)
+            )
+        } else {
+            Text(
+                text = title,
+                color = MaterialTheme.colorScheme.onSurface,
+                fontSize = 28.sp,
+                fontWeight = FontWeight.ExtraBold,
+                fontFamily = manrope,
+                textAlign = TextAlign.Center,
+                lineHeight = 34.sp,
+                modifier = Modifier.fillMaxWidth(0.95f)
+            )
+        }
 
         Spacer(Modifier.height(8.dp))
 
@@ -801,15 +854,34 @@ fun PaywallHeader(config: PaywallConfig, showTrialMessage: Boolean) {
         )
 
         if (displayTrial) {
-            Spacer(Modifier.height(12.dp))
-            Text(
-                text = config.trialMessage,
-                color = MaterialTheme.colorScheme.primary,
-                fontSize = 13.sp,
-                fontWeight = FontWeight.SemiBold,
-                fontFamily = manrope,
-                textAlign = TextAlign.Center
-            )
+            Spacer(Modifier.height(16.dp))
+            Surface(
+                shape = RoundedCornerShape(12.dp),
+                color = MaterialTheme.colorScheme.primary.copy(alpha = 0.05f),
+                border = BorderStroke(1.dp, MaterialTheme.colorScheme.primary.copy(alpha = 0.1f)),
+                modifier = Modifier.padding(horizontal = 8.dp)
+            ) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier.padding(horizontal = 14.dp, vertical = 8.dp)
+                ) {
+                    Icon(
+                        painter = painterResource(R.drawable.geowav_pro_badge),
+                        contentDescription = "Trial Badge",
+                        tint = Color.Unspecified,
+                        modifier = Modifier.size(16.dp)
+                    )
+                    Spacer(Modifier.width(8.dp))
+                    Text(
+                        text = config.trialMessage,
+                        color = MaterialTheme.colorScheme.primary,
+                        fontSize = 13.sp,
+                        fontWeight = FontWeight.Bold,
+                        fontFamily = manrope,
+                        textAlign = TextAlign.Center
+                    )
+                }
+            }
         }
     }
 }
