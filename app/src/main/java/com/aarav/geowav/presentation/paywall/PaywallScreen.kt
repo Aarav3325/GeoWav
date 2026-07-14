@@ -730,6 +730,10 @@ fun CurrentPlanCard(
 
 @Composable
 fun PaywallHeader(config: PaywallConfig, showTrialMessage: Boolean) {
+    val title = if (config.launchOfferEnabled) config.title else "Unlock smarter tracking"
+    val subtitle = if (config.launchOfferEnabled) config.subtitle else "Replay journeys, track longer, and share with your inner circle."
+    val displayTrial = showTrialMessage && config.launchOfferEnabled && config.trialMessage.isNotBlank()
+
     Column(
         modifier = Modifier
             .fillMaxWidth()
@@ -774,7 +778,7 @@ fun PaywallHeader(config: PaywallConfig, showTrialMessage: Boolean) {
         Spacer(Modifier.height(16.dp))
 
         Text(
-            text = config.title,
+            text = title,
             color = MaterialTheme.colorScheme.onSurface,
             fontSize = 28.sp,
             fontWeight = FontWeight.ExtraBold,
@@ -786,7 +790,7 @@ fun PaywallHeader(config: PaywallConfig, showTrialMessage: Boolean) {
         Spacer(Modifier.height(8.dp))
 
         Text(
-            text = config.subtitle,
+            text = subtitle,
             color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.8f),
             fontSize = 14.sp,
             fontFamily = manrope,
@@ -796,7 +800,7 @@ fun PaywallHeader(config: PaywallConfig, showTrialMessage: Boolean) {
             modifier = Modifier.fillMaxWidth(0.9f)
         )
 
-        if (showTrialMessage && config.trialMessage.isNotBlank()) {
+        if (displayTrial) {
             Spacer(Modifier.height(12.dp))
             Text(
                 text = config.trialMessage,
