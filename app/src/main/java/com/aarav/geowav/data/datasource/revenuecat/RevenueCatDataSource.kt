@@ -83,12 +83,17 @@ class RevenueCatDataSource @Inject constructor() {
         }
     }
 
-    suspend fun fetchAllPackages(): Resource<List<Package>> {
-        if(!isInitialized()) return Resource.UnknownError("Offerings unavailable")
-        Log.i(TAG, "Offerings loading...")
+    suspend fun fetchAllPackages(offeringId: String? = null): Resource<List<Package>> {
+        if (!Purchases.isConfigured) return Resource.UnknownError("Offerings unavailable")
+        Log.i(TAG, "Offerings loading for offeringId: $offeringId...")
         return withNetworkTimeout {
             val offerings = Purchases.sharedInstance.awaitOfferings()
-            offerings.current?.availablePackages.orEmpty()
+            val offering = if (!offeringId.isNullOrBlank()) {
+                offerings.all[offeringId] ?: offerings.current
+            } else {
+                offerings.current
+            }
+            offering?.availablePackages.orEmpty()
         }
     }
 

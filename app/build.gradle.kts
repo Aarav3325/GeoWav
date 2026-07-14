@@ -27,7 +27,7 @@ android {
         applicationId = "com.aarav.geowav"
         minSdk = 26
         targetSdk = 37
-        versionCode = 38
+        versionCode = 39
         versionName = "0.9.9"
 
 

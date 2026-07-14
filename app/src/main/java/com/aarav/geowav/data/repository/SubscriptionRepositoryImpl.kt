@@ -124,7 +124,7 @@ class SubscriptionRepositoryImpl
         }
     }
 
-    override suspend fun fetchAllPackages(): Resource<List<Package>> {
-        return revenueCatDataSource.fetchAllPackages()
+    override suspend fun fetchAllPackages(offeringId: String?): Resource<List<Package>> {
+        return revenueCatDataSource.fetchAllPackages(offeringId)
     }
 }

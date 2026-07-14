@@ -57,6 +57,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -72,6 +73,7 @@ import com.aarav.geowav.core.utils.SubscriptionHelper.getSubscriptionStatus
 import com.aarav.geowav.data.model.PurchaseResult
 import com.aarav.geowav.data.model.UserPlan
 import com.aarav.geowav.data.model.UserSubscription
+import com.aarav.geowav.data.model.PaywallConfig
 import com.aarav.geowav.data.model.getPlanContent
 import com.aarav.geowav.presentation.components.CustomBottomSheet
 import com.aarav.geowav.presentation.components.PurchaseSuccessBottomSheet
@@ -139,8 +141,32 @@ fun PaywallScreen(
     val plan by subscriptionViewModel.userPlan.collectAsState()
     val purchaseResult by subscriptionViewModel.purchaseResult.collectAsState()
     val subscriptionState by subscriptionViewModel.subscriptionState.collectAsState()
+    val paywallConfig by subscriptionViewModel.paywallConfig.collectAsState()
+    val offeringState by subscriptionViewModel.offeringState.collectAsState()
 
     val availablePlans = SubscriptionHelper.getAvailablePlans(plan)
+
+    val premiumPackage = remember(offeringState.allPackages) {
+        offeringState.allPackages.find {
+            it.identifier == "premium_monthly" || 
+            it.identifier.contains("premium", ignoreCase = true) || 
+            it.product.id.contains("premium", ignoreCase = true)
+        }
+    }
+    val proPackage = remember(offeringState.allPackages) {
+        offeringState.allPackages.find {
+            it.identifier == "pro_monthly" || 
+            it.identifier.contains("pro", ignoreCase = true) || 
+            it.product.id.contains("pro", ignoreCase = true)
+        }
+    }
+
+    val premiumPrice = premiumPackage?.product?.price?.formatted ?: "₹99"
+    val proPrice = proPackage?.product?.price?.formatted ?: "₹199"
+
+    val proOfferPrice = if (plan == UserPlan.PREMIUM) {
+            if (proPrice == "₹199" || proPrice.contains("199")) "₹149" else null
+        } else null
 
     var showUpgradeConfirm by remember { mutableStateOf(false) }
     var selectedPlan by remember { mutableStateOf<UserPlan?>(null) }
@@ -299,7 +325,7 @@ fun PaywallScreen(
                     .padding(top = 16.dp, bottom = if (availablePlans.isEmpty()) 48.dp else 140.dp)
             ) {
 
-                PaywallHeader()
+                PaywallHeader(config = paywallConfig, showTrialMessage = plan != UserPlan.PRO)
 
                 Spacer(Modifier.height(8.dp))
 
@@ -310,7 +336,7 @@ fun PaywallScreen(
                 if (availablePlans.contains(UserPlan.PREMIUM)) {
                     PlanCard(
                         title = "GeoWav Premium",
-                        price = "₹99",
+                        price = premiumPrice,
                         billingLabel = "/month",
                         features = listOf(
                             "Unlimited live tracking",
@@ -333,9 +359,9 @@ fun PaywallScreen(
                 if (availablePlans.contains(UserPlan.PRO)) {
                     PlanCard(
                         title = "GeoWav Pro",
-                        price = "₹199",
+                        price = proPrice,
                         billingLabel = "/month",
-                        offerPrice = if (plan == UserPlan.PREMIUM) "₹149" else null,
+                        offerPrice = proOfferPrice,
                         features = listOf(
                             "Everything in Premium",
                             "Full location history",
@@ -704,7 +730,11 @@ fun CurrentPlanCard(
 }
 
 @Composable
-fun PaywallHeader() {
+fun PaywallHeader(config: PaywallConfig, showTrialMessage: Boolean) {
+    val title = if (config.launchOfferEnabled) config.title else "Unlock smarter tracking"
+    val subtitle = if (config.launchOfferEnabled) config.subtitle else "Replay journeys, track longer, and share with your inner circle."
+    val displayTrial = showTrialMessage && config.launchOfferEnabled && config.trialMessage.isNotBlank()
+
     Column(
         modifier = Modifier
             .fillMaxWidth()
@@ -712,37 +742,108 @@ fun PaywallHeader() {
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
     ) {
-        Box(
-            modifier = Modifier
-                .size(48.dp)
-                .clip(CircleShape)
-                .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.08f)),
-            contentAlignment = Alignment.Center
-        ) {
-            Icon(
-                painter = painterResource(R.drawable.credit_card),
-                contentDescription = "Premium Icon",
-                tint = MaterialTheme.colorScheme.primary,
-                modifier = Modifier.size(22.dp)
-            )
+        if (config.launchOfferEnabled && config.showLaunchBadge && config.launchBadgeText.isNotBlank()) {
+            Surface(
+                shape = RoundedCornerShape(50),
+                color = MaterialTheme.colorScheme.primary.copy(alpha = 0.08f),
+                border = BorderStroke(1.dp, Brush.linearGradient(
+                    colors = listOf(
+                        MaterialTheme.colorScheme.primary.copy(alpha = 0.4f),
+                        MaterialTheme.colorScheme.secondary.copy(alpha = 0.2f)
+                    )
+                )),
+                modifier = Modifier.padding(bottom = 14.dp)
+            ) {
+                Text(
+                    text = config.launchBadgeText.uppercase(),
+                    color = MaterialTheme.colorScheme.primary,
+                    fontSize = 11.sp,
+                    fontWeight = FontWeight.ExtraBold,
+                    fontFamily = manrope,
+                    modifier = Modifier.padding(horizontal = 14.dp, vertical = 6.dp),
+                    letterSpacing = 1.sp
+                )
+            }
         }
 
-        Spacer(Modifier.height(16.dp))
+        Box(
+            modifier = Modifier
+                .size(72.dp)
+                .background(
+                    brush = Brush.radialGradient(
+                        colors = listOf(
+                            MaterialTheme.colorScheme.primary.copy(alpha = 0.15f),
+                            Color.Transparent
+                        )
+                    )
+                ),
+            contentAlignment = Alignment.Center
+        ) {
+            Box(
+                modifier = Modifier
+                    .size(48.dp)
+                    .clip(CircleShape)
+                    .background(
+                        brush = Brush.linearGradient(
+                            colors = listOf(
+                                MaterialTheme.colorScheme.primary.copy(alpha = 0.12f),
+                                MaterialTheme.colorScheme.secondary.copy(alpha = 0.04f)
+                            )
+                        )
+                    )
+                    .border(
+                        width = 1.dp,
+                        color = MaterialTheme.colorScheme.primary.copy(alpha = 0.2f),
+                        shape = CircleShape
+                    ),
+                contentAlignment = Alignment.Center
+            ) {
+                Icon(
+                    painter = painterResource(R.drawable.credit_card),
+                    contentDescription = "Premium Icon",
+                    tint = MaterialTheme.colorScheme.primary,
+                    modifier = Modifier.size(22.dp)
+                )
+            }
+        }
 
-        Text(
-            text = "Unlock smarter tracking",
-            color = MaterialTheme.colorScheme.onSurface,
-            fontSize = 28.sp,
-            fontWeight = FontWeight.ExtraBold,
-            fontFamily = manrope,
-            textAlign = TextAlign.Center,
-            lineHeight = 34.sp
-        )
+        Spacer(Modifier.height(12.dp))
+
+        if (config.launchOfferEnabled) {
+            Text(
+                text = title,
+                style = TextStyle(
+                    brush = Brush.linearGradient(
+                        colors = listOf(
+                            MaterialTheme.colorScheme.primary,
+                            MaterialTheme.colorScheme.secondary
+                        )
+                    )
+                ),
+                fontSize = 28.sp,
+                fontWeight = FontWeight.Black,
+                fontFamily = manrope,
+                textAlign = TextAlign.Center,
+                lineHeight = 34.sp,
+                modifier = Modifier.fillMaxWidth(0.95f)
+            )
+        } else {
+            Text(
+                text = title,
+                color = MaterialTheme.colorScheme.onSurface,
+                fontSize = 28.sp,
+                fontWeight = FontWeight.ExtraBold,
+                fontFamily = manrope,
+                textAlign = TextAlign.Center,
+                lineHeight = 34.sp,
+                modifier = Modifier.fillMaxWidth(0.95f)
+            )
+        }
 
         Spacer(Modifier.height(8.dp))
 
         Text(
-            text = "Replay journeys, track longer, and share with your inner circle.",
+            text = subtitle,
             color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.8f),
             fontSize = 14.sp,
             fontFamily = manrope,
@@ -751,6 +852,37 @@ fun PaywallHeader() {
             lineHeight = 22.sp,
             modifier = Modifier.fillMaxWidth(0.9f)
         )
+
+        if (displayTrial) {
+            Spacer(Modifier.height(16.dp))
+            Surface(
+                shape = RoundedCornerShape(12.dp),
+                color = MaterialTheme.colorScheme.primary.copy(alpha = 0.05f),
+                border = BorderStroke(1.dp, MaterialTheme.colorScheme.primary.copy(alpha = 0.1f)),
+                modifier = Modifier.padding(horizontal = 8.dp)
+            ) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier.padding(horizontal = 14.dp, vertical = 8.dp)
+                ) {
+                    Icon(
+                        painter = painterResource(R.drawable.geowav_pro_badge),
+                        contentDescription = "Trial Badge",
+                        tint = Color.Unspecified,
+                        modifier = Modifier.size(16.dp)
+                    )
+                    Spacer(Modifier.width(8.dp))
+                    Text(
+                        text = config.trialMessage,
+                        color = MaterialTheme.colorScheme.primary,
+                        fontSize = 13.sp,
+                        fontWeight = FontWeight.Bold,
+                        fontFamily = manrope,
+                        textAlign = TextAlign.Center
+                    )
+                }
+            }
+        }
     }
 }
 
