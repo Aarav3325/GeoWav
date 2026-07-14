@@ -1,6 +1,18 @@
 package com.aarav.geowav.presentation.circle
 
 import androidx.compose.animation.animateContentSize
+import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.togetherWith
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.rememberInfiniteTransition
+import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.RepeatMode
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.core.EaseInOut
+import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.BorderStroke
@@ -55,6 +67,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.scale
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.platform.LocalFocusManager
@@ -532,25 +545,39 @@ fun SendInviteButton(
             disabledContentColor = MaterialTheme.colorScheme.outline
         )
     ) {
-        if (isEnabled) {
-            Text(
-                "Send Invite",
-                fontFamily = manrope,
-                fontWeight = FontWeight.SemiBold,
-                fontSize = 15.sp
-            )
-            Spacer(Modifier.width(10.dp))
-            Icon(
-                painter = painterResource(R.drawable.send_invite),
-                contentDescription = null,
-                modifier = Modifier.size(17.dp)
-            )
-        } else {
-            CircularProgressIndicator(
-                modifier = Modifier.size(24.dp),
-                color = MaterialTheme.colorScheme.outline,
-                strokeWidth = 2.5.dp
-            )
+        AnimatedContent(
+            targetState = isEnabled,
+            transitionSpec = {
+                fadeIn(animationSpec = tween(220, delayMillis = 90)) togetherWith
+                fadeOut(animationSpec = tween(90))
+            },
+            label = "SendInviteButtonContent"
+        ) { enabled ->
+            if (enabled) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.Center
+                ) {
+                    Text(
+                        "Send Invite",
+                        fontFamily = manrope,
+                        fontWeight = FontWeight.SemiBold,
+                        fontSize = 15.sp
+                    )
+                    Spacer(Modifier.width(10.dp))
+                    Icon(
+                        painter = painterResource(R.drawable.send_invite),
+                        contentDescription = null,
+                        modifier = Modifier.size(17.dp)
+                    )
+                }
+            } else {
+                CircularProgressIndicator(
+                    modifier = Modifier.size(24.dp),
+                    color = MaterialTheme.colorScheme.outline,
+                    strokeWidth = 2.5.dp
+                )
+            }
         }
     }
 }
@@ -611,6 +638,16 @@ fun MyCircleSection(
             }
 
             if (lovedOnesList.isEmpty()) {
+                val infiniteTransition = rememberInfiniteTransition()
+                val scale by infiniteTransition.animateFloat(
+                    initialValue = 0.92f,
+                    targetValue = 1.08f,
+                    animationSpec = infiniteRepeatable(
+                        animation = tween(1800, easing = EaseInOut),
+                        repeatMode = RepeatMode.Reverse
+                    )
+                )
+
                 Column(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -621,6 +658,7 @@ fun MyCircleSection(
                     Box(
                         modifier = Modifier
                             .size(56.dp)
+                            .scale(scale)
                             .clip(CircleShape)
                             .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.08f)),
                         contentAlignment = Alignment.Center
@@ -1151,7 +1189,16 @@ fun ConnectionUsageCard(
             )
 
             if (!isUnlimited) {
-                val progress = current.toFloat() / max
+                val targetProgress = current.toFloat() / max
+                var progressAnimatable by remember { mutableStateOf(0f) }
+                LaunchedEffect(targetProgress) {
+                    progressAnimatable = targetProgress
+                }
+                val animatedProgress by animateFloatAsState(
+                    targetValue = progressAnimatable,
+                    animationSpec = tween(durationMillis = 1200, easing = FastOutSlowInEasing),
+                    label = "ConnectionUsageProgress"
+                )
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -1161,7 +1208,7 @@ fun ConnectionUsageCard(
                 ) {
                     Box(
                         modifier = Modifier
-                            .fillMaxWidth(progress)
+                            .fillMaxWidth(animatedProgress)
                             .fillMaxHeight()
                             .clip(RoundedCornerShape(99.dp))
                             .background(

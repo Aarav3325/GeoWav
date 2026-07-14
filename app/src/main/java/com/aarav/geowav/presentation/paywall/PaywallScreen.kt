@@ -266,7 +266,7 @@ fun PaywallScreen(
                 modifier = Modifier,
                 title = {
                     Text(
-                        text = "Upgrade your plan",
+                        text = if(paywallConfig.launchOfferEnabled) paywallConfig.launchBadgeText else "Upgrade your plan",
                         style = MaterialTheme.typography.titleLarge,
                         fontWeight = FontWeight.Bold,
                         fontFamily = manrope,

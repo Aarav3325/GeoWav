@@ -729,6 +729,16 @@ fun ConnectionsList(
                     modifier = Modifier.padding(vertical = 8.dp)
                 )
             } else if (connections.isEmpty()) {
+                val infiniteTransition = rememberInfiniteTransition()
+                val scale by infiniteTransition.animateFloat(
+                    initialValue = 0.92f,
+                    targetValue = 1.08f,
+                    animationSpec = infiniteRepeatable(
+                        animation = tween(1800, easing = EaseInOut),
+                        repeatMode = RepeatMode.Reverse
+                    )
+                )
+
                 Card(
                     modifier = Modifier
                         .fillMaxWidth(),
@@ -747,6 +757,7 @@ fun ConnectionsList(
                         Box(
                             modifier = Modifier
                                 .size(48.dp)
+                                .scale(scale)
                                 .clip(CircleShape)
                                 .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.08f)),
                             contentAlignment = Alignment.Center
