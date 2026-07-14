@@ -11,5 +11,5 @@ interface SubscriptionRepository {
 
     fun fetchSubscriptionStatus(): Flow<UserSubscription>
 
-    suspend fun fetchAllPackages(): Resource<List<Package>>
+    suspend fun fetchAllPackages(offeringId: String? = null): Resource<List<Package>>
 }

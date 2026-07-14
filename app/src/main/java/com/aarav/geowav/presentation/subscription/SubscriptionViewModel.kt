@@ -25,6 +25,8 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import com.aarav.geowav.data.model.PaywallConfig
+import com.aarav.geowav.domain.repository.PaywallConfigRepository
 import javax.inject.Inject
 
 @HiltViewModel
@@ -33,7 +35,8 @@ class SubscriptionViewModel
     @ApplicationContext val context: Context,
     val subscriptionRepository: SubscriptionRepository,
     val paymentRepository: PaymentRepository,
-    val googleSignInClient: GoogleSignInClient
+    val googleSignInClient: GoogleSignInClient,
+    private val paywallConfigRepository: PaywallConfigRepository
 ) : ViewModel() {
 
     val userPlan: StateFlow<UserPlan> =
@@ -43,6 +46,8 @@ class SubscriptionViewModel
                 started = SharingStarted.WhileSubscribed(5000),
                 initialValue = UserPlan.FREE
             )
+
+    val paywallConfig: StateFlow<PaywallConfig> = paywallConfigRepository.paywallConfig
     private val _uiEvents = MutableSharedFlow<SubscriptionEvents>()
     val uiEvents = _uiEvents.asSharedFlow()
 
@@ -64,17 +69,22 @@ class SubscriptionViewModel
     init {
         Log.i("SUBSCRIPTION", "init")
 
-        fetchOfferings()
+        viewModelScope.launch {
+            paywallConfigRepository.paywallConfig.collect { config ->
+                Log.i("SUBSCRIPTION", "Fetching offerings dynamically for offering ID: ${config.offeringId}")
+                fetchOfferings(config.offeringId)
+            }
+        }
 //        startRealTimeEntitlementSync()
     }
 
 
-    fun fetchOfferings() {
+    fun fetchOfferings(offeringId: String? = null) {
 
-        Log.i("SUBSCRIPTION", "Offerings loading")
+        Log.i("SUBSCRIPTION", "Offerings loading for offeringId: $offeringId")
         viewModelScope.launch {
             _offeringState.update { it.copy(isLoading = true, error = null) }
-            when (val result = subscriptionRepository.fetchAllPackages()) {
+            when (val result = subscriptionRepository.fetchAllPackages(offeringId)) {
                 is Resource.Success -> {
                     val allPackages = result.data.orEmpty()
                     _offeringState.update {
@@ -131,10 +141,14 @@ class SubscriptionViewModel
     fun purchasePlan(activity: Activity, plan: UserPlan) {
         val rcPackage = when (plan) {
             UserPlan.PREMIUM -> _offeringState.value.allPackages.find {
-                it.identifier == "premium_monthly"
+                it.identifier == "premium_monthly" || 
+                it.identifier.contains("premium", ignoreCase = true) || 
+                it.product.id.contains("premium", ignoreCase = true)
             }
             UserPlan.PRO -> _offeringState.value.allPackages.find {
-                it.identifier == "pro_monthly"
+                it.identifier == "pro_monthly" || 
+                it.identifier.contains("pro", ignoreCase = true) || 
+                it.product.id.contains("pro", ignoreCase = true)
             }
             UserPlan.FREE -> null
         }
@@ -177,6 +191,7 @@ class SubscriptionViewModel
 
 
     fun fetchSubscriptionStatus() {
+        fetchOfferings(paywallConfig.value.offeringId)
         viewModelScope.launch {
             subscriptionRepository.fetchSubscriptionStatus()
                 .collect {

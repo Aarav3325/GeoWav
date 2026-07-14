@@ -4,6 +4,7 @@ import android.content.Context
 import androidx.credentials.CredentialManager
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.database.FirebaseDatabase
+import com.google.firebase.remoteconfig.FirebaseRemoteConfig
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -31,5 +32,11 @@ object AuthModule {
     @Singleton
     fun provideFirebaseDatabase() : FirebaseDatabase{
         return FirebaseDatabase.getInstance()
+    }
+
+    @Provides
+    @Singleton
+    fun provideFirebaseRemoteConfig() : FirebaseRemoteConfig {
+        return FirebaseRemoteConfig.getInstance()
     }
 }

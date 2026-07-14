@@ -72,6 +72,7 @@ import com.aarav.geowav.core.utils.SubscriptionHelper.getSubscriptionStatus
 import com.aarav.geowav.data.model.PurchaseResult
 import com.aarav.geowav.data.model.UserPlan
 import com.aarav.geowav.data.model.UserSubscription
+import com.aarav.geowav.data.model.PaywallConfig
 import com.aarav.geowav.data.model.getPlanContent
 import com.aarav.geowav.presentation.components.CustomBottomSheet
 import com.aarav.geowav.presentation.components.PurchaseSuccessBottomSheet
@@ -139,8 +140,32 @@ fun PaywallScreen(
     val plan by subscriptionViewModel.userPlan.collectAsState()
     val purchaseResult by subscriptionViewModel.purchaseResult.collectAsState()
     val subscriptionState by subscriptionViewModel.subscriptionState.collectAsState()
+    val paywallConfig by subscriptionViewModel.paywallConfig.collectAsState()
+    val offeringState by subscriptionViewModel.offeringState.collectAsState()
 
     val availablePlans = SubscriptionHelper.getAvailablePlans(plan)
+
+    val premiumPackage = remember(offeringState.allPackages) {
+        offeringState.allPackages.find {
+            it.identifier == "premium_monthly" || 
+            it.identifier.contains("premium", ignoreCase = true) || 
+            it.product.id.contains("premium", ignoreCase = true)
+        }
+    }
+    val proPackage = remember(offeringState.allPackages) {
+        offeringState.allPackages.find {
+            it.identifier == "pro_monthly" || 
+            it.identifier.contains("pro", ignoreCase = true) || 
+            it.product.id.contains("pro", ignoreCase = true)
+        }
+    }
+
+    val premiumPrice = premiumPackage?.product?.price?.formatted ?: "₹99"
+    val proPrice = proPackage?.product?.price?.formatted ?: "₹199"
+
+    val proOfferPrice = if (plan == UserPlan.PREMIUM) {
+            if (proPrice == "₹199" || proPrice.contains("199")) "₹149" else null
+        } else null
 
     var showUpgradeConfirm by remember { mutableStateOf(false) }
     var selectedPlan by remember { mutableStateOf<UserPlan?>(null) }
@@ -299,7 +324,7 @@ fun PaywallScreen(
                     .padding(top = 16.dp, bottom = if (availablePlans.isEmpty()) 48.dp else 140.dp)
             ) {
 
-                PaywallHeader()
+                PaywallHeader(config = paywallConfig, showTrialMessage = plan != UserPlan.PRO)
 
                 Spacer(Modifier.height(8.dp))
 
@@ -310,7 +335,7 @@ fun PaywallScreen(
                 if (availablePlans.contains(UserPlan.PREMIUM)) {
                     PlanCard(
                         title = "GeoWav Premium",
-                        price = "₹99",
+                        price = premiumPrice,
                         billingLabel = "/month",
                         features = listOf(
                             "Unlimited live tracking",
@@ -333,9 +358,9 @@ fun PaywallScreen(
                 if (availablePlans.contains(UserPlan.PRO)) {
                     PlanCard(
                         title = "GeoWav Pro",
-                        price = "₹199",
+                        price = proPrice,
                         billingLabel = "/month",
-                        offerPrice = if (plan == UserPlan.PREMIUM) "₹149" else null,
+                        offerPrice = proOfferPrice,
                         features = listOf(
                             "Everything in Premium",
                             "Full location history",
@@ -704,7 +729,7 @@ fun CurrentPlanCard(
 }
 
 @Composable
-fun PaywallHeader() {
+fun PaywallHeader(config: PaywallConfig, showTrialMessage: Boolean) {
     Column(
         modifier = Modifier
             .fillMaxWidth()
@@ -712,6 +737,25 @@ fun PaywallHeader() {
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
     ) {
+        if (config.launchOfferEnabled && config.showLaunchBadge && config.launchBadgeText.isNotBlank()) {
+            Surface(
+                shape = RoundedCornerShape(50),
+                color = MaterialTheme.colorScheme.primary.copy(alpha = 0.1f),
+                border = BorderStroke(1.dp, MaterialTheme.colorScheme.primary.copy(alpha = 0.3f)),
+                modifier = Modifier.padding(bottom = 12.dp)
+            ) {
+                Text(
+                    text = config.launchBadgeText,
+                    color = MaterialTheme.colorScheme.primary,
+                    fontSize = 11.sp,
+                    fontWeight = FontWeight.Bold,
+                    fontFamily = manrope,
+                    modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
+                    letterSpacing = 0.5.sp
+                )
+            }
+        }
+
         Box(
             modifier = Modifier
                 .size(48.dp)
@@ -730,7 +774,7 @@ fun PaywallHeader() {
         Spacer(Modifier.height(16.dp))
 
         Text(
-            text = "Unlock smarter tracking",
+            text = config.title,
             color = MaterialTheme.colorScheme.onSurface,
             fontSize = 28.sp,
             fontWeight = FontWeight.ExtraBold,
@@ -742,7 +786,7 @@ fun PaywallHeader() {
         Spacer(Modifier.height(8.dp))
 
         Text(
-            text = "Replay journeys, track longer, and share with your inner circle.",
+            text = config.subtitle,
             color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.8f),
             fontSize = 14.sp,
             fontFamily = manrope,
@@ -751,6 +795,18 @@ fun PaywallHeader() {
             lineHeight = 22.sp,
             modifier = Modifier.fillMaxWidth(0.9f)
         )
+
+        if (showTrialMessage && config.trialMessage.isNotBlank()) {
+            Spacer(Modifier.height(12.dp))
+            Text(
+                text = config.trialMessage,
+                color = MaterialTheme.colorScheme.primary,
+                fontSize = 13.sp,
+                fontWeight = FontWeight.SemiBold,
+                fontFamily = manrope,
+                textAlign = TextAlign.Center
+            )
+        }
     }
 }
 
