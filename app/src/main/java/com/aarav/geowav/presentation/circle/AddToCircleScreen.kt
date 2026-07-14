@@ -2,7 +2,11 @@ package com.aarav.geowav.presentation.circle
 
 import androidx.compose.animation.animateContentSize
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.clickable
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -82,15 +86,27 @@ import com.aarav.geowav.presentation.theme.manrope
 
 @Composable
 private fun SectionLabel(text: String, modifier: Modifier = Modifier) {
-    Text(
-        text = text.uppercase(),
-        fontFamily = manrope,
-        fontSize = 11.sp,
-        fontWeight = FontWeight.SemiBold,
-        letterSpacing = 0.06.sp,
-        color = MaterialTheme.colorScheme.outline,
-        modifier = modifier.padding(horizontal = 4.dp)
-    )
+    Row(
+        modifier = modifier.padding(vertical = 6.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Box(
+            modifier = Modifier
+                .width(4.dp)
+                .height(14.dp)
+                .clip(RoundedCornerShape(2.dp))
+                .background(MaterialTheme.colorScheme.primary)
+        )
+        Spacer(Modifier.width(8.dp))
+        Text(
+            text = text.uppercase(),
+            fontFamily = manrope,
+            fontSize = 11.sp,
+            fontWeight = FontWeight.Bold,
+            letterSpacing = 0.08.sp,
+            color = MaterialTheme.colorScheme.primary
+        )
+    }
 }
 
 
@@ -327,8 +343,9 @@ fun AddLovedOneCard(
     Card(
         shape = RoundedCornerShape(20.dp),
         colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceContainerHigh
+            containerColor = MaterialTheme.colorScheme.surfaceContainer
         ),
+        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.3f)),
         modifier = Modifier
             .fillMaxWidth()
             .padding(horizontal = 12.dp, vertical = 4.dp),
@@ -484,19 +501,35 @@ fun SendInviteButton(
     isEnabled: Boolean,
     onClick: () -> Unit
 ) {
+    val btnBrush = if (isEnabled) {
+        Brush.linearGradient(
+            colors = listOf(
+                MaterialTheme.colorScheme.primary,
+                MaterialTheme.colorScheme.secondary
+            )
+        )
+    } else {
+        Brush.linearGradient(
+            colors = listOf(
+                MaterialTheme.colorScheme.surfaceVariant,
+                MaterialTheme.colorScheme.surfaceVariant
+            )
+        )
+    }
+
     Button(
         enabled = isEnabled,
         onClick = onClick,
         modifier = Modifier
             .fillMaxWidth()
-            .height(52.dp),
+            .height(52.dp)
+            .background(btnBrush, shape = RoundedCornerShape(16.dp)),
         shape = RoundedCornerShape(16.dp),
-
         colors = ButtonDefaults.buttonColors(
-            containerColor = MaterialTheme.colorScheme.primary,
+            containerColor = Color.Transparent,
             contentColor = MaterialTheme.colorScheme.onPrimary,
-            disabledContainerColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.5f),
-            disabledContentColor = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.7f)
+            disabledContainerColor = Color.Transparent,
+            disabledContentColor = MaterialTheme.colorScheme.outline
         )
     ) {
         if (isEnabled) {
@@ -513,10 +546,9 @@ fun SendInviteButton(
                 modifier = Modifier.size(17.dp)
             )
         } else {
-
             CircularProgressIndicator(
                 modifier = Modifier.size(24.dp),
-                color = MaterialTheme.colorScheme.onPrimary,
+                color = MaterialTheme.colorScheme.outline,
                 strokeWidth = 2.5.dp
             )
         }
@@ -536,8 +568,9 @@ fun MyCircleSection(
             .fillMaxWidth()
             .padding(horizontal = 12.dp, vertical = 4.dp),
         colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceContainerHigh
+            containerColor = MaterialTheme.colorScheme.surfaceContainer
         ),
+        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.3f)),
         shape = RoundedCornerShape(20.dp),
         elevation = CardDefaults.cardElevation(0.dp)
     ) {
@@ -628,8 +661,9 @@ fun PendingInviteSection(
             .fillMaxWidth()
             .padding(horizontal = 12.dp, vertical = 4.dp),
         colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceContainerHigh
+            containerColor = MaterialTheme.colorScheme.surfaceContainer
         ),
+        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.3f)),
         shape = RoundedCornerShape(20.dp),
         elevation = CardDefaults.cardElevation(0.dp)
     ) {
@@ -754,14 +788,24 @@ fun LovedOneCardCircle(
             .padding(horizontal = 16.dp, vertical = 12.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
-        IdentityAvatar(
-            avatarUrl = connection.avatarUrl,
-            displayName = displayName,
-            backgroundColor = avatarBg,
-            contentColor = avatarFg,
+        Box(
             modifier = Modifier
-                .size(44.dp)
-        )
+                .size(50.dp)
+                .border(
+                    width = 1.5.dp,
+                    color = avatarBg.copy(alpha = 0.4f),
+                    shape = CircleShape
+                ),
+            contentAlignment = Alignment.Center
+        ) {
+            IdentityAvatar(
+                avatarUrl = connection.avatarUrl,
+                displayName = displayName,
+                backgroundColor = avatarBg,
+                contentColor = avatarFg,
+                modifier = Modifier.size(42.dp)
+            )
+        }
 
         Spacer(Modifier.width(12.dp))
 
@@ -999,7 +1043,12 @@ fun ConnectionUsageCard(
     val cardBg = if (isLimitReached)
         MaterialTheme.colorScheme.errorContainer
     else
-        MaterialTheme.colorScheme.surfaceContainerHigh
+        MaterialTheme.colorScheme.surfaceContainer
+
+    val cardBorder = if (isLimitReached)
+        BorderStroke(1.dp, MaterialTheme.colorScheme.error.copy(alpha = 0.5f))
+    else
+        BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.3f))
 
     val cardFg = if (isLimitReached)
         MaterialTheme.colorScheme.onErrorContainer
@@ -1026,6 +1075,7 @@ fun ConnectionUsageCard(
         modifier = modifier.fillMaxWidth(),
         shape = RoundedCornerShape(20.dp),
         colors = CardDefaults.cardColors(containerColor = cardBg),
+        border = cardBorder,
         elevation = CardDefaults.cardElevation(0.dp)
     ) {
         Column(
@@ -1070,23 +1120,35 @@ fun ConnectionUsageCard(
             )
 
             if (!isUnlimited) {
+                val progress = current.toFloat() / max
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .height(5.dp)
+                        .height(8.dp)
                         .clip(RoundedCornerShape(99.dp))
-                        .background(cardFg.copy(alpha = 0.2f))
+                        .background(cardFg.copy(alpha = 0.15f))
                 ) {
                     Box(
                         modifier = Modifier
-                            .fillMaxWidth(current.toFloat() / max)
+                            .fillMaxWidth(progress)
                             .fillMaxHeight()
                             .clip(RoundedCornerShape(99.dp))
                             .background(
-                                if (isLimitReached)
-                                    cardFg
-                                else
-                                    MaterialTheme.colorScheme.primary
+                                brush = if (isLimitReached) {
+                                    Brush.linearGradient(
+                                        colors = listOf(
+                                            MaterialTheme.colorScheme.error,
+                                            MaterialTheme.colorScheme.error.copy(alpha = 0.8f)
+                                        )
+                                    )
+                                } else {
+                                    Brush.linearGradient(
+                                        colors = listOf(
+                                            MaterialTheme.colorScheme.primary,
+                                            MaterialTheme.colorScheme.secondary
+                                        )
+                                    )
+                                }
                             )
                     )
                 }
