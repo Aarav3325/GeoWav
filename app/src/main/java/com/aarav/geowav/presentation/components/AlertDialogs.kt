@@ -6,10 +6,24 @@ import android.annotation.SuppressLint
 
 import android.Manifest
 import android.widget.Toast
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.RepeatMode
+import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.rememberInfiniteTransition
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.scaleIn
+import androidx.compose.animation.scaleOut
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -52,8 +66,17 @@ import com.aarav.geowav.data.model.PaywallConfig
 import com.aarav.geowav.presentation.theme.manrope
 import com.aarav.geowav.presentation.theme.GeoWavTheme
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.offset
+import androidx.compose.material3.Button
+import androidx.compose.material3.IconButton
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.scale
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalHapticFeedback
 import com.google.accompanist.permissions.ExperimentalPermissionsApi
 import com.google.accompanist.permissions.isGranted
 import com.google.accompanist.permissions.rememberPermissionState
@@ -632,108 +655,216 @@ fun TrialOfferDialogContent(
     onClaim: () -> Unit,
     modifier: Modifier = Modifier
 ) {
+    val haptic = LocalHapticFeedback.current
+
     Card(
         shape = RoundedCornerShape(28.dp),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerHigh),
+        elevation = CardDefaults.cardElevation(defaultElevation = 8.dp),
         modifier = modifier.fillMaxWidth()
     ) {
-
-        Box(
-            Modifier.fillMaxWidth(),
-        ) {
+        Box(modifier = Modifier.fillMaxWidth()) {
             Column(
-                modifier = Modifier
-                    .fillMaxWidth(),
+                modifier = Modifier.fillMaxWidth(),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                Image(
-                    painter = painterResource(R.drawable.prism),
-                    contentDescription = "bg",
-                    contentScale = ContentScale.FillBounds,
+                Box(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .height(150.dp)
+                        .height(160.dp)
+                        .clip(RoundedCornerShape(topStart = 28.dp, topEnd = 28.dp))
+                ) {
+                    Image(
+                        painter = painterResource(R.drawable.prism),
+                        contentDescription = null,
+                        contentScale = ContentScale.FillBounds,
+                        modifier = Modifier.fillMaxSize()
+                    )
+                    Box(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .background(
+                                Brush.verticalGradient(
+                                    colors = listOf(
+                                        Color.Transparent,
+                                        MaterialTheme.colorScheme.surfaceContainerHigh
+                                    ),
+                                    startY = 60f
+                                )
+                            )
+                    )
+                }
+
+                val infiniteTransition = rememberInfiniteTransition(label = "badge_pulse")
+                val pulseScale by infiniteTransition.animateFloat(
+                    initialValue = 1f,
+                    targetValue = 1.12f,
+                    animationSpec = infiniteRepeatable(
+                        animation = tween(1200, easing = FastOutSlowInEasing),
+                        repeatMode = RepeatMode.Reverse
+                    ),
+                    label = "pulse_scale"
+                )
+                val glowAlpha by infiniteTransition.animateFloat(
+                    initialValue = 0.15f,
+                    targetValue = 0.35f,
+                    animationSpec = infiniteRepeatable(
+                        animation = tween(1200, easing = FastOutSlowInEasing),
+                        repeatMode = RepeatMode.Reverse
+                    ),
+                    label = "glow_alpha"
                 )
 
-                Surface(
-                    color = MaterialTheme.colorScheme.primary.copy(alpha = 0.1f),
-                    shape = CircleShape,
-                    modifier = Modifier.size(56.dp)
+                Box(
+                    modifier = Modifier
+                        .offset(y = (-32).dp)
+                        .size(80.dp),
+                    contentAlignment = Alignment.Center
                 ) {
-                    Box(contentAlignment = Alignment.Center) {
-                        Icon(
-                            painter = painterResource(R.drawable.geowav_pro_badge),
-                            contentDescription = "Trial Badge",
-                            tint = Color.Unspecified,
-                            modifier = Modifier.size(36.dp)
-                        )
+                    Box(
+                        modifier = Modifier
+                            .size(64.dp)
+                            .scale(pulseScale)
+                            .background(
+                                MaterialTheme.colorScheme.primary.copy(alpha = glowAlpha),
+                                CircleShape
+                            )
+                    )
+                    Surface(
+                        color = MaterialTheme.colorScheme.primary.copy(alpha = 0.12f),
+                        shape = CircleShape,
+                        modifier = Modifier
+                            .size(64.dp)
+                            .border(
+                                1.dp,
+                                MaterialTheme.colorScheme.primary.copy(alpha = 0.15f),
+                                CircleShape
+                            )
+                    ) {
+                        Box(contentAlignment = Alignment.Center) {
+                            Icon(
+                                painter = painterResource(R.drawable.geowav_pro_badge),
+                                contentDescription = null,
+                                tint = Color.Unspecified,
+                                modifier = Modifier.size(40.dp)
+                            )
+                        }
                     }
                 }
 
-                Spacer(modifier = Modifier.height(16.dp))
-
-                Text(
-                    text = config.trialMessage.ifBlank { "7-Day Free Trial" },
-                    fontFamily = manrope,
-                    fontWeight = FontWeight.ExtraBold,
-                    textAlign = TextAlign.Center,
-                    fontSize = 22.sp,
-                    color = MaterialTheme.colorScheme.primary
-                )
-
-                Spacer(modifier = Modifier.height(8.dp))
-
-                Text(
-                    text = config.title,
-                    fontFamily = manrope,
-                    fontWeight = FontWeight.Bold,
-                    textAlign = TextAlign.Center,
-                    fontSize = 16.sp,
-                    color = MaterialTheme.colorScheme.onSurface
-                )
-
-                Spacer(modifier = Modifier.height(8.dp))
-
-                Text(
-                    text = config.subtitle,
-                    fontFamily = manrope,
-                    fontWeight = FontWeight.Normal,
-                    textAlign = TextAlign.Center,
-                    fontSize = 13.sp,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-
-                Spacer(modifier = Modifier.height(24.dp))
-
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.End,
-                    verticalAlignment = Alignment.CenterVertically
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 24.dp)
+                        .offset(y = (-24).dp),
+                    horizontalAlignment = Alignment.CenterHorizontally
                 ) {
-                    TextButton(onClick = onDismiss) {
-                        Text("Maybe Later", fontFamily = manrope)
-                    }
+                    Text(
+                        text = config.trialMessage.ifBlank { "7-Day Free Trial" },
+                        fontFamily = manrope,
+                        fontWeight = FontWeight.ExtraBold,
+                        textAlign = TextAlign.Center,
+                        fontSize = 22.sp,
+                        letterSpacing = (-0.3).sp,
+                        color = MaterialTheme.colorScheme.primary
+                    )
 
-                    Spacer(modifier = Modifier.width(8.dp))
+                    Spacer(modifier = Modifier.height(8.dp))
 
-                    TextButton(
-                        onClick = onClaim,
-                        colors = ButtonDefaults.buttonColors(
-                            containerColor = MaterialTheme.colorScheme.primary,
-                            contentColor = MaterialTheme.colorScheme.onPrimary
-                        )
+                    Text(
+                        text = config.title,
+                        fontFamily = manrope,
+                        fontWeight = FontWeight.Bold,
+                        textAlign = TextAlign.Center,
+                        fontSize = 16.sp,
+                        color = MaterialTheme.colorScheme.onSurface
+                    )
+
+                    Spacer(modifier = Modifier.height(6.dp))
+
+                    Text(
+                        text = config.subtitle,
+                        fontFamily = manrope,
+                        fontWeight = FontWeight.Normal,
+                        textAlign = TextAlign.Center,
+                        fontSize = 13.sp,
+                        lineHeight = 18.sp,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+
+                    Spacer(modifier = Modifier.height(28.dp))
+
+                    Button(
+                        onClick = {
+                            haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                            onClaim()
+                        },
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(54.dp),
+                        shape = RoundedCornerShape(percent = 50),
+                        contentPadding = PaddingValues(),
+                        colors = ButtonDefaults.buttonColors(containerColor = Color.Transparent),
+                        elevation = ButtonDefaults.buttonElevation(defaultElevation = 0.dp)
                     ) {
+                        Box(
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .background(
+                                    Brush.horizontalGradient(
+                                        colors = listOf(
+                                            MaterialTheme.colorScheme.primary,
+                                            MaterialTheme.colorScheme.primary.copy(alpha = 0.8f)
+                                        )
+                                    ),
+                                    shape = RoundedCornerShape(percent = 50)
+                                ),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Text(
+                                text = config.launchBadgeText.ifBlank { "Claim Offer" },
+                                fontFamily = manrope,
+                                fontWeight = FontWeight.Bold,
+                                fontSize = 15.sp,
+                                color = MaterialTheme.colorScheme.onPrimary
+                            )
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.height(4.dp))
+
+                    TextButton(onClick = onDismiss) {
                         Text(
-                            text = if (config.launchBadgeText.isNotBlank()) config.launchBadgeText else "Claim Offer",
+                            text = "Maybe Later",
                             fontFamily = manrope,
-                            fontWeight = FontWeight.Bold
+                            fontSize = 13.sp,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
                     }
+
+                    Spacer(modifier = Modifier.height(4.dp))
                 }
             }
+
+            IconButton(
+                onClick = onDismiss,
+                modifier = Modifier
+                    .align(Alignment.TopEnd)
+                    .padding(16.dp)
+                    .size(32.dp)
+                    .background(
+                        MaterialTheme.colorScheme.surfaceContainerHigh.copy(alpha = 0.6f),
+                        CircleShape
+                    )
+            ) {
+                Icon(
+                    painter = painterResource(R.drawable.close),
+                    contentDescription = "Dismiss",
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.size(24.dp)
+                )
+            }
         }
-
-
     }
 }
 
@@ -746,23 +877,36 @@ fun TrialOfferDialog(
 ) {
     if (!showDialog) return
 
-    androidx.compose.ui.window.Dialog(
-        onDismissRequest = onDismiss,
-        properties = DialogProperties(usePlatformDefaultWidth = false)
+    AnimatedVisibility(
+        visible = true,
+        enter = scaleIn(
+            initialScale = 0.9f,
+            animationSpec = tween(durationMillis = 280, easing = FastOutSlowInEasing)
+        ) + fadeIn(animationSpec = tween(durationMillis = 220)),
+        exit = scaleOut(
+            targetScale = 0.9f,
+            animationSpec = tween(durationMillis = 180, easing = FastOutSlowInEasing)
+        ) + fadeOut(animationSpec = tween(durationMillis = 150)),
     ) {
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(24.dp),
-            contentAlignment = Alignment.Center
+        androidx.compose.ui.window.Dialog(
+            onDismissRequest = onDismiss,
+            properties = DialogProperties(usePlatformDefaultWidth = false)
         ) {
-            TrialOfferDialogContent(
-                config = config,
-                onDismiss = onDismiss,
-                onClaim = onClaim
-            )
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(24.dp),
+                contentAlignment = Alignment.Center
+            ) {
+                TrialOfferDialogContent(
+                    config = config,
+                    onDismiss = onDismiss,
+                    onClaim = onClaim
+                )
+            }
         }
     }
+
 }
 
 @Preview(showBackground = true)
@@ -782,7 +926,7 @@ fun TrialOfferDialogPreview() {
                     subtitle = "Claim GeoWav Pro celebrate our launch",
                     launchOfferEnabled = true,
                     showLaunchBadge = true,
-                    launchBadgeText = "LAUNCH",
+                    launchBadgeText = "Claim Now",
                     trialMessage = "7-Day Free Trial. Cancel Anytime."
                 ),
                 onDismiss = {},
