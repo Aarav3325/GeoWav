@@ -66,6 +66,8 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -103,7 +105,9 @@ import com.aarav.geowav.data.model.CircleMember
 import com.aarav.geowav.data.model.Place
 import com.aarav.geowav.data.model.User
 import com.aarav.geowav.data.model.UserPlan
+import androidx.compose.runtime.saveable.rememberSaveable
 import com.aarav.geowav.presentation.components.AvatarImage
+import com.aarav.geowav.presentation.components.TrialOfferDialog
 import com.aarav.geowav.presentation.components.AwarenessSnapshotCard
 import com.aarav.geowav.presentation.components.IdentityAvatar
 import com.aarav.geowav.presentation.components.InsightPreviewCard
@@ -146,6 +150,8 @@ fun GeoWavHomeScreen(
     }
 
     val plan by subscriptionViewModel.userPlan.collectAsState()
+    val paywallConfig by subscriptionViewModel.paywallConfig.collectAsState()
+    var hasShownPromoPopup by rememberSaveable { mutableStateOf(false) }
 
 
     val hideTopBar = uiState.currentUser == null
@@ -501,7 +507,15 @@ fun GeoWavHomeScreen(
         }
     }
 
-
+    TrialOfferDialog(
+        showDialog = paywallConfig.launchOfferEnabled && plan != UserPlan.PRO && !hasShownPromoPopup,
+        config = paywallConfig,
+        onDismiss = { hasShownPromoPopup = true },
+        onClaim = {
+            hasShownPromoPopup = true
+            navigateToPaywall()
+        }
+    )
 }
 
 @Composable

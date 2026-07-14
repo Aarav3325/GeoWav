@@ -7,10 +7,17 @@ import android.annotation.SuppressLint
 import android.Manifest
 import android.widget.Toast
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.AlertDialog
@@ -41,7 +48,12 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.DialogProperties
 import com.aarav.geowav.R
 import com.aarav.geowav.data.model.CircleMember
+import com.aarav.geowav.data.model.PaywallConfig
 import com.aarav.geowav.presentation.theme.manrope
+import com.aarav.geowav.presentation.theme.GeoWavTheme
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.layout.ContentScale
 import com.google.accompanist.permissions.ExperimentalPermissionsApi
 import com.google.accompanist.permissions.isGranted
 import com.google.accompanist.permissions.rememberPermissionState
@@ -613,3 +625,169 @@ fun NotificationDisabledDialog(onConfirmClick: () -> Unit, onDismiss: () -> Unit
     )
 }
 
+@Composable
+fun TrialOfferDialogContent(
+    config: PaywallConfig,
+    onDismiss: () -> Unit,
+    onClaim: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    Card(
+        shape = RoundedCornerShape(28.dp),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerHigh),
+        modifier = modifier.fillMaxWidth()
+    ) {
+
+        Box(
+            Modifier.fillMaxWidth(),
+        ) {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth(),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                Image(
+                    painter = painterResource(R.drawable.prism),
+                    contentDescription = "bg",
+                    contentScale = ContentScale.FillBounds,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(150.dp)
+                )
+
+                Surface(
+                    color = MaterialTheme.colorScheme.primary.copy(alpha = 0.1f),
+                    shape = CircleShape,
+                    modifier = Modifier.size(56.dp)
+                ) {
+                    Box(contentAlignment = Alignment.Center) {
+                        Icon(
+                            painter = painterResource(R.drawable.geowav_pro_badge),
+                            contentDescription = "Trial Badge",
+                            tint = Color.Unspecified,
+                            modifier = Modifier.size(36.dp)
+                        )
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(16.dp))
+
+                Text(
+                    text = config.trialMessage.ifBlank { "7-Day Free Trial" },
+                    fontFamily = manrope,
+                    fontWeight = FontWeight.ExtraBold,
+                    textAlign = TextAlign.Center,
+                    fontSize = 22.sp,
+                    color = MaterialTheme.colorScheme.primary
+                )
+
+                Spacer(modifier = Modifier.height(8.dp))
+
+                Text(
+                    text = config.title,
+                    fontFamily = manrope,
+                    fontWeight = FontWeight.Bold,
+                    textAlign = TextAlign.Center,
+                    fontSize = 16.sp,
+                    color = MaterialTheme.colorScheme.onSurface
+                )
+
+                Spacer(modifier = Modifier.height(8.dp))
+
+                Text(
+                    text = config.subtitle,
+                    fontFamily = manrope,
+                    fontWeight = FontWeight.Normal,
+                    textAlign = TextAlign.Center,
+                    fontSize = 13.sp,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+
+                Spacer(modifier = Modifier.height(24.dp))
+
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.End,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    TextButton(onClick = onDismiss) {
+                        Text("Maybe Later", fontFamily = manrope)
+                    }
+
+                    Spacer(modifier = Modifier.width(8.dp))
+
+                    TextButton(
+                        onClick = onClaim,
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = MaterialTheme.colorScheme.primary,
+                            contentColor = MaterialTheme.colorScheme.onPrimary
+                        )
+                    ) {
+                        Text(
+                            text = if (config.launchBadgeText.isNotBlank()) config.launchBadgeText else "Claim Offer",
+                            fontFamily = manrope,
+                            fontWeight = FontWeight.Bold
+                        )
+                    }
+                }
+            }
+        }
+
+
+    }
+}
+
+@Composable
+fun TrialOfferDialog(
+    showDialog: Boolean,
+    config: PaywallConfig,
+    onDismiss: () -> Unit,
+    onClaim: () -> Unit
+) {
+    if (!showDialog) return
+
+    androidx.compose.ui.window.Dialog(
+        onDismissRequest = onDismiss,
+        properties = DialogProperties(usePlatformDefaultWidth = false)
+    ) {
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(24.dp),
+            contentAlignment = Alignment.Center
+        ) {
+            TrialOfferDialogContent(
+                config = config,
+                onDismiss = onDismiss,
+                onClaim = onClaim
+            )
+        }
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+fun TrialOfferDialogPreview() {
+    GeoWavTheme {
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp),
+            contentAlignment = Alignment.Center
+        ) {
+            TrialOfferDialogContent(
+                config = PaywallConfig(
+                    offeringId = "default",
+                    title = "Claim Free Trial Now",
+                    subtitle = "Claim GeoWav Pro celebrate our launch",
+                    launchOfferEnabled = true,
+                    showLaunchBadge = true,
+                    launchBadgeText = "LAUNCH",
+                    trialMessage = "7-Day Free Trial. Cancel Anytime."
+                ),
+                onDismiss = {},
+                onClaim = {}
+            )
+        }
+    }
+}
