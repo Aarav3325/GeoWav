@@ -611,16 +611,47 @@ fun MyCircleSection(
             }
 
             if (lovedOnesList.isEmpty()) {
-                Text(
-                    text = "Add loved ones to your circle",
-                    fontFamily = manrope,
-                    fontSize = 14.sp,
-                    color = MaterialTheme.colorScheme.outline,
-                    textAlign = TextAlign.Center,
+                Column(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(bottom = 20.dp)
-                )
+                        .padding(vertical = 32.dp, horizontal = 24.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.Center
+                ) {
+                    Box(
+                        modifier = Modifier
+                            .size(56.dp)
+                            .clip(CircleShape)
+                            .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.08f)),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Icon(
+                            painter = painterResource(R.drawable.user),
+                            contentDescription = null,
+                            tint = MaterialTheme.colorScheme.primary,
+                            modifier = Modifier.size(24.dp)
+                        )
+                    }
+                    Spacer(Modifier.height(16.dp))
+                    Text(
+                        text = "Your Circle is Empty",
+                        fontFamily = manrope,
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 16.sp,
+                        color = MaterialTheme.colorScheme.onSurface,
+                        textAlign = TextAlign.Center
+                    )
+                    Spacer(Modifier.height(8.dp))
+                    Text(
+                        text = "Add friends or family members below to stay connected and view real-time location sharing.",
+                        fontFamily = manrope,
+                        fontWeight = FontWeight.Normal,
+                        fontSize = 13.sp,
+                        color = MaterialTheme.colorScheme.outline,
+                        textAlign = TextAlign.Center,
+                        lineHeight = 18.sp
+                    )
+                }
             } else {
                 lovedOnesList.forEachIndexed { index, member ->
                     if (index > 0) {
