@@ -71,6 +71,7 @@ import androidx.browser.customtabs.CustomTabsIntent
 import androidx.compose.foundation.layout.width
 import com.aarav.geowav.presentation.components.AboutDialog
 import com.aarav.geowav.presentation.components.ProfileCard
+import com.aarav.geowav.presentation.components.openAppDetailsSettings
 import com.aarav.geowav.presentation.locationsharing.itemShape
 import com.aarav.geowav.presentation.paywall.CurrentPlanCard
 import com.aarav.geowav.presentation.subscription.SubscriptionViewModel
@@ -442,13 +443,7 @@ fun openAppSettings(
     context.startActivity(intent)
 }
 
-fun openAppDetailsSettings(context: Context) {
-    val intent = Intent(
-        Settings.ACTION_APPLICATION_DETAILS_SETTINGS,
-        Uri.parse("package:${context.packageName}")
-    )
-    context.startActivity(intent)
-}
+
 
 @Composable
 fun PermissionEducationDialog(

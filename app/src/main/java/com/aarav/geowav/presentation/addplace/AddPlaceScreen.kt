@@ -58,6 +58,7 @@ import com.aarav.geowav.data.model.UpgradeEvents
 import com.aarav.geowav.presentation.components.CustomBottomSheet
 import com.aarav.geowav.presentation.components.MyAlertDialog
 import com.aarav.geowav.presentation.components.PermissionRequiredContent
+import com.aarav.geowav.presentation.components.openAppDetailsSettings
 import com.aarav.geowav.presentation.components.PlaceTextField
 import com.aarav.geowav.presentation.components.RadiusChipGroup
 import com.aarav.geowav.presentation.components.SnackbarManager
@@ -303,7 +304,7 @@ fun AddPlaceScreen(
                 title = "Place alerts need location setup",
                 message = "GeoWav needs live and background location access before it can save places that trigger entry and exit alerts.",
                 primaryActionText = "Review setup",
-                onPrimaryAction = navigateToSettings,
+                onPrimaryAction = { openAppDetailsSettings(context) },
                 secondaryActionText = "Go back",
                 onSecondaryAction = navigateToMaps,
                 modifier = Modifier.padding(it)

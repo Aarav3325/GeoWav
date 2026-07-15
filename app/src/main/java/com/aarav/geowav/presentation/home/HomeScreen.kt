@@ -112,6 +112,7 @@ import com.aarav.geowav.presentation.components.TrialOfferDialog
 import com.aarav.geowav.presentation.components.AwarenessSnapshotCard
 import com.aarav.geowav.presentation.components.IdentityAvatar
 import com.aarav.geowav.presentation.components.InsightPreviewCard
+import com.aarav.geowav.presentation.components.openAppDetailsSettings
 import com.aarav.geowav.presentation.insights.PersonalInsightsViewModel
 import com.aarav.geowav.presentation.navigation.NavRoute
 import com.aarav.geowav.presentation.subscription.SubscriptionViewModel
@@ -402,10 +403,11 @@ fun GeoWavHomeScreen(
 
                         val hasAnyLiveSharing = activeViewerIds.isNotEmpty()
 
+                        val context = LocalContext.current
                         AnimatedVisibility(uiState.permissionState.shouldShowSetupCard) {
                             LocationSetupReminderCard(
                                 permissionState = uiState.permissionState,
-                                onReviewClick = navigateToSettings,
+                                onReviewClick = { openAppDetailsSettings(context) },
                                 modifier = Modifier.padding(top = 16.dp)
                             )
                         }
