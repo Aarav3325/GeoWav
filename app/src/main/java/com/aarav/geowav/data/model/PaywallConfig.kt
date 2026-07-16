@@ -7,5 +7,7 @@ data class PaywallConfig(
     val launchOfferEnabled: Boolean,
     val showLaunchBadge: Boolean,
     val launchBadgeText: String,
-    val trialMessage: String
+    val trialMessage: String,
+    val offerPrimaryBtn: String,
+    val offerSecondaryBtn: String
 )
