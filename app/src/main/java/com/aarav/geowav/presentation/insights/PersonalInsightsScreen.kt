@@ -24,6 +24,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -77,7 +78,7 @@ fun PersonalInsightsScreen(
     Scaffold(
         contentWindowInsets = WindowInsets(0, 0, 0, 0),
         modifier = Modifier.fillMaxSize(),
-        containerColor = MaterialTheme.colorScheme.background
+        containerColor = Color.Transparent
     ) { paddingValues ->
         val mostVisitedPlaceInsight = uiState.mostVisitedPlaceInsight
         val averageVisitDurationInsight = uiState.averageVisitDurationInsight
@@ -87,8 +88,7 @@ fun PersonalInsightsScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(paddingValues)
-                .background(MaterialTheme.colorScheme.background)
-                .verticalScroll(rememberScrollState()),
+                .background(MaterialTheme.colorScheme.background),
             verticalArrangement = Arrangement.Top
         ) {
             Box(
@@ -102,16 +102,21 @@ fun PersonalInsightsScreen(
                     screenTitle = "Insights",
                     onBack = back,
                     modifier = Modifier
-                        .align(Alignment.TopStart)
                         .statusBarsPadding()
-                        .padding(start = 16.dp, top = 10.dp)
+                        .padding(horizontal = 16.dp)
+                        .windowInsetsPadding(TopAppBarDefaults.windowInsets)
+                        .padding(TopAppBarDefaults.ContentPadding)
+                        .height(TopAppBarDefaults.TopAppBarExpandedHeight)
+                        .background(Color.Transparent)
                 )
             }
 
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(start = 12.dp, end = 12.dp, bottom = 12.dp, top = 20.dp),
+                    .weight(1f)
+                    .padding(start = 12.dp, end = 12.dp, bottom = 12.dp, top = 20.dp)
+                    .verticalScroll(rememberScrollState()),
                 verticalArrangement = Arrangement.spacedBy(14.dp)
             ) {
                 InsightScopeSelector(
