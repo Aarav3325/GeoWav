@@ -36,6 +36,7 @@ import com.aarav.geowav.presentation.onboard.OnboardingScreen
 import com.aarav.geowav.presentation.paywall.PaywallScreen
 import com.aarav.geowav.presentation.profile.AboutScreen
 import com.aarav.geowav.presentation.profile.ProfileScreen
+import com.aarav.geowav.presentation.releasenotes.ReleaseNotesScreen
 import com.aarav.geowav.presentation.profile.ThemeMode
 import com.aarav.geowav.presentation.subscription.SubscriptionViewModel
 import com.aarav.geowav.presentation.timeline.TimelineMapPreview
@@ -65,6 +66,17 @@ fun NavGraph(
         !isOnboarded -> NavRoute.OnBoard.path
         !isLoggedIn && isOnboarded -> NavRoute.Login.path
         else -> NavRoute.SignUp.path
+    }
+
+    LaunchedEffect(isLoggedIn, isOnboarded) {
+        if (isLoggedIn && isOnboarded) {
+            val lastVersionCode = sharedPreferences.getInt("last_version_code", 0)
+            val currentVersionCode = com.aarav.geowav.BuildConfig.VERSION_CODE
+            if (lastVersionCode in 1 until currentVersionCode) {
+                navHostController.navigate(NavRoute.ReleaseNotes.path)
+            }
+            sharedPreferences.edit().putInt("last_version_code", currentVersionCode).apply()
+        }
     }
 
     NavHost(
@@ -199,6 +211,11 @@ fun NavGraph(
         )
 
         AddAboutScreen(
+            navHostController,
+            this
+        )
+
+        AddReleaseNotesScreen(
             navHostController,
             this
         )
@@ -720,6 +737,9 @@ fun AddProfileScreen(
             navigateToAbout = {
                 navController.navigate(NavRoute.About.path)
             },
+            navigateToReleaseNotes = {
+                navController.navigate(NavRoute.ReleaseNotes.path)
+            },
 
             onLogout = {
                 navController.navigate(NavRoute.Login.path) {
@@ -831,6 +851,22 @@ fun AddAboutScreen(
         route = NavRoute.About.path
     ) {
         AboutScreen(
+            onBack = {
+                navController.popBackStack()
+            }
+        )
+    }
+}
+
+fun AddReleaseNotesScreen(
+    navController: NavController,
+    navGraphBuilder: NavGraphBuilder
+) {
+    navGraphBuilder.composable(
+        route = NavRoute.ReleaseNotes.path
+    ) {
+        ReleaseNotesScreen(
+            viewModel = hiltViewModel(),
             onBack = {
                 navController.popBackStack()
             }

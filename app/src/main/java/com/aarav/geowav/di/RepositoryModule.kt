@@ -12,6 +12,7 @@ import com.aarav.geowav.data.repository.PlaceRepositoryImpl
 import com.aarav.geowav.data.repository.SessionHistoryRepositoryImpl
 import com.aarav.geowav.data.repository.SubscriptionRepositoryImpl
 import com.aarav.geowav.data.repository.PaywallConfigRepositoryImpl
+import com.aarav.geowav.data.repository.ReleaseNotesRepositoryImpl
 import com.aarav.geowav.data.repository.ViewerLocationRepositoryImpl
 import com.aarav.geowav.domain.repository.DayReplayRepository
 import com.aarav.geowav.domain.repository.CircleRepository
@@ -24,6 +25,7 @@ import com.aarav.geowav.domain.repository.PlaceRepository
 import com.aarav.geowav.domain.repository.SessionHistoryRepository
 import com.aarav.geowav.domain.repository.SubscriptionRepository
 import com.aarav.geowav.domain.repository.PaywallConfigRepository
+import com.aarav.geowav.domain.repository.ReleaseNotesRepository
 import com.aarav.geowav.domain.repository.ViewerLocationRepository
 import dagger.Binds
 import dagger.Module
@@ -94,4 +96,9 @@ abstract class RepositoryModule {
     abstract fun bindPaywallConfigRepository(
         paywallConfigRepositoryImpl: PaywallConfigRepositoryImpl
     ): PaywallConfigRepository
+
+    @Binds
+    abstract fun bindReleaseNotesRepository(
+        releaseNotesRepositoryImpl: ReleaseNotesRepositoryImpl
+    ): ReleaseNotesRepository
 }

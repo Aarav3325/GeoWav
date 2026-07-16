@@ -97,6 +97,7 @@ fun ProfileScreen(
     navigateToHome: () -> Unit,
     navigateToInsights: () -> Unit,
     navigateToAbout: () -> Unit,
+    navigateToReleaseNotes: () -> Unit,
     onLogout: () -> Unit,
     onDeleteAccount: () -> Unit
 ) {
@@ -308,23 +309,31 @@ fun ProfileScreen(
                         SettingItemNew(
                             title = "App Version",
                             index = 0,
-                            count = 3,
+                            count = 4,
                             subtitle = uiState.appVersion,
                             enabled = true
                         )
 
                         SettingItemNew(
-                            title = "About GeoWav",
+                            title = "What's New",
+                            subtitle = "Check out the latest features and updates",
                             index = 1,
-                            count = 3,
+                            count = 4,
+                            onClick = navigateToReleaseNotes
+                        )
+
+                        SettingItemNew(
+                            title = "About GeoWav",
+                            index = 2,
+                            count = 4,
                             onClick = navigateToAbout
                         )
 
                         SettingItemNew(
                             title = "Privacy Policy",
                             subtitle = "Learn how GeoWav protects your data",
-                            index = 2,
-                            count = 3,
+                            index = 3,
+                            count = 4,
                             trailingIcon = {
                                 Icon(
                                     painter = painterResource(R.drawable.redirect),
