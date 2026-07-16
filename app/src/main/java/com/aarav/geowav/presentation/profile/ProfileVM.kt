@@ -71,9 +71,8 @@ class ProfileVM @Inject constructor(
     }
 
     fun loadLovedOnes() {
-
         if (currentUserId.isEmpty()) return
-
+        _uiState.update { it.copy(isLovedOnesLoading = true) }
         viewModelScope.launch {
             when (val result =
                 circleRepository.getAcceptedLovedOnes(currentUserId)
@@ -81,7 +80,8 @@ class ProfileVM @Inject constructor(
                 is Resource.Success -> {
                     _uiState.update {
                         it.copy(
-                            lovedOnes = result.data ?: emptyList()
+                            lovedOnes = result.data ?: emptyList(),
+                            isLovedOnesLoading = false
                         )
                     }
                 }
@@ -93,24 +93,29 @@ class ProfileVM @Inject constructor(
                 is Resource.Error -> {
                     _uiState.update {
                         it.copy(
-                            lovedOnesError = result.failure.messageFor("your circle", result.message)
+                            lovedOnesError = result.failure.messageFor("your circle", result.message),
+                            isLovedOnesLoading = false
                         )
                     }
                 }
 
-                else -> {}
+                else -> {
+                    _uiState.update { it.copy(isLovedOnesLoading = false) }
+                }
             }
         }
     }
 
     fun getPlaces() {
+        _uiState.update { it.copy(isPlacesLoading = true) }
         viewModelScope.launch {
             placeRepository.getPlaces()
                 .distinctUntilChanged()
                 .collectLatest { list ->
                     _uiState.update {
                         it.copy(
-                            placesList = list
+                            placesList = list,
+                            isPlacesLoading = false
                         )
                     }
                 }
@@ -282,6 +287,8 @@ data class SettingsUiState(
     val placesError: String? = null,
     val lovedOnes: List<CircleMember> = emptyList(),
     val placesList: List<Place> = emptyList(),
+    val isLovedOnesLoading: Boolean = true,
+    val isPlacesLoading: Boolean = true,
     val showDeleteDialog: Boolean = false,
     val permissionState: GeoPermissionUiState = GeoPermissionUiState()
 )

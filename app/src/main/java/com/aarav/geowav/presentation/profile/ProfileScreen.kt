@@ -220,19 +220,21 @@ fun ProfileScreen(
 
                     Section(title = "Usage Overview") {
                         ConnectionUsageCard(
-                            uiState.lovedOnes.size,
-                            plan,
+                            current = uiState.lovedOnes.size,
+                            plan = plan,
                             textSize = MaterialTheme.typography.bodyMedium.fontSize,
-                            false,
-                            Modifier.padding(bottom = 8.dp)
+                            showPlanInfo = false,
+                            isLoading = uiState.isLovedOnesLoading,
+                            modifier = Modifier.padding(bottom = 8.dp)
                         )
 
                         PlacesUsageCard(
-                            uiState.placesList.size,
-                            plan,
+                            current = uiState.placesList.size,
+                            plan = plan,
                             textSize = MaterialTheme.typography.bodyMedium.fontSize,
-                            false,
-                            Modifier.padding(top = 8.dp)
+                            showPlanInfo = false,
+                            isLoading = uiState.isPlacesLoading,
+                            modifier = Modifier.padding(top = 8.dp)
                         )
                     }
 
