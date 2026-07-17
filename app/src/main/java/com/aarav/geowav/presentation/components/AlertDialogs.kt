@@ -822,7 +822,7 @@ fun TrialOfferDialogContent(
                             contentAlignment = Alignment.Center
                         ) {
                             Text(
-                                text = config.launchBadgeText.ifBlank { "Claim Offer" },
+                                text = config.offerPrimaryBtn.ifBlank { "Claim Offer" },
                                 fontFamily = manrope,
                                 fontWeight = FontWeight.Bold,
                                 fontSize = 15.sp,
@@ -835,7 +835,7 @@ fun TrialOfferDialogContent(
 
                     TextButton(onClick = onDismiss) {
                         Text(
-                            text = "Maybe Later",
+                            text = config.offerSecondaryBtn.ifBlank { "Maybe Later" },
                             fontFamily = manrope,
                             fontSize = 13.sp,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
@@ -927,7 +927,9 @@ fun TrialOfferDialogPreview() {
                     launchOfferEnabled = true,
                     showLaunchBadge = true,
                     launchBadgeText = "Claim Now",
-                    trialMessage = "7-Day Free Trial. Cancel Anytime."
+                    trialMessage = "7-Day Free Trial. Cancel Anytime.",
+                    offerPrimaryBtn = "Claim Now",
+                    offerSecondaryBtn = "Maybe Later"
                 ),
                 onDismiss = {},
                 onClaim = {}

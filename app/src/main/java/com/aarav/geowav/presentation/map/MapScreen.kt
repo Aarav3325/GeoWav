@@ -55,7 +55,9 @@ import androidx.compose.ui.unit.sp
 import com.aarav.geowav.R
 import com.aarav.geowav.core.utils.NetworkFailure
 import com.aarav.geowav.presentation.components.MyAlertDialog
+import androidx.compose.ui.platform.LocalContext
 import com.aarav.geowav.presentation.components.PermissionRequiredContent
+import com.aarav.geowav.presentation.components.openAppDetailsSettings
 import com.aarav.geowav.presentation.components.PlaceModalSheet
 import com.aarav.geowav.presentation.theme.manrope
 import com.aarav.geowav.presentation.theme.surfaceContainerLowDarkHighContrast
@@ -188,11 +190,12 @@ fun MapScreen(
         }
     ) { innerPadding ->
         if (!hasForegroundLocationPermission) {
+            val context = LocalContext.current
             PermissionRequiredContent(
                 title = "Location access is needed",
                 message = "Adding places uses your current area to help position the map and set up reliable place alerts.",
                 primaryActionText = "Review setup",
-                onPrimaryAction = navigateToSettings,
+                onPrimaryAction = { openAppDetailsSettings(context) },
                 secondaryActionText = "Go back",
                 onSecondaryAction = navigateToHome,
                 modifier = Modifier.padding(innerPadding)

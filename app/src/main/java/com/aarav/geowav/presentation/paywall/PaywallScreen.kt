@@ -266,7 +266,7 @@ fun PaywallScreen(
                 modifier = Modifier,
                 title = {
                     Text(
-                        text = "Upgrade your plan",
+                        text = if(paywallConfig.launchOfferEnabled) paywallConfig.launchBadgeText else "Upgrade your plan",
                         style = MaterialTheme.typography.titleLarge,
                         fontWeight = FontWeight.Bold,
                         fontFamily = manrope,
@@ -1316,22 +1316,17 @@ fun StickyUpgradeCTA(
             .padding(top = 16.dp, bottom = 12.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        HorizontalDivider(
-            color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.35f),
-            thickness = 0.8.dp,
-            modifier = Modifier.padding(bottom = 12.dp)
-        )
 
-        val buttonBgColor = if (targetPlan == UserPlan.PRO) {
-            proPlanColors().buttonBg
-        } else {
+        val buttonBgColor = if (targetPlan == UserPlan.PREMIUM) {
             premiumPlanColors().buttonBg
+        } else {
+            proPlanColors().buttonBg
         }
 
         val buttonTextColor = if (targetPlan == UserPlan.PRO) {
-            proPlanColors().buttonTextColor
-        } else {
             premiumPlanColors().buttonTextColor
+        } else {
+            proPlanColors().buttonTextColor
         }
 
         Button(

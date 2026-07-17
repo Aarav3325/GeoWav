@@ -31,7 +31,9 @@ class PaywallConfigRepositoryImpl @Inject constructor(
         "launch_offer_enabled" to false,
         "show_launch_badge" to false,
         "launch_badge_text" to "🎉 Launch Offer",
-        "trial_message" to "7-Day Free Trial"
+        "trial_message" to "7-Day Free Trial",
+        "offer_primary_btn" to "Upgrade to Premium",
+        "offer_secondary_btn" to "Maybe Later"
     )
 
     private val _paywallConfig = MutableStateFlow(getActiveConfig())
@@ -92,6 +94,9 @@ class PaywallConfigRepositoryImpl @Inject constructor(
         val showLaunchBadge = remoteConfig.getBoolean("show_launch_badge")
         val launchBadgeText = remoteConfig.getString("launch_badge_text").ifBlank { "🎉 Launch Offer" }
         val trialMessage = remoteConfig.getString("trial_message").ifBlank { "7-Day Free Trial" }
+        val offerPrimaryBtn = remoteConfig.getString("offer_primary_btn").ifBlank { "Upgrade to Premium" }
+        val offerSecondaryBtn = remoteConfig.getString("offer_secondary_btn").ifBlank { "Maybe Later" }
+
 
         return PaywallConfig(
             offeringId = offeringId,
@@ -100,7 +105,9 @@ class PaywallConfigRepositoryImpl @Inject constructor(
             launchOfferEnabled = launchOfferEnabled,
             showLaunchBadge = showLaunchBadge,
             launchBadgeText = launchBadgeText,
-            trialMessage = trialMessage
+            trialMessage = trialMessage,
+            offerPrimaryBtn = offerPrimaryBtn,
+            offerSecondaryBtn = offerSecondaryBtn
         )
     }
 }

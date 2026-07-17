@@ -66,7 +66,9 @@ import com.aarav.geowav.data.model.UserPlan
 import com.aarav.geowav.presentation.components.EmergencyShareDialog
 import com.aarav.geowav.presentation.components.CustomBottomSheet
 import com.aarav.geowav.presentation.components.IdentityAvatar
+import androidx.compose.ui.platform.LocalContext
 import com.aarav.geowav.presentation.components.PermissionRequiredContent
+import com.aarav.geowav.presentation.components.openAppDetailsSettings
 import com.aarav.geowav.presentation.components.SnackbarManager
 import com.aarav.geowav.presentation.components.UpgradeBottomSheetContent
 import com.aarav.geowav.presentation.subscription.SubscriptionViewModel
@@ -163,11 +165,12 @@ fun LocationSharingScreen(
         containerColor = MaterialTheme.colorScheme.background,
     ) { padding ->
         if (!locationServicesReady) {
+            val context = LocalContext.current
             PermissionRequiredContent(
                 title = "Location setup is needed",
                 message = "Live sharing and emergency sharing need live and background location access so updates can continue reliably.",
                 primaryActionText = "Review setup",
-                onPrimaryAction = navigateToSettings,
+                onPrimaryAction = { openAppDetailsSettings(context) },
                 modifier = Modifier.padding(padding)
             )
             return@Scaffold

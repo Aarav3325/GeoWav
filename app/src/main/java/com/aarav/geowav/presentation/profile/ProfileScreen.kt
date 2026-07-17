@@ -71,6 +71,7 @@ import androidx.browser.customtabs.CustomTabsIntent
 import androidx.compose.foundation.layout.width
 import com.aarav.geowav.presentation.components.AboutDialog
 import com.aarav.geowav.presentation.components.ProfileCard
+import com.aarav.geowav.presentation.components.openAppDetailsSettings
 import com.aarav.geowav.presentation.locationsharing.itemShape
 import com.aarav.geowav.presentation.paywall.CurrentPlanCard
 import com.aarav.geowav.presentation.subscription.SubscriptionViewModel
@@ -96,6 +97,7 @@ fun ProfileScreen(
     navigateToHome: () -> Unit,
     navigateToInsights: () -> Unit,
     navigateToAbout: () -> Unit,
+    navigateToReleaseNotes: () -> Unit,
     onLogout: () -> Unit,
     onDeleteAccount: () -> Unit
 ) {
@@ -218,19 +220,21 @@ fun ProfileScreen(
 
                     Section(title = "Usage Overview") {
                         ConnectionUsageCard(
-                            uiState.lovedOnes.size,
-                            plan,
+                            current = uiState.lovedOnes.size,
+                            plan = plan,
                             textSize = MaterialTheme.typography.bodyMedium.fontSize,
-                            false,
-                            Modifier.padding(bottom = 8.dp)
+                            showPlanInfo = false,
+                            isLoading = uiState.isLovedOnesLoading,
+                            modifier = Modifier.padding(bottom = 8.dp)
                         )
 
                         PlacesUsageCard(
-                            uiState.placesList.size,
-                            plan,
+                            current = uiState.placesList.size,
+                            plan = plan,
                             textSize = MaterialTheme.typography.bodyMedium.fontSize,
-                            false,
-                            Modifier.padding(top = 8.dp)
+                            showPlanInfo = false,
+                            isLoading = uiState.isPlacesLoading,
+                            modifier = Modifier.padding(top = 8.dp)
                         )
                     }
 
@@ -307,23 +311,31 @@ fun ProfileScreen(
                         SettingItemNew(
                             title = "App Version",
                             index = 0,
-                            count = 3,
+                            count = 4,
                             subtitle = uiState.appVersion,
                             enabled = true
                         )
 
                         SettingItemNew(
-                            title = "About GeoWav",
+                            title = "What's New",
+                            subtitle = "Check out the latest features and updates",
                             index = 1,
-                            count = 3,
+                            count = 4,
+                            onClick = navigateToReleaseNotes
+                        )
+
+                        SettingItemNew(
+                            title = "About GeoWav",
+                            index = 2,
+                            count = 4,
                             onClick = navigateToAbout
                         )
 
                         SettingItemNew(
                             title = "Privacy Policy",
                             subtitle = "Learn how GeoWav protects your data",
-                            index = 2,
-                            count = 3,
+                            index = 3,
+                            count = 4,
                             trailingIcon = {
                                 Icon(
                                     painter = painterResource(R.drawable.redirect),
@@ -442,13 +454,7 @@ fun openAppSettings(
     context.startActivity(intent)
 }
 
-fun openAppDetailsSettings(context: Context) {
-    val intent = Intent(
-        Settings.ACTION_APPLICATION_DETAILS_SETTINGS,
-        Uri.parse("package:${context.packageName}")
-    )
-    context.startActivity(intent)
-}
+
 
 @Composable
 fun PermissionEducationDialog(
