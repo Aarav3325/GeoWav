@@ -51,6 +51,12 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.FilledTonalButton
+import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.core.tween
+import androidx.compose.foundation.border
+import androidx.compose.foundation.layout.IntrinsicSize
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
@@ -115,8 +121,8 @@ fun PersonalInsightsScreen(
                 modifier = Modifier
                     .fillMaxWidth()
                     .weight(1f)
-                    .padding(start = 12.dp, end = 12.dp, bottom = 12.dp, top = 20.dp)
-                    .verticalScroll(rememberScrollState()),
+                    .verticalScroll(rememberScrollState())
+                    .padding(start = 12.dp, end = 12.dp, bottom = 12.dp, top = 6.dp),
                 verticalArrangement = Arrangement.spacedBy(14.dp)
             ) {
                 InsightScopeSelector(
@@ -197,14 +203,61 @@ fun PersonalInsightsScreen(
 private fun InsightsIntroCard(
     selectedScope: PersonalInsightScope
 ) {
-    Image(
-        painter = painterResource(R.drawable.glass),
-        contentDescription = "bg",
-        contentScale = ContentScale.FillWidth,
+    Box(
         modifier = Modifier
             .fillMaxWidth()
-            .aspectRatio(16f / 9f)
-    )
+            .aspectRatio(1.8f)
+    ) {
+        Image(
+            painter = painterResource(R.drawable.pixel_violet),
+            contentDescription = "bg",
+            contentScale = ContentScale.Crop,
+            modifier = Modifier.fillMaxSize()
+        )
+
+        // Gradient overlay to blend with background and make text readable
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(
+                    Brush.verticalGradient(
+                        colors = listOf(
+                            Color.Black.copy(alpha = 0.35f),
+                            Color.Black.copy(alpha = 0.05f),
+                            MaterialTheme.colorScheme.background.copy(alpha = 0.8f),
+                            MaterialTheme.colorScheme.background
+                        )
+                    )
+                )
+        )
+
+        // Title and description overlay at the bottom
+        Column(
+            modifier = Modifier
+                .align(Alignment.BottomStart)
+                .padding(horizontal = 20.dp, vertical = 16.dp),
+            verticalArrangement = Arrangement.spacedBy(4.dp)
+        ) {
+            Text(
+                text = "Movement Trends",
+                fontFamily = manrope,
+                fontSize = 24.sp,
+                fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.onBackground
+            )
+            Text(
+                text = if (selectedScope == PersonalInsightScope.Month) {
+                    "Analyzing your behavior patterns over the month"
+                } else {
+                    "Discover the rhythm of your journeys this week"
+                },
+                fontFamily = manrope,
+                fontSize = 13.sp,
+                fontWeight = FontWeight.Medium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.85f)
+            )
+        }
+    }
 }
 
 @Composable
@@ -217,8 +270,13 @@ private fun InsightScopeSelector(
             .fillMaxWidth()
             .clip(RoundedCornerShape(50))
             .background(MaterialTheme.colorScheme.surfaceContainerHigh)
-            .padding(3.dp),
-        horizontalArrangement = Arrangement.spacedBy(2.dp)
+            .border(
+                width = 1.dp,
+                color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.15f),
+                shape = RoundedCornerShape(50)
+            )
+            .padding(4.dp),
+        horizontalArrangement = Arrangement.spacedBy(4.dp)
     ) {
         PersonalInsightScopeChip(
             label = "Week",
@@ -253,6 +311,7 @@ private fun MostVisitedPlaceInsightCard(
             }
         }",
         accentColor = MaterialTheme.colorScheme.tertiary,
+        iconRes = R.drawable.map_pin_simple_line,
         modifier = modifier
     )
 }
@@ -269,6 +328,7 @@ private fun AverageVisitDurationInsightCard(
         primaryText = formatDuration(insight.averageDurationMillis),
         supportingText = "Typical time at ${insight.placeName}",
         accentColor = MaterialTheme.colorScheme.secondary,
+        iconRes = R.drawable.timeline,
         modifier = modifier
     )
 }
@@ -280,10 +340,11 @@ private fun InsightMetricCard(
     primaryText: String,
     supportingText: String,
     accentColor: Color,
+    iconRes: Int,
     modifier: Modifier = Modifier
 ) {
     Card(
-        shape = RoundedCornerShape(16.dp),
+        shape = RoundedCornerShape(20.dp),
         modifier = modifier.fillMaxWidth(),
         border = BorderStroke(
             1.dp,
@@ -297,30 +358,36 @@ private fun InsightMetricCard(
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(14.dp),
-            horizontalArrangement = Arrangement.spacedBy(12.dp),
+                .padding(16.dp),
+            horizontalArrangement = Arrangement.spacedBy(14.dp),
             verticalAlignment = Alignment.Top
         ) {
             Box(
                 modifier = Modifier
-                    .padding(top = 2.dp)
-                    .height(42.dp)
-                    .clip(RoundedCornerShape(50))
-                    .background(accentColor.copy(alpha = 0.18f))
-                    .padding(horizontal = 3.dp)
-            )
+                    .size(38.dp)
+                    .clip(CircleShape)
+                    .background(accentColor.copy(alpha = 0.12f)),
+                contentAlignment = Alignment.Center
+            ) {
+                Icon(
+                    painter = painterResource(iconRes),
+                    contentDescription = null,
+                    modifier = Modifier.size(18.dp),
+                    tint = accentColor
+                )
+            }
 
             Column(
                 modifier = Modifier.weight(1f),
-                verticalArrangement = Arrangement.spacedBy(9.dp)
+                verticalArrangement = Arrangement.spacedBy(10.dp)
             ) {
                 Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
                     Text(
                         text = title,
                         fontFamily = manrope,
-                        fontSize = 13.sp,
-                        fontWeight = FontWeight.SemiBold,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                        fontSize = 14.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.onSurface
                     )
                     Text(
                         text = if (selectedScope == PersonalInsightScope.Month) {
@@ -334,21 +401,23 @@ private fun InsightMetricCard(
                     )
                 }
 
-                Text(
-                    text = primaryText,
-                    fontFamily = manrope,
-                    fontSize = 26.sp,
-                    lineHeight = 30.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.onSurface
-                )
-                Text(
-                    text = supportingText,
-                    fontFamily = manrope,
-                    fontSize = 13.sp,
-                    lineHeight = 18.sp,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
+                Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                    Text(
+                        text = primaryText,
+                        fontFamily = manrope,
+                        fontSize = 24.sp,
+                        lineHeight = 28.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.onSurface
+                    )
+                    Text(
+                        text = supportingText,
+                        fontFamily = manrope,
+                        fontSize = 13.sp,
+                        lineHeight = 18.sp,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
             }
         }
     }
@@ -373,19 +442,22 @@ private fun PersonalInsightScopeChip(
     onClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
+    val backgroundColor by animateColorAsState(
+        targetValue = if (selected) MaterialTheme.colorScheme.primary else Color.Transparent,
+        animationSpec = tween(durationMillis = 200),
+        label = "chipBg"
+    )
+    val contentColor by animateColorAsState(
+        targetValue = if (selected) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurfaceVariant,
+        animationSpec = tween(durationMillis = 200),
+        label = "chipContent"
+    )
+
     Surface(
-        color = if (selected) {
-            MaterialTheme.colorScheme.primary
-        } else {
-            Color.Transparent
-        },
-        contentColor = if (selected) {
-            MaterialTheme.colorScheme.onPrimary
-        } else {
-            MaterialTheme.colorScheme.onSurfaceVariant
-        },
+        color = backgroundColor,
+        contentColor = contentColor,
         shape = RoundedCornerShape(50),
-        modifier = modifier.clickable(onClick = onClick)
+        modifier = modifier.clip(RoundedCornerShape(50)).clickable(onClick = onClick)
     ) {
         Text(
             text = label,
@@ -419,7 +491,7 @@ private fun SkeletonMetricCard() {
     )
 
     Card(
-        shape = RoundedCornerShape(16.dp),
+        shape = RoundedCornerShape(20.dp),
         modifier = Modifier.fillMaxWidth(),
         border = BorderStroke(
             1.dp,
@@ -432,22 +504,20 @@ private fun SkeletonMetricCard() {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(14.dp),
-            horizontalArrangement = Arrangement.spacedBy(12.dp),
+                .padding(16.dp),
+            horizontalArrangement = Arrangement.spacedBy(14.dp),
             verticalAlignment = Alignment.Top
         ) {
             Box(
                 modifier = Modifier
-                    .padding(top = 2.dp)
-                    .height(42.dp)
-                    .width(6.dp)
-                    .clip(RoundedCornerShape(50))
+                    .size(38.dp)
+                    .clip(CircleShape)
                     .background(MaterialTheme.colorScheme.onSurface.copy(alpha = alpha * 0.12f))
             )
 
             Column(
                 modifier = Modifier.weight(1f),
-                verticalArrangement = Arrangement.spacedBy(12.dp)
+                verticalArrangement = Arrangement.spacedBy(10.dp)
             ) {
                 Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
                     Box(
@@ -466,21 +536,23 @@ private fun SkeletonMetricCard() {
                     )
                 }
 
-                Box(
-                    modifier = Modifier
-                        .width(180.dp)
-                        .height(26.dp)
-                        .clip(RoundedCornerShape(4.dp))
-                        .background(MaterialTheme.colorScheme.onSurface.copy(alpha = alpha * 0.08f))
-                )
+                Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                    Box(
+                        modifier = Modifier
+                            .width(180.dp)
+                            .height(24.dp)
+                            .clip(RoundedCornerShape(4.dp))
+                            .background(MaterialTheme.colorScheme.onSurface.copy(alpha = alpha * 0.08f))
+                    )
 
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth(0.7f)
-                        .height(14.dp)
-                        .clip(RoundedCornerShape(4.dp))
-                        .background(MaterialTheme.colorScheme.onSurface.copy(alpha = alpha * 0.08f))
-                )
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth(0.7f)
+                            .height(14.dp)
+                            .clip(RoundedCornerShape(4.dp))
+                            .background(MaterialTheme.colorScheme.onSurface.copy(alpha = alpha * 0.08f))
+                    )
+                }
             }
         }
     }
@@ -492,7 +564,7 @@ private fun WeeklyAwarenessSummaryInsightCard(
     modifier: Modifier = Modifier
 ) {
     Card(
-        shape = RoundedCornerShape(16.dp),
+        shape = RoundedCornerShape(20.dp),
         modifier = modifier.fillMaxWidth(),
         border = BorderStroke(
             1.dp,
@@ -503,42 +575,55 @@ private fun WeeklyAwarenessSummaryInsightCard(
             contentColor = MaterialTheme.colorScheme.onSurface
         )
     ) {
-        Row(
+        Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(14.dp),
-            horizontalArrangement = Arrangement.spacedBy(12.dp),
-            verticalAlignment = Alignment.Top
+                .padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            Box(
-                modifier = Modifier
-                    .padding(top = 2.dp)
-                    .height(42.dp)
-                    .width(6.dp)
-                    .clip(RoundedCornerShape(50))
-                    .background(MaterialTheme.colorScheme.primary)
-            )
-
-            Column(
-                modifier = Modifier.weight(1f),
-                verticalArrangement = Arrangement.spacedBy(12.dp)
+            // Header Row
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(12.dp)
             ) {
-                Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                Box(
+                    modifier = Modifier
+                        .size(38.dp)
+                        .clip(CircleShape)
+                        .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.12f)),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Icon(
+                        painter = painterResource(R.drawable.timeline),
+                        contentDescription = null,
+                        modifier = Modifier.size(18.dp),
+                        tint = MaterialTheme.colorScheme.primary
+                    )
+                }
+
+                Column(verticalArrangement = Arrangement.spacedBy(1.dp)) {
                     Text(
                         text = "Awareness Summary",
                         fontFamily = manrope,
-                        fontSize = 13.sp,
-                        fontWeight = FontWeight.SemiBold,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                        fontSize = 15.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.onSurface
                     )
                     Text(
                         text = if (insight.scope == PersonalInsightScope.Month) "This month" else "This week",
                         fontFamily = manrope,
-                        fontSize = 11.sp,
+                        fontSize = 12.sp,
                         color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.78f)
                     )
                 }
+            }
 
+            // Stat Cards Grid
+            Column(
+                verticalArrangement = Arrangement.spacedBy(8.dp),
+                modifier = Modifier.fillMaxWidth()
+            ) {
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.spacedBy(8.dp)
@@ -546,11 +631,15 @@ private fun WeeklyAwarenessSummaryInsightCard(
                     StatBox(
                         value = "${insight.arrivals}",
                         label = "Arrivals",
+                        iconRes = R.drawable.arrow_bend_direction,
+                        iconColor = Color(0xFF10B981),
                         modifier = Modifier.weight(1f)
                     )
                     StatBox(
                         value = "${insight.departures}",
                         label = "Departures",
+                        iconRes = R.drawable.navigation_arrow,
+                        iconColor = Color(0xFFF43F5E),
                         modifier = Modifier.weight(1f)
                     )
                 }
@@ -562,11 +651,15 @@ private fun WeeklyAwarenessSummaryInsightCard(
                     StatBox(
                         value = "${insight.placesVisited}",
                         label = "Places",
+                        iconRes = R.drawable.map_pin,
+                        iconColor = Color(0xFF6366F1),
                         modifier = Modifier.weight(1f)
                     )
                     StatBox(
                         value = insight.mostActivePlace ?: "None",
                         label = "Most Active",
+                        iconRes = R.drawable.activity,
+                        iconColor = Color(0xFFF59E0B),
                         modifier = Modifier.weight(1f)
                     )
                 }
@@ -579,31 +672,60 @@ private fun WeeklyAwarenessSummaryInsightCard(
 private fun StatBox(
     value: String,
     label: String,
+    iconRes: Int,
+    iconColor: Color,
     modifier: Modifier = Modifier
 ) {
     Box(
         modifier = modifier
-            .clip(RoundedCornerShape(10.dp))
-            .background(MaterialTheme.colorScheme.surfaceContainerLow)
-            .padding(horizontal = 10.dp, vertical = 8.dp)
+            .clip(RoundedCornerShape(12.dp))
+            .background(MaterialTheme.colorScheme.surface)
+            .border(
+                width = 1.dp,
+                color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.15f),
+                shape = RoundedCornerShape(12.dp)
+            )
+            .padding(horizontal = 12.dp, vertical = 10.dp)
     ) {
         Column(
-            verticalArrangement = Arrangement.spacedBy(2.dp)
+            verticalArrangement = Arrangement.spacedBy(6.dp)
         ) {
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                Box(
+                    modifier = Modifier
+                        .size(28.dp)
+                        .clip(CircleShape)
+                        .background(iconColor.copy(alpha = 0.12f)),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Icon(
+                        painter = painterResource(iconRes),
+                        contentDescription = null,
+                        modifier = Modifier.size(15.dp),
+                        tint = iconColor
+                    )
+                }
+
+                Text(
+                    text = label,
+                    fontFamily = manrope,
+                    fontSize = 11.sp,
+                    fontWeight = FontWeight.Medium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.8f)
+                )
+            }
+
             Text(
                 text = value,
                 fontFamily = manrope,
-                fontSize = 16.sp,
+                fontSize = 18.sp,
                 fontWeight = FontWeight.Bold,
                 color = MaterialTheme.colorScheme.onSurface,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis
-            )
-            Text(
-                text = label,
-                fontFamily = manrope,
-                fontSize = 10.sp,
-                color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.75f)
             )
         }
     }
@@ -615,36 +737,52 @@ private fun EmptyInsightsState(
     modifier: Modifier = Modifier
 ) {
     Card(
-        shape = RoundedCornerShape(16.dp),
+        shape = RoundedCornerShape(20.dp),
         modifier = modifier.fillMaxWidth(),
         border = BorderStroke(
             1.dp,
             MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.18f)
         ),
         colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceContainer
+            containerColor = MaterialTheme.colorScheme.surfaceContainerLow
         )
     ) {
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(vertical = 28.dp, horizontal = 20.dp),
+                .padding(vertical = 32.dp, horizontal = 24.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.spacedBy(14.dp)
+            verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
+            // Icon with double gradient glow
             Box(
                 modifier = Modifier
-                    .size(56.dp)
+                    .size(64.dp)
                     .clip(CircleShape)
-                    .background(MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.35f)),
+                    .background(
+                        Brush.radialGradient(
+                            colors = listOf(
+                                MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.45f),
+                                MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.05f)
+                            )
+                        )
+                    ),
                 contentAlignment = Alignment.Center
             ) {
-                Icon(
-                    painter = painterResource(R.drawable.map_trifold),
-                    contentDescription = null,
-                    modifier = Modifier.size(26.dp),
-                    tint = MaterialTheme.colorScheme.primary
-                )
+                Box(
+                    modifier = Modifier
+                        .size(44.dp)
+                        .clip(CircleShape)
+                        .background(MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.6f)),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Icon(
+                        painter = painterResource(R.drawable.map_trifold),
+                        contentDescription = null,
+                        modifier = Modifier.size(22.dp),
+                        tint = MaterialTheme.colorScheme.primary
+                    )
+                }
             }
 
             Column(
@@ -654,31 +792,30 @@ private fun EmptyInsightsState(
                 Text(
                     text = "No insights yet",
                     fontFamily = manrope,
-                    fontSize = 17.sp,
+                    fontSize = 18.sp,
                     fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.onBackground,
+                    color = MaterialTheme.colorScheme.onSurface,
                     textAlign = TextAlign.Center
                 )
                 Text(
                     text = "Keep exploring. GeoWav will quietly transform your movements into meaningful insights.",
                     fontFamily = manrope,
                     fontSize = 13.sp,
-                    lineHeight = 18.sp,
+                    lineHeight = 19.sp,
                     color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.85f),
-                    textAlign = TextAlign.Center
+                    textAlign = TextAlign.Center,
+                    modifier = Modifier.padding(horizontal = 8.dp)
                 )
             }
 
-            OutlinedButton(
+            FilledTonalButton(
                 onClick = navigateToMap,
                 shape = RoundedCornerShape(50),
-                border = BorderStroke(
-                    1.dp,
-                    MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.45f)
+                colors = ButtonDefaults.filledTonalButtonColors(
+                    containerColor = MaterialTheme.colorScheme.primaryContainer,
+                    contentColor = MaterialTheme.colorScheme.onPrimaryContainer
                 ),
-                colors = ButtonDefaults.outlinedButtonColors(
-                    contentColor = MaterialTheme.colorScheme.primary
-                )
+                contentPadding = androidx.compose.foundation.layout.PaddingValues(horizontal = 20.dp, vertical = 10.dp)
             ) {
                 Icon(
                     painter = painterResource(R.drawable.map_pin),
@@ -689,8 +826,8 @@ private fun EmptyInsightsState(
                 Text(
                     text = "Explore Map",
                     fontFamily = manrope,
-                    fontSize = 12.sp,
-                    fontWeight = FontWeight.SemiBold
+                    fontSize = 13.sp,
+                    fontWeight = FontWeight.Bold
                 )
             }
         }
