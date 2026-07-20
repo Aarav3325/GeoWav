@@ -1154,7 +1154,7 @@ fun ComparisonTable() {
         CompareRow("Session History", "Today", "2 days", "Full"),
         CompareRow("Places", "2", "10", "Unlimited"),
         CompareRow("Connections", "1", "5", "Unlimited"),
-        CompareRow("Insights", "–", "–", "✓"),
+        CompareRow("Insights", "✓", "✓", "✓"),
         CompareRow("Stay point", "-", "–", "✓"),
     )
 

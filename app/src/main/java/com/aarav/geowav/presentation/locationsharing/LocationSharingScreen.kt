@@ -350,7 +350,7 @@ fun StatusCard(
 
         LiveLocationState.Starting,
         is LiveLocationState.Sharing ->
-            MaterialTheme.colorScheme.tertiaryContainer
+            Color.White
 
         is LiveLocationState.EmergencySharing ->
             MaterialTheme.colorScheme.errorContainer
