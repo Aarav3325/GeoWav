@@ -130,7 +130,7 @@ fun ReleaseNotesContent(
             modifier = Modifier
                 .fillMaxSize()
                 .verticalScroll(scrollState)
-                .padding(horizontal = 20.dp)
+                .padding(horizontal = 16.dp)
                 .padding(top = 8.dp, bottom = 100.dp), // Leave space for bottom button
             verticalArrangement = Arrangement.spacedBy(28.dp)
         ) {
@@ -153,14 +153,14 @@ fun ReleaseNotesContent(
                         )
                     )
                 )
-                .padding(24.dp)
+                .padding(16.dp)
         ) {
             Button(
                 onClick = onDone,
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(56.dp),
-                shape = RoundedCornerShape(16.dp),
+                shape = RoundedCornerShape(32.dp),
                 colors = ButtonDefaults.buttonColors(
                     containerColor = MaterialTheme.colorScheme.primary,
                     contentColor = MaterialTheme.colorScheme.onPrimary

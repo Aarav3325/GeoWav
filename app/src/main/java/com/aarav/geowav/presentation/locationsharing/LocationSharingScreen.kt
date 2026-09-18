@@ -433,7 +433,7 @@ fun StatusCard(
                         .padding(horizontal = 16.dp, vertical = 8.dp)
                 ) {
                     Surface(
-                        color = color.copy(alpha = 0.12f),
+                        color = if(liveLocationState is LiveLocationState.Sharing) Color.White else color.copy(alpha = 0.12f),
                         shape = CircleShape
                     ) {
                         Icon(
