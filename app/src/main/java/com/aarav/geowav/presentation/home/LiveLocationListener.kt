@@ -123,6 +123,7 @@ import com.google.maps.android.compose.Marker
 import com.google.maps.android.compose.MarkerState
 import com.google.maps.android.compose.Polyline
 import com.google.maps.android.compose.rememberCameraPositionState
+import com.google.maps.android.compose.rememberMarkerState
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
@@ -462,7 +463,7 @@ fun ObserveLiveLocationCard(
                     else "${mins / 60}h ${mins % 60}m"
 
                     Marker(
-                        state = MarkerState(position = stayPos),
+                        state = rememberMarkerState(key = stay.startedAt.toString(), position = stayPos),
                         title = durationText,
                         snippet = "Stay Point",
                         anchor = Offset(0.5f, 0.5f),

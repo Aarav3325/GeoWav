@@ -71,6 +71,7 @@ import com.google.maps.android.compose.MapUiSettings
 import com.google.maps.android.compose.Marker
 import com.google.maps.android.compose.MarkerState
 import com.google.maps.android.compose.rememberCameraPositionState
+import com.google.maps.android.compose.rememberMarkerState
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
@@ -260,7 +261,8 @@ fun MapScreen(
 
                 if (uiState.selectedPlace != null) {
                     Marker(
-                        state = MarkerState(
+                        state = rememberMarkerState(
+                            key = selectedPlace?.displayName,
                             position = LatLng(
                                 selectedPlace?.location?.latitude ?: 0.0,
                                 selectedPlace?.location?.longitude ?: 0.0
@@ -276,7 +278,7 @@ fun MapScreen(
 
                 manualSelectedLatLng?.let { latLng ->
                     Marker(
-                        state = MarkerState(position = latLng),
+                        state = rememberMarkerState(key = latLng.toString(), position = latLng),
                         title = "Dropped pin"
                     )
                 }

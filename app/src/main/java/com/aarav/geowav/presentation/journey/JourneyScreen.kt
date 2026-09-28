@@ -67,6 +67,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -91,6 +92,7 @@ import com.google.maps.android.compose.Marker
 import com.google.maps.android.compose.MarkerState
 import com.google.maps.android.compose.Polyline
 import com.google.maps.android.compose.rememberCameraPositionState
+import com.google.maps.android.compose.rememberMarkerState
 import kotlinx.coroutines.flow.collectLatest
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -363,6 +365,7 @@ private fun DestinationSelectionContent(
                     color = MaterialTheme.colorScheme.surfaceContainerHigh,
                     modifier = Modifier
                         .fillMaxWidth()
+                        .clip(RoundedCornerShape(20.dp))
                         .clickable { onNavigateToMapPicker() }
                 ) {
                     Row(
@@ -461,7 +464,7 @@ private fun DestinationSelectionContent(
                 ) {
                     places.forEach { place ->
                         Marker(
-                            state = MarkerState(position = LatLng(place.latitude, place.longitude)),
+                            state = rememberMarkerState(key = place.placeId, position = LatLng(place.latitude, place.longitude)),
                             title = place.customName.ifEmpty { place.placeName }
                         )
                     }
@@ -534,6 +537,7 @@ private fun PlainPlaceRow(place: Place, onClick: () -> Unit) {
         color = MaterialTheme.colorScheme.surfaceContainerHigh,
         modifier = Modifier
             .fillMaxWidth()
+            .clip(RoundedCornerShape(20.dp))
             .clickable { onClick() }
     ) {
         Row(
@@ -646,12 +650,43 @@ private fun MemberSelectionContent(
                     .weight(1f),
                 contentAlignment = Alignment.Center
             ) {
-                Text(
-                    text = "No circle members found. Add members in Circle screen.",
-                    fontFamily = manrope,
-                    fontSize = 14.sp,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
+                Column(
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.Center,
+                    modifier = Modifier.padding(24.dp)
+                ) {
+                    Surface(
+                        shape = CircleShape,
+                        color = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.5f),
+                        modifier = Modifier.size(64.dp)
+                    ) {
+                        Box(contentAlignment = Alignment.Center) {
+                            Icon(
+                                painter = painterResource(id = R.drawable.user),
+                                contentDescription = null,
+                                tint = MaterialTheme.colorScheme.primary,
+                                modifier = Modifier.size(30.dp)
+                            )
+                        }
+                    }
+                    Spacer(modifier = Modifier.height(16.dp))
+                    Text(
+                        text = "No Circle Members Yet",
+                        fontFamily = manrope,
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 17.sp,
+                        color = MaterialTheme.colorScheme.onSurface
+                    )
+                    Spacer(modifier = Modifier.height(6.dp))
+                    Text(
+                        text = "Add family or trusted contacts to your Circle so they can track your journey progress.",
+                        fontFamily = manrope,
+                        fontSize = 13.sp,
+                        textAlign = TextAlign.Center,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        lineHeight = 18.sp
+                    )
+                }
             }
         } else {
             LazyColumn(
@@ -818,7 +853,7 @@ private fun ConfirmationContent(
                         uiSettings = MapUiSettings(zoomControlsEnabled = false)
                     ) {
                         Marker(
-                            state = MarkerState(position = destLatLng),
+                            state = rememberMarkerState(key = destinationName, position = destLatLng),
                             title = destinationName
                         )
                     }

@@ -72,6 +72,7 @@ import com.google.maps.android.compose.MapUiSettings
 import com.google.maps.android.compose.Marker
 import com.google.maps.android.compose.MarkerState
 import com.google.maps.android.compose.rememberCameraPositionState
+import com.google.maps.android.compose.rememberMarkerState
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -464,7 +465,7 @@ fun AddPlaceScreen(
                     ) {
                         if (latlng.latitude != 0.0 && latlng.longitude != 0.0) {
                             Marker(
-                                state = MarkerState(latlng),
+                                state = rememberMarkerState(key = latlng.toString(), position = latlng),
                                 title = placeTitle
                             )
 

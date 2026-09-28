@@ -18,6 +18,11 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.statusBarsPadding
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
+import androidx.compose.ui.platform.LocalHapticFeedback
+import kotlinx.coroutines.delay
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -171,7 +176,7 @@ fun LocationSharingScreen(
         }
     }
     Scaffold(
-        contentWindowInsets = WindowInsets(0, 0, 0, 0),
+        contentWindowInsets = WindowInsets(left = 0, top = 0, right = 0, bottom = 0),
         containerColor = MaterialTheme.colorScheme.background,
     ) { padding ->
         if (!locationServicesReady) {
@@ -218,67 +223,73 @@ fun LocationSharingContent(
     navigateToJourney: () -> Unit = {}
 ) {
 
-    var showEmergencyDialog by remember {
-        mutableStateOf(false)
-    }
+    var showCountdownSheet by remember { mutableStateOf(false) }
+    var showSetupContactsDialog by remember { mutableStateOf(false) }
 
-
-    val isEmergencyActive = locationUiState.emergencyEndsAt != null
+    val isEmergencyActive = locationUiState.emergencyEndsAt != null ||
+            locationUiState.sharingState is LiveLocationState.EmergencySharing
     val selectedViewerCount = locationUiState.selectedViewerIds.size
 
-    EmergencyShareDialog(
-        showEmergencyDialog,
-        onConfirm = {
-            onStartEmergency(15)
-            showEmergencyDialog = false
-        },
-        onDismiss = { showEmergencyDialog = false }
-    )
-
     val lazyState = rememberLazyListState()
-
-    var expanded by remember {
-        mutableStateOf(false)
-    }
+    var expanded by remember { mutableStateOf(false) }
 
     LaunchedEffect(expanded) {
         if (expanded) {
-            lazyState.animateScrollToItem(2)
+            lazyState.animateScrollToItem(1)
         }
     }
 
+    // SOS Countdown Bottom Sheet
+    EmergencyCountdownSheet(
+        isVisible = showCountdownSheet,
+        onConfirmEmergency = {
+            onStartEmergency(15)
+            showCountdownSheet = false
+        },
+        onCancel = { showCountdownSheet = false }
+    )
+
+    // Emergency Setup Dialog (if no contacts configured)
+    EmergencySetupDialog(
+        isVisible = showSetupContactsDialog,
+        onDismiss = { showSetupContactsDialog = false },
+        onOpenSetup = {
+            expanded = true
+        }
+    )
 
     Column(
-        modifier = modifier
+        modifier = modifier.fillMaxSize()
     ) {
+        // Pinned Top Bar with Live Location title and SOS Pill
+        LiveLocationTopBar(
+            isEmergencyActive = isEmergencyActive,
+            onSosClick = {
+                if (isEmergencyActive) {
+                    onStopEmergency()
+                } else if (locationUiState.lovedOnes.isEmpty()) {
+                    showSetupContactsDialog = true
+                } else {
+                    showCountdownSheet = true
+                }
+            }
+        )
+
+        // Pinned Emergency Active Banner (when emergency is active)
+        AnimatedVisibility(visible = isEmergencyActive) {
+            EmergencyActiveBanner(
+                remainingText = locationUiState.remaining,
+                onStopEmergency = onStopEmergency
+            )
+        }
+
         LazyColumn(
             state = lazyState,
-            contentPadding = PaddingValues(bottom = 83.dp),
+            contentPadding = PaddingValues(top = 10.dp, bottom = 83.dp),
             modifier = Modifier
                 .fillMaxSize()
                 .background(MaterialTheme.colorScheme.background)
         ) {
-            item {
-                Column(
-                    modifier = Modifier.padding(top = 56.dp, start = 16.dp, end = 16.dp, bottom = 8.dp)
-                ) {
-                    Text(
-                        text = "Live Location",
-                        fontSize = 28.sp,
-                        fontFamily = manrope,
-                        fontWeight = FontWeight.ExtraBold,
-                        color = MaterialTheme.colorScheme.onBackground
-                    )
-                    Spacer(modifier = Modifier.height(4.dp))
-                    Text(
-                        text = "Real-time location sharing with loved ones",
-                        fontSize = 13.sp,
-                        fontFamily = manrope,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                }
-            }
-
             item {
                 StatusCard(
                     userPlan,
@@ -318,16 +329,6 @@ fun LocationSharingContent(
 
             item {
                 MapPreviewCard(cameraPosition, locationUiState.sharingState)
-            }
-
-            item {
-                EmergencyShareButton(
-                    enabled = !isEmergencyActive &&
-                            !locationUiState.isEmergencyLoading &&
-                            locationUiState.sharingState !is LiveLocationState.EmergencySharing
-                ) {
-                    showEmergencyDialog = true
-                }
             }
         }
     }
@@ -1547,6 +1548,410 @@ private fun JourneyModeCardDarkPreview() {
             activeSession = null,
             onStartJourney = {},
             onStopSharing = {}
+        )
+    }
+}
+
+@Composable
+fun LiveLocationTopBar(
+    isEmergencyActive: Boolean,
+    onSosClick: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    Surface(
+        modifier = modifier.fillMaxWidth(),
+        color = MaterialTheme.colorScheme.surface,
+        tonalElevation = 2.dp
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .statusBarsPadding()
+                .padding(horizontal = 16.dp, vertical = 10.dp)
+        ) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(
+                        text = "Live Location",
+                        fontFamily = manrope,
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 22.sp,
+                        color = MaterialTheme.colorScheme.onSurface
+                    )
+                    Text(
+                        text = "Real-time sharing with loved ones",
+                        fontFamily = manrope,
+                        fontSize = 12.sp,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+
+                Spacer(modifier = Modifier.width(12.dp))
+
+                Surface(
+                    onClick = onSosClick,
+                    shape = CircleShape,
+                    color = MaterialTheme.colorScheme.errorContainer,
+                    contentColor = MaterialTheme.colorScheme.onErrorContainer,
+                    modifier = Modifier.heightIn(min = 48.dp)
+                ) {
+                    Row(
+                        modifier = Modifier.padding(horizontal = 16.dp, vertical = 10.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(6.dp)
+                    ) {
+                        Icon(
+                            painter = painterResource(id = R.drawable.emergency),
+                            contentDescription = "SOS Emergency",
+                            tint = MaterialTheme.colorScheme.onErrorContainer,
+                            modifier = Modifier.size(20.dp)
+                        )
+                        Text(
+                            text = if (isEmergencyActive) "ACTIVE" else "SOS",
+                            fontFamily = manrope,
+                            fontWeight = FontWeight.ExtraBold,
+                            fontSize = 15.sp,
+                            color = MaterialTheme.colorScheme.onErrorContainer
+                        )
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+fun EmergencyActiveBanner(
+    remainingText: String?,
+    onStopEmergency: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    Surface(
+        modifier = modifier
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp, vertical = 6.dp),
+        color = MaterialTheme.colorScheme.errorContainer,
+        shape = RoundedCornerShape(16.dp)
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 16.dp, vertical = 12.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.SpaceBetween
+        ) {
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(10.dp),
+                modifier = Modifier.weight(1f)
+            ) {
+                Surface(
+                    shape = CircleShape,
+                    color = MaterialTheme.colorScheme.error,
+                    modifier = Modifier.size(32.dp)
+                ) {
+                    Box(contentAlignment = Alignment.Center) {
+                        Icon(
+                            painter = painterResource(id = R.drawable.emergency),
+                            contentDescription = null,
+                            tint = MaterialTheme.colorScheme.onError,
+                            modifier = Modifier.size(16.dp)
+                        )
+                    }
+                }
+                Column {
+                    Text(
+                        text = "Emergency active",
+                        fontFamily = manrope,
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 14.sp,
+                        color = MaterialTheme.colorScheme.onErrorContainer
+                    )
+                    Text(
+                        text = if (!remainingText.isNullOrBlank()) "Ends in $remainingText" else "Broadcasting location to circle",
+                        fontFamily = manrope,
+                        fontSize = 12.sp,
+                        color = MaterialTheme.colorScheme.onErrorContainer.copy(alpha = 0.8f)
+                    )
+                }
+            }
+
+            Spacer(modifier = Modifier.width(8.dp))
+
+            Button(
+                onClick = onStopEmergency,
+                shape = RoundedCornerShape(12.dp),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = MaterialTheme.colorScheme.error,
+                    contentColor = MaterialTheme.colorScheme.onError
+                ),
+                contentPadding = PaddingValues(horizontal = 14.dp, vertical = 6.dp)
+            ) {
+                Text(
+                    text = "Stop sharing",
+                    fontFamily = manrope,
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 13.sp
+                )
+            }
+        }
+    }
+}
+
+@Composable
+fun EmergencyCountdownSheet(
+    isVisible: Boolean,
+    onConfirmEmergency: () -> Unit,
+    onCancel: () -> Unit
+) {
+    if (!isVisible) return
+
+    var secondsRemaining by remember { mutableStateOf(5) }
+    val haptic = LocalHapticFeedback.current
+
+    LaunchedEffect(isVisible) {
+        if (isVisible) {
+            secondsRemaining = 5
+            while (secondsRemaining > 0) {
+                try {
+                    haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                } catch (e: Exception) {
+                    // Fallback
+                }
+                delay(1000L)
+                secondsRemaining--
+            }
+            onConfirmEmergency()
+        }
+    }
+
+    CustomBottomSheet(
+        onDismissRequest = onCancel
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 24.dp, vertical = 20.dp),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            Surface(
+                shape = CircleShape,
+                color = MaterialTheme.colorScheme.errorContainer,
+                modifier = Modifier.size(64.dp)
+            ) {
+                Box(contentAlignment = Alignment.Center) {
+                    Icon(
+                        painter = painterResource(id = R.drawable.emergency),
+                        contentDescription = null,
+                        tint = MaterialTheme.colorScheme.error,
+                        modifier = Modifier.size(32.dp)
+                    )
+                }
+            }
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            Text(
+                text = "Emergency Alert",
+                fontFamily = manrope,
+                fontWeight = FontWeight.ExtraBold,
+                fontSize = 20.sp,
+                color = MaterialTheme.colorScheme.onSurface
+            )
+
+            Spacer(modifier = Modifier.height(12.dp))
+
+            Text(
+                text = "Sending in ${secondsRemaining}s…",
+                fontFamily = manrope,
+                fontWeight = FontWeight.ExtraBold,
+                fontSize = 32.sp,
+                color = MaterialTheme.colorScheme.error
+            )
+
+            Spacer(modifier = Modifier.height(8.dp))
+
+            Text(
+                text = "An emergency location broadcast will be sent to your emergency contacts in $secondsRemaining seconds.",
+                fontFamily = manrope,
+                fontSize = 13.sp,
+                textAlign = TextAlign.Center,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                lineHeight = 18.sp
+            )
+
+            Spacer(modifier = Modifier.height(24.dp))
+
+            Button(
+                onClick = onCancel,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(52.dp),
+                shape = RoundedCornerShape(16.dp),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
+                    contentColor = MaterialTheme.colorScheme.onSurface
+                )
+            ) {
+                Text(
+                    text = "Cancel Emergency",
+                    fontFamily = manrope,
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 16.sp
+                )
+            }
+        }
+    }
+}
+
+@Composable
+fun EmergencySetupDialog(
+    isVisible: Boolean,
+    onDismiss: () -> Unit,
+    onOpenSetup: () -> Unit
+) {
+    if (!isVisible) return
+
+    CustomBottomSheet(
+        onDismissRequest = onDismiss
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 24.dp, vertical = 20.dp),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            Surface(
+                shape = CircleShape,
+                color = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.5f),
+                modifier = Modifier.size(64.dp)
+            ) {
+                Box(contentAlignment = Alignment.Center) {
+                    Icon(
+                        painter = painterResource(id = R.drawable.user),
+                        contentDescription = null,
+                        tint = MaterialTheme.colorScheme.primary,
+                        modifier = Modifier.size(32.dp)
+                    )
+                }
+            }
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            Text(
+                text = "Setup Emergency Contacts",
+                fontFamily = manrope,
+                fontWeight = FontWeight.Bold,
+                fontSize = 18.sp,
+                color = MaterialTheme.colorScheme.onSurface
+            )
+
+            Spacer(modifier = Modifier.height(8.dp))
+
+            Text(
+                text = "No emergency contacts found. Add trusted members to your Circle first so emergency SOS alerts can reach them.",
+                fontFamily = manrope,
+                fontSize = 13.sp,
+                textAlign = TextAlign.Center,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                lineHeight = 18.sp
+            )
+
+            Spacer(modifier = Modifier.height(24.dp))
+
+            Button(
+                onClick = {
+                    onDismiss()
+                    onOpenSetup()
+                },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(50.dp),
+                shape = RoundedCornerShape(16.dp),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = MaterialTheme.colorScheme.primary,
+                    contentColor = MaterialTheme.colorScheme.onPrimary
+                )
+            ) {
+                Text(
+                    text = "Add Contacts",
+                    fontFamily = manrope,
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 15.sp
+                )
+            }
+        }
+    }
+}
+
+@Preview(name = "LiveLocationTopBar - Light", showBackground = true)
+@Composable
+private fun LiveLocationTopBarLightPreview() {
+    MaterialTheme {
+        LiveLocationTopBar(
+            isEmergencyActive = false,
+            onSosClick = {}
+        )
+    }
+}
+
+@Preview(name = "LiveLocationTopBar - Dark", uiMode = android.content.res.Configuration.UI_MODE_NIGHT_YES, showBackground = true)
+@Composable
+private fun LiveLocationTopBarDarkPreview() {
+    MaterialTheme {
+        LiveLocationTopBar(
+            isEmergencyActive = false,
+            onSosClick = {}
+        )
+    }
+}
+
+@Preview(name = "EmergencyActiveBanner - Light", showBackground = true)
+@Composable
+private fun EmergencyActiveBannerLightPreview() {
+    MaterialTheme {
+        EmergencyActiveBanner(
+            remainingText = "14m 30s",
+            onStopEmergency = {}
+        )
+    }
+}
+
+@Preview(name = "EmergencyActiveBanner - Dark", uiMode = android.content.res.Configuration.UI_MODE_NIGHT_YES, showBackground = true)
+@Composable
+private fun EmergencyActiveBannerDarkPreview() {
+    MaterialTheme {
+        EmergencyActiveBanner(
+            remainingText = "14m 30s",
+            onStopEmergency = {}
+        )
+    }
+}
+
+@Preview(name = "EmergencyCountdownSheet - Light", showBackground = true)
+@Composable
+private fun EmergencyCountdownSheetLightPreview() {
+    MaterialTheme {
+        EmergencyCountdownSheet(
+            isVisible = true,
+            onConfirmEmergency = {},
+            onCancel = {}
+        )
+    }
+}
+
+@Preview(name = "EmergencyCountdownSheet - Dark", uiMode = android.content.res.Configuration.UI_MODE_NIGHT_YES, showBackground = true)
+@Composable
+private fun EmergencyCountdownSheetDarkPreview() {
+    MaterialTheme {
+        EmergencyCountdownSheet(
+            isVisible = true,
+            onConfirmEmergency = {},
+            onCancel = {}
         )
     }
 }
