@@ -36,4 +36,16 @@ sealed class SocialEvent {
     data class Geofence(
         val geofence: GeoAlert
     ): SocialEvent()
+
+    data class LocationRequestReceived(
+        val requestId: String,
+        val requesterId: String,
+        val requesterName: String
+    ): SocialEvent()
+
+    data class LocationRequestResponded(
+        val requestId: String,
+        val accepted: Boolean,
+        val respondentName: String
+    ): SocialEvent()
 }
