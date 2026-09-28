@@ -204,6 +204,7 @@ class JourneyViewModel @Inject constructor(
                     putExtra("DESTINATION_ADDRESS", dest.address)
                     _uiState.value.selectedPlace?.let { putExtra("DESTINATION_PLACE_ID", it.placeId) }
                     putExtra("CREATED_FROM", "JOURNEY_MODE")
+                    putStringArrayListExtra("SHARED_WITH", ArrayList(viewers.toList()))
                 }
                 context.startForegroundService(intent)
 
@@ -237,7 +238,17 @@ class JourneyViewModel @Inject constructor(
         viewModelScope.launch {
             liveLocationSharingRepository.observeActiveSession(currentUserId)
                 .collect { session ->
-                    _uiState.update { it.copy(activeSession = session) }
+                    _uiState.update { state ->
+                        val updatedSelectedMembers = if (session != null && session.sharedWith.isNotEmpty()) {
+                            session.sharedWith.toSet()
+                        } else {
+                            state.selectedMemberIds
+                        }
+                        state.copy(
+                            activeSession = session,
+                            selectedMemberIds = updatedSelectedMembers
+                        )
+                    }
                     if (session != null && session.mode == SessionMode.JOURNEY && session.status == SessionStatus.ACTIVE) {
                         if (_uiState.value.step != JourneyStep.ACTIVE_JOURNEY && _uiState.value.step != JourneyStep.ARRIVED) {
                             _uiState.update { it.copy(step = JourneyStep.ACTIVE_JOURNEY) }
@@ -245,6 +256,15 @@ class JourneyViewModel @Inject constructor(
                         startLocationMonitoring(session.destinationLocation)
                     } else if (session == null || session.status.isTerminal()) {
                         stopLocationMonitoring()
+                        if (_uiState.value.step == JourneyStep.ACTIVE_JOURNEY) {
+                            _uiState.update {
+                                it.copy(
+                                    step = JourneyStep.ARRIVED,
+                                    distanceToDestinationMeters = 0.0
+                                )
+                            }
+                            _events.emit(JourneyUiEvent.JourneyCompleted)
+                        }
                     }
                 }
         }
@@ -254,9 +274,20 @@ class JourneyViewModel @Inject constructor(
         if (destination == null || locationMonitorJob != null) return
 
         val destLatLng = LatLng(destination.latitude, destination.longitude)
-        val radiusMeters = _uiState.value.selectedPlace?.radius?.toDouble() ?: 100.0
+        val radiusMeters = (_uiState.value.selectedPlace?.radius?.toDouble() ?: 150.0).coerceAtLeast(150.0)
 
         locationMonitorJob = viewModelScope.launch {
+            val lastLocation = locationManager.getLastKnownLocation()
+            if (lastLocation != null) {
+                val currentLatLng = LatLng(lastLocation.latitude, lastLocation.longitude)
+                val distance = SphericalUtil.computeDistanceBetween(currentLatLng, destLatLng)
+                _uiState.update { it.copy(distanceToDestinationMeters = distance) }
+                if (distance <= radiusMeters) {
+                    onArrivalDetected(destination)
+                    return@launch
+                }
+            }
+
             locationManager.getLocationUpdates().collect { location ->
                 val currentLatLng = LatLng(location.latitude, location.longitude)
                 val distance = SphericalUtil.computeDistanceBetween(currentLatLng, destLatLng)
@@ -279,6 +310,11 @@ class JourneyViewModel @Inject constructor(
         stopLocationMonitoring()
         try {
             liveLocationSharingRepository.stopSharingLiveLocation(currentUserId, SessionStatus.COMPLETED)
+            val intent = Intent(context, LiveLocationService::class.java).apply {
+                action = "ACTION_STOP_LIVE_LOCATION"
+                putExtra("STOP_STATUS", SessionStatus.COMPLETED.name)
+            }
+            context.startService(intent)
 
             GeoNotificationHelper.show(
                 context = context,

@@ -212,7 +212,14 @@ fun JourneyScreen(
 
                 JourneyStep.ACTIVE_JOURNEY -> ActiveJourneyContent(
                     destinationName = uiState.customDestination?.name ?: uiState.activeSession?.destinationLocation?.name ?: "Destination",
-                    selectedMembers = uiState.circleMembers.filter { it.id in uiState.selectedMemberIds || it.id in (uiState.activeSession?.sharedWith ?: emptyList()) },
+                    selectedMembers = remember(uiState.circleMembers, uiState.activeSession, uiState.selectedMemberIds) {
+                        val activeSharedWith = uiState.activeSession?.sharedWith.orEmpty()
+                        if (activeSharedWith.isNotEmpty()) {
+                            uiState.circleMembers.filter { it.id in activeSharedWith }
+                        } else {
+                            uiState.circleMembers.filter { it.id in uiState.selectedMemberIds }
+                        }
+                    },
                     distanceMeters = uiState.distanceToDestinationMeters,
                     activeSession = uiState.activeSession,
                     onEndJourney = { viewModel.endJourneyManually() }
