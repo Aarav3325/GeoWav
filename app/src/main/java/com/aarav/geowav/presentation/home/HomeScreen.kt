@@ -13,9 +13,14 @@ import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.EaseInOut
 import androidx.compose.animation.core.RepeatMode
 import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.infiniteRepeatable
 import androidx.compose.animation.core.rememberInfiniteTransition
+import androidx.compose.animation.core.spring
+import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.tween
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -28,6 +33,7 @@ import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -40,6 +46,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
@@ -51,6 +58,7 @@ import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
@@ -58,6 +66,10 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBarDefaults
+import androidx.compose.material3.ripple
+import androidx.compose.animation.core.LinearOutSlowInEasing
+import androidx.compose.foundation.layout.defaultMinSize
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
@@ -117,6 +129,7 @@ import com.aarav.geowav.presentation.components.openAppDetailsSettings
 import com.aarav.geowav.presentation.insights.PersonalInsightsViewModel
 import com.aarav.geowav.presentation.navigation.NavRoute
 import com.aarav.geowav.presentation.subscription.SubscriptionViewModel
+import com.aarav.geowav.presentation.theme.GeoWavTheme
 import com.aarav.geowav.presentation.theme.manrope
 import com.google.accompanist.permissions.ExperimentalPermissionsApi
 import kotlinx.coroutines.delay
@@ -415,11 +428,15 @@ fun GeoWavHomeScreen(
                         }
 
                         val isSessionActive = uiState.activeSession != null &&
-                                uiState.activeSession?.status == com.aarav.geowav.data.model.SessionStatus.ACTIVE
+                                (uiState.activeSession?.status == com.aarav.geowav.data.model.SessionStatus.ACTIVE ||
+                                 uiState.activeSession?.status == com.aarav.geowav.data.model.SessionStatus.COMPLETED)
                         AnimatedVisibility(isSessionActive) {
                             uiState.activeSession?.let { session ->
                                 ActiveJourneyHomeCard(
                                     session = session,
+                                    circleMembers = uiState.lovedOnes,
+                                    userLocation = uiState.lastPosition?.let { Pair(it.latitude, it.longitude) },
+                                    onCardClick = navigateToJourney,
                                     onEndJourney = { homeScreenVM.stopActiveSession() },
                                     modifier = Modifier.padding(top = 12.dp)
                                 )
@@ -1941,83 +1958,506 @@ fun buildRelativeSubtitle(type: String, timestamp: Long): String {
 @Composable
 fun ActiveJourneyHomeCard(
     session: com.aarav.geowav.data.model.SharingSession,
-    onEndJourney: () -> Unit,
+    circleMembers: List<CircleMember> = emptyList(),
+    userLocation: Pair<Double, Double>? = null,
+    distanceMeters: Double? = null,
+    onCardClick: () -> Unit = {},
+    onEndJourney: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
-    Card(
-        modifier = modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.primaryContainer
-        ),
-        shape = RoundedCornerShape(20.dp)
+    JourneyInProgressCard(
+        session = session,
+        circleMembers = circleMembers,
+        userLocation = userLocation,
+        distanceMeters = distanceMeters,
+        onCardClick = onCardClick,
+        onEndJourney = onEndJourney,
+        modifier = modifier
+    )
+}
+
+/**
+ * Redesigned "Journey in progress" home card (Material 3).
+ *
+ * Design Decisions:
+ * 1. Color roles: Live indicator uses `tertiary` (mint) with a pulsing outer ring.
+ *    Progress uses `primary` (periwinkle). `error` color is used ONLY for the End action.
+ * 2. Hierarchy & Layout: 20dp padding, 12dp row gaps, 16dp before footer.
+ * 3. Press scale & ripple: Whole card is tap target with 0.98 scale animation on press.
+ * 4. Hero row: Destination name (20sp semibold) on left, remaining distance numeral ("1.9 km", 20sp semibold) with small "left" label (12sp) on right.
+ * 5. Progress: 4dp rounded track, animated fill, with destination pin icon at end.
+ * 6. Caption: "Just started" or "2 min" (updated once per minute, no seconds counter).
+ * 7. Footer: Overlapping avatar stack (28dp size, max 3 + overflow badge) + recipient name, text-only "End" button in error color with 48dp min touch target & no background fill.
+ * 8. Surface: primaryContainer with vertical tonal gradient, 1dp border at ~10% alpha, 28dp corner radius.
+ * 9. Arrival state: Swap to "Arrived at [destination] · sharing stopped" with check icon in tertiary color.
+ */
+@Composable
+fun JourneyInProgressCard(
+    session: com.aarav.geowav.data.model.SharingSession,
+    circleMembers: List<CircleMember> = emptyList(),
+    userLocation: Pair<Double, Double>? = null,
+    distanceMeters: Double? = null,
+    onCardClick: () -> Unit = {},
+    onEndJourney: () -> Unit = {},
+    modifier: Modifier = Modifier
+) {
+    val interactionSource = remember { MutableInteractionSource() }
+    val isPressed by interactionSource.collectIsPressedAsState()
+    val pressScale by animateFloatAsState(
+        targetValue = if (isPressed) 0.98f else 1.0f,
+        animationSpec = spring(stiffness = Spring.StiffnessMediumLow),
+        label = "pressScale"
+    )
+
+    var showEndConfirmDialog by remember { mutableStateOf(false) }
+
+    if (showEndConfirmDialog) {
+        AlertDialog(
+            onDismissRequest = { showEndConfirmDialog = false },
+            title = {
+                Text(
+                    text = "End journey?",
+                    fontFamily = manrope,
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 18.sp,
+                    color = MaterialTheme.colorScheme.onSurface
+                )
+            },
+            text = {
+                val memberName = circleMembers.firstOrNull { it.id in session.sharedWith }?.let {
+                    it.alias?.takeIf { a -> a.isNotBlank() } ?: it.profileName
+                }
+                val sharingDetail = when {
+                    session.sharedWith.size == 1 && memberName != null -> memberName
+                    session.sharedWith.isNotEmpty() -> "${session.sharedWith.size} people"
+                    else -> "Circle members"
+                }
+                Text(
+                    text = "$sharingDetail will stop seeing your location.",
+                    fontFamily = manrope,
+                    fontSize = 14.sp,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        showEndConfirmDialog = false
+                        onEndJourney()
+                    }
+                ) {
+                    Text(
+                        text = "End journey",
+                        fontFamily = manrope,
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.error
+                    )
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showEndConfirmDialog = false }) {
+                    Text(
+                        text = "Cancel",
+                        fontFamily = manrope,
+                        fontWeight = FontWeight.SemiBold,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+            },
+            containerColor = MaterialTheme.colorScheme.surface,
+            shape = RoundedCornerShape(24.dp)
+        )
+    }
+
+    val isArrived = session.status == com.aarav.geowav.data.model.SessionStatus.COMPLETED
+
+    Surface(
+        modifier = modifier
+            .fillMaxWidth()
+            .graphicsLayer(scaleX = pressScale, scaleY = pressScale)
+            .clip(RoundedCornerShape(28.dp))
+            .clickable(
+                interactionSource = interactionSource,
+                indication = ripple(),
+                enabled = !isArrived,
+                onClick = onCardClick
+            ),
+        shape = RoundedCornerShape(28.dp),
+        color = MaterialTheme.colorScheme.secondaryContainer,
+        border = BorderStroke(1.dp, MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.10f)),
+        shadowElevation = 2.dp,
+        tonalElevation = 2.dp
     ) {
-        Column(
-            modifier = Modifier.padding(16.dp)
-        ) {
+        if (isArrived) {
             Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(20.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Surface(
                     shape = CircleShape,
-                    color = MaterialTheme.colorScheme.primary,
-                    modifier = Modifier.size(40.dp)
+                    color = MaterialTheme.colorScheme.secondary,
+                    modifier = Modifier.size(36.dp)
                 ) {
                     Box(contentAlignment = Alignment.Center) {
                         Icon(
-                            painter = painterResource(id = R.drawable.navigation_arrow),
+                            painter = painterResource(id = R.drawable.check),
                             contentDescription = null,
-                            tint = MaterialTheme.colorScheme.onPrimary,
+                            tint = MaterialTheme.colorScheme.onSecondary,
                             modifier = Modifier.size(20.dp)
                         )
                     }
                 }
-                Spacer(modifier = Modifier.width(12.dp))
+                Spacer(modifier = Modifier.width(14.dp))
                 Column(modifier = Modifier.weight(1f)) {
                     Text(
-                        text = "JOURNEY IN PROGRESS",
+                        text = "Arrived at ${session.destinationLocation?.name ?: "Destination"}",
                         fontFamily = manrope,
-                        fontWeight = FontWeight.ExtraBold,
-                        fontSize = 11.sp,
-                        color = MaterialTheme.colorScheme.primary,
-                        letterSpacing = 0.8.sp
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 16.sp,
+                        color = MaterialTheme.colorScheme.onPrimaryContainer
                     )
                     Text(
-                        text = session.destinationLocation?.name ?: "Selected Location",
+                        text = "Sharing stopped automatically",
                         fontFamily = manrope,
-                        fontWeight = FontWeight.ExtraBold,
-                        fontSize = 18.sp,
-                        color = MaterialTheme.colorScheme.onPrimaryContainer
+                        fontSize = 13.sp,
+                        color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.75f)
                     )
                 }
             }
-
-            Spacer(modifier = Modifier.height(10.dp))
-            val sharedCount = session.sharedWith.size
-            val sharingText = if (sharedCount > 0) "Sharing live location with $sharedCount circle ${if (sharedCount == 1) "member" else "members"}" else "Sharing live location until arrival"
-            Text(
-                text = sharingText,
-                fontFamily = manrope,
-                fontSize = 13.sp,
-                color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.85f)
-            )
-
-            Spacer(modifier = Modifier.height(14.dp))
-            Button(
-                onClick = onEndJourney,
-                modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(12.dp),
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = MaterialTheme.colorScheme.errorContainer,
-                    contentColor = MaterialTheme.colorScheme.onErrorContainer
-                )
+        } else {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .background(
+                        Brush.verticalGradient(
+                            listOf(
+                                MaterialTheme.colorScheme.primaryContainer,
+                                MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.88f)
+                            )
+                        )
+                    )
+                    .padding(20.dp)
             ) {
+                // 1. Header row: Pulsing dot (small, soft pulse ring, no oversized halo) + "LIVE" overline (tertiary) on left, thin chevron_right (20dp, ~60% alpha) on right
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        val infiniteTransition = rememberInfiniteTransition(label = "pulsingLive")
+                        val ringScale by infiniteTransition.animateFloat(
+                            initialValue = 1.0f,
+                            targetValue = 1.4f,
+                            animationSpec = infiniteRepeatable(
+                                animation = tween(1200, easing = LinearOutSlowInEasing),
+                                repeatMode = RepeatMode.Reverse
+                            ),
+                            label = "ringScale"
+                        )
+                        val ringAlpha by infiniteTransition.animateFloat(
+                            initialValue = 0.4f,
+                            targetValue = 0.0f,
+                            animationSpec = infiniteRepeatable(
+                                animation = tween(1200, easing = LinearOutSlowInEasing),
+                                repeatMode = RepeatMode.Reverse
+                            ),
+                            label = "ringAlpha"
+                        )
+
+                        Box(contentAlignment = Alignment.Center, modifier = Modifier.size(14.dp)) {
+                            Box(
+                                modifier = Modifier
+                                    .size(14.dp)
+                                    .graphicsLayer(scaleX = ringScale, scaleY = ringScale)
+                                    .clip(CircleShape)
+                                    .background(MaterialTheme.colorScheme.tertiary.copy(alpha = ringAlpha))
+                            )
+                            Box(
+                                modifier = Modifier
+                                    .size(8.dp)
+                                    .clip(CircleShape)
+                                    .background(MaterialTheme.colorScheme.tertiary)
+                            )
+                        }
+
+                        Spacer(modifier = Modifier.width(8.dp))
+
+                        Text(
+                            text = "LIVE",
+                            fontFamily = manrope,
+                            fontWeight = FontWeight.ExtraBold,
+                            fontSize = 11.sp,
+                            color = MaterialTheme.colorScheme.tertiary,
+                            letterSpacing = 1.sp
+                        )
+                    }
+
+                    Icon(
+                        painter = painterResource(id = R.drawable.right_arrow),
+                        contentDescription = "Open Active Journey",
+                        tint = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.60f),
+                        modifier = Modifier.size(20.dp)
+                    )
+                }
+
+                Spacer(modifier = Modifier.height(12.dp))
+
+                // 2. Body: Destination name (20sp semibold)
                 Text(
-                    text = "End Journey",
+                    text = session.destinationLocation?.name ?: "Selected Location",
                     fontFamily = manrope,
-                    fontWeight = FontWeight.Bold,
-                    fontSize = 14.sp
+                    fontWeight = FontWeight.SemiBold,
+                    fontSize = 20.sp,
+                    color = MaterialTheme.colorScheme.onPrimaryContainer,
+                    modifier = Modifier.fillMaxWidth(),
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
                 )
+
+                Spacer(modifier = Modifier.height(4.dp))
+
+                // 3. Single caption line: "[distance] left · [elapsed]"
+                val calcDistanceMeters = remember(userLocation, session.destinationLocation, distanceMeters) {
+                    if (distanceMeters != null) return@remember distanceMeters
+                    val dest = session.destinationLocation
+                    if (userLocation != null && dest != null && dest.latitude != 0.0 && dest.longitude != 0.0) {
+                        val results = FloatArray(1)
+                        android.location.Location.distanceBetween(
+                            userLocation.first,
+                            userLocation.second,
+                            dest.latitude,
+                            dest.longitude,
+                            results
+                        )
+                        results[0].toDouble()
+                    } else null
+                }
+
+                val elapsedMs = (System.currentTimeMillis() - session.startedAt).coerceAtLeast(0L)
+                val elapsedMins = (elapsedMs / 60000L).toInt()
+                val elapsedText = if (elapsedMins == 0) "Just started" else "$elapsedMins min"
+
+                val captionText = if (calcDistanceMeters != null) {
+                    val distStr = if (calcDistanceMeters >= 1000.0) "%.1f km left".format(calcDistanceMeters / 1000.0) else "%d m left".format(calcDistanceMeters.toInt())
+                    "$distStr · $elapsedText"
+                } else {
+                    elapsedText
+                }
+
+                Text(
+                    text = captionText,
+                    fontFamily = manrope,
+                    fontSize = 13.sp,
+                    color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.85f)
+                )
+
+                Spacer(modifier = Modifier.height(16.dp))
+
+                // 5. Divider: 1dp at ~10% alpha
+                HorizontalDivider(
+                    thickness = 1.dp,
+                    color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.10f)
+                )
+
+                Spacer(modifier = Modifier.height(12.dp))
+
+                // 6. Footer row: avatar (28dp; overlapping stack, max 3 + overflow) with first name (or "3 people") on left; text-only "End" button in error color with 48dp min touch target & no fill on right
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    val recipientMembers = circleMembers.filter { it.id in session.sharedWith }
+                    val sharedCount = session.sharedWith.size
+
+                    val recipientLabel = when {
+                        recipientMembers.isNotEmpty() -> {
+                            val first = recipientMembers.first()
+                            val firstName = first.alias?.takeIf { it.isNotBlank() } ?: first.profileName.orEmpty().ifBlank { "Member" }
+                            if (recipientMembers.size == 1) "Sharing with $firstName"
+                            else if (recipientMembers.size == 2) {
+                                val second = recipientMembers[1]
+                                val secondName = second.alias?.takeIf { it.isNotBlank() } ?: second.profileName.orEmpty().ifBlank { "Member" }
+                                "Sharing with $firstName & $secondName"
+                            } else "Sharing with $firstName & ${sharedCount - 1} others"
+                        }
+                        sharedCount > 0 -> "Sharing with $sharedCount ${if (sharedCount == 1) "person" else "people"}"
+                        else -> "Sharing live location"
+                    }
+
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        modifier = Modifier.weight(1f)
+                    ) {
+                        if (recipientMembers.isNotEmpty()) {
+                            HomeCardOverlappingAvatarStack(members = recipientMembers)
+                            Spacer(modifier = Modifier.width(10.dp))
+                        }
+                        Text(
+                            text = recipientLabel,
+                            fontFamily = manrope,
+                            fontWeight = FontWeight.SemiBold,
+                            fontSize = 13.sp,
+                            color = MaterialTheme.colorScheme.onPrimaryContainer,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis
+                        )
+                    }
+
+                    Spacer(modifier = Modifier.width(8.dp))
+
+                    // Text-only "End" button in error color with minimum 48dp touch target and no fill
+                    TextButton(
+                        onClick = { showEndConfirmDialog = true },
+                        modifier = Modifier.defaultMinSize(minWidth = 48.dp, minHeight = 48.dp)
+                    ) {
+                        Text(
+                            text = "End",
+                            fontFamily = manrope,
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 14.sp,
+                            color = MaterialTheme.colorScheme.error
+                        )
+                    }
+                }
             }
+        }
+    }
+}
+
+@Composable
+private fun HomeCardOverlappingAvatarStack(
+    members: List<CircleMember>,
+    maxDisplay: Int = 3
+) {
+    val displayMembers = members.take(maxDisplay)
+    val overflowCount = (members.size - maxDisplay).coerceAtLeast(0)
+
+    Row(
+        horizontalArrangement = Arrangement.spacedBy((-8).dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        displayMembers.forEach { member ->
+            val name = member.alias?.takeIf { it.isNotBlank() }
+                ?: member.profileName.orEmpty().ifBlank { member.receiverEmail.orEmpty() }
+            com.aarav.geowav.presentation.components.IdentityAvatar(
+                avatarUrl = member.avatarUrl,
+                displayName = name,
+                backgroundColor = MaterialTheme.colorScheme.surfaceContainerHigh,
+                contentColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                borderColor = MaterialTheme.colorScheme.primaryContainer,
+                modifier = Modifier.size(28.dp)
+            )
+        }
+        if (overflowCount > 0) {
+            Surface(
+                shape = CircleShape,
+                color = MaterialTheme.colorScheme.surfaceContainerHigh,
+                border = BorderStroke(1.5.dp, MaterialTheme.colorScheme.primaryContainer),
+                modifier = Modifier.size(28.dp)
+            ) {
+                Box(contentAlignment = Alignment.Center) {
+                    Text(
+                        text = "+$overflowCount",
+                        fontFamily = manrope,
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 10.sp,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+            }
+        }
+    }
+}
+
+@Preview(name = "JourneyInProgressCard - Light", showBackground = true)
+@Composable
+private fun JourneyInProgressCardLightPreview() {
+    GeoWavTheme {
+        Box(modifier = Modifier.padding(16.dp)) {
+            JourneyInProgressCard(
+                session = com.aarav.geowav.data.model.SharingSession(
+                    sessionId = "1",
+                    ownerId = "user1",
+                    ownerName = "Aarav",
+                    mode = com.aarav.geowav.data.model.SessionMode.JOURNEY,
+                    status = com.aarav.geowav.data.model.SessionStatus.ACTIVE,
+                    startedAt = System.currentTimeMillis() - (12 * 60 * 1000),
+                    destinationLocation = com.aarav.geowav.data.model.DestinationLocation(
+                        latitude = 37.7749,
+                        longitude = -122.4194,
+                        name = "Office",
+                        address = "123 Tech Park"
+                    ),
+                    sharedWith = listOf("user2", "user3", "user4", "user5")
+                ),
+                circleMembers = listOf(
+                    CircleMember(id = "user2", profileName = "Aarav", alias = null, selected = false),
+                    CircleMember(id = "user3", profileName = "Sarah", alias = null, selected = false),
+                    CircleMember(id = "user4", profileName = "John", alias = null, selected = false),
+                    CircleMember(id = "user5", profileName = "Emma", alias = null, selected = false)
+                ),
+                distanceMeters = 1900.0
+            )
+        }
+    }
+}
+
+@Preview(name = "JourneyInProgressCard - Dark", uiMode = android.content.res.Configuration.UI_MODE_NIGHT_YES, showBackground = true)
+@Composable
+private fun JourneyInProgressCardDarkPreview() {
+    GeoWavTheme {
+        Box(modifier = Modifier.padding(16.dp)) {
+            JourneyInProgressCard(
+                session = com.aarav.geowav.data.model.SharingSession(
+                    sessionId = "1",
+                    ownerId = "user1",
+                    ownerName = "Aarav",
+                    mode = com.aarav.geowav.data.model.SessionMode.JOURNEY,
+                    status = com.aarav.geowav.data.model.SessionStatus.ACTIVE,
+                    startedAt = System.currentTimeMillis() - (12 * 60 * 1000),
+                    destinationLocation = com.aarav.geowav.data.model.DestinationLocation(
+                        latitude = 37.7749,
+                        longitude = -122.4194,
+                        name = "Office",
+                        address = "123 Tech Park"
+                    ),
+                    sharedWith = listOf("user2")
+                ),
+                circleMembers = listOf(
+                    CircleMember(id = "user2", profileName = "Aarav", alias = null, selected = false)
+                ),
+                distanceMeters = 1900.0
+            )
+        }
+    }
+}
+
+@Preview(name = "JourneyInProgressCard - Arrived", showBackground = true)
+@Composable
+private fun JourneyInProgressCardArrivedPreview() {
+    GeoWavTheme {
+        Box(modifier = Modifier.padding(16.dp)) {
+            JourneyInProgressCard(
+                session = com.aarav.geowav.data.model.SharingSession(
+                    sessionId = "1",
+                    ownerId = "user1",
+                    ownerName = "Aarav",
+                    mode = com.aarav.geowav.data.model.SessionMode.JOURNEY,
+                    status = com.aarav.geowav.data.model.SessionStatus.COMPLETED,
+                    startedAt = System.currentTimeMillis() - (25 * 60 * 1000),
+                    destinationLocation = com.aarav.geowav.data.model.DestinationLocation(
+                        latitude = 37.7749,
+                        longitude = -122.4194,
+                        name = "Office",
+                        address = "123 Tech Park"
+                    ),
+                    sharedWith = listOf("user2")
+                )
+            )
         }
     }
 }
