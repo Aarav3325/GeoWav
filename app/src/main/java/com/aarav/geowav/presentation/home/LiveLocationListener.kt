@@ -352,8 +352,30 @@ fun ObserveLiveLocationCard(
         }
         .keys
 
-    val viewers = uiState.lovedOnes.filter {
-        it.id in activeViewerIds
+    val viewers = remember(activeViewerIds, uiState.lovedOnes, locations, uiState.currentViewers) {
+        activeViewerIds.map { userId ->
+            val memberInLovedOnes = uiState.lovedOnes.firstOrNull { it.id == userId }
+            if (memberInLovedOnes != null) {
+                memberInLovedOnes
+            } else {
+                val fetchedUser = uiState.currentViewers.firstOrNull { it.userId == userId }
+                val locState = locations[userId]
+                val locUpdate = when (locState) {
+                    is ViewerLocationState.NormalSharing -> locState.location
+                    is ViewerLocationState.EmergencySharing -> locState.location
+                    else -> null
+                }
+                CircleMember(
+                    id = userId,
+                    profileName = fetchedUser?.username?.takeIf { it.isNotBlank() }
+                        ?: locUpdate?.userName?.takeIf { it.isNotBlank() }
+                        ?: "Circle Member",
+                    alias = null,
+                    selected = false,
+                    avatarUrl = fetchedUser?.avatar?.takeIf { it.isNotBlank() }
+                )
+            }
+        }
     }
 
 
@@ -668,7 +690,7 @@ fun ObserveLiveLocationCard(
                         content = {
 
                             val selectedUserDetails =
-                                uiState.lovedOnes.firstOrNull {
+                                viewers.firstOrNull {
                                     it.id == selectedUser
                                 }
 
@@ -723,10 +745,7 @@ fun ObserveLiveLocationCard(
                         .padding(bottom = 16.dp)
                 ) {
 
-                    val member =
-                        uiState.lovedOnes.firstOrNull {
-                            it.id == selectedUser
-                        }
+                    val member = viewers.firstOrNull { it.id == selectedUser }
 
                     val location = when (val state = locations[selectedUser]) {
 
@@ -739,10 +758,16 @@ fun ObserveLiveLocationCard(
                         else -> null
                     }
 
+                    val memberName = member?.alias?.takeIf { it.isNotBlank() }
+                        ?: member?.profileName?.takeIf { it.isNotBlank() }
+                        ?: location?.userName?.takeIf { it.isNotBlank() }
+                        ?: "Live User"
+
+                    val isJourney = location?.mode == "JOURNEY" && !location.destinationName.isNullOrBlank()
+                    val displayLabel = if (isJourney) "$memberName (on the way to ${location?.destinationName})" else memberName
+
                     CollapsedViewerInfo(
-                        memberName = member?.alias
-                            ?: member?.profileName
-                            ?: "Live User",
+                        memberName = displayLabel,
 
                         lastTimestamp = location?.timestamp
                             ?: System.currentTimeMillis(),
@@ -756,6 +781,7 @@ fun ObserveLiveLocationCard(
 
             else -> CollapsedViewerTray(
                 viewerInfo = viewers,
+                locations = locations,
                 showDetail = {
                     showViewerInfoSheet = true
                 },
@@ -1413,14 +1439,14 @@ fun ViewerCardHome(
             "No one"
 
         viewerInfo.size == 1 -> {
-            viewerInfo.first().profileName
+            viewerInfo.first().alias
         }
 
         viewerInfo.size == 2 ->
-            viewerInfo.joinToString { it.profileName }
+            viewerInfo.joinToString { it.alias ?: it.profileName }
 
         else ->
-            "${viewerInfo[0].profileName}, ${viewerInfo[1].profileName} + ${viewerInfo.size - 2}"
+            "${viewerInfo[0].alias ?: viewerInfo[0].profileName}, ${viewerInfo[1].alias ?: viewerInfo[1].profileName} + ${viewerInfo.size - 2}"
     }
 
     Card(

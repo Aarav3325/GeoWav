@@ -97,6 +97,37 @@ class HomeScreenVM @Inject constructor(
 
     private val observerJobs = mutableMapOf<String, Job>()
 
+    init {
+        fetchUser()
+        observeActiveSession()
+    }
+
+    fun observeActiveSession() {
+        val uid = viewerId
+        if (uid.isEmpty()) return
+        viewModelScope.launch {
+            liveLocationSharingRepository.observeActiveSession(uid)
+                .collect { session ->
+                    _uiState.update { it.copy(activeSession = session) }
+                }
+        }
+    }
+
+    fun stopActiveSession() {
+        val uid = viewerId
+        if (uid.isEmpty()) return
+        viewModelScope.launch {
+            liveLocationSharingRepository.stopSharingLiveLocation(
+                userId = uid,
+                finalStatus = com.aarav.geowav.data.model.SessionStatus.CANCELLED
+            )
+            val intent = android.content.Intent(context, com.aarav.geowav.platform.LiveLocationService::class.java).apply {
+                action = "ACTION_STOP_LIVE_LOCATION"
+            }
+            context.stopService(intent)
+        }
+    }
+
     fun fetchUser() {
         viewModelScope.launch {
             googleSignInClient.currentUser()
@@ -394,6 +425,7 @@ class HomeScreenVM @Inject constructor(
                             lovedOnesError = null
                         )
                     }
+                    observeUsers()
                 }
 
                 is Resource.NoInternet,
@@ -693,6 +725,7 @@ data class HomeScreenUiState(
     val isLovedOnesLoading: Boolean = true,
     val isPlacesLoading: Boolean = true,
     val isAwarenessLoading: Boolean = true,
+    val activeSession: com.aarav.geowav.data.model.SharingSession? = null,
     val lovedOnesError: String? = null,
     val awarenessError: String? = null
 )

@@ -22,6 +22,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -88,6 +89,7 @@ fun LocationSharingScreen(
     viewModel: LocationSharingVM,
     navigateToPaywall: () -> Unit,
     navigateToSettings: () -> Unit,
+    navigateToJourney: () -> Unit = {},
     subscriptionVM: SubscriptionViewModel,
     location: Pair<Double, Double>?,
     locationServicesReady: Boolean
@@ -179,13 +181,14 @@ fun LocationSharingScreen(
         LocationSharingContent(
             modifier = Modifier.padding(padding),
             locationUiState = uiState,
-            plan,
-            cameraPositionState,
+            userPlan = plan,
+            cameraPosition = cameraPositionState,
             onToggleChange = viewModel::onViewerToggle,
             onStartSharing = viewModel::startLiveLocationSharing,
             onStopSharing = viewModel::stopLiveLocationSharing,
             onStartEmergency = viewModel::startEmergency,
-            onStopEmergency = viewModel::stopEmergency
+            onStopEmergency = viewModel::stopEmergency,
+            navigateToJourney = navigateToJourney
         )
 
     }
@@ -201,7 +204,8 @@ fun LocationSharingContent(
     onStartSharing: (UserPlan) -> Unit,
     onStopSharing: () -> Unit,
     onStartEmergency: (Int) -> Unit,
-    onStopEmergency: () -> Unit
+    onStopEmergency: () -> Unit,
+    navigateToJourney: () -> Unit = {}
 ) {
 
     var showEmergencyDialog by remember {
@@ -275,6 +279,14 @@ fun LocationSharingContent(
                     onStartSharing,
                     onStopSharing,
                     onStopEmergency
+                )
+            }
+
+            item {
+                JourneyModeCard(
+                    activeSession = locationUiState.activeSession,
+                    onStartJourney = navigateToJourney,
+                    onStopSharing = onStopSharing
                 )
             }
 
@@ -1249,4 +1261,143 @@ fun LastUpdatedText(lastUpdatedAt: Long) {
         modifier = Modifier.padding(vertical = 6.dp, horizontal = 12.dp)
 
     )
+}
+
+@Composable
+fun JourneyModeCard(
+    activeSession: com.aarav.geowav.data.model.SharingSession?,
+    onStartJourney: () -> Unit,
+    onStopSharing: () -> Unit
+) {
+    val isJourneyActive = activeSession != null &&
+            activeSession.mode == com.aarav.geowav.data.model.SessionMode.JOURNEY &&
+            activeSession.status == com.aarav.geowav.data.model.SessionStatus.ACTIVE
+
+    val cardBorder = if (isJourneyActive) {
+        BorderStroke(1.5.dp, MaterialTheme.colorScheme.primary)
+    } else {
+        BorderStroke(1.dp, MaterialTheme.colorScheme.primary.copy(alpha = 0.4f))
+    }
+
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp, vertical = 8.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = if (isJourneyActive)
+                MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.85f)
+            else
+                MaterialTheme.colorScheme.surfaceContainerHigh
+        ),
+        shape = RoundedCornerShape(20.dp),
+        border = cardBorder,
+        elevation = CardDefaults.cardElevation(defaultElevation = if (isJourneyActive) 4.dp else 2.dp)
+    ) {
+        Column(
+            modifier = Modifier.padding(18.dp)
+        ) {
+            Row(
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Surface(
+                    shape = CircleShape,
+                    color = if (isJourneyActive) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.primaryContainer,
+                    modifier = Modifier.size(42.dp)
+                ) {
+                    Box(contentAlignment = Alignment.Center) {
+                        Icon(
+                            painter = painterResource(id = R.drawable.directions),
+                            contentDescription = null,
+                            tint = if (isJourneyActive) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.primary,
+                            modifier = Modifier.size(22.dp)
+                        )
+                    }
+                }
+                Spacer(modifier = Modifier.width(14.dp))
+                Column(modifier = Modifier.weight(1f)) {
+                    Surface(
+                        shape = RoundedCornerShape(6.dp),
+                        color = MaterialTheme.colorScheme.primary.copy(alpha = 0.15f),
+                        modifier = Modifier.padding(bottom = 2.dp)
+                    ) {
+                        Text(
+                            text = if (isJourneyActive) "LIVE JOURNEY ACTIVE" else "HERO FEATURE",
+                            fontFamily = manrope,
+                            fontWeight = FontWeight.ExtraBold,
+                            fontSize = 10.sp,
+                            color = MaterialTheme.colorScheme.primary,
+                            letterSpacing = 0.8.sp,
+                            modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
+                        )
+                    }
+                    Text(
+                        text = if (isJourneyActive) "On the way to ${activeSession?.destinationLocation?.name ?: "Destination"}" else "Journey Mode",
+                        fontFamily = manrope,
+                        fontWeight = FontWeight.ExtraBold,
+                        fontSize = 17.sp,
+                        color = if (isJourneyActive) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onSurface
+                    )
+                    Text(
+                        text = if (isJourneyActive)
+                            "Sharing location until you arrive at destination"
+                        else
+                            "Shares location automatically until you reach your destination",
+                        fontFamily = manrope,
+                        fontSize = 12.sp,
+                        color = if (isJourneyActive) MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.85f) else MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+            }
+            Spacer(modifier = Modifier.height(14.dp))
+            if (isJourneyActive) {
+                Button(
+                    onClick = onStopSharing,
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(14.dp),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = MaterialTheme.colorScheme.errorContainer,
+                        contentColor = MaterialTheme.colorScheme.onErrorContainer
+                    )
+                ) {
+                    Text(
+                        text = "End Journey",
+                        fontFamily = manrope,
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 14.sp,
+                        modifier = Modifier.padding(vertical = 2.dp)
+                    )
+                }
+            } else {
+                Button(
+                    onClick = onStartJourney,
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(14.dp),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = MaterialTheme.colorScheme.primary,
+                        contentColor = MaterialTheme.colorScheme.onPrimary
+                    ),
+                    elevation = ButtonDefaults.buttonElevation(defaultElevation = 2.dp)
+                ) {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.Center
+                    ) {
+                        Icon(
+                            painter = painterResource(id = R.drawable.navigation_arrow),
+                            contentDescription = null,
+                            modifier = Modifier.size(16.dp)
+                        )
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text(
+                            text = "I'm On My Way",
+                            fontFamily = manrope,
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 15.sp,
+                            modifier = Modifier.padding(vertical = 4.dp)
+                        )
+                    }
+                }
+            }
+        }
+    }
 }

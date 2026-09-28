@@ -52,6 +52,7 @@ import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -139,6 +140,7 @@ fun GeoWavHomeScreen(
     navigateToTimeline: (String, String) -> Unit,
     navigateToActivity: () -> Unit,
     navigateToInsights: () -> Unit,
+    navigateToJourney: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
 
@@ -412,6 +414,17 @@ fun GeoWavHomeScreen(
                             )
                         }
 
+                        val isSessionActive = uiState.activeSession != null &&
+                                uiState.activeSession?.status == com.aarav.geowav.data.model.SessionStatus.ACTIVE
+                        AnimatedVisibility(isSessionActive) {
+                            uiState.activeSession?.let { session ->
+                                ActiveJourneyHomeCard(
+                                    session = session,
+                                    onEndJourney = { homeScreenVM.stopActiveSession() },
+                                    modifier = Modifier.padding(top = 12.dp)
+                                )
+                            }
+                        }
 
                         AnimatedVisibility(hasAnyLiveSharing) {
                             Column(
@@ -1921,6 +1934,90 @@ fun buildRelativeSubtitle(type: String, timestamp: Long): String {
         else -> {
             val df = java.text.SimpleDateFormat("dd MMMM y", java.util.Locale.getDefault())
             "${df.format(java.util.Date(timestamp))}"
+        }
+    }
+}
+
+@Composable
+fun ActiveJourneyHomeCard(
+    session: com.aarav.geowav.data.model.SharingSession,
+    onEndJourney: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    Card(
+        modifier = modifier.fillMaxWidth(),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.primaryContainer
+        ),
+        shape = RoundedCornerShape(20.dp)
+    ) {
+        Column(
+            modifier = Modifier.padding(16.dp)
+        ) {
+            Row(
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Surface(
+                    shape = CircleShape,
+                    color = MaterialTheme.colorScheme.primary,
+                    modifier = Modifier.size(40.dp)
+                ) {
+                    Box(contentAlignment = Alignment.Center) {
+                        Icon(
+                            painter = painterResource(id = R.drawable.navigation_arrow),
+                            contentDescription = null,
+                            tint = MaterialTheme.colorScheme.onPrimary,
+                            modifier = Modifier.size(20.dp)
+                        )
+                    }
+                }
+                Spacer(modifier = Modifier.width(12.dp))
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(
+                        text = "JOURNEY IN PROGRESS",
+                        fontFamily = manrope,
+                        fontWeight = FontWeight.ExtraBold,
+                        fontSize = 11.sp,
+                        color = MaterialTheme.colorScheme.primary,
+                        letterSpacing = 0.8.sp
+                    )
+                    Text(
+                        text = session.destinationLocation?.name ?: "Selected Location",
+                        fontFamily = manrope,
+                        fontWeight = FontWeight.ExtraBold,
+                        fontSize = 18.sp,
+                        color = MaterialTheme.colorScheme.onPrimaryContainer
+                    )
+                }
+            }
+
+            Spacer(modifier = Modifier.height(10.dp))
+            val sharedCount = session.sharedWith.size
+            val sharingText = if (sharedCount > 0) "Sharing live location with $sharedCount circle ${if (sharedCount == 1) "member" else "members"}" else "Sharing live location until arrival"
+            Text(
+                text = sharingText,
+                fontFamily = manrope,
+                fontSize = 13.sp,
+                color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.85f)
+            )
+
+            Spacer(modifier = Modifier.height(14.dp))
+            Button(
+                onClick = onEndJourney,
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(12.dp),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = MaterialTheme.colorScheme.errorContainer,
+                    contentColor = MaterialTheme.colorScheme.onErrorContainer
+                )
+            ) {
+                Text(
+                    text = "End Journey",
+                    fontFamily = manrope,
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 14.sp
+                )
+            }
         }
     }
 }

@@ -208,17 +208,35 @@ fun ViewerInfoSheetContent(
 
     val titleText = when {
         viewerList.isEmpty() ->
-            "No one"
+            "No one is sharing"
 
         viewerList.size == 1 -> {
-            viewerList.first().profileName
+            val single = viewerList.first()
+            val singleName = single.alias?.takeIf { it.isNotBlank() } ?: single.profileName.takeIf { it.isNotBlank() } ?: "Circle Member"
+            val singleLocState = locations[single.id]
+            val loc = when (singleLocState) {
+                is ViewerLocationState.NormalSharing -> singleLocState.location
+                is ViewerLocationState.EmergencySharing -> singleLocState.location
+                else -> null
+            }
+            if (loc?.mode == "JOURNEY" && loc.destinationName.isNotBlank()) {
+                "$singleName is on the way to ${loc.destinationName}"
+            } else {
+                "$singleName is sharing location"
+            }
         }
 
-        viewerList.size == 2 ->
-            viewerList.joinToString { it.profileName }
+        viewerList.size == 2 -> {
+            val n1 = viewerList[0].alias?.takeIf { it.isNotBlank() } ?: viewerList[0].profileName
+            val n2 = viewerList[1].alias?.takeIf { it.isNotBlank() } ?: viewerList[1].profileName
+            "$n1 & $n2 are sharing location"
+        }
 
-        else ->
-            "${viewerList[0].profileName}, ${viewerList[1].profileName} + ${viewerList.size - 2}"
+        else -> {
+            val n1 = viewerList[0].alias?.takeIf { it.isNotBlank() } ?: viewerList[0].profileName
+            val n2 = viewerList[1].alias?.takeIf { it.isNotBlank() } ?: viewerList[1].profileName
+            "$n1, $n2 + ${viewerList.size - 2} are sharing location"
+        }
     }
 
     AnimatedVisibility(
@@ -263,7 +281,7 @@ fun ViewerInfoSheetContent(
         ) {
             item {
                 Text(
-                    "$titleText is sharing",
+                    titleText,
                     color = Color.White,
                     fontFamily = manrope,
                     style = MaterialTheme.typography.titleMedium,
@@ -335,17 +353,20 @@ fun ViewerInfoRow(
     onClick: (String) -> Unit
 ) {
 
-    val displayName = conn.alias?.takeIf { it.isNotBlank() } ?: conn.profileName
-    val avatarUrl = conn.avatarUrl?.takeIf { it.isNotBlank() }
     val location = when (viewerState) {
         is ViewerLocationState.NormalSharing -> viewerState.location
         is ViewerLocationState.EmergencySharing -> viewerState.location
         else -> null
     }
+    val displayName = conn.alias?.takeIf { it.isNotBlank() }
+        ?: conn.profileName.takeIf { it.isNotBlank() }
+        ?: location?.userName?.takeIf { it.isNotBlank() }
+        ?: "Circle Member"
+    val avatarUrl = conn.avatarUrl?.takeIf { it.isNotBlank() }
+    val isJourney = location?.mode == "JOURNEY" && !location.destinationName.isNullOrBlank()
 
     Column(
         modifier = Modifier
-//            .background(Color(0xEE111820))
             .clickable {
                 onClick(conn.id)
             }
@@ -390,7 +411,7 @@ fun ViewerInfoRow(
                             contentAlignment = Alignment.Center
                         ) {
                             Text(
-                                text = displayName.take(1),
+                                text = displayName.take(1).uppercase(),
                                 fontFamily = manrope,
                                 fontWeight = FontWeight.Bold,
                                 fontSize = 22.sp,
@@ -408,6 +429,8 @@ fun ViewerInfoRow(
                         .background(
                             if (isEmergency)
                                 MaterialTheme.colorScheme.error
+                            else if (isJourney)
+                                Color(0xFFBAC2FF)
                             else
                                 Color(0xFF34C759)
                         )
@@ -434,8 +457,14 @@ fun ViewerInfoRow(
                     overflow = TextOverflow.Ellipsis
                 )
 
+                val statusSubtext = if (isJourney) {
+                    "On the way to ${location?.destinationName}"
+                } else {
+                    "Last Updated: ${formatTime(location?.timestamp ?: System.currentTimeMillis())}"
+                }
+
                 Text(
-                    text = "Last Updated: ${formatTime(location?.timestamp ?: System.currentTimeMillis())}",
+                    text = statusSubtext,
                     style = MaterialTheme.typography.labelMedium,
                     fontFamily = manrope,
                     color = Color.White.copy(alpha = 0.62f),
@@ -445,15 +474,32 @@ fun ViewerInfoRow(
 
             }
 
+            val pillColor = if (isEmergency) {
+                MaterialTheme.colorScheme.error
+            } else if (isJourney) {
+                Color(0xFFBAC2FF)
+            } else {
+                Color(0xFF34C759)
+            }
+
+            val pillText = if (isEmergency) {
+                "Emergency"
+            } else if (isJourney) {
+                "Journey"
+            } else {
+                "Live"
+            }
+
             Surface(
-                color = Color(0xFF34C759).copy(0.08f),
+                color = pillColor.copy(0.12f),
                 shape = RoundedCornerShape(99.dp),
             ) {
                 Text(
-                    text = "Live",
+                    text = pillText,
                     style = MaterialTheme.typography.bodySmall,
                     fontFamily = manrope,
-                    color = Color(0xFF34C759).copy(alpha = 0.86f),
+                    color = pillColor.copy(alpha = 0.95f),
+                    fontWeight = FontWeight.SemiBold,
                     maxLines = 1,
                     modifier = Modifier.padding(horizontal = 14.dp, vertical = 8.dp)
                 )
@@ -476,23 +522,39 @@ fun ViewerInfoRow(
 @Composable
 fun CollapsedViewerTray(
     viewerInfo: List<CircleMember>,
+    locations: Map<String, ViewerLocationState> = emptyMap(),
     showDetail: () -> Unit,
     modifier: Modifier = Modifier
 ) {
+
+    val singleMember = viewerInfo.firstOrNull()
+    val singleLocState = singleMember?.let { locations[it.id] }
+    val singleLoc = when (singleLocState) {
+        is ViewerLocationState.NormalSharing -> singleLocState.location
+        is ViewerLocationState.EmergencySharing -> singleLocState.location
+        else -> null
+    }
+    val isSingleJourney = singleLoc?.mode == "JOURNEY" && !singleLoc.destinationName.isNullOrBlank()
 
     val titleText = when {
         viewerInfo.isEmpty() ->
             "No one"
 
         viewerInfo.size == 1 -> {
-            viewerInfo.first().profileName
+            singleMember?.alias?.takeIf { it.isNotBlank() } ?: singleMember?.profileName.orEmpty()
         }
 
         viewerInfo.size == 2 ->
-            viewerInfo.joinToString { it.profileName }
+            viewerInfo.joinToString { it.alias?.takeIf { a -> a.isNotBlank() } ?: it.profileName }
 
         else ->
             "${viewerInfo[0].profileName}, ${viewerInfo[1].profileName} + ${viewerInfo.size - 2}"
+    }
+
+    val subtitleText = when {
+        viewerInfo.size == 1 && isSingleJourney -> "On the way to ${singleLoc?.destinationName}"
+        viewerInfo.size == 1 -> "Sharing live location"
+        else -> "Viewing live locations"
     }
 
     Surface(
@@ -531,7 +593,7 @@ fun CollapsedViewerTray(
                 )
 
                 Text(
-                    text = "Viewing live locations",
+                    text = subtitleText,
                     style = MaterialTheme.typography.labelMedium,
                     fontFamily = manrope,
                     color = Color.White.copy(alpha = 0.62f),
@@ -773,6 +835,19 @@ fun ViewerDetailContent(
         }
     }
 
+    val currentLoc = when (locationState) {
+        is ViewerLocationState.NormalSharing -> locationState.location
+        is ViewerLocationState.EmergencySharing -> locationState.location
+        else -> null
+    }
+
+    val displayName = viewer?.alias?.takeIf { it.isNotBlank() }
+        ?: viewer?.profileName?.takeIf { it.isNotBlank() }
+        ?: currentLoc?.userName?.takeIf { it.isNotBlank() }
+        ?: "Circle Member"
+
+    val avatarUrl = viewer?.avatarUrl?.takeIf { it.isNotBlank() }
+
     Column(
         modifier = modifier
             .fillMaxWidth()
@@ -782,12 +857,85 @@ fun ViewerDetailContent(
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Text(
-                viewer?.alias ?: viewer?.profileName ?: "",
-                color = Color.White,
-                style = MaterialTheme.typography.titleLarge,
-                fontWeight = FontWeight.W900
-            )
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(12.dp),
+                modifier = Modifier.weight(1f)
+            ) {
+                Box(
+                    modifier = Modifier
+                        .clip(CircleShape)
+                        .size(48.dp),
+                    contentAlignment = Alignment.Center
+                ) {
+                    if (avatarUrl != null) {
+                        AvatarImage(
+                            avatarUrl = avatarUrl,
+                            isUploading = false,
+                            modifier = Modifier
+                                .matchParentSize()
+                                .clip(CircleShape)
+                        )
+                    } else {
+                        Box(
+                            modifier = Modifier
+                                .matchParentSize()
+                                .background(
+                                    Brush.radialGradient(
+                                        listOf(
+                                            MaterialTheme.colorScheme.onPrimary,
+                                            MaterialTheme.colorScheme.inversePrimary
+                                        )
+                                    )
+                                ),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Text(
+                                text = displayName.take(1).uppercase(),
+                                fontFamily = manrope,
+                                fontWeight = FontWeight.Bold,
+                                fontSize = 22.sp,
+                                color = MaterialTheme.colorScheme.onSurface
+                            )
+                        }
+                    }
+                }
+
+                Column {
+                    Text(
+                        text = displayName,
+                        color = Color.White,
+                        style = MaterialTheme.typography.titleLarge,
+                        fontWeight = FontWeight.W900,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
+                    )
+
+                    val statusLabel = when {
+                        isEmergency -> "Emergency Sharing"
+                        currentLoc?.mode == "JOURNEY" && !currentLoc.destinationName.isNullOrBlank() ->
+                            "On the way to ${currentLoc.destinationName}"
+                        else -> "Sharing Live Location"
+                    }
+
+                    val statusColor = when {
+                        isEmergency -> MaterialTheme.colorScheme.error
+                        currentLoc?.mode == "JOURNEY" && !currentLoc.destinationName.isNullOrBlank() ->
+                            Color(0xFFBAC2FF)
+                        else -> Color(0xFF34C759)
+                    }
+
+                    Text(
+                        text = statusLabel,
+                        color = statusColor,
+                        style = MaterialTheme.typography.bodyMedium,
+                        fontWeight = FontWeight.SemiBold,
+                        fontFamily = manrope,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
+                    )
+                }
+            }
 
             IconButton(
                 onClick = onDismiss,
@@ -802,12 +950,6 @@ fun ViewerDetailContent(
                 )
             }
         }
-
-        Text(
-            if (isEmergency) "Emergency" else "Live",
-            color = if (isEmergency) MaterialTheme.colorScheme.error else Color(0xFF34C759),
-            style = MaterialTheme.typography.titleMedium,
-        )
 
         Spacer(Modifier.height(16.dp))
 
@@ -854,7 +996,7 @@ fun ViewerDetailContent(
 
                         distanceBetween?.let {
                             Text(
-                                "${viewer?.alias ?: viewer?.profileName ?: ""} is $it away from you",
+                                "$displayName is $it away from you",
                                 color = Color.White.copy(alpha = 0.84f),
                                 style = MaterialTheme.typography.bodySmall
                             )
