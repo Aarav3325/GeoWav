@@ -21,7 +21,8 @@ interface LiveLocationSharingRepository {
         expiresAt: Long? = null,
         destinationPlaceId: String? = null,
         destinationLocation: DestinationLocation? = null,
-        createdFrom: String? = null
+        createdFrom: String? = null,
+        sharedWith: List<String> = emptyList()
     )
 
     suspend fun updateLocation(

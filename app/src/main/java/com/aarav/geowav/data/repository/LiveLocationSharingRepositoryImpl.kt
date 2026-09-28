@@ -64,7 +64,8 @@ class LiveLocationSharingRepositoryImpl
         expiresAt: Long?,
         destinationPlaceId: String?,
         destinationLocation: DestinationLocation?,
-        createdFrom: String?
+        createdFrom: String?,
+        sharedWith: List<String>
     ) {
         val now = System.currentTimeMillis()
         val sessionId = "${userId}_${now}"
@@ -95,6 +96,9 @@ class LiveLocationSharingRepositoryImpl
             update["live_location/$userId/destinationName"] = it.name
         }
         createdFrom?.let { update["live_location/$userId/createdFrom"] = it }
+        if (sharedWith.isNotEmpty()) {
+            update["live_location/$userId/sharedWith"] = sharedWith
+        }
 
         update["live_location/$userId/path/${pathRef.key}"] = mapOf(
             "lat" to lat,

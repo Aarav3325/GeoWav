@@ -74,6 +74,7 @@ class LiveLocationService : Service() {
     private var destPlaceId: String? = null
     private var destLocation: com.aarav.geowav.data.model.DestinationLocation? = null
     private var sessionCreatedFrom: String? = null
+    private var sharedWithList: List<String> = emptyList()
     private var stopStatus: com.aarav.geowav.data.model.SessionStatus = com.aarav.geowav.data.model.SessionStatus.COMPLETED
 
     private fun setSharingState(state: ServiceState) {
@@ -126,6 +127,10 @@ class LiveLocationService : Service() {
 
         if (intent?.hasExtra("EXPIRES_AT") == true) {
             sessionExpiresAt = intent.getLongExtra("EXPIRES_AT", 0L).takeIf { it > 0L }
+        }
+
+        intent?.getStringArrayListExtra("SHARED_WITH")?.let {
+            sharedWithList = it
         }
 
         destPlaceId = intent?.getStringExtra("DESTINATION_PLACE_ID")
@@ -186,7 +191,8 @@ class LiveLocationService : Service() {
                 expiresAt = sessionExpiresAt,
                 destinationPlaceId = destPlaceId,
                 destinationLocation = destLocation,
-                createdFrom = sessionCreatedFrom
+                createdFrom = sessionCreatedFrom,
+                sharedWith = sharedWithList
             )
             hasStartedSharing = true
             setSharingState(ServiceState.SHARING)
@@ -282,6 +288,38 @@ class LiveLocationService : Service() {
                         }
 
                         sendLocation(location)
+
+                        if (sessionMode == com.aarav.geowav.data.model.SessionMode.JOURNEY && destLocation != null) {
+                            val distanceResults = FloatArray(1)
+                            Location.distanceBetween(
+                                location.latitude,
+                                location.longitude,
+                                destLocation!!.latitude,
+                                destLocation!!.longitude,
+                                distanceResults
+                            )
+                            val distanceMeters = distanceResults[0]
+                            val arrivalThresholdMeters = 150f
+
+                            if (distanceMeters <= arrivalThresholdMeters) {
+                                Log.i("SERVICE", "Arrival detected at ${destLocation?.name} ($distanceMeters m)")
+                                stopStatus = com.aarav.geowav.data.model.SessionStatus.COMPLETED
+                                setSharingState(ServiceState.NOT_SHARING)
+
+                                com.aarav.geowav.core.utils.GeoNotificationHelper.show(
+                                    context = this@LiveLocationService,
+                                    channelId = "geo_channel",
+                                    title = "Arrival",
+                                    message = "You arrived at ${destLocation?.name ?: "your destination"}.",
+                                    type = com.aarav.geowav.core.utils.NotificationType.JourneyCompleted
+                                )
+
+                                stopLocationUpdates()
+                                stopForeground(STOP_FOREGROUND_REMOVE)
+                                stopSelf()
+                                return@launch
+                            }
+                        }
                     } catch (e: Exception) {
                         setSharingState(ServiceState.NOT_SHARING)
                         stopForeground(STOP_FOREGROUND_REMOVE)
