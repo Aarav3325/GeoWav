@@ -148,6 +148,7 @@ fun NavGraph(
         )
 
         AddLocationSharingScreen(
+            isDarkThemeEnabled,
             navHostController,
             this,
             location,
@@ -231,7 +232,8 @@ fun NavGraph(
         AddJourneyScreen(
             navHostController,
             this,
-            subscriptionVM
+            subscriptionVM,
+            location
         )
     }
 
@@ -587,6 +589,7 @@ fun AddCircleScreen(
 }
 
 fun AddLocationSharingScreen(
+    isDarkThemeEnabled: Boolean,
     navController: NavController,
     navGraphBuilder: NavGraphBuilder,
     location: Pair<Double, Double>?,
@@ -597,6 +600,7 @@ fun AddLocationSharingScreen(
         route = NavRoute.LocationSharing.path
     ) {
         LocationSharingScreen(
+            isDarkThemeEnabled = isDarkThemeEnabled,
             viewModel = hiltViewModel(),
             navigateToPaywall = {
                 navController.navigate(NavRoute.Paywall.path)
@@ -904,7 +908,8 @@ fun AddReleaseNotesScreen(
 fun AddJourneyScreen(
     navController: NavController,
     navGraphBuilder: NavGraphBuilder,
-    subscriptionVM: SubscriptionViewModel
+    subscriptionVM: SubscriptionViewModel,
+    location: Pair<Double, Double>? = null
 ) {
     navGraphBuilder.composable(
         route = NavRoute.Journey.path
@@ -913,6 +918,12 @@ fun AddJourneyScreen(
 
         val savedStateHandle = backStackEntry.savedStateHandle
         val viewModel: com.aarav.geowav.presentation.journey.JourneyViewModel = hiltViewModel()
+
+        LaunchedEffect(location) {
+            location?.let {
+                viewModel.setUserLocation(com.google.android.gms.maps.model.LatLng(it.first, it.second))
+            }
+        }
 
         LaunchedEffect(savedStateHandle) {
             val lat = savedStateHandle.get<Double>("journey_dest_lat")

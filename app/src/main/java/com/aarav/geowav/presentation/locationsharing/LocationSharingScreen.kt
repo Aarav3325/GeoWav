@@ -1,6 +1,13 @@
 package com.aarav.geowav.presentation.locationsharing
 
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.horizontalScroll
+import androidx.compose.foundation.isSystemInDarkTheme
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.ui.graphics.Path
+import androidx.compose.ui.graphics.PathEffect
+import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.animation.animateContentSize
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
@@ -86,6 +93,7 @@ import kotlinx.coroutines.delay
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun LocationSharingScreen(
+    isDarkThemeEnabled: Boolean,
     viewModel: LocationSharingVM,
     navigateToPaywall: () -> Unit,
     navigateToSettings: () -> Unit,
@@ -180,6 +188,7 @@ fun LocationSharingScreen(
 
         LocationSharingContent(
             modifier = Modifier.padding(padding),
+            isDarkThemeEnabled = isDarkThemeEnabled,
             locationUiState = uiState,
             userPlan = plan,
             cameraPosition = cameraPositionState,
@@ -197,6 +206,7 @@ fun LocationSharingScreen(
 @Composable
 fun LocationSharingContent(
     modifier: Modifier = Modifier,
+    isDarkThemeEnabled: Boolean,
     locationUiState: LiveLocationUiState,
     userPlan: UserPlan,
     cameraPosition: CameraPositionState,
@@ -284,7 +294,9 @@ fun LocationSharingContent(
 
             item {
                 JourneyModeCard(
+                    isDark = isDarkThemeEnabled,
                     activeSession = locationUiState.activeSession,
+                    savedPlaces = locationUiState.savedPlaces,
                     onStartJourney = navigateToJourney,
                     onStopSharing = onStopSharing
                 )
@@ -1265,95 +1277,148 @@ fun LastUpdatedText(lastUpdatedAt: Long) {
 
 @Composable
 fun JourneyModeCard(
-    activeSession: com.aarav.geowav.data.model.SharingSession?,
-    onStartJourney: () -> Unit,
-    onStopSharing: () -> Unit
+    isDark: Boolean,
+    activeSession: com.aarav.geowav.data.model.SharingSession? = null,
+    savedPlaces: List<com.aarav.geowav.data.model.Place> = emptyList(),
+    onStartJourney: () -> Unit = {},
+    onStartJourneyWithPlace: ((com.aarav.geowav.data.model.Place) -> Unit)? = null,
+    onStopSharing: () -> Unit = {}
 ) {
     val isJourneyActive = activeSession != null &&
             activeSession.mode == com.aarav.geowav.data.model.SessionMode.JOURNEY &&
             activeSession.status == com.aarav.geowav.data.model.SessionStatus.ACTIVE
 
-    val cardBorder = if (isJourneyActive) {
-        BorderStroke(1.5.dp, MaterialTheme.colorScheme.primary)
+
+    // Surface styling: Tinted primaryContainer (soft lavender in light, deep navy #222C61 in dark), no outline, 28dp radius
+    val containerColor = if (isDark) {
+        Color(0xFF222C61)
     } else {
-        BorderStroke(1.dp, MaterialTheme.colorScheme.primary.copy(alpha = 0.4f))
+        MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.65f)
     }
+
+    val titleColor = if (isDark) Color.White else MaterialTheme.colorScheme.onPrimaryContainer
+    val subtitleColor = if (isDark) Color.White.copy(alpha = 0.7f) else MaterialTheme.colorScheme.onSurfaceVariant
 
     Card(
         modifier = Modifier
             .fillMaxWidth()
             .padding(horizontal = 16.dp, vertical = 8.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = if (isJourneyActive)
-                MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.85f)
-            else
-                MaterialTheme.colorScheme.surfaceContainerHigh
-        ),
-        shape = RoundedCornerShape(20.dp),
-        border = cardBorder,
-        elevation = CardDefaults.cardElevation(defaultElevation = if (isJourneyActive) 4.dp else 2.dp)
+        colors = CardDefaults.cardColors(containerColor = containerColor),
+        shape = RoundedCornerShape(28.dp),
+        border = null,
+        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
     ) {
         Column(
-            modifier = Modifier.padding(18.dp)
+            modifier = Modifier.padding(20.dp)
         ) {
+            // Header Row: Title & Subtitle on Left, Decorative Canvas & Affordance on Right
             Row(
-                verticalAlignment = Alignment.CenterVertically
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceBetween
             ) {
-                Surface(
-                    shape = CircleShape,
-                    color = if (isJourneyActive) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.primaryContainer,
-                    modifier = Modifier.size(42.dp)
+                Column(
+                    modifier = Modifier.weight(1f)
                 ) {
-                    Box(contentAlignment = Alignment.Center) {
-                        Icon(
-                            painter = painterResource(id = R.drawable.directions),
-                            contentDescription = null,
-                            tint = if (isJourneyActive) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.primary,
-                            modifier = Modifier.size(22.dp)
-                        )
-                    }
-                }
-                Spacer(modifier = Modifier.width(14.dp))
-                Column(modifier = Modifier.weight(1f)) {
-                    Surface(
-                        shape = RoundedCornerShape(6.dp),
-                        color = MaterialTheme.colorScheme.primary.copy(alpha = 0.15f),
-                        modifier = Modifier.padding(bottom = 2.dp)
-                    ) {
-                        Text(
-                            text = if (isJourneyActive) "LIVE JOURNEY ACTIVE" else "HERO FEATURE",
-                            fontFamily = manrope,
-                            fontWeight = FontWeight.ExtraBold,
-                            fontSize = 10.sp,
-                            color = MaterialTheme.colorScheme.primary,
-                            letterSpacing = 0.8.sp,
-                            modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
-                        )
-                    }
                     Text(
                         text = if (isJourneyActive) "On the way to ${activeSession?.destinationLocation?.name ?: "Destination"}" else "Journey Mode",
                         fontFamily = manrope,
-                        fontWeight = FontWeight.ExtraBold,
-                        fontSize = 17.sp,
-                        color = if (isJourneyActive) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onSurface
+                        fontWeight = FontWeight.SemiBold,
+                        fontSize = 20.sp,
+                        color = titleColor
                     )
+                    Spacer(modifier = Modifier.height(4.dp))
                     Text(
-                        text = if (isJourneyActive)
-                            "Sharing location until you arrive at destination"
-                        else
-                            "Shares location automatically until you reach your destination",
+                        text = if (isJourneyActive) "Sharing location until you arrive" else "Share your location until you arrive",
                         fontFamily = manrope,
-                        fontSize = 12.sp,
-                        color = if (isJourneyActive) MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.85f) else MaterialTheme.colorScheme.onSurfaceVariant
+                        fontWeight = FontWeight.Normal,
+                        fontSize = 13.sp,
+                        color = subtitleColor,
+                        lineHeight = 18.sp
                     )
                 }
+
+                Spacer(modifier = Modifier.width(12.dp))
+
+                if (!isJourneyActive) {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        // Decorative Canvas illustration (Start dot, dashed curved path, destination pin)
+                        val accentColor = (if (isDark) Color(0xFF90CAF9) else MaterialTheme.colorScheme.primary).copy(alpha = 0.45f)
+                        Canvas(
+                            modifier = Modifier.size(width = 54.dp, height = 40.dp)
+                        ) {
+                            val startX = 6.dp.toPx()
+                            val startY = 32.dp.toPx()
+                            val endX = 46.dp.toPx()
+                            val endY = 10.dp.toPx()
+
+                            // Path
+                            val path = Path().apply {
+                                moveTo(startX, startY)
+                                cubicTo(
+                                    18.dp.toPx(), 40.dp.toPx(),
+                                    32.dp.toPx(), 6.dp.toPx(),
+                                    endX, endY
+                                )
+                            }
+                            drawPath(
+                                path = path,
+                                color = accentColor,
+                                style = Stroke(
+                                    width = 2.dp.toPx(),
+                                    pathEffect = PathEffect.dashPathEffect(floatArrayOf(8f, 6f), 0f)
+                                )
+                            )
+                            // Start dot
+                            drawCircle(
+                                color = accentColor,
+                                radius = 3.5.dp.toPx(),
+                                center = androidx.compose.ui.geometry.Offset(startX, startY)
+                            )
+                            // Destination pin outer & inner circle
+                            drawCircle(
+                                color = accentColor,
+                                radius = 5.dp.toPx(),
+                                center = androidx.compose.ui.geometry.Offset(endX, endY)
+                            )
+                            drawCircle(
+                                color = containerColor,
+                                radius = 2.dp.toPx(),
+                                center = androidx.compose.ui.geometry.Offset(endX, endY)
+                            )
+                        }
+
+                        Spacer(modifier = Modifier.width(8.dp))
+
+                        // Single primary affordance circular button
+                        Surface(
+                            onClick = onStartJourney,
+                            shape = CircleShape,
+                            color = if (isDark) Color(0xFF3B488C) else Color(0xFF1B2348),
+                            contentColor = Color.White,
+                            modifier = Modifier.size(42.dp)
+                        ) {
+                            Box(contentAlignment = Alignment.Center) {
+                                Icon(
+                                    painter = painterResource(id = R.drawable.navigation_arrow),
+                                    contentDescription = "Start Journey",
+                                    tint = Color.White,
+                                    modifier = Modifier.size(18.dp)
+                                )
+                            }
+                        }
+                    }
+                }
             }
-            Spacer(modifier = Modifier.height(14.dp))
+
             if (isJourneyActive) {
+                Spacer(modifier = Modifier.height(16.dp))
                 Button(
                     onClick = onStopSharing,
                     modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(14.dp),
+                    shape = RoundedCornerShape(16.dp),
                     colors = ButtonDefaults.buttonColors(
                         containerColor = MaterialTheme.colorScheme.errorContainer,
                         contentColor = MaterialTheme.colorScheme.onErrorContainer
@@ -1364,40 +1429,124 @@ fun JourneyModeCard(
                         fontFamily = manrope,
                         fontWeight = FontWeight.Bold,
                         fontSize = 14.sp,
-                        modifier = Modifier.padding(vertical = 2.dp)
+                        modifier = Modifier.padding(vertical = 4.dp)
                     )
                 }
             } else {
-                Button(
-                    onClick = onStartJourney,
-                    modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(14.dp),
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = MaterialTheme.colorScheme.primary,
-                        contentColor = MaterialTheme.colorScheme.onPrimary
-                    ),
-                    elevation = ButtonDefaults.buttonElevation(defaultElevation = 2.dp)
+                Spacer(modifier = Modifier.height(16.dp))
+
+                // Bottom row of saved-place chips
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .horizontalScroll(rememberScrollState()),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.Center
+                    val chipContainerColor = if (isDark) Color(0xFF2C3775) else MaterialTheme.colorScheme.surface.copy(alpha = 0.9f)
+                    val chipContentColor = if (isDark) Color.White else MaterialTheme.colorScheme.onSurface
+
+                    val displayPlaces = if (savedPlaces.isNotEmpty()) {
+                        savedPlaces
+                    } else {
+                        // Fallback quick chips if no places saved yet
+                        listOf(
+                            com.aarav.geowav.data.model.Place(placeName = "Work", customName = "Office"),
+                            com.aarav.geowav.data.model.Place(placeName = "Home", customName = "Home")
+                        )
+                    }
+
+                    displayPlaces.take(3).forEach { place ->
+                        val label = place.customName.ifBlank { place.placeName }
+                        Surface(
+                            onClick = {
+                                if (onStartJourneyWithPlace != null && savedPlaces.isNotEmpty()) {
+                                    onStartJourneyWithPlace(place)
+                                } else {
+                                    onStartJourney()
+                                }
+                            },
+                            shape = RoundedCornerShape(12.dp),
+                            color = chipContainerColor,
+                            modifier = Modifier.height(40.dp)
+                        ) {
+                            Row(
+                                modifier = Modifier.padding(horizontal = 14.dp, vertical = 8.dp),
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(6.dp)
+                            ) {
+                                Icon(
+                                    painter = painterResource(id = R.drawable.map_pin),
+                                    contentDescription = null,
+                                    tint = chipContentColor,
+                                    modifier = Modifier.size(16.dp)
+                                )
+                                Text(
+                                    text = label,
+                                    fontFamily = manrope,
+                                    fontWeight = FontWeight.Medium,
+                                    fontSize = 13.sp,
+                                    color = chipContentColor
+                                )
+                            }
+                        }
+                    }
+
+                    // Trailing "Other…" chip
+                    Surface(
+                        onClick = onStartJourney,
+                        shape = RoundedCornerShape(12.dp),
+                        color = chipContainerColor,
+                        modifier = Modifier.height(40.dp)
                     ) {
-                        Icon(
-                            painter = painterResource(id = R.drawable.navigation_arrow),
-                            contentDescription = null,
-                            modifier = Modifier.size(16.dp)
-                        )
-                        Spacer(modifier = Modifier.width(8.dp))
-                        Text(
-                            text = "I'm On My Way",
-                            fontFamily = manrope,
-                            fontWeight = FontWeight.Bold,
-                            fontSize = 15.sp,
-                            modifier = Modifier.padding(vertical = 4.dp)
-                        )
+                        Row(
+                            modifier = Modifier.padding(horizontal = 14.dp, vertical = 8.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(6.dp)
+                        ) {
+                            Icon(
+                                painter = painterResource(id = R.drawable.search),
+                                contentDescription = null,
+                                tint = chipContentColor,
+                                modifier = Modifier.size(15.dp)
+                            )
+                            Text(
+                                text = "Other…",
+                                fontFamily = manrope,
+                                fontWeight = FontWeight.Medium,
+                                fontSize = 13.sp,
+                                color = chipContentColor
+                            )
+                        }
                     }
                 }
             }
         }
+    }
+}
+
+@Preview(name = "JourneyModeCard - Light", showBackground = true)
+@Composable
+private fun JourneyModeCardLightPreview() {
+    MaterialTheme {
+        JourneyModeCard(
+            isDark = false,
+            activeSession = null,
+            onStartJourney = {},
+            onStopSharing = {}
+        )
+    }
+}
+
+@Preview(name = "JourneyModeCard - Dark", uiMode = android.content.res.Configuration.UI_MODE_NIGHT_YES, showBackground = true)
+@Composable
+private fun JourneyModeCardDarkPreview() {
+    MaterialTheme {
+        JourneyModeCard(
+            isDark = true,
+            activeSession = null,
+            onStartJourney = {},
+            onStopSharing = {}
+        )
     }
 }

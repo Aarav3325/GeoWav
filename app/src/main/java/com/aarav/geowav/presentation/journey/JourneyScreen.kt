@@ -307,13 +307,10 @@ private fun DestinationSelectionContent(
         position = CameraPosition.fromLatLngZoom(defaultLatLng, 15f)
     }
 
-    var hasAnimatedToUserLocation by remember { mutableStateOf(false) }
-
     LaunchedEffect(userLocation) {
-        if (userLocation != null && !hasAnimatedToUserLocation) {
-            hasAnimatedToUserLocation = true
+        userLocation?.let { loc ->
             cameraPositionState.animate(
-                CameraUpdateFactory.newLatLngZoom(userLocation, 15f),
+                CameraUpdateFactory.newLatLngZoom(loc, 15f),
                 1000
             )
         }
@@ -709,16 +706,14 @@ private fun DistinctMemberCard(
     else
         MaterialTheme.colorScheme.surfaceContainerHigh
 
-    val elevation = if (isSelected) 3.dp else 0.dp
-
     Card(
         modifier = Modifier
-            .fillMaxWidth()
-            .clickable { onToggle() },
+            .fillMaxWidth(),
+        onClick = onToggle,
         shape = RoundedCornerShape(18.dp),
         colors = CardDefaults.cardColors(containerColor = containerColor),
         border = cardBorder,
-        elevation = CardDefaults.cardElevation(defaultElevation = elevation)
+        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
     ) {
         Row(
             modifier = Modifier

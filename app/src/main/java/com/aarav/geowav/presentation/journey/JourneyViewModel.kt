@@ -78,6 +78,10 @@ class JourneyViewModel @Inject constructor(
         }
     }
 
+    fun setUserLocation(latLng: LatLng) {
+        _uiState.update { it.copy(userLocation = latLng) }
+    }
+
     fun loadPlaces() {
         viewModelScope.launch {
             _uiState.update { it.copy(isLoadingPlaces = true) }

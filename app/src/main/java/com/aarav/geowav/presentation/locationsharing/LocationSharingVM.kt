@@ -45,7 +45,8 @@ class LocationSharingVM
     val circleRepository: CircleRepository,
     val locationPermissionRepository: LocationPermissionRepository,
     val emergencySharingRepository: EmergencySharingRepository,
-    val locationLocationSharingRepository: LiveLocationSharingRepository
+    val locationLocationSharingRepository: LiveLocationSharingRepository,
+    val placeRepository: com.aarav.geowav.domain.repository.PlaceRepository
 ) : ViewModel() {
 
     val ACTION_STOP = "ACTION_STOP_LIVE_LOCATION"
@@ -75,6 +76,15 @@ class LocationSharingVM
         observeEmergency()
         recoverActualSharingState()
         observeActiveSession()
+        observeSavedPlaces()
+    }
+
+    private fun observeSavedPlaces() {
+        viewModelScope.launch {
+            placeRepository.getPlaces().collect { places ->
+                _uiState.update { it.copy(savedPlaces = places) }
+            }
+        }
     }
 
     private fun observeActiveSession() {
@@ -681,6 +691,7 @@ data class LiveLocationUiState(
     val activeSession: com.aarav.geowav.data.model.SharingSession? = null,
     val selectedViewerIds: Set<String> = emptySet(),
     val lovedOnes: List<CircleMember> = emptyList(),
+    val savedPlaces: List<com.aarav.geowav.data.model.Place> = emptyList(),
     val isInitialLoading: Boolean = false,
     val isServiceActionLoading: Boolean = false,
     val updatingViewerId: String? = null,
