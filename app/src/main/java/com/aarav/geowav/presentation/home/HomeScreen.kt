@@ -69,6 +69,7 @@ import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.ripple
 import androidx.compose.animation.core.LinearOutSlowInEasing
 import androidx.compose.foundation.layout.defaultMinSize
+import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
@@ -211,6 +212,25 @@ fun GeoWavHomeScreen(
         if (locations.isNotEmpty()) {
             homeScreenVM.fetchViewerInfo()
         }
+    }
+
+    val activeLocationRequest = uiState.incomingLocationRequests.firstOrNull()
+    if (activeLocationRequest != null) {
+        val requestSheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+        com.aarav.geowav.presentation.components.LocationRequestBottomSheet(
+            requesterName = activeLocationRequest.requesterName,
+            sheetState = requestSheetState,
+            showSheet = true,
+            onDismissRequest = {
+                homeScreenVM.respondToLocationRequest(activeLocationRequest, accept = false, durationMinutes = null)
+            },
+            onAccept = { duration ->
+                homeScreenVM.respondToLocationRequest(activeLocationRequest, accept = true, durationMinutes = duration)
+            },
+            onDecline = {
+                homeScreenVM.respondToLocationRequest(activeLocationRequest, accept = false, durationMinutes = null)
+            }
+        )
     }
 
     val scope = rememberCoroutineScope()

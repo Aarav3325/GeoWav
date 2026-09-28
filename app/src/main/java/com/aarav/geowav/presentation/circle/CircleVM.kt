@@ -440,6 +440,33 @@ class CircleVM
         }
     }
 
+    // Request location from a circle member
+    fun requestLocation(recipientUid: String, recipientName: String) {
+        if (currentUserId.isEmpty()) {
+            emitError("User not authenticated")
+            return
+        }
+
+        viewModelScope.launch {
+            val currentUser = googleSignInClient.findUserByUserId(currentUserId)
+            val requesterName = currentUser?.username ?: "Circle Member"
+
+            when (val result = circleRepository.sendLocationRequest(currentUserId, requesterName, recipientUid)) {
+                is Resource.Success -> {
+                    _events.emit(CircleUiEvent.LocationRequestSent(recipientName))
+                }
+                is Resource.NoInternet,
+                is Resource.Timeout,
+                is Resource.ServerError,
+                is Resource.UnknownError,
+                is Resource.Error -> {
+                    emitError(result.failure.messageFor("the request", result.message ?: "Failed to send location request"))
+                }
+                else -> Unit
+            }
+        }
+    }
+
     // Emit error
     private fun emitError(message: String) {
         viewModelScope.launch {
@@ -469,6 +496,7 @@ sealed class CircleUiEvent {
     object InviteAccepted : CircleUiEvent()
 
     object MemberDeleted : CircleUiEvent()
+    data class LocationRequestSent(val recipientName: String) : CircleUiEvent()
     data class ShowUpgrade(
         val context: UpgradeContext
     ) : CircleUiEvent()

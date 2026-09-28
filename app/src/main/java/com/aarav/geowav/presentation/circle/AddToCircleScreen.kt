@@ -54,6 +54,7 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
@@ -165,6 +166,7 @@ fun CircleScreen(
                 is CircleUiEvent.ShowError -> SnackbarManager.showMessage(event.message)
                 is CircleUiEvent.InviteAccepted -> SnackbarManager.showMessage("Invite Accepted")
                 is CircleUiEvent.MemberDeleted -> SnackbarManager.showMessage("Member deleted")
+                is CircleUiEvent.LocationRequestSent -> SnackbarManager.showMessage("Location request sent to ${event.recipientName}")
                 is CircleUiEvent.ShowUpgrade -> upgradeContext = event.context
             }
         }
@@ -233,7 +235,8 @@ fun CircleScreen(
                 onRejectInvite = viewModel::rejectInvite,
                 onDeleteMember = viewModel::showDeleteDialog,
                 dismissDialog = viewModel::hideDeleteDialog,
-                deleteMember = viewModel::deleteMember
+                deleteMember = viewModel::deleteMember,
+                onRequestLocation = viewModel::requestLocation
             )
         }
     }
@@ -253,8 +256,10 @@ fun CircleContent(
     onDeleteMember: () -> Unit,
     dismissDialog: () -> Unit,
     deleteMember: (String) -> Unit,
+    onRequestLocation: (String, String) -> Unit,
 ) {
     var confirmDeleteFor by remember { mutableStateOf<String?>(null) }
+    var pendingRequestMember by remember { mutableStateOf<Pair<String, String>?>(null) }
 
     DeleteDialog(
         shouldShowDialog = uiState.showDeleteDialog && confirmDeleteFor != null,
@@ -270,6 +275,54 @@ fun CircleContent(
             deleteMember(it)
             dismissDialog()
         }
+    }
+
+    if (pendingRequestMember != null) {
+        val (reqId, reqName) = pendingRequestMember!!
+        androidx.compose.material3.AlertDialog(
+            onDismissRequest = { pendingRequestMember = null },
+            title = {
+                Text(
+                    text = "Request location?",
+                    fontFamily = manrope,
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 18.sp
+                )
+            },
+            text = {
+                Text(
+                    text = "Ask $reqName to share their current location.",
+                    fontFamily = manrope,
+                    fontSize = 14.sp
+                )
+            },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        onRequestLocation(reqId, reqName)
+                        pendingRequestMember = null
+                    }
+                ) {
+                    Text(
+                        text = "Request",
+                        fontFamily = manrope,
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.primary
+                    )
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { pendingRequestMember = null }) {
+                    Text(
+                        text = "Cancel",
+                        fontFamily = manrope,
+                        color = MaterialTheme.colorScheme.outline
+                    )
+                }
+            },
+            shape = RoundedCornerShape(24.dp),
+            containerColor = MaterialTheme.colorScheme.surface
+        )
     }
 
     LazyColumn(
@@ -294,7 +347,8 @@ fun CircleContent(
                 lovedOnesList = uiState.lovedOnes,
                 deletingMemberId = uiState.deletingMemberId,
                 onDeleteMember = onDeleteMember,
-                confirmDelete = { confirmDeleteFor = it }
+                confirmDelete = { confirmDeleteFor = it },
+                onRequestLocation = { id, name -> pendingRequestMember = Pair(id, name) }
             )
         }
 
@@ -590,6 +644,7 @@ fun MyCircleSection(
     deletingMemberId: String?,
     onDeleteMember: () -> Unit,
     confirmDelete: (String) -> Unit,
+    onRequestLocation: (String, String) -> Unit,
 ) {
     Card(
         modifier = Modifier
@@ -706,7 +761,8 @@ fun MyCircleSection(
                         count = lovedOnesList.size,
                         deletingMemberId = deletingMemberId,
                         onDeleteMember = onDeleteMember,
-                        confirmDelete = confirmDelete
+                        confirmDelete = confirmDelete,
+                        onRequestLocation = onRequestLocation
                     )
                 }
                 Spacer(Modifier.height(4.dp))
@@ -831,8 +887,9 @@ fun LovedOneCardCircle(
     index: Int,
     count: Int,
     deletingMemberId: String? = null,
-    onDeleteMember: () -> Unit,
-    confirmDelete: (String) -> Unit
+    onDeleteMember: () -> Unit = {},
+    confirmDelete: (String) -> Unit = {},
+    onRequestLocation: (String, String) -> Unit = { _, _ -> }
 ) {
 
     val (avatarBg, avatarFg) = when (index % 3) {
@@ -900,37 +957,56 @@ fun LovedOneCardCircle(
         val isDeleting = deletingMemberId == connection.id
         val isAnyDeleting = deletingMemberId != null
 
-        if (isDeleting) {
-            Box(
-                modifier = Modifier.size(32.dp),
-                contentAlignment = Alignment.Center
-            ) {
-                CircularProgressIndicator(
-                    modifier = Modifier.size(16.dp),
-                    color = MaterialTheme.colorScheme.primary,
-                    strokeWidth = 2.dp
-                )
-            }
-        } else {
+        Row(verticalAlignment = Alignment.CenterVertically) {
             IconButton(
-                onClick = {
-                    onDeleteMember()
-                    confirmDelete(connection.id)
-                },
+                onClick = { onRequestLocation(connection.id, displayName) },
                 enabled = !isAnyDeleting,
                 modifier = Modifier
-                    .size(32.dp)
+                    .size(36.dp)
                     .clip(CircleShape)
             ) {
                 Icon(
-                    painter = painterResource(R.drawable.trash),
-                    contentDescription = "Remove member",
-                    tint = if (isAnyDeleting)
-                        MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.38f)
-                    else
-                        MaterialTheme.colorScheme.outlineVariant,
+                    painter = painterResource(R.drawable.gps),
+                    contentDescription = "Request Location",
+                    tint = MaterialTheme.colorScheme.primary,
                     modifier = Modifier.size(18.dp)
                 )
+            }
+
+            Spacer(Modifier.width(4.dp))
+
+            if (isDeleting) {
+                Box(
+                    modifier = Modifier.size(32.dp),
+                    contentAlignment = Alignment.Center
+                ) {
+                    CircularProgressIndicator(
+                        modifier = Modifier.size(16.dp),
+                        color = MaterialTheme.colorScheme.primary,
+                        strokeWidth = 2.dp
+                    )
+                }
+            } else {
+                IconButton(
+                    onClick = {
+                        onDeleteMember()
+                        confirmDelete(connection.id)
+                    },
+                    enabled = !isAnyDeleting,
+                    modifier = Modifier
+                        .size(32.dp)
+                        .clip(CircleShape)
+                ) {
+                    Icon(
+                        painter = painterResource(R.drawable.trash),
+                        contentDescription = "Remove member",
+                        tint = if (isAnyDeleting)
+                            MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.38f)
+                        else
+                            MaterialTheme.colorScheme.outlineVariant,
+                        modifier = Modifier.size(18.dp)
+                    )
+                }
             }
         }
     }

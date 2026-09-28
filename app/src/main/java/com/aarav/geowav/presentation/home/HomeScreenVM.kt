@@ -100,6 +100,7 @@ class HomeScreenVM @Inject constructor(
     init {
         fetchUser()
         observeActiveSession()
+        observeIncomingLocationRequests()
     }
 
     fun observeActiveSession() {
@@ -110,6 +111,49 @@ class HomeScreenVM @Inject constructor(
                 .collect { session ->
                     _uiState.update { it.copy(activeSession = session) }
                 }
+        }
+    }
+
+    fun observeIncomingLocationRequests() {
+        val uid = viewerId
+        if (uid.isEmpty()) return
+        viewModelScope.launch {
+            circleRepository.observeIncomingLocationRequests(uid)
+                .collect { requests ->
+                    _uiState.update { it.copy(incomingLocationRequests = requests) }
+                }
+        }
+    }
+
+    fun respondToLocationRequest(request: com.aarav.geowav.data.model.LocationRequest, accept: Boolean, durationMinutes: Int?) {
+        val uid = viewerId
+        if (uid.isEmpty()) return
+        viewModelScope.launch {
+            circleRepository.respondToLocationRequest(uid, request.requestId, accept, durationMinutes)
+            if (accept) {
+                val recipients = listOf(request.requesterId)
+                locationPermissionRepository.updateSharedWith(uid, recipients.toSet())
+                recipients.forEach { viewerId ->
+                    locationPermissionRepository.allowViewer(uid, viewerId)
+                }
+                liveLocationSharingRepository.startSharing(
+                    userName = _uiState.value.username ?: "User",
+                    userId = uid,
+                    lat = 0.0,
+                    long = 0.0,
+                    mode = com.aarav.geowav.data.model.SessionMode.NORMAL,
+                    sharedWith = recipients
+                )
+                val intent = android.content.Intent(context, com.aarav.geowav.platform.LiveLocationService::class.java).apply {
+                    action = "ACTION_START_LIVE_LOCATION"
+                    putExtra("USER_ID", uid)
+                }
+                if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
+                    context.startForegroundService(intent)
+                } else {
+                    context.startService(intent)
+                }
+            }
         }
     }
 
@@ -726,6 +770,7 @@ data class HomeScreenUiState(
     val isPlacesLoading: Boolean = true,
     val isAwarenessLoading: Boolean = true,
     val activeSession: com.aarav.geowav.data.model.SharingSession? = null,
+    val incomingLocationRequests: List<com.aarav.geowav.data.model.LocationRequest> = emptyList(),
     val lovedOnesError: String? = null,
     val awarenessError: String? = null
 )
