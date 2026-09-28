@@ -78,10 +78,12 @@ import com.aarav.geowav.presentation.timeline.SessionPreviewTopBar
 import com.google.android.gms.maps.model.LatLng
 import com.google.maps.android.SphericalUtil
 import androidx.core.net.toUri
+import androidx.compose.material3.Button
+import androidx.compose.ui.text.style.TextAlign
+import com.aarav.geowav.presentation.theme.GeoWavTheme
 
 private val SpatialEnterEasing = CubicBezierEasing(0.2f, 0f, 0f, 1f)
 private val SpatialExitEasing = CubicBezierEasing(0.4f, 0f, 1f, 1f)
-
 
 @Preview(showBackground = true)
 @OptIn(ExperimentalMaterial3Api::class)
@@ -95,73 +97,67 @@ fun ObserveScreen(
     val uiState by viewModel.uiState.collectAsState()
     val locations by viewModel.locations.collectAsState()
 
+    var wasSharingStarted by remember { mutableStateOf(false) }
+    var lastMemberName by remember { mutableStateOf("Circle Member") }
+    var lastDestinationName by remember { mutableStateOf<String?>(null) }
+    var showArrivalState by remember { mutableStateOf(false) }
+    var showTray by remember { mutableStateOf(true) }
+
+    val activeSharers = remember(locations, uiState.lovedOnes) {
+        locations.entries.mapNotNull { (id, state) ->
+            val loc = when (state) {
+                is ViewerLocationState.NormalSharing -> state.location
+                is ViewerLocationState.EmergencySharing -> state.location
+                else -> null
+            }
+            if (loc != null) {
+                val member = uiState.lovedOnes.firstOrNull { it.id == id }
+                val name = member?.alias?.takeIf { it.isNotBlank() }
+                    ?: member?.profileName?.takeIf { it.isNotBlank() }
+                    ?: loc.userName.takeIf { it.isNotBlank() }
+                    ?: "Circle Member"
+                Triple(name, loc.destinationName, loc.mode)
+            } else null
+        }
+    }
+
+    val hasAnyLiveSharing = activeSharers.isNotEmpty()
+
+    LaunchedEffect(hasAnyLiveSharing, activeSharers) {
+        if (hasAnyLiveSharing) {
+            wasSharingStarted = true
+            val sharer = activeSharers.firstOrNull()
+            if (sharer != null) {
+                lastMemberName = sharer.first
+                if (!sharer.second.isNullOrBlank()) {
+                    lastDestinationName = sharer.second
+                }
+            }
+        } else if (wasSharingStarted) {
+            showArrivalState = true
+        }
+    }
 
     Scaffold(
         contentWindowInsets = WindowInsets(0, 0, 0, 0)
-    ) {
-
-
-        var showStopDialog by remember {
-            mutableStateOf(false)
-        }
-
-        var showTray by remember {
-            mutableStateOf(true)
-        }
-
-        MyAlertDialog(
-            shouldShowDialog = showStopDialog,
-            onDismissRequest = {
-                showStopDialog = false
-                back()
-            },
-            icon = R.drawable.new_logo,
-            title = "Sharing Inactive",
-            message = "Currently nobody is sharing their live location with you. You will be redirected to Home on clicking Return to Home button.",
-            confirmButtonText = "Return to Home"
-
-        ) {
-            showStopDialog = false
-            back()
-        }
-
-        val hasAnyLiveSharing = locations.values.any {
-            it is ViewerLocationState.NormalSharing ||
-                    it is ViewerLocationState.EmergencySharing
-        }
-
-        LaunchedEffect(hasAnyLiveSharing) {
-            if (!hasAnyLiveSharing) {
-                showStopDialog = true
-            }
-        }
-
-
-        val emergencyUser = locations
-            .entries
-            .firstOrNull { it.value is ViewerLocationState.EmergencySharing }
-
-
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(it)
-        ) {
-
-            AnimatedVisibility(
-                visible = hasAnyLiveSharing,
-                enter = fadeIn(
-                    animationSpec = tween(
-                        durationMillis = 240,
-                        easing = SpatialEnterEasing
-                    )
-                ),
-                exit = fadeOut(
-                    animationSpec = tween(
-                        durationMillis = 180,
-                        easing = SpatialExitEasing
-                    )
-                )
+    ) { innerPadding ->
+        if (!hasAnyLiveSharing && (showArrivalState || wasSharingStarted)) {
+            ObserverArrivalContent(
+                memberName = lastMemberName,
+                destinationName = lastDestinationName,
+                onReturnHome = back
+            )
+        } else if (!hasAnyLiveSharing && !wasSharingStarted) {
+            ObserverArrivalContent(
+                memberName = "Circle Member",
+                destinationName = null,
+                onReturnHome = back
+            )
+        } else {
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(innerPadding)
             ) {
                 ObserveLiveLocationCard(
                     viewModel, uiState, true,
@@ -176,18 +172,104 @@ fun ObserveScreen(
                     Modifier.fillMaxSize(),
                     userLocation = userLocation
                 )
+
+                SessionPreviewTopBar(
+                    screenTitle = "Observe Loved Ones",
+                    onBack = back,
+                    modifier = Modifier
+                        .align(Alignment.TopStart)
+                        .statusBarsPadding()
+                        .padding(start = 16.dp, top = 10.dp)
+                )
             }
+        }
+    }
+}
 
-            SessionPreviewTopBar(
-                screenTitle = "Observe Loved Ones",
-                onBack = back,
-                modifier = Modifier
-                    .align(Alignment.TopStart)
-                    .statusBarsPadding()
-                    .padding(start = 16.dp, top = 10.dp)
+@Preview(showBackground = true)
+@Composable
+fun PreviewObserverArrivalContent(){
+    GeoWavTheme {
+        ObserverArrivalContent(
+            "Aarav",
+            "Home",
+        ){}
+    }
+}
+
+@Composable
+fun ObserverArrivalContent(
+    memberName: String,
+    destinationName: String?,
+    onReturnHome: () -> Unit
+) {
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(MaterialTheme.colorScheme.surface)
+            .statusBarsPadding()
+            .padding(24.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Center
+    ) {
+        Surface(
+            shape = CircleShape,
+            color = MaterialTheme.colorScheme.primaryContainer,
+            modifier = Modifier.size(80.dp)
+        ) {
+            Box(contentAlignment = Alignment.Center) {
+                Icon(
+                    painter = painterResource(id = R.drawable.check),
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.onPrimaryContainer,
+                    modifier = Modifier.size(36.dp)
+                )
+            }
+        }
+
+        Spacer(modifier = Modifier.height(20.dp))
+        Text(
+            text = "$memberName Arrived!",
+            fontFamily = manrope,
+            fontWeight = FontWeight.ExtraBold,
+            fontSize = 24.sp,
+            color = MaterialTheme.colorScheme.onSurface,
+            textAlign = TextAlign.Center
+        )
+        Spacer(modifier = Modifier.height(6.dp))
+        val subtitle = if (!destinationName.isNullOrBlank()) {
+            "Safely reached $destinationName."
+        } else {
+            "Safely reached destination."
+        }
+        Text(
+            text = subtitle,
+            fontFamily = manrope,
+            fontSize = 14.sp,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            textAlign = TextAlign.Center
+        )
+        Spacer(modifier = Modifier.height(4.dp))
+        Text(
+            text = "Live location sharing completed automatically.",
+            fontFamily = manrope,
+            fontSize = 12.sp,
+            color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.8f),
+            textAlign = TextAlign.Center
+        )
+
+        Spacer(modifier = Modifier.height(32.dp))
+        Button(
+            onClick = onReturnHome,
+            modifier = Modifier.fillMaxWidth(0.6f),
+            shape = RoundedCornerShape(14.dp)
+        ) {
+            Text(
+                text = "Return to Home",
+                fontFamily = manrope,
+                fontWeight = FontWeight.Bold,
+                fontSize = 15.sp
             )
-
-
         }
     }
 }

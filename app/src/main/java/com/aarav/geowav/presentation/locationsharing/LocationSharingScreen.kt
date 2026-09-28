@@ -85,6 +85,7 @@ import com.aarav.geowav.presentation.components.openAppDetailsSettings
 import com.aarav.geowav.presentation.components.SnackbarManager
 import com.aarav.geowav.presentation.components.UpgradeBottomSheetContent
 import com.aarav.geowav.presentation.subscription.SubscriptionViewModel
+import com.aarav.geowav.presentation.theme.GeoWavTheme
 import com.aarav.geowav.presentation.theme.manrope
 import com.google.android.gms.maps.model.CameraPosition
 import com.google.android.gms.maps.model.LatLng
@@ -260,6 +261,7 @@ fun LocationSharingContent(
 
     Column(
         modifier = modifier.fillMaxSize()
+            .navigationBarsPadding()
     ) {
         // Pinned Top Bar with Live Location title and SOS Pill
         LiveLocationTopBar(
@@ -1287,7 +1289,18 @@ fun JourneyModeCard(
 ) {
     val isJourneyActive = activeSession != null &&
             activeSession.mode == com.aarav.geowav.data.model.SessionMode.JOURNEY &&
-            activeSession.status == com.aarav.geowav.data.model.SessionStatus.ACTIVE
+            (activeSession.status == com.aarav.geowav.data.model.SessionStatus.ACTIVE ||
+             activeSession.status == com.aarav.geowav.data.model.SessionStatus.COMPLETED)
+
+    if (isJourneyActive && activeSession != null) {
+        com.aarav.geowav.presentation.home.JourneyInProgressCard(
+            session = activeSession,
+            onCardClick = onStartJourney,
+            onEndJourney = onStopSharing,
+            modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
+        )
+        return
+    }
 
 
     // Surface styling: Tinted primaryContainer (soft lavender in light, deep navy #222C61 in dark), no outline, 28dp radius
@@ -1403,7 +1416,7 @@ fun JourneyModeCard(
                         ) {
                             Box(contentAlignment = Alignment.Center) {
                                 Icon(
-                                    painter = painterResource(id = R.drawable.navigation_arrow),
+                                    painter = painterResource(id = R.drawable.path),
                                     contentDescription = "Start Journey",
                                     tint = Color.White,
                                     modifier = Modifier.size(18.dp)
@@ -1560,14 +1573,12 @@ fun LiveLocationTopBar(
 ) {
     Surface(
         modifier = modifier.fillMaxWidth(),
-        color = MaterialTheme.colorScheme.surface,
-        tonalElevation = 2.dp
     ) {
         Column(
             modifier = Modifier
                 .fillMaxWidth()
                 .statusBarsPadding()
-                .padding(horizontal = 16.dp, vertical = 10.dp)
+                .padding(horizontal = 16.dp, vertical = 8.dp)
         ) {
             Row(
                 modifier = Modifier.fillMaxWidth(),
@@ -1891,7 +1902,7 @@ fun EmergencySetupDialog(
 @Preview(name = "LiveLocationTopBar - Light", showBackground = true)
 @Composable
 private fun LiveLocationTopBarLightPreview() {
-    MaterialTheme {
+    GeoWavTheme {
         LiveLocationTopBar(
             isEmergencyActive = false,
             onSosClick = {}
@@ -1902,7 +1913,7 @@ private fun LiveLocationTopBarLightPreview() {
 @Preview(name = "LiveLocationTopBar - Dark", uiMode = android.content.res.Configuration.UI_MODE_NIGHT_YES, showBackground = true)
 @Composable
 private fun LiveLocationTopBarDarkPreview() {
-    MaterialTheme {
+    GeoWavTheme {
         LiveLocationTopBar(
             isEmergencyActive = false,
             onSosClick = {}
@@ -1913,7 +1924,7 @@ private fun LiveLocationTopBarDarkPreview() {
 @Preview(name = "EmergencyActiveBanner - Light", showBackground = true)
 @Composable
 private fun EmergencyActiveBannerLightPreview() {
-    MaterialTheme {
+    GeoWavTheme {
         EmergencyActiveBanner(
             remainingText = "14m 30s",
             onStopEmergency = {}
@@ -1924,7 +1935,7 @@ private fun EmergencyActiveBannerLightPreview() {
 @Preview(name = "EmergencyActiveBanner - Dark", uiMode = android.content.res.Configuration.UI_MODE_NIGHT_YES, showBackground = true)
 @Composable
 private fun EmergencyActiveBannerDarkPreview() {
-    MaterialTheme {
+    GeoWavTheme {
         EmergencyActiveBanner(
             remainingText = "14m 30s",
             onStopEmergency = {}
@@ -1935,7 +1946,7 @@ private fun EmergencyActiveBannerDarkPreview() {
 @Preview(name = "EmergencyCountdownSheet - Light", showBackground = true)
 @Composable
 private fun EmergencyCountdownSheetLightPreview() {
-    MaterialTheme {
+    GeoWavTheme {
         EmergencyCountdownSheet(
             isVisible = true,
             onConfirmEmergency = {},
@@ -1947,7 +1958,7 @@ private fun EmergencyCountdownSheetLightPreview() {
 @Preview(name = "EmergencyCountdownSheet - Dark", uiMode = android.content.res.Configuration.UI_MODE_NIGHT_YES, showBackground = true)
 @Composable
 private fun EmergencyCountdownSheetDarkPreview() {
-    MaterialTheme {
+    GeoWavTheme {
         EmergencyCountdownSheet(
             isVisible = true,
             onConfirmEmergency = {},
