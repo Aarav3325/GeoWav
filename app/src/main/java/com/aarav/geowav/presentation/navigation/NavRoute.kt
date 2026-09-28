@@ -22,7 +22,11 @@ sealed class NavRoute(val path: String) {
 
     object Paywall : NavRoute("paywall")
 
-    object MapScreen : NavRoute("mapScreen")
+    object MapScreen : NavRoute("mapScreen") {
+        fun createRoute(forJourney: Boolean = false): String {
+            return if (forJourney) "mapScreen?forJourney=true" else "mapScreen"
+        }
+    }
 
     object AddPlace : NavRoute("addPlace") {
         fun createRoute(placeId: String): String {
@@ -51,4 +55,6 @@ sealed class NavRoute(val path: String) {
             return "placeDetails/$placeId"
         }
     }
+
+    object Journey : NavRoute("journey")
 }

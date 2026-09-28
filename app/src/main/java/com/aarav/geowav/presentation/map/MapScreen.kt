@@ -85,6 +85,8 @@ fun MapScreen(
     navigateToManualAddPlace: (Double, Double, String) -> Unit,
     navigateToSettings: () -> Unit,
     navigateToHome: () -> Unit,
+    forJourney: Boolean = false,
+    onSelectJourneyDestination: ((Double, Double, String, String) -> Unit)? = null,
     modifier: Modifier = Modifier
 ) {
 
@@ -302,7 +304,9 @@ fun MapScreen(
                 },
                 onDismissRequest = {
                     mapViewModel.dismissBottomSheet()
-                }
+                },
+                forJourney = forJourney,
+                onSelectJourneyDestination = onSelectJourneyDestination
             )
 
             LaunchedEffect(selectedPlace) {
@@ -336,7 +340,7 @@ fun MapScreen(
 
             if (!uiState.isSearchExpanded) {
                 SelectPlaceTopBar(
-                    screenTitle = "Select place",
+                    screenTitle = if (forJourney) "Select destination" else "Select place",
                     actionLabel = "Help",
                     onBack = navigateToHome,
                     onAction = { showPlaceHelpDialog = true },
@@ -361,11 +365,20 @@ fun MapScreen(
                         mapViewModel.clearManualPlace()
                     },
                     onContinue = {
-                        navigateToManualAddPlace(
-                            latLng.latitude,
-                            latLng.longitude,
-                            manualPlaceAddress ?: "Approximate location"
-                        )
+                        if (forJourney && onSelectJourneyDestination != null) {
+                            onSelectJourneyDestination(
+                                latLng.latitude,
+                                latLng.longitude,
+                                manualPlaceAddress ?: "Dropped Pin",
+                                manualPlaceAddress ?: "Approximate location"
+                            )
+                        } else {
+                            navigateToManualAddPlace(
+                                latLng.latitude,
+                                latLng.longitude,
+                                manualPlaceAddress ?: "Approximate location"
+                            )
+                        }
                     }
                 )
             }

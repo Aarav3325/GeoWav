@@ -87,7 +87,6 @@ private val ObserveSheetEnterEasing = CubicBezierEasing(0.2f, 0f, 0f, 1f)
 private val ObserveSheetExitEasing = CubicBezierEasing(0.4f, 0f, 1f, 1f)
 
 @OptIn(ExperimentalMaterial3Api::class)
-@Preview(showBackground = true)
 @Composable
 fun PlaceModalSheet(
     place: Place?,
@@ -95,7 +94,9 @@ fun PlaceModalSheet(
     showSheet: Boolean,
     onDismissRequest: () -> Unit,
     clearSearch: () -> Unit,
-    onAddPlaceBtnClick: (String) -> Unit
+    onAddPlaceBtnClick: (String) -> Unit,
+    forJourney: Boolean = false,
+    onSelectJourneyDestination: ((Double, Double, String, String) -> Unit)? = null
 ) {
 
     AnimatedVisibility(showSheet) {
@@ -119,21 +120,24 @@ fun PlaceModalSheet(
             contentColor = MaterialTheme.colorScheme.onSurface
         ) {
             SheetContent(
-                place,
-                clearSearch,
-                onAddPlaceBtnClick
+                place = place,
+                clearSearch = clearSearch,
+                onAddPlaceBtnClick = onAddPlaceBtnClick,
+                forJourney = forJourney,
+                onSelectJourneyDestination = onSelectJourneyDestination
             )
         }
     }
 }
 
 
-@Preview(showBackground = true)
 @Composable
 fun SheetContent(
     place: Place?,
     clearSearch: () -> Unit,
-    onAddPlaceBtnClick: (String) -> Unit
+    onAddPlaceBtnClick: (String) -> Unit,
+    forJourney: Boolean = false,
+    onSelectJourneyDestination: ((Double, Double, String, String) -> Unit)? = null
 ) {
 
     Column(
@@ -191,8 +195,17 @@ fun SheetContent(
 
         FilledTonalButton(
             onClick = {
-                onAddPlaceBtnClick(place?.id ?: "0")
-                clearSearch()
+                if (forJourney && onSelectJourneyDestination != null && place != null) {
+                    val lat = place.location?.latitude ?: 0.0
+                    val lng = place.location?.longitude ?: 0.0
+                    val name = place.displayName ?: "Selected Location"
+                    val address = place.shortFormattedAddress ?: place.formattedAddress ?: ""
+                    onSelectJourneyDestination(lat, lng, name, address)
+                    clearSearch()
+                } else {
+                    onAddPlaceBtnClick(place?.id ?: "0")
+                    clearSearch()
+                }
             },
             colors = ButtonDefaults.buttonColors(
                 containerColor = MaterialTheme.colorScheme.primary,
@@ -208,7 +221,9 @@ fun SheetContent(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
-                    "Add Place", fontFamily = manrope, fontWeight = FontWeight.SemiBold,
+                    if (forJourney) "Select as Journey Destination" else "Add Place",
+                    fontFamily = manrope,
+                    fontWeight = FontWeight.SemiBold,
                     fontSize = 16.sp
                 )
 
