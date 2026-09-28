@@ -92,6 +92,7 @@ class LiveLocationSharingRepositoryImpl
                 "name" to it.name,
                 "address" to it.address
             )
+            update["live_location/$userId/destinationName"] = it.name
         }
         createdFrom?.let { update["live_location/$userId/createdFrom"] = it }
 

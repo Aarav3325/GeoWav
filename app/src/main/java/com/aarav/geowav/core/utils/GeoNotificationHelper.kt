@@ -25,6 +25,8 @@ sealed class NotificationType {
     object EmergencyStarted : NotificationType()
     object EmergencyStopped : NotificationType()
     object Trigger : NotificationType()
+    object JourneyStarted : NotificationType()
+    object JourneyCompleted : NotificationType()
 }
 
 object GeoNotificationHelper {
@@ -45,6 +47,8 @@ object GeoNotificationHelper {
             NotificationType.EmergencyStarted -> NavRoute.ObserveUsers.path
             NotificationType.EmergencyStopped -> NavRoute.HomeScreen.path
             NotificationType.Trigger -> NavRoute.HomeScreen.path
+            NotificationType.JourneyStarted -> NavRoute.ObserveUsers.path
+            NotificationType.JourneyCompleted -> NavRoute.HomeScreen.path
         }
 
         val intent = Intent(context, MainActivity::class.java).apply {

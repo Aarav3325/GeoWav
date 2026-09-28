@@ -7,7 +7,10 @@ data class LocationUpdates(
     val lng: Double = 0.0,
     val startedAt: Long = 0L,
     val timestamp: Long = 0L,
-    val sharedWith: List<String> = emptyList()
+    val sharedWith: List<String> = emptyList(),
+    val userName: String = "",
+    val mode: String = "NORMAL",
+    val destinationName: String = ""
 )
 
 data class LocationMeta(

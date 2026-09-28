@@ -59,12 +59,24 @@ class ViewerLocationRepositoryImpl
                 return
             }
 
+            val userName = snapshot.child("userName").getValue(String::class.java) ?: ""
+            val mode = snapshot.child("mode").getValue(String::class.java) ?: "NORMAL"
+            val destSnap = snapshot.child("destinationLocation")
+            val destinationName = if (destSnap.exists()) {
+                destSnap.child("name").getValue(String::class.java) ?: ""
+            } else {
+                snapshot.child("destinationName").getValue(String::class.java) ?: ""
+            }
+
             val location = LocationUpdates(
                 lat = lat,
                 lng = lng,
                 timestamp = timestamp,
                 startedAt = startedAt,
-                sharedWith = sharedWith
+                sharedWith = sharedWith,
+                userName = userName,
+                mode = mode,
+                destinationName = destinationName
             )
 
             val path = snapshot.child("path")
