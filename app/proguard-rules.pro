@@ -32,3 +32,7 @@
 # Keep Firebase Realtime Database deserialization models to prevent R8 from obfuscating fields/methods
 -keep class com.aarav.geowav.data.model.** { *; }
 -keep class com.aarav.geowav.data.mapper.** { *; }
+
+# Keep Google Play Services Common R resources and Basement classes
+-keep class com.google.android.gms.common.R$* { *; }
+-keep class com.google.android.gms.common.** { *; }

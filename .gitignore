@@ -30,3 +30,4 @@ keystore_base64_new.txt
 .idea/
 .kotlin/
 *.log
+/docs
