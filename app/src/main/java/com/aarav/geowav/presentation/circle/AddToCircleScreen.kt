@@ -30,6 +30,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.imePadding
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -73,10 +74,14 @@ import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
@@ -259,7 +264,7 @@ fun CircleContent(
     onRequestLocation: (String, String) -> Unit,
 ) {
     var confirmDeleteFor by remember { mutableStateOf<String?>(null) }
-    var pendingRequestMember by remember { mutableStateOf<Pair<String, String>?>(null) }
+    var pendingRequestMember by remember { mutableStateOf<CircleMember?>(null) }
 
     DeleteDialog(
         shouldShowDialog = uiState.showDeleteDialog && confirmDeleteFor != null,
@@ -277,52 +282,25 @@ fun CircleContent(
         }
     }
 
-    if (pendingRequestMember != null) {
-        val (reqId, reqName) = pendingRequestMember!!
-        androidx.compose.material3.AlertDialog(
-            onDismissRequest = { pendingRequestMember = null },
-            title = {
-                Text(
-                    text = "Request location?",
-                    fontFamily = manrope,
-                    fontWeight = FontWeight.Bold,
-                    fontSize = 18.sp
-                )
-            },
-            text = {
-                Text(
-                    text = "Ask $reqName to share their current location.",
-                    fontFamily = manrope,
-                    fontSize = 14.sp
-                )
-            },
-            confirmButton = {
-                TextButton(
-                    onClick = {
-                        onRequestLocation(reqId, reqName)
-                        pendingRequestMember = null
-                    }
-                ) {
-                    Text(
-                        text = "Request",
-                        fontFamily = manrope,
-                        fontWeight = FontWeight.Bold,
-                        color = MaterialTheme.colorScheme.primary
-                    )
+    pendingRequestMember?.let { member ->
+        CustomBottomSheet(
+            onDismissRequest = {
+                if (uiState.requestingLocationMemberId == null) {
+                    pendingRequestMember = null
                 }
-            },
-            dismissButton = {
-                TextButton(onClick = { pendingRequestMember = null }) {
-                    Text(
-                        text = "Cancel",
-                        fontFamily = manrope,
-                        color = MaterialTheme.colorScheme.outline
-                    )
-                }
-            },
-            shape = RoundedCornerShape(24.dp),
-            containerColor = MaterialTheme.colorScheme.surface
-        )
+            }
+        ) {
+            RequestLocationBottomSheetContent(
+                member = member,
+                isLoading = uiState.requestingLocationMemberId == member.id,
+                onConfirm = {
+                    val displayName = member.alias?.takeIf { it.isNotBlank() } ?: member.profileName
+                    onRequestLocation(member.id, displayName)
+                    pendingRequestMember = null
+                },
+                onDismiss = { pendingRequestMember = null }
+            )
+        }
     }
 
     LazyColumn(
@@ -346,9 +324,10 @@ fun CircleContent(
             MyCircleSection(
                 lovedOnesList = uiState.lovedOnes,
                 deletingMemberId = uiState.deletingMemberId,
+                requestingLocationMemberId = uiState.requestingLocationMemberId,
                 onDeleteMember = onDeleteMember,
                 confirmDelete = { confirmDeleteFor = it },
-                onRequestLocation = { id, name -> pendingRequestMember = Pair(id, name) }
+                onRequestLocation = { member -> pendingRequestMember = member }
             )
         }
 
@@ -642,9 +621,10 @@ fun SendInviteButton(
 fun MyCircleSection(
     lovedOnesList: List<CircleMember>,
     deletingMemberId: String?,
+    requestingLocationMemberId: String? = null,
     onDeleteMember: () -> Unit,
     confirmDelete: (String) -> Unit,
-    onRequestLocation: (String, String) -> Unit,
+    onRequestLocation: (CircleMember) -> Unit,
 ) {
     Card(
         modifier = Modifier
@@ -760,6 +740,7 @@ fun MyCircleSection(
                         index = index,
                         count = lovedOnesList.size,
                         deletingMemberId = deletingMemberId,
+                        requestingLocationMemberId = requestingLocationMemberId,
                         onDeleteMember = onDeleteMember,
                         confirmDelete = confirmDelete,
                         onRequestLocation = onRequestLocation
@@ -887,9 +868,10 @@ fun LovedOneCardCircle(
     index: Int,
     count: Int,
     deletingMemberId: String? = null,
+    requestingLocationMemberId: String? = null,
     onDeleteMember: () -> Unit = {},
     confirmDelete: (String) -> Unit = {},
-    onRequestLocation: (String, String) -> Unit = { _, _ -> }
+    onRequestLocation: (CircleMember) -> Unit = {}
 ) {
 
     val (avatarBg, avatarFg) = when (index % 3) {
@@ -942,7 +924,9 @@ fun LovedOneCardCircle(
                 color = MaterialTheme.colorScheme.onSurface,
                 fontFamily = manrope,
                 fontWeight = FontWeight.SemiBold,
-                fontSize = 15.sp
+                fontSize = 15.sp,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis
             )
             Spacer(Modifier.height(2.dp))
             Text(
@@ -950,39 +934,81 @@ fun LovedOneCardCircle(
                 color = MaterialTheme.colorScheme.outline,
                 fontFamily = manrope,
                 fontWeight = FontWeight.Medium,
-                fontSize = 12.sp
+                fontSize = 12.sp,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis
             )
         }
 
+        val isRequesting = requestingLocationMemberId == connection.id
         val isDeleting = deletingMemberId == connection.id
-        val isAnyDeleting = deletingMemberId != null
+        val isAnyActionBusy = deletingMemberId != null || requestingLocationMemberId != null
 
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            IconButton(
-                onClick = { onRequestLocation(connection.id, displayName) },
-                enabled = !isAnyDeleting,
-                modifier = Modifier
-                    .size(36.dp)
-                    .clip(CircleShape)
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(6.dp)
+        ) {
+            // Refined Request Location Action Pill
+            Surface(
+                onClick = { onRequestLocation(connection) },
+                enabled = !isAnyActionBusy,
+                shape = RoundedCornerShape(99.dp),
+                color = if (isRequesting) {
+                    MaterialTheme.colorScheme.primaryContainer
+                } else {
+                    MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.55f)
+                },
+                border = BorderStroke(
+                    1.dp,
+                    if (isRequesting) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.primary.copy(alpha = 0.25f)
+                ),
+                contentColor = MaterialTheme.colorScheme.onPrimaryContainer
             ) {
-                Icon(
-                    painter = painterResource(R.drawable.gps),
-                    contentDescription = "Request Location",
-                    tint = MaterialTheme.colorScheme.primary,
-                    modifier = Modifier.size(18.dp)
-                )
+                Row(
+                    modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(5.dp)
+                ) {
+                    if (isRequesting) {
+                        CircularProgressIndicator(
+                            modifier = Modifier.size(13.dp),
+                            color = MaterialTheme.colorScheme.primary,
+                            strokeWidth = 2.dp
+                        )
+                        Text(
+                            text = "Asking...",
+                            fontFamily = manrope,
+                            fontWeight = FontWeight.SemiBold,
+                            fontSize = 12.sp,
+                            color = MaterialTheme.colorScheme.primary
+                        )
+                    } else {
+                        Icon(
+                            painter = painterResource(R.drawable.location_sharing),
+                            contentDescription = null,
+                            tint = MaterialTheme.colorScheme.primary,
+                            modifier = Modifier.size(14.dp)
+                        )
+                        Text(
+                            text = "Request",
+                            fontFamily = manrope,
+                            fontWeight = FontWeight.SemiBold,
+                            fontSize = 12.sp,
+                            color = MaterialTheme.colorScheme.onPrimaryContainer
+                        )
+                    }
+                }
             }
 
-            Spacer(Modifier.width(4.dp))
-
+            // Delete Member Action Button
             if (isDeleting) {
                 Box(
                     modifier = Modifier.size(32.dp),
                     contentAlignment = Alignment.Center
                 ) {
                     CircularProgressIndicator(
-                        modifier = Modifier.size(16.dp),
-                        color = MaterialTheme.colorScheme.primary,
+                        modifier = Modifier.size(14.dp),
+                        color = MaterialTheme.colorScheme.outline,
                         strokeWidth = 2.dp
                     )
                 }
@@ -992,19 +1018,19 @@ fun LovedOneCardCircle(
                         onDeleteMember()
                         confirmDelete(connection.id)
                     },
-                    enabled = !isAnyDeleting,
+                    enabled = !isAnyActionBusy,
                     modifier = Modifier
                         .size(32.dp)
                         .clip(CircleShape)
                 ) {
                     Icon(
                         painter = painterResource(R.drawable.trash),
-                        contentDescription = "Remove member",
-                        tint = if (isAnyDeleting)
+                        contentDescription = "Remove $displayName from circle",
+                        tint = if (isAnyActionBusy)
                             MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.38f)
                         else
                             MaterialTheme.colorScheme.outlineVariant,
-                        modifier = Modifier.size(18.dp)
+                        modifier = Modifier.size(16.dp)
                     )
                 }
             }
@@ -1396,3 +1422,235 @@ fun ConnectionUsageCard(
         }
     }
 }
+
+@Composable
+fun RequestLocationBottomSheetContent(
+    member: CircleMember,
+    isLoading: Boolean,
+    onConfirm: () -> Unit,
+    onDismiss: () -> Unit
+) {
+    val displayName = member.alias?.takeIf { it.isNotBlank() } ?: member.profileName
+
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .navigationBarsPadding()
+            .padding(horizontal = 24.dp, vertical = 8.dp),
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        // Hero Avatar with location sharing badge
+        Box(
+            modifier = Modifier.size(68.dp),
+            contentAlignment = Alignment.Center
+        ) {
+            IdentityAvatar(
+                avatarUrl = member.avatarUrl,
+                displayName = displayName,
+                backgroundColor = MaterialTheme.colorScheme.primaryContainer,
+                contentColor = MaterialTheme.colorScheme.onPrimaryContainer,
+                modifier = Modifier.size(60.dp)
+            )
+            Surface(
+                shape = CircleShape,
+                color = MaterialTheme.colorScheme.primary,
+                border = BorderStroke(2.dp, MaterialTheme.colorScheme.surface),
+                modifier = Modifier
+                    .size(26.dp)
+                    .align(Alignment.BottomEnd)
+            ) {
+                Box(contentAlignment = Alignment.Center) {
+                    Icon(
+                        painter = painterResource(id = R.drawable.location_sharing),
+                        contentDescription = null,
+                        tint = MaterialTheme.colorScheme.onPrimary,
+                        modifier = Modifier.size(14.dp)
+                    )
+                }
+            }
+        }
+
+        Spacer(modifier = Modifier.height(16.dp))
+
+        // Title
+        Text(
+            text = "Request Location",
+            fontFamily = manrope,
+            fontWeight = FontWeight.Bold,
+            fontSize = 20.sp,
+            color = MaterialTheme.colorScheme.onSurface,
+            textAlign = TextAlign.Center
+        )
+
+        Spacer(modifier = Modifier.height(6.dp))
+
+        // Subtitle with clear emphasis
+        Text(
+            text = buildAnnotatedString {
+                append("Ask ")
+                withStyle(SpanStyle(fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurface)) {
+                    append(displayName)
+                }
+                append(" to share their real-time location with you.")
+            },
+            fontFamily = manrope,
+            fontSize = 14.sp,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            textAlign = TextAlign.Center,
+            lineHeight = 20.sp
+        )
+
+        Spacer(modifier = Modifier.height(20.dp))
+
+        // Transparency & Privacy Info Card
+        Card(
+            shape = RoundedCornerShape(16.dp),
+            colors = CardDefaults.cardColors(
+                containerColor = MaterialTheme.colorScheme.surfaceContainerHigh
+            ),
+            border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.3f)),
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            Column(
+                modifier = Modifier.padding(16.dp),
+                verticalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    Surface(
+                        shape = CircleShape,
+                        color = MaterialTheme.colorScheme.primary.copy(alpha = 0.12f),
+                        modifier = Modifier.size(32.dp)
+                    ) {
+                        Box(contentAlignment = Alignment.Center) {
+                            Icon(
+                                painter = painterResource(id = R.drawable.bell),
+                                contentDescription = null,
+                                tint = MaterialTheme.colorScheme.primary,
+                                modifier = Modifier.size(16.dp)
+                            )
+                        }
+                    }
+                    Column(modifier = Modifier.weight(1f)) {
+                        Text(
+                            text = "Instant Notification",
+                            fontFamily = manrope,
+                            fontWeight = FontWeight.SemiBold,
+                            fontSize = 13.sp,
+                            color = MaterialTheme.colorScheme.onSurface
+                        )
+                        Text(
+                            text = "$displayName will get an alert with your request.",
+                            fontFamily = manrope,
+                            fontSize = 12.sp,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                }
+
+                HorizontalDivider(
+                    thickness = 0.5.dp,
+                    color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.3f)
+                )
+
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    Surface(
+                        shape = CircleShape,
+                        color = MaterialTheme.colorScheme.secondary.copy(alpha = 0.12f),
+                        modifier = Modifier.size(32.dp)
+                    ) {
+                        Box(contentAlignment = Alignment.Center) {
+                            Icon(
+                                painter = painterResource(id = R.drawable.clock),
+                                contentDescription = null,
+                                tint = MaterialTheme.colorScheme.secondary,
+                                modifier = Modifier.size(16.dp)
+                            )
+                        }
+                    }
+                    Column(modifier = Modifier.weight(1f)) {
+                        Text(
+                            text = "Audience & Duration Control",
+                            fontFamily = manrope,
+                            fontWeight = FontWeight.SemiBold,
+                            fontSize = 13.sp,
+                            color = MaterialTheme.colorScheme.onSurface
+                        )
+                        Text(
+                            text = "They choose how long to share (15m, 1h, or ongoing).",
+                            fontFamily = manrope,
+                            fontSize = 12.sp,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                }
+            }
+        }
+
+        Spacer(modifier = Modifier.height(24.dp))
+
+        // Action Buttons
+        Button(
+            onClick = onConfirm,
+            enabled = !isLoading,
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(50.dp),
+            shape = RoundedCornerShape(16.dp),
+            colors = ButtonDefaults.buttonColors(
+                containerColor = MaterialTheme.colorScheme.primary,
+                contentColor = MaterialTheme.colorScheme.onPrimary
+            )
+        ) {
+            if (isLoading) {
+                CircularProgressIndicator(
+                    modifier = Modifier.size(20.dp),
+                    strokeWidth = 2.dp,
+                    color = MaterialTheme.colorScheme.onPrimary
+                )
+            } else {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.Center
+                ) {
+                    Icon(
+                        painter = painterResource(id = R.drawable.location_sharing),
+                        contentDescription = null,
+                        modifier = Modifier.size(18.dp)
+                    )
+                    Spacer(Modifier.width(8.dp))
+                    Text(
+                        text = "Send Request",
+                        fontFamily = manrope,
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 15.sp
+                    )
+                }
+            }
+        }
+
+        Spacer(modifier = Modifier.height(8.dp))
+
+        TextButton(
+            onClick = onDismiss,
+            enabled = !isLoading,
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            Text(
+                text = "Cancel",
+                fontFamily = manrope,
+                fontWeight = FontWeight.SemiBold,
+                fontSize = 14.sp,
+                color = MaterialTheme.colorScheme.outline
+            )
+        }
+
+        Spacer(modifier = Modifier.height(8.dp))
+    }
+}
+

@@ -448,21 +448,26 @@ class CircleVM
         }
 
         viewModelScope.launch {
-            val currentUser = googleSignInClient.findUserByUserId(currentUserId)
-            val requesterName = currentUser?.username ?: "Circle Member"
+            _uiState.update { it.copy(requestingLocationMemberId = recipientUid) }
+            try {
+                val currentUser = googleSignInClient.findUserByUserId(currentUserId)
+                val requesterName = currentUser?.username ?: "Circle Member"
 
-            when (val result = circleRepository.sendLocationRequest(currentUserId, requesterName, recipientUid)) {
-                is Resource.Success -> {
-                    _events.emit(CircleUiEvent.LocationRequestSent(recipientName))
+                when (val result = circleRepository.sendLocationRequest(currentUserId, requesterName, recipientUid)) {
+                    is Resource.Success -> {
+                        _events.emit(CircleUiEvent.LocationRequestSent(recipientName))
+                    }
+                    is Resource.NoInternet,
+                    is Resource.Timeout,
+                    is Resource.ServerError,
+                    is Resource.UnknownError,
+                    is Resource.Error -> {
+                        emitError(result.failure.messageFor("the request", result.message ?: "Failed to send location request"))
+                    }
+                    else -> Unit
                 }
-                is Resource.NoInternet,
-                is Resource.Timeout,
-                is Resource.ServerError,
-                is Resource.UnknownError,
-                is Resource.Error -> {
-                    emitError(result.failure.messageFor("the request", result.message ?: "Failed to send location request"))
-                }
-                else -> Unit
+            } finally {
+                _uiState.update { it.copy(requestingLocationMemberId = null) }
             }
         }
     }
@@ -483,6 +488,7 @@ data class CircleUiState(
     val acceptingInviteId: String? = null,
     val rejectingInviteId: String? = null,
     val deletingMemberId: String? = null,
+    val requestingLocationMemberId: String? = null,
     val name: String = "",
     val email: String = "",
     val showDeleteDialog: Boolean = false,
