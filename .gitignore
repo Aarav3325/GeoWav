@@ -31,3 +31,20 @@ keystore_base64_new.txt
 .kotlin/
 *.log
 /docs
+
+# AI Agents & IDE Tooling
+.agent/
+.agents/
+.claude/
+.codex/
+.cursor/
+.github/agents/
+.github/hooks/
+.github/skills/
+.impeccable/
+.ketoy/
+PRODUCT.md
+DESIGN.md
+
+
+
