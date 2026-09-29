@@ -155,7 +155,7 @@ class NotificationService : Service() {
                     "sharing_channel",
                     "Location Request",
                     "${event.requesterName} is asking for your current location.",
-                    NotificationType.SharingStarted
+                    NotificationType.LocationRequestReceived
                 )
             }
 
@@ -166,7 +166,7 @@ class NotificationService : Service() {
                     "sharing_channel",
                     "Location Request Update",
                     "${event.respondentName} $statusText",
-                    NotificationType.SharingStarted
+                    NotificationType.LocationRequestResponded
                 )
             }
         }
