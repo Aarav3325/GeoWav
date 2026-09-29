@@ -3,6 +3,8 @@ package com.aarav.geowav.presentation.journey
 import com.aarav.geowav.data.model.CircleMember
 import com.aarav.geowav.data.model.DestinationLocation
 import com.aarav.geowav.data.model.Place
+import com.aarav.geowav.data.model.SessionMode
+import com.aarav.geowav.data.model.SessionStatus
 import com.aarav.geowav.data.model.SharingSession
 
 import com.google.android.gms.maps.model.LatLng
@@ -31,7 +33,12 @@ data class JourneyUiState(
     val isLoadingMembers: Boolean = false,
     val isActionLoading: Boolean = false,
     val error: String? = null
-)
+) {
+    val isOtherSharingActive: Boolean
+        get() = activeSession != null &&
+                activeSession.mode != SessionMode.JOURNEY &&
+                (activeSession.status == SessionStatus.ACTIVE || activeSession.status == SessionStatus.PAUSED)
+}
 
 sealed class JourneyUiEvent {
     data class ShowError(val message: String) : JourneyUiEvent()

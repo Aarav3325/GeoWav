@@ -174,6 +174,11 @@ class JourneyViewModel @Inject constructor(
             return
         }
 
+        if (_uiState.value.isOtherSharingActive) {
+            emitError("Another location sharing session is already active. Please stop it before starting a journey.")
+            return
+        }
+
         val viewers = _uiState.value.selectedMemberIds
         if (viewers.isEmpty()) {
             emitError("Select at least one person to notify")
