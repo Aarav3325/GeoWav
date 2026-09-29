@@ -36,6 +36,7 @@ import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilledTonalButton
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
@@ -59,6 +60,7 @@ import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -107,30 +109,29 @@ fun PlaceModalSheet(
     forJourney: Boolean = false,
     onSelectJourneyDestination: ((Double, Double, String, String) -> Unit)? = null
 ) {
-
     AnimatedVisibility(showSheet) {
         ModalBottomSheet(
             dragHandle = {
                 Surface(
-                    shape = CircleShape,
+                    shape = RoundedCornerShape(2.dp),
                     modifier = Modifier
-                        .padding(top = 12.dp)
-                        .width(60.dp)
-                        .height(3.dp),
-                    color = MaterialTheme.colorScheme.secondary,
-                ) {
-
-                }
+                        .padding(top = 12.dp, bottom = 8.dp)
+                        .width(36.dp)
+                        .height(4.dp),
+                    color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f),
+                ) {}
             },
             onDismissRequest = onDismissRequest,
             sheetState = sheetState,
-            shape = RoundedCornerShape(24.dp),
-            containerColor = MaterialTheme.colorScheme.surface,
-            contentColor = MaterialTheme.colorScheme.onSurface
+            shape = RoundedCornerShape(topStart = 28.dp, topEnd = 28.dp),
+            containerColor = MaterialTheme.colorScheme.surfaceContainerLow,
+            contentColor = MaterialTheme.colorScheme.onSurface,
+            tonalElevation = 0.dp
         ) {
             SheetContent(
                 place = place,
                 clearSearch = clearSearch,
+                onDismiss = onDismissRequest,
                 onAddPlaceBtnClick = onAddPlaceBtnClick,
                 forJourney = forJourney,
                 onSelectJourneyDestination = onSelectJourneyDestination
@@ -144,106 +145,252 @@ fun PlaceModalSheet(
 fun SheetContent(
     place: Place?,
     clearSearch: () -> Unit,
+    onDismiss: () -> Unit = {},
     onAddPlaceBtnClick: (String) -> Unit,
     forJourney: Boolean = false,
     onSelectJourneyDestination: ((Double, Double, String, String) -> Unit)? = null
 ) {
+    val displayName = place?.displayName?.takeIf { it.isNotBlank() } ?: "Selected Location"
+    val addressText = place?.shortFormattedAddress?.takeIf { it.isNotBlank() }
+        ?: place?.formattedAddress?.takeIf { it.isNotBlank() }
+        ?: "Address unavailable"
+
+    val lat = place?.location?.latitude ?: 0.0
+    val lng = place?.location?.longitude ?: 0.0
+    val coordinatesText = String.format(Locale.US, "%.5f, %.5f", lat, lng)
 
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(12.dp),
-        verticalArrangement = Arrangement.spacedBy(12.dp)
+            .navigationBarsPadding()
+            .padding(start = 20.dp, end = 20.dp, top = 4.dp, bottom = 16.dp),
+        verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
-        Row(verticalAlignment = Alignment.CenterVertically) {
-
+        // Hero Header Row
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(14.dp)
+        ) {
             Surface(
-                modifier = Modifier.size(32.dp),
-                color = MaterialTheme.colorScheme.secondaryContainer,
+                modifier = Modifier.size(48.dp),
+                color = if (forJourney)
+                    MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.7f)
+                else
+                    MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.7f),
                 shape = CircleShape,
-            ) {
-                Icon(
-                    painter = painterResource(R.drawable.navigation_arrow),
-                    contentDescription = null,
-                    modifier = Modifier
-                        .size(24.dp)
-                        .padding(6.dp),
-                    tint = MaterialTheme.colorScheme.onSecondaryContainer
+                border = BorderStroke(
+                    1.dp,
+                    if (forJourney)
+                        MaterialTheme.colorScheme.secondary.copy(alpha = 0.25f)
+                    else
+                        MaterialTheme.colorScheme.primary.copy(alpha = 0.25f)
                 )
+            ) {
+                Box(contentAlignment = Alignment.Center) {
+                    Icon(
+                        painter = painterResource(
+                            if (forJourney) R.drawable.navigation_arrow else R.drawable.map_pin
+                        ),
+                        contentDescription = null,
+                        modifier = Modifier.size(22.dp),
+                        tint = if (forJourney)
+                            MaterialTheme.colorScheme.secondary
+                        else
+                            MaterialTheme.colorScheme.primary
+                    )
+                }
             }
 
-            Spacer(Modifier.width(12.dp))
-
-            Text(
-                text = place?.displayName ?: "Invalid Place",
-                style = MaterialTheme.typography.titleMedium,
-                fontFamily = manrope,
-                fontWeight = FontWeight.SemiBold,
-                fontSize = 20.sp
-            )
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    text = displayName,
+                    style = MaterialTheme.typography.titleMedium,
+                    fontFamily = manrope,
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 19.sp,
+                    color = MaterialTheme.colorScheme.onSurface,
+                    maxLines = 2,
+                    overflow = TextOverflow.Ellipsis
+                )
+                Spacer(Modifier.height(2.dp))
+                Surface(
+                    shape = RoundedCornerShape(99.dp),
+                    color = MaterialTheme.colorScheme.surfaceContainerHigh
+                ) {
+                    Text(
+                        text = if (forJourney) "Journey Destination" else "Place Details",
+                        fontFamily = manrope,
+                        fontWeight = FontWeight.SemiBold,
+                        fontSize = 11.sp,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 2.dp)
+                    )
+                }
+            }
         }
 
-        Text(
-            text = place?.shortFormattedAddress ?: "Address not available",
-            style = MaterialTheme.typography.bodyMedium,
-            fontWeight = FontWeight.SemiBold,
-            fontFamily = manrope,
-            fontSize = 16.sp,
-            color = MaterialTheme.colorScheme.onSurfaceVariant
-        )
+        // Details Card
+        Card(
+            shape = RoundedCornerShape(20.dp),
+            colors = CardDefaults.cardColors(
+                containerColor = MaterialTheme.colorScheme.surfaceContainer
+            ),
+            border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.35f)),
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            Column(
+                modifier = Modifier.padding(16.dp),
+                verticalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                // Address Section
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    Surface(
+                        shape = CircleShape,
+                        color = MaterialTheme.colorScheme.primary.copy(alpha = 0.1f),
+                        modifier = Modifier.size(34.dp)
+                    ) {
+                        Box(contentAlignment = Alignment.Center) {
+                            Icon(
+                                painter = painterResource(R.drawable.map_pin),
+                                contentDescription = null,
+                                tint = MaterialTheme.colorScheme.primary,
+                                modifier = Modifier.size(16.dp)
+                            )
+                        }
+                    }
+                    Column(modifier = Modifier.weight(1f)) {
+                        Text(
+                            text = "Address",
+                            fontFamily = manrope,
+                            fontWeight = FontWeight.SemiBold,
+                            fontSize = 11.sp,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                        Spacer(Modifier.height(1.dp))
+                        Text(
+                            text = addressText,
+                            fontFamily = manrope,
+                            fontWeight = FontWeight.Medium,
+                            fontSize = 13.sp,
+                            color = MaterialTheme.colorScheme.onSurface,
+                            maxLines = 2,
+                            overflow = TextOverflow.Ellipsis
+                        )
+                    }
+                }
 
-        Text(
-            text = "Lat: ${
-                place?.location?.latitude?.toString()?.take(7)
-            }, Lng: ${place?.location?.longitude?.toString()?.take(7)}",
-            style = MaterialTheme.typography.labelMedium,
-            fontSize = 14.sp,
-            fontFamily = manrope,
-            color = MaterialTheme.colorScheme.onSurfaceVariant
-        )
+                HorizontalDivider(
+                    thickness = 0.5.dp,
+                    color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.25f)
+                )
 
-        FilledTonalButton(
+                // Coordinates Section
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    Surface(
+                        shape = CircleShape,
+                        color = MaterialTheme.colorScheme.secondary.copy(alpha = 0.1f),
+                        modifier = Modifier.size(34.dp)
+                    ) {
+                        Box(contentAlignment = Alignment.Center) {
+                            Icon(
+                                painter = painterResource(R.drawable.gps),
+                                contentDescription = null,
+                                tint = MaterialTheme.colorScheme.secondary,
+                                modifier = Modifier.size(16.dp)
+                            )
+                        }
+                    }
+                    Column(modifier = Modifier.weight(1f)) {
+                        Text(
+                            text = "GPS Coordinates",
+                            fontFamily = manrope,
+                            fontWeight = FontWeight.SemiBold,
+                            fontSize = 11.sp,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                        Spacer(Modifier.height(1.dp))
+                        Text(
+                            text = coordinatesText,
+                            fontFamily = manrope,
+                            fontWeight = FontWeight.Medium,
+                            fontSize = 13.sp,
+                            color = MaterialTheme.colorScheme.onSurface
+                        )
+                    }
+                }
+            }
+        }
+
+        // Action Button
+        Button(
             onClick = {
                 if (forJourney && onSelectJourneyDestination != null && place != null) {
-                    val lat = place.location?.latitude ?: 0.0
-                    val lng = place.location?.longitude ?: 0.0
+                    val placeLat = place.location?.latitude ?: 0.0
+                    val placeLng = place.location?.longitude ?: 0.0
                     val name = place.displayName ?: "Selected Location"
                     val address = place.shortFormattedAddress ?: place.formattedAddress ?: ""
-                    onSelectJourneyDestination(lat, lng, name, address)
+                    onSelectJourneyDestination(placeLat, placeLng, name, address)
                     clearSearch()
                 } else {
                     onAddPlaceBtnClick(place?.id ?: "0")
                     clearSearch()
                 }
             },
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(52.dp),
+            shape = RoundedCornerShape(16.dp),
             colors = ButtonDefaults.buttonColors(
                 containerColor = MaterialTheme.colorScheme.primary,
                 contentColor = MaterialTheme.colorScheme.onPrimary
-            ),
-
-            modifier = Modifier.fillMaxWidth(),
-            shape = RoundedCornerShape(10.dp)
+            )
         ) {
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.Center,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Text(
-                    if (forJourney) "Select as Journey Destination" else "Add Place",
-                    fontFamily = manrope,
-                    fontWeight = FontWeight.SemiBold,
-                    fontSize = 16.sp
-                )
-
-                Spacer(modifier = Modifier.width(8.dp))
-
                 Icon(
-                    painter = painterResource(R.drawable.caret_circle_right),
-                    contentDescription = "caret circle right",
-                    modifier = Modifier.size(28.dp)
+                    painter = painterResource(
+                        if (forJourney) R.drawable.navigation_arrow else R.drawable.add
+                    ),
+                    contentDescription = null,
+                    modifier = Modifier.size(18.dp)
+                )
+                Spacer(modifier = Modifier.width(8.dp))
+                Text(
+                    text = if (forJourney) "Set as Destination" else "Add to Places",
+                    fontFamily = manrope,
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 15.sp
                 )
             }
+        }
+
+        // Dismiss / Cancel Button
+        TextButton(
+            onClick = {
+                clearSearch()
+                onDismiss()
+            },
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(44.dp)
+        ) {
+            Text(
+                text = "Cancel",
+                fontFamily = manrope,
+                fontWeight = FontWeight.SemiBold,
+                fontSize = 14.sp,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
         }
     }
 }
