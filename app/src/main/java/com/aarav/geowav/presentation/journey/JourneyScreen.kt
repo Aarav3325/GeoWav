@@ -182,6 +182,7 @@ fun JourneyScreen(
                     places = uiState.savedPlaces,
                     userLocation = uiState.userLocation,
                     isLoading = uiState.isLoadingPlaces,
+                    isOtherSharingActive = uiState.isOtherSharingActive,
                     onSelectPlace = { viewModel.selectPlace(it) },
                     onSelectCustomDestination = { dest -> viewModel.selectCustomDestination(dest) },
                     onNavigateToMapPicker = onNavigateToMapPicker
@@ -206,6 +207,7 @@ fun JourneyScreen(
                     destinationLng = uiState.customDestination?.longitude ?: 0.0,
                     selectedMembers = uiState.circleMembers.filter { it.id in uiState.selectedMemberIds },
                     isLoading = uiState.isActionLoading,
+                    isOtherSharingActive = uiState.isOtherSharingActive,
                     onStartJourney = { viewModel.startJourney(userPlan) },
                     onCancel = { viewModel.backToStep(JourneyStep.DESTINATION_SELECTION) }
                 )
@@ -294,6 +296,7 @@ private fun DestinationSelectionContent(
     places: List<Place>,
     userLocation: LatLng?,
     isLoading: Boolean,
+    isOtherSharingActive: Boolean = false,
     onSelectPlace: (Place) -> Unit,
     onSelectCustomDestination: (DestinationLocation) -> Unit,
     onNavigateToMapPicker: () -> Unit
@@ -326,6 +329,10 @@ private fun DestinationSelectionContent(
     }
 
     Column(modifier = Modifier.fillMaxSize()) {
+        if (isOtherSharingActive) {
+            SharingActiveWarningBanner(modifier = Modifier.padding(bottom = 12.dp))
+        }
+
         OutlinedTextField(
             value = searchQuery,
             onValueChange = { searchQuery = it },
@@ -828,6 +835,7 @@ private fun ConfirmationContent(
     destinationLng: Double,
     selectedMembers: List<CircleMember>,
     isLoading: Boolean,
+    isOtherSharingActive: Boolean = false,
     onStartJourney: () -> Unit,
     onCancel: () -> Unit
 ) {
@@ -944,16 +952,25 @@ private fun ConfirmationContent(
                 color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.8f),
                 modifier = Modifier.padding(horizontal = 2.dp)
             )
+
+            if (isOtherSharingActive) {
+                Spacer(modifier = Modifier.height(14.dp))
+                SharingActiveWarningBanner()
+            }
         }
 
         // Action Buttons at bottom
         Column(modifier = Modifier.padding(bottom = 12.dp)) {
             Button(
                 onClick = onStartJourney,
-                enabled = !isLoading,
+                enabled = !isLoading && !isOtherSharingActive,
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(14.dp),
-                colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary)
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = MaterialTheme.colorScheme.primary,
+                    disabledContainerColor = MaterialTheme.colorScheme.surfaceContainerHighest,
+                    disabledContentColor = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f)
+                )
             ) {
                 if (isLoading) {
                     CircularProgressIndicator(
@@ -963,7 +980,7 @@ private fun ConfirmationContent(
                     )
                 } else {
                     Text(
-                        text = "Start Journey",
+                        text = if (isOtherSharingActive) "Stop Active Sharing to Start" else "Start Journey",
                         fontFamily = manrope,
                         fontWeight = FontWeight.Bold,
                         fontSize = 15.sp,
@@ -1448,6 +1465,55 @@ private fun NotReachedContent(
                 fontWeight = FontWeight.SemiBold,
                 fontSize = 14.sp
             )
+        }
+    }
+}
+
+@Composable
+private fun SharingActiveWarningBanner(
+    modifier: Modifier = Modifier
+) {
+    Surface(
+        modifier = modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(16.dp),
+        color = MaterialTheme.colorScheme.errorContainer.copy(alpha = 0.85f),
+        border = BorderStroke(1.dp, MaterialTheme.colorScheme.error.copy(alpha = 0.3f))
+    ) {
+        Row(
+            modifier = Modifier.padding(horizontal = 14.dp, vertical = 12.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Surface(
+                shape = CircleShape,
+                color = MaterialTheme.colorScheme.error.copy(alpha = 0.2f),
+                modifier = Modifier.size(32.dp)
+            ) {
+                Box(contentAlignment = Alignment.Center) {
+                    Icon(
+                        painter = painterResource(id = R.drawable.info),
+                        contentDescription = null,
+                        tint = MaterialTheme.colorScheme.onErrorContainer,
+                        modifier = Modifier.size(16.dp)
+                    )
+                }
+            }
+            Spacer(modifier = Modifier.width(12.dp))
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    text = "Live Location Sharing Is Active",
+                    fontFamily = manrope,
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 13.sp,
+                    color = MaterialTheme.colorScheme.onErrorContainer
+                )
+                Text(
+                    text = "You must stop your active location sharing session before starting a journey.",
+                    fontFamily = manrope,
+                    fontSize = 12.sp,
+                    color = MaterialTheme.colorScheme.onErrorContainer.copy(alpha = 0.85f),
+                    lineHeight = 16.sp
+                )
+            }
         }
     }
 }

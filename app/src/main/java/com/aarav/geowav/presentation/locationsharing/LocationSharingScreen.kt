@@ -1292,6 +1292,11 @@ fun JourneyModeCard(
             (activeSession.status == com.aarav.geowav.data.model.SessionStatus.ACTIVE ||
              activeSession.status == com.aarav.geowav.data.model.SessionStatus.COMPLETED)
 
+    val isOtherSharingActive = activeSession != null &&
+            activeSession.mode != com.aarav.geowav.data.model.SessionMode.JOURNEY &&
+            (activeSession.status == com.aarav.geowav.data.model.SessionStatus.ACTIVE ||
+             activeSession.status == com.aarav.geowav.data.model.SessionStatus.PAUSED)
+
     if (isJourneyActive && activeSession != null) {
         com.aarav.geowav.presentation.home.JourneyInProgressCard(
             session = activeSession,
@@ -1343,7 +1348,11 @@ fun JourneyModeCard(
                     )
                     Spacer(modifier = Modifier.height(4.dp))
                     Text(
-                        text = if (isJourneyActive) "Sharing location until you arrive" else "Share your location until you arrive",
+                        text = when {
+                            isOtherSharingActive -> "Stop live sharing to start a journey"
+                            isJourneyActive -> "Sharing location until you arrive"
+                            else -> "Share your location until you arrive"
+                        },
                         fontFamily = manrope,
                         fontWeight = FontWeight.Normal,
                         fontSize = 13.sp,
