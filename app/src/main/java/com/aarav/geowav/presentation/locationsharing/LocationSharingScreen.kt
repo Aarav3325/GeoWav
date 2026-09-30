@@ -274,7 +274,6 @@ fun LocationSharingContent(
 
     Column(
         modifier = modifier.fillMaxSize()
-            .navigationBarsPadding()
     ) {
         // Pinned Top Bar with Live Location title and SOS Pill
         LiveLocationTopBar(
@@ -300,7 +299,7 @@ fun LocationSharingContent(
 
         LazyColumn(
             state = lazyState,
-            contentPadding = PaddingValues(top = 8.dp, bottom = 96.dp),
+            contentPadding = PaddingValues(top = 8.dp, bottom = 128.dp),
             modifier = Modifier
                 .fillMaxSize()
                 .background(MaterialTheme.colorScheme.background)
