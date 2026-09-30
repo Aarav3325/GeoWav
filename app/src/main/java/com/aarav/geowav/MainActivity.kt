@@ -274,11 +274,11 @@ class MainActivity : ComponentActivity() {
                 ) {
 
 
-//                    val controller = WindowInsetsControllerCompat(
-//                        window,
-//                        View(applicationContext)
-//                    )
-//                    controller.isAppearanceLightStatusBars = !isDark
+                    val controller = WindowInsetsControllerCompat(
+                        window,
+                        View(applicationContext)
+                    )
+                    controller.isAppearanceLightStatusBars = !isDark
 
 
                     val fineLocationPermission =
