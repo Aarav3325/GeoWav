@@ -30,6 +30,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.imePadding
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -54,6 +55,7 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
@@ -67,15 +69,20 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.draw.scale
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
@@ -100,24 +107,23 @@ import com.aarav.geowav.presentation.theme.manrope
 @Composable
 private fun SectionLabel(text: String, modifier: Modifier = Modifier) {
     Row(
-        modifier = modifier.padding(vertical = 6.dp),
+        modifier = modifier.padding(vertical = 4.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
         Box(
             modifier = Modifier
-                .width(4.dp)
-                .height(14.dp)
+                .width(3.5.dp)
+                .height(13.dp)
                 .clip(RoundedCornerShape(2.dp))
                 .background(MaterialTheme.colorScheme.primary)
         )
         Spacer(Modifier.width(8.dp))
         Text(
-            text = text.uppercase(),
+            text = text,
             fontFamily = manrope,
-            fontSize = 11.sp,
-            fontWeight = FontWeight.Bold,
-            letterSpacing = 0.08.sp,
-            color = MaterialTheme.colorScheme.primary
+            fontSize = 13.sp,
+            fontWeight = FontWeight.SemiBold,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
         )
     }
 }
@@ -126,12 +132,11 @@ private fun SectionLabel(text: String, modifier: Modifier = Modifier) {
 @Composable
 private fun FieldLabel(text: String) {
     Text(
-        text = text.uppercase(),
+        text = text,
         fontFamily = manrope,
-        fontSize = 11.sp,
+        fontSize = 12.sp,
         fontWeight = FontWeight.SemiBold,
-        letterSpacing = 0.05.sp,
-        color = MaterialTheme.colorScheme.outline
+        color = MaterialTheme.colorScheme.onSurfaceVariant
     )
 }
 
@@ -165,6 +170,7 @@ fun CircleScreen(
                 is CircleUiEvent.ShowError -> SnackbarManager.showMessage(event.message)
                 is CircleUiEvent.InviteAccepted -> SnackbarManager.showMessage("Invite Accepted")
                 is CircleUiEvent.MemberDeleted -> SnackbarManager.showMessage("Member deleted")
+                is CircleUiEvent.LocationRequestSent -> SnackbarManager.showMessage("Location request sent to ${event.recipientName}")
                 is CircleUiEvent.ShowUpgrade -> upgradeContext = event.context
             }
         }
@@ -193,7 +199,7 @@ fun CircleScreen(
                     IconButton(onClick = { back() }) {
                         Icon(
                             painter = painterResource(R.drawable.back),
-                            contentDescription = null,
+                            contentDescription = "Back",
                             modifier = Modifier.size(24.dp)
                         )
                     }
@@ -233,7 +239,14 @@ fun CircleScreen(
                 onRejectInvite = viewModel::rejectInvite,
                 onDeleteMember = viewModel::showDeleteDialog,
                 dismissDialog = viewModel::hideDeleteDialog,
-                deleteMember = viewModel::deleteMember
+                deleteMember = viewModel::deleteMember,
+                onRequestLocation = viewModel::requestLocation,
+                onUpgradeClick = {
+                    val nextPlan = FeatureAccess.nextPlan(plan)
+                    if (nextPlan != null) {
+                        upgradeContext = UpgradeContext(upgradeTo = nextPlan, reason = com.aarav.geowav.data.model.UpgradeReason.MaxConnections)
+                    }
+                }
             )
         }
     }
@@ -253,8 +266,11 @@ fun CircleContent(
     onDeleteMember: () -> Unit,
     dismissDialog: () -> Unit,
     deleteMember: (String) -> Unit,
+    onRequestLocation: (String, String) -> Unit,
+    onUpgradeClick: () -> Unit = {}
 ) {
     var confirmDeleteFor by remember { mutableStateOf<String?>(null) }
+    var pendingRequestMember by remember { mutableStateOf<CircleMember?>(null) }
 
     DeleteDialog(
         shouldShowDialog = uiState.showDeleteDialog && confirmDeleteFor != null,
@@ -272,29 +288,52 @@ fun CircleContent(
         }
     }
 
+    pendingRequestMember?.let { member ->
+        CustomBottomSheet(
+            onDismissRequest = {
+                if (uiState.requestingLocationMemberId == null) {
+                    pendingRequestMember = null
+                }
+            }
+        ) {
+            RequestLocationBottomSheetContent(
+                member = member,
+                isLoading = uiState.requestingLocationMemberId == member.id,
+                onConfirm = {
+                    val displayName = member.alias?.takeIf { it.isNotBlank() } ?: member.profileName
+                    onRequestLocation(member.id, displayName)
+                    pendingRequestMember = null
+                },
+                onDismiss = { pendingRequestMember = null }
+            )
+        }
+    }
+
     LazyColumn(
         modifier = modifier
             .fillMaxSize()
             .imePadding()
             .background(MaterialTheme.colorScheme.background),
-        verticalArrangement = Arrangement.spacedBy(8.dp),
+        verticalArrangement = Arrangement.spacedBy(4.dp),
         contentPadding = androidx.compose.foundation.layout.PaddingValues(
-            top = 8.dp,
-            bottom = 32.dp
+            top = 6.dp,
+            bottom = 40.dp
         )
     ) {
         item {
             SectionLabel(
-                text = "My circle",
-                modifier = Modifier.padding(top = 4.dp, start = 12.dp, end = 12.dp)
+                text = "My Circle",
+                modifier = Modifier.padding(top = 4.dp, start = 16.dp, end = 16.dp)
             )
         }
         item {
             MyCircleSection(
                 lovedOnesList = uiState.lovedOnes,
                 deletingMemberId = uiState.deletingMemberId,
+                requestingLocationMemberId = uiState.requestingLocationMemberId,
                 onDeleteMember = onDeleteMember,
-                confirmDelete = { confirmDeleteFor = it }
+                confirmDelete = { confirmDeleteFor = it },
+                onRequestLocation = { member -> pendingRequestMember = member }
             )
         }
 
@@ -303,14 +342,15 @@ fun CircleContent(
                 current = uiState.lovedOnes.size,
                 plan = userPlan,
                 isLoading = uiState.isLoading,
-                modifier = Modifier.padding(horizontal = 12.dp, vertical = 4.dp)
+                onUpgradeClick = onUpgradeClick,
+                modifier = Modifier.padding(horizontal = 16.dp, vertical = 6.dp)
             )
         }
 
         item {
             SectionLabel(
-                text = "Invite someone you trust",
-                modifier = Modifier.padding(top = 8.dp, start = 12.dp, end = 12.dp)
+                text = "Invite Someone You Trust",
+                modifier = Modifier.padding(top = 8.dp, start = 16.dp, end = 16.dp)
             )
         }
         item {
@@ -327,8 +367,8 @@ fun CircleContent(
         if (uiState.pendingInvites.isNotEmpty()) {
             item {
                 SectionLabel(
-                    text = "Pending invites",
-                    modifier = Modifier.padding(top = 8.dp, start = 12.dp, end = 12.dp)
+                    text = "Pending Invites",
+                    modifier = Modifier.padding(top = 8.dp, start = 16.dp, end = 16.dp)
                 )
             }
             item {
@@ -355,20 +395,19 @@ fun AddLovedOneCard(
     onSendInvite: (String, String, UserPlan) -> Unit
 ) {
     Card(
-        shape = RoundedCornerShape(20.dp),
+        shape = RoundedCornerShape(24.dp),
         colors = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.surfaceContainer
         ),
-        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.3f)),
+        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.35f)),
         modifier = Modifier
             .fillMaxWidth()
-            .padding(horizontal = 12.dp, vertical = 4.dp),
+            .padding(horizontal = 16.dp, vertical = 6.dp),
         elevation = CardDefaults.cardElevation(0.dp)
     ) {
-        Column(Modifier.padding(16.dp)) {
+        Column(Modifier.padding(18.dp)) {
 
             val focusRequester = remember { FocusRequester() }
-
 
             Text(
                 text = "Bring someone into your circle",
@@ -376,29 +415,30 @@ fun AddLovedOneCard(
                     fontWeight = FontWeight.SemiBold,
                     fontFamily = manrope
                 ),
-                fontSize = 16.sp
+                fontSize = 16.sp,
+                color = MaterialTheme.colorScheme.onSurface
             )
             Spacer(Modifier.height(2.dp))
             Text(
-                text = "They'll receive an email when you're ready to stay connected",
+                text = "They'll receive an email invitation to stay connected in real-time.",
                 fontFamily = manrope,
-                fontSize = 12.sp,
-                color = MaterialTheme.colorScheme.outline
+                fontSize = 13.sp,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
             )
 
             Spacer(Modifier.height(16.dp))
 
-            FieldLabel("Name")
-            Spacer(Modifier.height(5.dp))
+            FieldLabel("Full Name")
+            Spacer(Modifier.height(6.dp))
             OutlinedTextField(
                 value = uiState.name,
                 onValueChange = { nameUpdate(it) },
                 placeholder = {
                     Text(
-                        "Enter their name",
+                        "Dhruv Mehta",
                         fontFamily = manrope,
                         fontSize = 14.sp,
-                        color = MaterialTheme.colorScheme.outline
+                        color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f)
                     )
                 },
                 isError = uiState.nameError != null,
@@ -428,34 +468,34 @@ fun AddLovedOneCard(
                         painter = painterResource(R.drawable.user),
                         contentDescription = null,
                         modifier = Modifier.size(20.dp),
-                        tint = MaterialTheme.colorScheme.outline
+                        tint = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 },
                 colors = TextFieldDefaults.colors(
                     focusedContainerColor = MaterialTheme.colorScheme.surfaceContainerLow,
                     unfocusedContainerColor = MaterialTheme.colorScheme.surfaceContainerLow,
                     focusedIndicatorColor = MaterialTheme.colorScheme.primary,
-                    unfocusedIndicatorColor = MaterialTheme.colorScheme.outlineVariant,
+                    unfocusedIndicatorColor = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f),
                     cursorColor = MaterialTheme.colorScheme.primary
                 ),
-                shape = RoundedCornerShape(14.dp)
+                shape = RoundedCornerShape(16.dp)
             )
 
             val focusManager = LocalFocusManager.current
 
-            Spacer(Modifier.height(4.dp))
+            Spacer(Modifier.height(6.dp))
 
-            FieldLabel("Email")
-            Spacer(Modifier.height(5.dp))
+            FieldLabel("Email Address")
+            Spacer(Modifier.height(6.dp))
             OutlinedTextField(
                 value = uiState.email,
                 onValueChange = { emailUpdate(it) },
                 placeholder = {
                     Text(
-                        "Enter their email",
+                        "dhruv@example.com",
                         fontFamily = manrope,
                         fontSize = 14.sp,
-                        color = MaterialTheme.colorScheme.outline
+                        color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f)
                     )
                 },
                 isError = uiState.emailError != null,
@@ -485,20 +525,20 @@ fun AddLovedOneCard(
                         painter = painterResource(R.drawable.email),
                         contentDescription = null,
                         modifier = Modifier.size(20.dp),
-                        tint = MaterialTheme.colorScheme.outline
+                        tint = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 },
                 colors = TextFieldDefaults.colors(
                     focusedContainerColor = MaterialTheme.colorScheme.surfaceContainerLow,
                     unfocusedContainerColor = MaterialTheme.colorScheme.surfaceContainerLow,
                     focusedIndicatorColor = MaterialTheme.colorScheme.primary,
-                    unfocusedIndicatorColor = MaterialTheme.colorScheme.outlineVariant,
+                    unfocusedIndicatorColor = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f),
                     cursorColor = MaterialTheme.colorScheme.primary
                 ),
-                shape = RoundedCornerShape(14.dp)
+                shape = RoundedCornerShape(16.dp)
             )
 
-            Spacer(Modifier.height(8.dp))
+            Spacer(Modifier.height(10.dp))
 
             SendInviteButton(!isLoading) {
                 focusManager.clearFocus()
@@ -588,18 +628,20 @@ fun SendInviteButton(
 fun MyCircleSection(
     lovedOnesList: List<CircleMember>,
     deletingMemberId: String?,
+    requestingLocationMemberId: String? = null,
     onDeleteMember: () -> Unit,
     confirmDelete: (String) -> Unit,
+    onRequestLocation: (CircleMember) -> Unit,
 ) {
     Card(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(horizontal = 12.dp, vertical = 4.dp),
+            .padding(horizontal = 16.dp, vertical = 6.dp),
         colors = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.surfaceContainer
         ),
-        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.3f)),
-        shape = RoundedCornerShape(20.dp),
+        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.35f)),
+        shape = RoundedCornerShape(24.dp),
         elevation = CardDefaults.cardElevation(0.dp)
     ) {
         Column(modifier = Modifier.animateContentSize()) {
@@ -607,7 +649,7 @@ fun MyCircleSection(
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = 16.dp, vertical = 14.dp),
+                    .padding(horizontal = 18.dp, vertical = 16.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
@@ -616,22 +658,23 @@ fun MyCircleSection(
                         fontWeight = FontWeight.SemiBold,
                         fontFamily = manrope
                     ),
-                    fontSize = 15.sp,
+                    fontSize = 16.sp,
+                    color = MaterialTheme.colorScheme.onSurface,
                     modifier = Modifier.weight(1f)
                 )
 
                 if (lovedOnesList.isNotEmpty()) {
-
                     Surface(
                         shape = RoundedCornerShape(99.dp),
-                        color = MaterialTheme.colorScheme.primaryContainer
+                        color = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.6f),
+                        border = BorderStroke(1.dp, MaterialTheme.colorScheme.primary.copy(alpha = 0.2f))
                     ) {
                         Text(
                             text = "${lovedOnesList.size} in circle",
                             fontFamily = manrope,
                             fontWeight = FontWeight.SemiBold,
                             fontSize = 12.sp,
-                            color = MaterialTheme.colorScheme.onPrimaryContainer,
+                            color = MaterialTheme.colorScheme.primary,
                             modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp)
                         )
                     }
@@ -639,14 +682,15 @@ fun MyCircleSection(
             }
 
             if (lovedOnesList.isEmpty()) {
-                val infiniteTransition = rememberInfiniteTransition()
+                val infiniteTransition = rememberInfiniteTransition(label = "EmptyCirclePulse")
                 val scale by infiniteTransition.animateFloat(
-                    initialValue = 0.92f,
-                    targetValue = 1.08f,
+                    initialValue = 0.94f,
+                    targetValue = 1.06f,
                     animationSpec = infiniteRepeatable(
-                        animation = tween(1800, easing = EaseInOut),
+                        animation = tween(2000, easing = EaseInOut),
                         repeatMode = RepeatMode.Reverse
-                    )
+                    ),
+                    label = "EmptyCircleScale"
                 )
 
                 Column(
@@ -661,14 +705,14 @@ fun MyCircleSection(
                             .size(56.dp)
                             .scale(scale)
                             .clip(CircleShape)
-                            .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.08f)),
+                            .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.1f)),
                         contentAlignment = Alignment.Center
                     ) {
                         Icon(
                             painter = painterResource(R.drawable.user),
                             contentDescription = null,
                             tint = MaterialTheme.colorScheme.primary,
-                            modifier = Modifier.size(24.dp)
+                            modifier = Modifier.size(26.dp)
                         )
                     }
                     Spacer(Modifier.height(16.dp))
@@ -680,15 +724,15 @@ fun MyCircleSection(
                         color = MaterialTheme.colorScheme.onSurface,
                         textAlign = TextAlign.Center
                     )
-                    Spacer(Modifier.height(8.dp))
+                    Spacer(Modifier.height(6.dp))
                     Text(
                         text = "Add friends or family members below to stay connected and view real-time location sharing.",
                         fontFamily = manrope,
                         fontWeight = FontWeight.Normal,
                         fontSize = 13.sp,
-                        color = MaterialTheme.colorScheme.outline,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
                         textAlign = TextAlign.Center,
-                        lineHeight = 18.sp
+                        lineHeight = 19.sp
                     )
                 }
             } else {
@@ -696,8 +740,8 @@ fun MyCircleSection(
                     if (index > 0) {
                         HorizontalDivider(
                             thickness = 0.5.dp,
-                            color = MaterialTheme.colorScheme.outlineVariant,
-                            modifier = Modifier.padding(horizontal = 16.dp)
+                            color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.25f),
+                            modifier = Modifier.padding(horizontal = 18.dp)
                         )
                     }
                     LovedOneCardCircle(
@@ -705,11 +749,13 @@ fun MyCircleSection(
                         index = index,
                         count = lovedOnesList.size,
                         deletingMemberId = deletingMemberId,
+                        requestingLocationMemberId = requestingLocationMemberId,
                         onDeleteMember = onDeleteMember,
-                        confirmDelete = confirmDelete
+                        confirmDelete = confirmDelete,
+                        onRequestLocation = onRequestLocation
                     )
                 }
-                Spacer(Modifier.height(4.dp))
+                Spacer(Modifier.height(6.dp))
             }
         }
     }
@@ -725,16 +771,21 @@ fun PendingInviteSection(
     rejectInvite: (String) -> Unit
 ) {
     var expanded by remember { mutableStateOf(false) }
+    val chevronRotation by animateFloatAsState(
+        targetValue = if (expanded) 180f else 0f,
+        animationSpec = tween(durationMillis = 250, easing = EaseInOut),
+        label = "ChevronRotation"
+    )
 
     Card(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(horizontal = 12.dp, vertical = 4.dp),
+            .padding(horizontal = 16.dp, vertical = 6.dp),
         colors = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.surfaceContainer
         ),
-        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.3f)),
-        shape = RoundedCornerShape(20.dp),
+        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.35f)),
+        shape = RoundedCornerShape(24.dp),
         elevation = CardDefaults.cardElevation(0.dp)
     ) {
         Column(modifier = Modifier.animateContentSize()) {
@@ -742,8 +793,9 @@ fun PendingInviteSection(
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
+                    .clip(RoundedCornerShape(topStart = 24.dp, topEnd = 24.dp))
                     .clickable(enabled = pendingInvites.isNotEmpty()) { expanded = !expanded }
-                    .padding(horizontal = 16.dp, vertical = 14.dp),
+                    .padding(horizontal = 18.dp, vertical = 16.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
@@ -752,38 +804,36 @@ fun PendingInviteSection(
                         fontWeight = FontWeight.SemiBold,
                         fontFamily = manrope
                     ),
-                    fontSize = 15.sp,
+                    fontSize = 16.sp,
+                    color = MaterialTheme.colorScheme.onSurface,
                     modifier = Modifier.weight(1f)
                 )
 
                 if (pendingInvites.isNotEmpty()) {
-
-                    Box(
-                        contentAlignment = Alignment.Center,
-                        modifier = Modifier
-                            .size(22.dp)
-                            .clip(CircleShape)
-                            .background(MaterialTheme.colorScheme.primaryFixedDim)
+                    Surface(
+                        shape = RoundedCornerShape(99.dp),
+                        color = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.6f),
+                        border = BorderStroke(1.dp, MaterialTheme.colorScheme.primary.copy(alpha = 0.2f))
                     ) {
                         Text(
-                            text = pendingInvites.size.toString(),
+                            text = "${pendingInvites.size}",
                             fontFamily = manrope,
-                            fontWeight = FontWeight.SemiBold,
-                            color = MaterialTheme.colorScheme.onPrimaryFixed,
+                            fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.primary,
                             fontSize = 12.sp,
-                            textAlign = TextAlign.Center
+                            modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp)
                         )
                     }
-                    Spacer(Modifier.width(8.dp))
+                    Spacer(Modifier.width(10.dp))
                 }
 
                 Icon(
-                    painter = painterResource(
-                        if (expanded) R.drawable.up_arrow else R.drawable.down_arrow
-                    ),
-                    contentDescription = null,
-                    tint = MaterialTheme.colorScheme.outline,
-                    modifier = Modifier.size(18.dp)
+                    painter = painterResource(R.drawable.down_arrow),
+                    contentDescription = if (expanded) "Collapse" else "Expand",
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier
+                        .size(18.dp)
+                        .rotate(chevronRotation)
                 )
             }
 
@@ -791,12 +841,12 @@ fun PendingInviteSection(
                 Text(
                     text = "No pending invites",
                     fontFamily = manrope,
-                    fontSize = 14.sp,
-                    color = MaterialTheme.colorScheme.outline,
+                    fontSize = 13.sp,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                     textAlign = TextAlign.Center,
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(bottom = 18.dp)
+                        .padding(bottom = 20.dp, top = 4.dp)
                 )
             }
 
@@ -804,8 +854,8 @@ fun PendingInviteSection(
                 pendingInvites.forEachIndexed { index, invite ->
                     HorizontalDivider(
                         thickness = 0.5.dp,
-                        color = MaterialTheme.colorScheme.outlineVariant,
-                        modifier = Modifier.padding(horizontal = 16.dp)
+                        color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.25f),
+                        modifier = Modifier.padding(horizontal = 18.dp)
                     )
                     PendingInviteRow(
                         acceptingInviteId = acceptingInviteId,
@@ -817,7 +867,7 @@ fun PendingInviteSection(
                         onDecline = rejectInvite
                     )
                 }
-                Spacer(Modifier.height(4.dp))
+                Spacer(Modifier.height(6.dp))
             }
         }
     }
@@ -831,10 +881,11 @@ fun LovedOneCardCircle(
     index: Int,
     count: Int,
     deletingMemberId: String? = null,
-    onDeleteMember: () -> Unit,
-    confirmDelete: (String) -> Unit
+    requestingLocationMemberId: String? = null,
+    onDeleteMember: () -> Unit = {},
+    confirmDelete: (String) -> Unit = {},
+    onRequestLocation: (CircleMember) -> Unit = {}
 ) {
-
     val (avatarBg, avatarFg) = when (index % 3) {
         0 -> Pair(
             MaterialTheme.colorScheme.primaryContainer,
@@ -855,15 +906,15 @@ fun LovedOneCardCircle(
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(horizontal = 16.dp, vertical = 12.dp),
+            .padding(horizontal = 18.dp, vertical = 12.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
         Box(
             modifier = Modifier
-                .size(50.dp)
+                .size(48.dp)
                 .border(
-                    width = 1.5.dp,
-                    color = avatarBg.copy(alpha = 0.4f),
+                    width = 1.dp,
+                    color = avatarBg.copy(alpha = 0.5f),
                     shape = CircleShape
                 ),
             contentAlignment = Alignment.Center
@@ -877,7 +928,7 @@ fun LovedOneCardCircle(
             )
         }
 
-        Spacer(Modifier.width(12.dp))
+        Spacer(Modifier.width(14.dp))
 
         Column(modifier = Modifier.weight(1f)) {
             Text(
@@ -885,52 +936,115 @@ fun LovedOneCardCircle(
                 color = MaterialTheme.colorScheme.onSurface,
                 fontFamily = manrope,
                 fontWeight = FontWeight.SemiBold,
-                fontSize = 15.sp
+                fontSize = 15.sp,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis
             )
             Spacer(Modifier.height(2.dp))
             Text(
                 text = presenceContext,
-                color = MaterialTheme.colorScheme.outline,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
                 fontFamily = manrope,
-                fontWeight = FontWeight.Medium,
-                fontSize = 12.sp
+                fontWeight = FontWeight.Normal,
+                fontSize = 12.sp,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis
             )
         }
 
+        val isRequesting = requestingLocationMemberId == connection.id
         val isDeleting = deletingMemberId == connection.id
-        val isAnyDeleting = deletingMemberId != null
+        val isAnyActionBusy = deletingMemberId != null || requestingLocationMemberId != null
 
-        if (isDeleting) {
-            Box(
-                modifier = Modifier.size(32.dp),
-                contentAlignment = Alignment.Center
-            ) {
-                CircularProgressIndicator(
-                    modifier = Modifier.size(16.dp),
-                    color = MaterialTheme.colorScheme.primary,
-                    strokeWidth = 2.dp
-                )
-            }
-        } else {
-            IconButton(
-                onClick = {
-                    onDeleteMember()
-                    confirmDelete(connection.id)
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            // Refined Request Location Action Pill
+            Surface(
+                onClick = { onRequestLocation(connection) },
+                enabled = !isAnyActionBusy,
+                shape = RoundedCornerShape(99.dp),
+                color = if (isRequesting) {
+                    MaterialTheme.colorScheme.primaryContainer
+                } else {
+                    MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.6f)
                 },
-                enabled = !isAnyDeleting,
-                modifier = Modifier
-                    .size(32.dp)
-                    .clip(CircleShape)
+                border = BorderStroke(
+                    1.dp,
+                    if (isRequesting) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.primary.copy(alpha = 0.25f)
+                ),
+                contentColor = MaterialTheme.colorScheme.onPrimaryContainer
             ) {
-                Icon(
-                    painter = painterResource(R.drawable.trash),
-                    contentDescription = "Remove member",
-                    tint = if (isAnyDeleting)
-                        MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.38f)
-                    else
-                        MaterialTheme.colorScheme.outlineVariant,
-                    modifier = Modifier.size(18.dp)
-                )
+                Row(
+                    modifier = Modifier.padding(horizontal = 12.dp, vertical = 7.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(6.dp)
+                ) {
+                    if (isRequesting) {
+                        CircularProgressIndicator(
+                            modifier = Modifier.size(13.dp),
+                            color = MaterialTheme.colorScheme.primary,
+                            strokeWidth = 2.dp
+                        )
+                        Text(
+                            text = "Asking...",
+                            fontFamily = manrope,
+                            fontWeight = FontWeight.SemiBold,
+                            fontSize = 12.sp,
+                            color = MaterialTheme.colorScheme.primary
+                        )
+                    } else {
+                        Icon(
+                            painter = painterResource(R.drawable.location_sharing),
+                            contentDescription = null,
+                            tint = MaterialTheme.colorScheme.primary,
+                            modifier = Modifier.size(15.dp)
+                        )
+                        Text(
+                            text = "Request",
+                            fontFamily = manrope,
+                            fontWeight = FontWeight.SemiBold,
+                            fontSize = 12.sp,
+                            color = MaterialTheme.colorScheme.onPrimaryContainer
+                        )
+                    }
+                }
+            }
+
+            // Delete Member Action Button
+            if (isDeleting) {
+                Box(
+                    modifier = Modifier.size(36.dp),
+                    contentAlignment = Alignment.Center
+                ) {
+                    CircularProgressIndicator(
+                        modifier = Modifier.size(16.dp),
+                        color = MaterialTheme.colorScheme.outline,
+                        strokeWidth = 2.dp
+                    )
+                }
+            } else {
+                IconButton(
+                    onClick = {
+                        onDeleteMember()
+                        confirmDelete(connection.id)
+                    },
+                    enabled = !isAnyActionBusy,
+                    modifier = Modifier
+                        .size(36.dp)
+                        .clip(CircleShape)
+                ) {
+                    Icon(
+                        painter = painterResource(R.drawable.trash),
+                        contentDescription = "Remove $displayName from circle",
+                        tint = if (isAnyActionBusy)
+                            MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.38f)
+                        else
+                            MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.65f),
+                        modifier = Modifier.size(17.dp)
+                    )
+                }
             }
         }
     }
@@ -964,7 +1078,6 @@ fun PendingInviteRow(
 
     val isAccepting = acceptingInviteId == connection.senderId
     val isDeclining = rejectingInviteId == connection.senderId
-    val isRowBusy = isAccepting || isDeclining
     val isAnyInviteBusy = acceptingInviteId != null || rejectingInviteId != null
 
     val isAcceptEnabled = !isAnyInviteBusy
@@ -983,7 +1096,7 @@ fun PendingInviteRow(
     val declineBg = when {
         isDeclining -> MaterialTheme.colorScheme.errorContainer
         isAnyInviteBusy -> MaterialTheme.colorScheme.surfaceVariant
-        else -> MaterialTheme.colorScheme.errorContainer
+        else -> MaterialTheme.colorScheme.errorContainer.copy(alpha = 0.7f)
     }
     val declineFg = when {
         isDeclining -> MaterialTheme.colorScheme.onErrorContainer
@@ -994,12 +1107,12 @@ fun PendingInviteRow(
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(horizontal = 16.dp, vertical = 10.dp),
+            .padding(horizontal = 18.dp, vertical = 12.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
         Box(
             modifier = Modifier
-                .size(38.dp)
+                .size(40.dp)
                 .clip(CircleShape)
                 .background(avatarBg),
             contentAlignment = Alignment.Center
@@ -1021,67 +1134,70 @@ fun PendingInviteRow(
             fontWeight = FontWeight.Medium,
             fontSize = 14.sp,
             color = MaterialTheme.colorScheme.onSurface,
-            modifier = Modifier.weight(1f)
+            modifier = Modifier.weight(1f),
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis
         )
 
-
-        Surface(
-            shape = RoundedCornerShape(10.dp),
-            color = acceptBg,
-            modifier = Modifier.clickable(enabled = isAcceptEnabled) {
-                onAccept(connection.senderId)
-            }
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
         ) {
-            Box(
-                contentAlignment = Alignment.Center,
-                modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp)
+            Surface(
+                shape = RoundedCornerShape(10.dp),
+                color = acceptBg,
+                modifier = Modifier.clickable(enabled = isAcceptEnabled) {
+                    onAccept(connection.senderId)
+                }
             ) {
-                if (isAccepting) {
-                    CircularProgressIndicator(
-                        modifier = Modifier.size(16.dp),
-                        color = acceptFg,
-                        strokeWidth = 2.dp
-                    )
-                } else {
-                    Text(
-                        text = "Accept",
-                        fontFamily = manrope,
-                        fontWeight = FontWeight.SemiBold,
-                        fontSize = 12.sp,
-                        color = acceptFg
-                    )
+                Box(
+                    contentAlignment = Alignment.Center,
+                    modifier = Modifier.padding(horizontal = 12.dp, vertical = 7.dp)
+                ) {
+                    if (isAccepting) {
+                        CircularProgressIndicator(
+                            modifier = Modifier.size(15.dp),
+                            color = acceptFg,
+                            strokeWidth = 2.dp
+                        )
+                    } else {
+                        Text(
+                            text = "Accept",
+                            fontFamily = manrope,
+                            fontWeight = FontWeight.SemiBold,
+                            fontSize = 12.sp,
+                            color = acceptFg
+                        )
+                    }
                 }
             }
-        }
 
-        Spacer(Modifier.width(6.dp))
-
-
-        Surface(
-            shape = RoundedCornerShape(10.dp),
-            color = declineBg,
-            modifier = Modifier.clickable(enabled = isDeclineEnabled) {
-                onDecline(connection.senderId)
-            }
-        ) {
-            Box(
-                contentAlignment = Alignment.Center,
-                modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp)
+            Surface(
+                shape = RoundedCornerShape(10.dp),
+                color = declineBg,
+                modifier = Modifier.clickable(enabled = isDeclineEnabled) {
+                    onDecline(connection.senderId)
+                }
             ) {
-                if (isDeclining) {
-                    CircularProgressIndicator(
-                        modifier = Modifier.size(16.dp),
-                        color = declineFg,
-                        strokeWidth = 2.dp
-                    )
-                } else {
-                    Text(
-                        text = "Decline",
-                        fontFamily = manrope,
-                        fontWeight = FontWeight.SemiBold,
-                        fontSize = 12.sp,
-                        color = declineFg
-                    )
+                Box(
+                    contentAlignment = Alignment.Center,
+                    modifier = Modifier.padding(horizontal = 12.dp, vertical = 7.dp)
+                ) {
+                    if (isDeclining) {
+                        CircularProgressIndicator(
+                            modifier = Modifier.size(15.dp),
+                            color = declineFg,
+                            strokeWidth = 2.dp
+                        )
+                    } else {
+                        Text(
+                            text = "Decline",
+                            fontFamily = manrope,
+                            fontWeight = FontWeight.SemiBold,
+                            fontSize = 12.sp,
+                            color = declineFg
+                        )
+                    }
                 }
             }
         }
@@ -1128,6 +1244,7 @@ fun ConnectionUsageCard(
     textSize: TextUnit? = null,
     showPlanInfo: Boolean = true,
     isLoading: Boolean = false,
+    onUpgradeClick: (() -> Unit)? = null,
     modifier: Modifier = Modifier
 ) {
     val max = FeatureAccess.maxConnections(plan)
@@ -1140,18 +1257,17 @@ fun ConnectionUsageCard(
         UserPlan.PRO -> "GeoWav Pro"
     }
 
-    val usageText = if (isUnlimited) "$current connection" else "$current / $max connections used"
-
+    val usageText = if (isUnlimited) "$current active connections" else "$current / $max connections used"
 
     val cardBg = if (isLimitReached)
-        MaterialTheme.colorScheme.errorContainer
+        MaterialTheme.colorScheme.errorContainer.copy(alpha = 0.35f)
     else
         MaterialTheme.colorScheme.surfaceContainer
 
     val cardBorder = if (isLimitReached)
-        BorderStroke(1.dp, MaterialTheme.colorScheme.error.copy(alpha = 0.5f))
+        BorderStroke(1.dp, MaterialTheme.colorScheme.error.copy(alpha = 0.45f))
     else
-        BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.3f))
+        BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.35f))
 
     val cardFg = if (isLimitReached)
         MaterialTheme.colorScheme.onErrorContainer
@@ -1159,24 +1275,23 @@ fun ConnectionUsageCard(
         MaterialTheme.colorScheme.onSurface
 
     val cardFgMuted = if (isLimitReached)
-        cardFg.copy(alpha = 0.65f)
+        MaterialTheme.colorScheme.error
     else
-        MaterialTheme.colorScheme.outline
-
+        MaterialTheme.colorScheme.onSurfaceVariant
 
     val badgeBg = if (isLimitReached)
         MaterialTheme.colorScheme.error
     else
-        MaterialTheme.colorScheme.surfaceContainerLow
+        MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.6f)
 
     val badgeFg = if (isLimitReached)
         MaterialTheme.colorScheme.onError
     else
-        MaterialTheme.colorScheme.outline
+        MaterialTheme.colorScheme.primary
 
     Card(
         modifier = modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(20.dp),
+        shape = RoundedCornerShape(24.dp),
         colors = CardDefaults.cardColors(containerColor = cardBg),
         border = cardBorder,
         elevation = CardDefaults.cardElevation(0.dp)
@@ -1234,14 +1349,15 @@ fun ConnectionUsageCard(
                     ) {
                         Text(
                             text = planText,
-                            fontSize = 12.sp,
-                            fontWeight = FontWeight.Medium,
+                            fontSize = 13.sp,
+                            fontWeight = FontWeight.SemiBold,
                             fontFamily = manrope,
                             color = cardFgMuted
                         )
                         Surface(
                             shape = RoundedCornerShape(99.dp),
-                            color = badgeBg
+                            color = badgeBg,
+                            border = if (!isLimitReached) BorderStroke(1.dp, MaterialTheme.colorScheme.primary.copy(alpha = 0.2f)) else null
                         ) {
                             Text(
                                 text = if (isLimitReached) "Limit reached" else "Active",
@@ -1257,21 +1373,21 @@ fun ConnectionUsageCard(
 
                 Text(
                     text = usageText,
-                    fontSize = textSize ?: 18.sp,
+                    fontSize = textSize ?: 17.sp,
                     fontWeight = FontWeight.SemiBold,
                     fontFamily = manrope,
                     color = cardFg
                 )
 
                 if (!isUnlimited) {
-                    val targetProgress = current.toFloat() / max
+                    val targetProgress = (current.toFloat() / max).coerceIn(0f, 1f)
                     var progressAnimatable by remember { mutableStateOf(0f) }
                     LaunchedEffect(targetProgress) {
                         progressAnimatable = targetProgress
                     }
                     val animatedProgress by animateFloatAsState(
                         targetValue = progressAnimatable,
-                        animationSpec = tween(durationMillis = 1200, easing = FastOutSlowInEasing),
+                        animationSpec = tween(durationMillis = 1000, easing = FastOutSlowInEasing),
                         label = "ConnectionUsageProgress"
                     )
                     Box(
@@ -1279,7 +1395,7 @@ fun ConnectionUsageCard(
                             .fillMaxWidth()
                             .height(8.dp)
                             .clip(RoundedCornerShape(99.dp))
-                            .background(cardFg.copy(alpha = 0.15f))
+                            .background(MaterialTheme.colorScheme.surfaceContainerHighest.copy(alpha = 0.7f))
                     ) {
                         Box(
                             modifier = Modifier
@@ -1308,15 +1424,275 @@ fun ConnectionUsageCard(
                 }
 
                 if (isLimitReached) {
-                    Text(
-                        text = "Upgrade to add more connections",
-                        fontSize = 12.sp,
-                        fontWeight = FontWeight.Medium,
-                        fontFamily = manrope,
-                        color = cardFgMuted
-                    )
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(top = 4.dp),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(
+                            text = "Upgrade to add more connections",
+                            fontSize = 12.sp,
+                            fontWeight = FontWeight.Medium,
+                            fontFamily = manrope,
+                            color = cardFgMuted,
+                            modifier = Modifier.weight(1f)
+                        )
+                        if (onUpgradeClick != null) {
+                            Surface(
+                                onClick = onUpgradeClick,
+                                shape = RoundedCornerShape(99.dp),
+                                color = MaterialTheme.colorScheme.error,
+                                contentColor = MaterialTheme.colorScheme.onError
+                            ) {
+                                Text(
+                                    text = "Upgrade",
+                                    fontFamily = manrope,
+                                    fontWeight = FontWeight.Bold,
+                                    fontSize = 12.sp,
+                                    modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp)
+                                )
+                            }
+                        }
+                    }
                 }
             }
         }
     }
 }
+
+@Composable
+fun RequestLocationBottomSheetContent(
+    member: CircleMember,
+    isLoading: Boolean,
+    onConfirm: () -> Unit,
+    onDismiss: () -> Unit
+) {
+    val displayName = member.alias?.takeIf { it.isNotBlank() } ?: member.profileName
+
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .navigationBarsPadding()
+            .padding(horizontal = 24.dp, vertical = 12.dp),
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+
+        // Hero Avatar with location sharing badge
+        Box(
+            modifier = Modifier.size(68.dp),
+            contentAlignment = Alignment.Center
+        ) {
+            IdentityAvatar(
+                avatarUrl = member.avatarUrl,
+                displayName = displayName,
+                backgroundColor = MaterialTheme.colorScheme.primaryContainer,
+                contentColor = MaterialTheme.colorScheme.onPrimaryContainer,
+                modifier = Modifier.size(60.dp)
+            )
+            Surface(
+                shape = CircleShape,
+                color = MaterialTheme.colorScheme.primary,
+                border = BorderStroke(2.dp, MaterialTheme.colorScheme.surface),
+                modifier = Modifier
+                    .size(26.dp)
+                    .align(Alignment.BottomEnd)
+            ) {
+                Box(contentAlignment = Alignment.Center) {
+                    Icon(
+                        painter = painterResource(id = R.drawable.location_sharing),
+                        contentDescription = null,
+                        tint = MaterialTheme.colorScheme.onPrimary,
+                        modifier = Modifier.size(14.dp)
+                    )
+                }
+            }
+        }
+
+        Spacer(modifier = Modifier.height(16.dp))
+
+        // Title
+        Text(
+            text = "Request Location",
+            fontFamily = manrope,
+            fontWeight = FontWeight.Bold,
+            fontSize = 20.sp,
+            color = MaterialTheme.colorScheme.onSurface,
+            textAlign = TextAlign.Center
+        )
+
+        Spacer(modifier = Modifier.height(6.dp))
+
+        // Subtitle with clear emphasis
+        Text(
+            text = buildAnnotatedString {
+                append("Ask ")
+                withStyle(SpanStyle(fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurface)) {
+                    append(displayName)
+                }
+                append(" to share their real-time location with you.")
+            },
+            fontFamily = manrope,
+            fontSize = 14.sp,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            textAlign = TextAlign.Center,
+            lineHeight = 20.sp
+        )
+
+        Spacer(modifier = Modifier.height(20.dp))
+
+        // Transparency & Privacy Info Card
+        Card(
+            shape = RoundedCornerShape(20.dp),
+            colors = CardDefaults.cardColors(
+                containerColor = MaterialTheme.colorScheme.surfaceContainerHigh
+            ),
+            border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.35f)),
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            Column(
+                modifier = Modifier.padding(16.dp),
+                verticalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    Surface(
+                        shape = CircleShape,
+                        color = MaterialTheme.colorScheme.primary.copy(alpha = 0.12f),
+                        modifier = Modifier.size(34.dp)
+                    ) {
+                        Box(contentAlignment = Alignment.Center) {
+                            Icon(
+                                painter = painterResource(id = R.drawable.bell),
+                                contentDescription = null,
+                                tint = MaterialTheme.colorScheme.primary,
+                                modifier = Modifier.size(16.dp)
+                            )
+                        }
+                    }
+                    Column(modifier = Modifier.weight(1f)) {
+                        Text(
+                            text = "Instant Notification",
+                            fontFamily = manrope,
+                            fontWeight = FontWeight.SemiBold,
+                            fontSize = 13.sp,
+                            color = MaterialTheme.colorScheme.onSurface
+                        )
+                        Text(
+                            text = "$displayName will get an alert with your request.",
+                            fontFamily = manrope,
+                            fontSize = 12.sp,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                }
+
+                HorizontalDivider(
+                    thickness = 0.5.dp,
+                    color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.3f)
+                )
+
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    Surface(
+                        shape = CircleShape,
+                        color = MaterialTheme.colorScheme.secondary.copy(alpha = 0.12f),
+                        modifier = Modifier.size(34.dp)
+                    ) {
+                        Box(contentAlignment = Alignment.Center) {
+                            Icon(
+                                painter = painterResource(id = R.drawable.clock),
+                                contentDescription = null,
+                                tint = MaterialTheme.colorScheme.secondary,
+                                modifier = Modifier.size(16.dp)
+                            )
+                        }
+                    }
+                    Column(modifier = Modifier.weight(1f)) {
+                        Text(
+                            text = "Audience & Duration Control",
+                            fontFamily = manrope,
+                            fontWeight = FontWeight.SemiBold,
+                            fontSize = 13.sp,
+                            color = MaterialTheme.colorScheme.onSurface
+                        )
+                        Text(
+                            text = "They choose how long to share (15m, 1h, or ongoing).",
+                            fontFamily = manrope,
+                            fontSize = 12.sp,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                }
+            }
+        }
+
+        Spacer(modifier = Modifier.height(24.dp))
+
+        // Action Buttons
+        Button(
+            onClick = onConfirm,
+            enabled = !isLoading,
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(52.dp),
+            shape = RoundedCornerShape(16.dp),
+            colors = ButtonDefaults.buttonColors(
+                containerColor = MaterialTheme.colorScheme.primary,
+                contentColor = MaterialTheme.colorScheme.onPrimary
+            )
+        ) {
+            if (isLoading) {
+                CircularProgressIndicator(
+                    modifier = Modifier.size(20.dp),
+                    strokeWidth = 2.dp,
+                    color = MaterialTheme.colorScheme.onPrimary
+                )
+            } else {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.Center
+                ) {
+                    Icon(
+                        painter = painterResource(id = R.drawable.location_sharing),
+                        contentDescription = null,
+                        modifier = Modifier.size(18.dp)
+                    )
+                    Spacer(Modifier.width(8.dp))
+                    Text(
+                        text = "Send Request",
+                        fontFamily = manrope,
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 15.sp
+                    )
+                }
+            }
+        }
+
+        Spacer(modifier = Modifier.height(8.dp))
+
+        TextButton(
+            onClick = onDismiss,
+            enabled = !isLoading,
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(48.dp)
+        ) {
+            Text(
+                text = "Cancel",
+                fontFamily = manrope,
+                fontWeight = FontWeight.SemiBold,
+                fontSize = 14.sp,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+        }
+
+        Spacer(modifier = Modifier.height(8.dp))
+    }
+}
+

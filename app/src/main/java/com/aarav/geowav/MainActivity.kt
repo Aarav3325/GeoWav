@@ -134,10 +134,7 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge(
-            navigationBarStyle = SystemBarStyle.auto(
-                android.graphics.Color.TRANSPARENT,
-                android.graphics.Color.TRANSPARENT
-            )
+            navigationBarStyle = SystemBarStyle.dark(android.graphics.Color.TRANSPARENT)
         )
 
         fusedClient = LocationServices.getFusedLocationProviderClient(this)
@@ -277,11 +274,11 @@ class MainActivity : ComponentActivity() {
                 ) {
 
 
-//                    val controller = WindowInsetsControllerCompat(
-//                        window,
-//                        View(applicationContext)
-//                    )
-//                    controller.isAppearanceLightStatusBars = !isDark
+                    val controller = WindowInsetsControllerCompat(
+                        window,
+                        View(applicationContext)
+                    )
+                    controller.isAppearanceLightStatusBars = !isDark
 
 
                     val fineLocationPermission =

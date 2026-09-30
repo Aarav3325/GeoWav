@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -22,6 +23,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -43,39 +45,52 @@ fun CircleSummarySection(
     val containerColor = MaterialTheme.colorScheme.surfaceContainerLow.copy(alpha = 0.74f)
 
     Card(
-        shape = RoundedCornerShape(12.dp),
+        shape = RoundedCornerShape(20.dp),
         modifier = modifier.fillMaxWidth(),
         border = BorderStroke(
             1.dp,
-            MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.20f)
+            MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.35f)
         ),
         colors = CardDefaults.cardColors(
-            containerColor = containerColor,
+            containerColor = MaterialTheme.colorScheme.surfaceContainer,
             contentColor = MaterialTheme.colorScheme.onSurface
-        )
+        ),
+        elevation = CardDefaults.cardElevation(0.dp)
     ) {
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = 12.dp, vertical = 6.dp),
-            verticalArrangement = Arrangement.spacedBy(4.dp)
+                .padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(10.dp)
         ) {
-            Text(
-                text = "Circle Overview",
-                fontFamily = manrope,
-                fontWeight = FontWeight.ExtraBold,
-                fontSize = 13.sp,
-                color = MaterialTheme.colorScheme.onSurface
-            )
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                Box(
+                    modifier = Modifier
+                        .width(3.5.dp)
+                        .height(14.dp)
+                        .clip(RoundedCornerShape(2.dp))
+                        .background(MaterialTheme.colorScheme.primary)
+                )
+                Text(
+                    text = "Circle Overview",
+                    fontFamily = manrope,
+                    fontWeight = FontWeight.SemiBold,
+                    fontSize = 15.sp,
+                    color = MaterialTheme.colorScheme.onSurface
+                )
+            }
 
             when {
                 uiState.isLoading -> {
                     Text(
-                        text = "Checking recent movement",
+                        text = "Checking recent movement...",
                         fontFamily = manrope,
-                        fontWeight = FontWeight.SemiBold,
-                        fontSize = 14.sp,
-                        color = MaterialTheme.colorScheme.onSurface
+                        fontWeight = FontWeight.Medium,
+                        fontSize = 13.sp,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 }
 
@@ -114,49 +129,50 @@ private fun CirclePulseContent(
     summary: CircleActivitySummary,
     periodLabel: String
 ) {
-    Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-        Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-
+    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
             Text(
                 text = "${summary.activeMemberCount} ${memberLabel(summary.activeMemberCount)} active $periodLabel",
                 fontFamily = manrope,
-                fontWeight = FontWeight.ExtraBold,
-                fontSize = 18.sp,
-                lineHeight = 23.sp,
+                fontWeight = FontWeight.Bold,
+                fontSize = 16.sp,
+                lineHeight = 22.sp,
                 color = MaterialTheme.colorScheme.onSurface
             )
             Text(
-                text = "${summary.activityUpdateCount} ${activityUpdateLabel(summary.activityUpdateCount)} $periodLabel",
+                text = "${summary.activityUpdateCount} ${activityUpdateLabel(summary.activityUpdateCount)} recorded $periodLabel",
                 fontFamily = manrope,
-                fontSize = 11.sp,
-                color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.78f)
+                fontSize = 12.sp,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
             )
         }
 
         summary.latestActivity?.let { latestActivity ->
             HorizontalDivider(
-                color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.22f)
+                color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.25f),
+                thickness = 0.5.dp
             )
 
-            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
                 Text(
-                    text = "Latest activity",
+                    text = "Latest update",
                     fontFamily = manrope,
+                    fontWeight = FontWeight.SemiBold,
                     fontSize = 11.sp,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                    color = MaterialTheme.colorScheme.primary
                 )
 
                 Row(
                     modifier = Modifier.fillMaxWidth(),
-                    verticalAlignment = Alignment.Top
+                    verticalAlignment = Alignment.CenterVertically
                 ) {
                     IdentityAvatar(
                         avatarUrl = latestActivity.actorAvatar,
                         displayName = latestActivity.actorName,
                         backgroundColor = MaterialTheme.colorScheme.outline.copy(alpha = 0.12f),
-                        contentColor = MaterialTheme.colorScheme.outline,
-                        borderColor = MaterialTheme.colorScheme.outline.copy(alpha = 0.24f),
-                        modifier = Modifier.size(44.dp)
+                        contentColor = MaterialTheme.colorScheme.onSurface,
+                        borderColor = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.35f),
+                        modifier = Modifier.size(42.dp)
                     )
 
                     Spacer(modifier = Modifier.width(12.dp))
@@ -168,9 +184,9 @@ private fun CirclePulseContent(
                         Text(
                             text = buildSummaryLatestActivityText(latestActivity),
                             fontFamily = manrope,
-                            fontWeight = FontWeight.ExtraBold,
-                            fontSize = 15.sp,
-                            lineHeight = 20.sp,
+                            fontWeight = FontWeight.SemiBold,
+                            fontSize = 14.sp,
+                            lineHeight = 19.sp,
                             maxLines = 2,
                             overflow = TextOverflow.Ellipsis,
                             color = MaterialTheme.colorScheme.onSurface
@@ -179,7 +195,7 @@ private fun CirclePulseContent(
                             text = activityRelativeTime(latestActivity.timestamp),
                             fontFamily = manrope,
                             fontSize = 12.sp,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.82f)
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
                     }
                 }

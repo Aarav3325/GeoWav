@@ -149,37 +149,60 @@ private fun ActivityErrorState(
 
 @Composable
 private fun ActivityEmptyState() {
-    Column(
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.spacedBy(6.dp),
+    Card(
+        shape = RoundedCornerShape(20.dp),
         modifier = Modifier
             .fillMaxWidth()
-            .padding(horizontal = 32.dp)
+            .padding(horizontal = 16.dp, vertical = 24.dp),
+        border = BorderStroke(
+            1.dp,
+            MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.35f)
+        ),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surfaceContainer
+        ),
+        elevation = CardDefaults.cardElevation(0.dp)
     ) {
-        Image(
-            painter = painterResource(R.drawable.link_break),
-            contentDescription = "No activity",
-            modifier = Modifier.size(48.dp),
-            colorFilter = ColorFilter.tint(MaterialTheme.colorScheme.primary)
-        )
+        Column(
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.Center,
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(24.dp)
+        ) {
+            Surface(
+                color = MaterialTheme.colorScheme.primary.copy(alpha = 0.12f),
+                shape = CircleShape,
+                modifier = Modifier.size(48.dp)
+            ) {
+                Box(contentAlignment = Alignment.Center) {
+                    Image(
+                        painter = painterResource(R.drawable.link_break),
+                        contentDescription = null,
+                        modifier = Modifier.size(22.dp),
+                        colorFilter = ColorFilter.tint(MaterialTheme.colorScheme.primary)
+                    )
+                }
+            }
 
-        Spacer(modifier = Modifier.height(12.dp))
+            Spacer(modifier = Modifier.height(12.dp))
 
-        Text(
-            text = "Your circle is quiet right now",
-            fontFamily = manrope,
-            style = MaterialTheme.typography.bodyLarge.copy(
-                fontWeight = FontWeight.SemiBold
-            ),
-            color = MaterialTheme.colorScheme.onBackground
-        )
-        Text(
-            text = "When someone arrives at or leaves a saved place, GeoWav will show it here.",
-            style = MaterialTheme.typography.bodySmall,
-            fontFamily = manrope,
-            textAlign = TextAlign.Center,
-            color = MaterialTheme.colorScheme.onSurfaceVariant
-        )
+            Text(
+                text = "Your circle is quiet right now",
+                fontFamily = manrope,
+                fontWeight = FontWeight.Bold,
+                fontSize = 15.sp,
+                color = MaterialTheme.colorScheme.onSurface
+            )
+            Spacer(modifier = Modifier.height(4.dp))
+            Text(
+                text = "When someone arrives at or leaves a saved place, GeoWav will show it here.",
+                fontFamily = manrope,
+                fontSize = 13.sp,
+                textAlign = TextAlign.Center,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+        }
     }
 }
 
@@ -215,7 +238,7 @@ private fun ActivityFeedList(
         state = listState,
         contentPadding = PaddingValues(bottom = 83.dp),
         modifier = Modifier
-            .padding(top = 12.dp)
+            .padding(top = 10.dp)
             .fillMaxSize(),
         verticalArrangement = Arrangement.spacedBy(10.dp)
     ) {
@@ -234,7 +257,7 @@ private fun ActivityFeedList(
                 item = item,
                 currentUserId = currentUserId,
                 isDarkThemeEnabled = isDarkThemeEnabled,
-                modifier = Modifier.padding(horizontal = 12.dp)
+                modifier = Modifier.padding(horizontal = 16.dp)
             )
         }
 
@@ -274,10 +297,10 @@ private fun ActivityFeedSectionHeader(
         text = label,
         modifier = modifier
             .fillMaxWidth()
-            .padding(top = 2.dp, bottom = 2.dp),
+            .padding(top = 4.dp, bottom = 2.dp),
         fontFamily = manrope,
         fontWeight = FontWeight.SemiBold,
-        fontSize = 12.sp,
+        fontSize = 13.sp,
         color = MaterialTheme.colorScheme.onSurfaceVariant
     )
 }
@@ -329,7 +352,7 @@ private fun ActivityEventRow(
     val containerColor = if (isDarkThemeEnabled) {
         MaterialTheme.colorScheme.surfaceContainerHigh.copy(alpha = 0.72f)
     } else {
-        MaterialTheme.colorScheme.surfaceContainerLowest
+        MaterialTheme.colorScheme.surfaceContainer
     }
     val storyText = buildAnnotatedString {
         withStyle(
@@ -358,21 +381,22 @@ private fun ActivityEventRow(
     }
 
     Card(
-        shape = RoundedCornerShape(12.dp),
+        shape = RoundedCornerShape(18.dp),
         modifier = modifier.fillMaxWidth(),
         border = BorderStroke(
             1.dp,
-            MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.24f)
+            MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.35f)
         ),
         colors = CardDefaults.cardColors(
             containerColor = containerColor,
             contentColor = MaterialTheme.colorScheme.onSurface
-        )
+        ),
+        elevation = CardDefaults.cardElevation(0.dp)
     ) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = 12.dp, vertical = 8.dp),
+                .padding(horizontal = 14.dp, vertical = 12.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
             Box(contentAlignment = Alignment.BottomEnd) {
@@ -380,9 +404,9 @@ private fun ActivityEventRow(
                     avatarUrl = activity.actorAvatar,
                     displayName = activity.actorName,
                     backgroundColor = MaterialTheme.colorScheme.outline.copy(alpha = 0.12f),
-                    contentColor = MaterialTheme.colorScheme.outline,
-                    borderColor = MaterialTheme.colorScheme.outline.copy(alpha = 0.24f),
-                    modifier = Modifier.size(48.dp)
+                    contentColor = MaterialTheme.colorScheme.onSurface,
+                    borderColor = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.35f),
+                    modifier = Modifier.size(46.dp)
                 )
                 Box(
                     modifier = Modifier
@@ -396,7 +420,7 @@ private fun ActivityEventRow(
 
             Column(
                 modifier = Modifier.weight(1f),
-                verticalArrangement = Arrangement.spacedBy(5.dp)
+                verticalArrangement = Arrangement.spacedBy(4.dp)
             ) {
                 Text(
                     text = storyText,
@@ -430,16 +454,17 @@ private fun ActivityEventRow(
                 }
             }
 
-            Spacer(modifier = Modifier.width(10.dp))
+            Spacer(modifier = Modifier.width(8.dp))
 
             Surface(
-                color = accentColor.copy(alpha = 0.10f),
+                color = accentColor.copy(alpha = 0.12f),
                 contentColor = accentColor,
-                shape = RoundedCornerShape(50)
+                border = BorderStroke(1.dp, accentColor.copy(alpha = 0.25f)),
+                shape = RoundedCornerShape(99.dp)
             ) {
                 Text(
                     text = transitionLabel,
-                    modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp),
+                    modifier = Modifier.padding(horizontal = 9.dp, vertical = 4.dp),
                     fontFamily = manrope,
                     fontWeight = FontWeight.SemiBold,
                     fontSize = 11.sp
@@ -468,7 +493,7 @@ private fun ActivityVisitRow(
     val containerColor = if (isDarkThemeEnabled) {
         MaterialTheme.colorScheme.surfaceContainerHigh.copy(alpha = 0.72f)
     } else {
-        MaterialTheme.colorScheme.surfaceContainerLowest
+        MaterialTheme.colorScheme.surfaceContainer
     }
     val storyText = buildAnnotatedString {
         withStyle(
@@ -491,21 +516,22 @@ private fun ActivityVisitRow(
     }
 
     Card(
-        shape = RoundedCornerShape(12.dp),
+        shape = RoundedCornerShape(18.dp),
         modifier = modifier.fillMaxWidth(),
         border = BorderStroke(
             1.dp,
-            MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.24f)
+            MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.35f)
         ),
         colors = CardDefaults.cardColors(
             containerColor = containerColor,
             contentColor = MaterialTheme.colorScheme.onSurface
-        )
+        ),
+        elevation = CardDefaults.cardElevation(0.dp)
     ) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = 12.dp, vertical = 8.dp),
+                .padding(horizontal = 14.dp, vertical = 12.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
             Box(contentAlignment = Alignment.BottomEnd) {
@@ -513,9 +539,9 @@ private fun ActivityVisitRow(
                     avatarUrl = item.actorAvatar,
                     displayName = item.actorName,
                     backgroundColor = MaterialTheme.colorScheme.outline.copy(alpha = 0.12f),
-                    contentColor = MaterialTheme.colorScheme.outline,
-                    borderColor = MaterialTheme.colorScheme.outline.copy(alpha = 0.24f),
-                    modifier = Modifier.size(48.dp)
+                    contentColor = MaterialTheme.colorScheme.onSurface,
+                    borderColor = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.35f),
+                    modifier = Modifier.size(46.dp)
                 )
                 Box(
                     modifier = Modifier
@@ -529,7 +555,7 @@ private fun ActivityVisitRow(
 
             Column(
                 modifier = Modifier.weight(1f),
-                verticalArrangement = Arrangement.spacedBy(5.dp)
+                verticalArrangement = Arrangement.spacedBy(4.dp)
             ) {
                 Text(
                     text = storyText,
@@ -570,16 +596,17 @@ private fun ActivityVisitRow(
                 }
             }
 
-            Spacer(modifier = Modifier.width(10.dp))
+            Spacer(modifier = Modifier.width(8.dp))
 
             Surface(
-                color = accentColor.copy(alpha = 0.10f),
+                color = accentColor.copy(alpha = 0.12f),
                 contentColor = accentColor,
-                shape = RoundedCornerShape(50)
+                border = BorderStroke(1.dp, accentColor.copy(alpha = 0.25f)),
+                shape = RoundedCornerShape(99.dp)
             ) {
                 Text(
                     text = "Visit",
-                    modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp),
+                    modifier = Modifier.padding(horizontal = 9.dp, vertical = 4.dp),
                     fontFamily = manrope,
                     fontWeight = FontWeight.SemiBold,
                     fontSize = 11.sp

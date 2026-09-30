@@ -37,6 +37,9 @@ class NotificationRepositoryImpl @Inject constructor(
 
     private var inviteListener: ChildEventListener? = null
     private var circleListener: ChildEventListener? = null
+    private var locationRequestRef: DatabaseReference? = null
+    private var locationRequestListener: ChildEventListener? = null
+    private val sentRequestListeners = mutableMapOf<String, ChildEventListener>()
 
     // Store user and listener references preventing duplicate listener to avoid memory leaks
     private val listenerMap = mutableMapOf<String, ValueEventListener>()
@@ -56,6 +59,7 @@ class NotificationRepositoryImpl @Inject constructor(
 
         listenToInvites(userId)
         listenToCircle(userId)
+        listenToLocationRequests(userId)
         members.filterNot { it == userId }.forEach { memberId ->
 
             if (!listenerMap.containsKey(memberId)) {
@@ -68,6 +72,10 @@ class NotificationRepositoryImpl @Inject constructor(
 
             if (!emergencyListenerMap.containsKey(memberId)) {
                 attachEmergencySharingListener(memberId, userId)
+            }
+
+            if (!sentRequestListeners.containsKey(memberId)) {
+                listenToSentLocationRequests(memberId, userId)
             }
         }
     }
@@ -239,6 +247,87 @@ class NotificationRepositoryImpl @Inject constructor(
         }
         circleListener = listener
         circleEventRef?.addChildEventListener(listener)
+    }
+
+    private fun listenToLocationRequests(userId: String) {
+        val ref = firebaseDatabase.getReference("location_requests").child(userId)
+        locationRequestRef = ref
+
+        val listenerStartTime = System.currentTimeMillis()
+
+        val listener = object : ChildEventListener {
+            override fun onChildAdded(snapshot: DataSnapshot, previousChildName: String?) {
+                val status = snapshot.child("status").getValue(String::class.java) ?: "PENDING"
+                val requesterName = snapshot.child("requesterName").getValue(String::class.java) ?: "Circle Member"
+                val requesterId = snapshot.child("requesterId").getValue(String::class.java).orEmpty()
+                val requestId = snapshot.child("requestId").getValue(String::class.java) ?: snapshot.key.orEmpty()
+                val requestedAt = snapshot.child("requestedAt").getValue(Long::class.java) ?: 0L
+                val expiresAt = snapshot.child("expiresAt").getValue(Long::class.java) ?: 0L
+                val now = System.currentTimeMillis()
+
+                Log.i("NOTI", "LocationRequest onChildAdded: $requestId from $requesterName, status: $status, requestedAt: $requestedAt")
+
+                if (status.equals("PENDING", ignoreCase = true) && expiresAt > now && requestedAt >= (listenerStartTime - 30000L)) {
+                    repositoryScope.launch {
+                        _events.emit(
+                            SocialEvent.LocationRequestReceived(
+                                requestId = requestId,
+                                requesterId = requesterId,
+                                requesterName = requesterName
+                            )
+                        )
+                    }
+                }
+            }
+
+            override fun onChildChanged(snapshot: DataSnapshot, previousChildName: String?) {}
+            override fun onChildRemoved(snapshot: DataSnapshot) {}
+            override fun onChildMoved(snapshot: DataSnapshot, previousChildName: String?) {}
+            override fun onCancelled(error: DatabaseError) {
+                Log.e("NotificationRepo", "Location request listener cancelled: ${error.message}")
+            }
+        }
+
+        locationRequestListener = listener
+        ref.addChildEventListener(listener)
+    }
+
+    private fun listenToSentLocationRequests(memberId: String, myUserId: String) {
+        if (sentRequestListeners.containsKey(memberId)) return
+
+        val ref = firebaseDatabase.getReference("location_requests").child(memberId)
+
+        val listener = object : ChildEventListener {
+            override fun onChildAdded(snapshot: DataSnapshot, previousChildName: String?) {}
+
+            override fun onChildChanged(snapshot: DataSnapshot, previousChildName: String?) {
+                val requesterId = snapshot.child("requesterId").getValue(String::class.java)
+                if (requesterId == myUserId) {
+                    val status = snapshot.child("status").getValue(String::class.java) ?: return
+                    val requestId = snapshot.child("requestId").getValue(String::class.java) ?: snapshot.key.orEmpty()
+                    if (status.equals("ACCEPTED", ignoreCase = true) || status.equals("DECLINED", ignoreCase = true)) {
+                        fetchUserName(memberId) { memberName ->
+                            repositoryScope.launch {
+                                _events.emit(
+                                    SocialEvent.LocationRequestResponded(
+                                        requestId = requestId,
+                                        accepted = status.equals("ACCEPTED", ignoreCase = true),
+                                        respondentName = memberName
+                                    )
+                                )
+                            }
+                        }
+                    }
+                }
+            }
+
+            override fun onChildRemoved(snapshot: DataSnapshot) {}
+            override fun onChildMoved(snapshot: DataSnapshot, previousChildName: String?) {}
+            override fun onCancelled(error: DatabaseError) {}
+        }
+
+        sentRequestListeners[memberId] = listener
+        ref.addChildEventListener(listener)
     }
 
 //    private fun listenToSharing(userId: String) {
@@ -476,6 +565,19 @@ class NotificationRepositoryImpl @Inject constructor(
                 .removeEventListener(listener)
         }
         emergencyListenerMap.clear()
+
+        locationRequestListener?.let { listener ->
+            locationRequestRef?.removeEventListener(listener)
+        }
+        locationRequestListener = null
+        locationRequestRef = null
+
+        sentRequestListeners.forEach { (memberId, listener) ->
+            firebaseDatabase.getReference("location_requests")
+                .child(memberId)
+                .removeEventListener(listener)
+        }
+        sentRequestListeners.clear()
 
         inviteListener?.let { listener ->
             inviteRef?.removeEventListener(listener)

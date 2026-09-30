@@ -148,6 +148,27 @@ class NotificationService : Service() {
                     NotificationType.Trigger
                 )
             }
+
+            is SocialEvent.LocationRequestReceived -> {
+                GeoNotificationHelper.show(
+                    this,
+                    "sharing_channel",
+                    "Location Request",
+                    "${event.requesterName} is asking for your current location.",
+                    NotificationType.LocationRequestReceived
+                )
+            }
+
+            is SocialEvent.LocationRequestResponded -> {
+                val statusText = if (event.accepted) "accepted your location request." else "declined your location request."
+                GeoNotificationHelper.show(
+                    this,
+                    "sharing_channel",
+                    "Location Request Update",
+                    "${event.respondentName} $statusText",
+                    NotificationType.LocationRequestResponded
+                )
+            }
         }
     }
 

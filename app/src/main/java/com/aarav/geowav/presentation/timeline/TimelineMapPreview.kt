@@ -94,6 +94,7 @@ import com.google.maps.android.compose.Marker
 import com.google.maps.android.compose.MarkerState
 import com.google.maps.android.compose.Polyline
 import com.google.maps.android.compose.rememberCameraPositionState
+import com.google.maps.android.compose.rememberMarkerState
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
@@ -1251,7 +1252,7 @@ private fun StayPointMarker(stay: StayPoint, icon: BitmapDescriptor?) {
     val endStr = timeFormatter.format(Date(stay.endedAt))
 
     Marker(
-        state = MarkerState(position = stayPos),
+        state = rememberMarkerState(key = stay.startedAt.toString(), position = stayPos),
         icon = icon,
         title = durationText,
         snippet = "$startStr – $endStr",

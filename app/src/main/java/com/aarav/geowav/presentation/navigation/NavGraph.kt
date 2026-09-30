@@ -3,6 +3,8 @@ package com.aarav.geowav.presentation.navigation
 import android.content.SharedPreferences
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
@@ -146,6 +148,7 @@ fun NavGraph(
         )
 
         AddLocationSharingScreen(
+            isDarkThemeEnabled,
             navHostController,
             this,
             location,
@@ -225,6 +228,13 @@ fun NavGraph(
             navHostController,
             this
         )
+
+        AddJourneyScreen(
+            navHostController,
+            this,
+            subscriptionVM,
+            location
+        )
     }
 
 }
@@ -237,13 +247,29 @@ fun AddMapsScreen(
     hasForegroundLocationPermission: Boolean
 ) {
     navGraphBuilder.composable(
-        route = NavRoute.MapScreen.path
-    ) {
+        route = NavRoute.MapScreen.path.plus("?forJourney={forJourney}"),
+        arguments = listOf(
+            navArgument("forJourney") {
+                type = NavType.BoolType
+                defaultValue = false
+            }
+        )
+    ) { backStackEntry ->
+        val forJourney = backStackEntry.arguments?.getBoolean("forJourney") ?: false
+
         MapScreen(
-            isDarkThemeEnabled,
+            isDarkThemeEnabled = isDarkThemeEnabled,
             mapViewModel = hiltViewModel(),
-            location,
+            location = location,
             hasForegroundLocationPermission = hasForegroundLocationPermission,
+            forJourney = forJourney,
+            onSelectJourneyDestination = { lat, lng, name, address ->
+                navController.previousBackStackEntry?.savedStateHandle?.set("journey_dest_lat", lat)
+                navController.previousBackStackEntry?.savedStateHandle?.set("journey_dest_lng", lng)
+                navController.previousBackStackEntry?.savedStateHandle?.set("journey_dest_name", name)
+                navController.previousBackStackEntry?.savedStateHandle?.set("journey_dest_address", address)
+                navController.popBackStack()
+            },
             navigateToAddPlace = { id ->
                 navController.navigate(NavRoute.AddPlace.createRoute(id))
             },
@@ -563,6 +589,7 @@ fun AddCircleScreen(
 }
 
 fun AddLocationSharingScreen(
+    isDarkThemeEnabled: Boolean,
     navController: NavController,
     navGraphBuilder: NavGraphBuilder,
     location: Pair<Double, Double>?,
@@ -573,12 +600,16 @@ fun AddLocationSharingScreen(
         route = NavRoute.LocationSharing.path
     ) {
         LocationSharingScreen(
+            isDarkThemeEnabled = isDarkThemeEnabled,
             viewModel = hiltViewModel(),
             navigateToPaywall = {
                 navController.navigate(NavRoute.Paywall.path)
             },
             navigateToSettings = {
                 navController.navigate(NavRoute.Settings.path)
+            },
+            navigateToJourney = {
+                navController.navigate(NavRoute.Journey.path)
             },
             subscriptionVM = subscriptionVM,
             location = location,
@@ -873,3 +904,62 @@ fun AddReleaseNotesScreen(
         )
     }
 }
+
+fun AddJourneyScreen(
+    navController: NavController,
+    navGraphBuilder: NavGraphBuilder,
+    subscriptionVM: SubscriptionViewModel,
+    location: Pair<Double, Double>? = null
+) {
+    navGraphBuilder.composable(
+        route = NavRoute.Journey.path
+    ) { backStackEntry ->
+        val userPlan by subscriptionVM.userPlan.collectAsState()
+
+        val savedStateHandle = backStackEntry.savedStateHandle
+        val viewModel: com.aarav.geowav.presentation.journey.JourneyViewModel = hiltViewModel()
+
+        LaunchedEffect(location) {
+            location?.let {
+                viewModel.setUserLocation(com.google.android.gms.maps.model.LatLng(it.first, it.second))
+            }
+        }
+
+        LaunchedEffect(savedStateHandle) {
+            val lat = savedStateHandle.get<Double>("journey_dest_lat")
+            val lng = savedStateHandle.get<Double>("journey_dest_lng")
+            val name = savedStateHandle.get<String>("journey_dest_name")
+            val address = savedStateHandle.get<String>("journey_dest_address")
+
+            if (lat != null && lng != null) {
+                viewModel.selectCustomDestination(
+                    com.aarav.geowav.data.model.DestinationLocation(
+                        latitude = lat,
+                        longitude = lng,
+                        name = name ?: "Selected Location",
+                        address = address ?: ""
+                    )
+                )
+                savedStateHandle.remove<Double>("journey_dest_lat")
+                savedStateHandle.remove<Double>("journey_dest_lng")
+                savedStateHandle.remove<String>("journey_dest_name")
+                savedStateHandle.remove<String>("journey_dest_address")
+            }
+        }
+
+        com.aarav.geowav.presentation.journey.JourneyScreen(
+            viewModel = viewModel,
+            userPlan = userPlan,
+            onBack = {
+                navController.popBackStack()
+            },
+            onNavigateToMapPicker = {
+                navController.navigate(NavRoute.MapScreen.createRoute(forJourney = true))
+            },
+            onNavigateToObserve = {
+                navController.navigate(NavRoute.ObserveUsers.path)
+            }
+        )
+    }
+}
+

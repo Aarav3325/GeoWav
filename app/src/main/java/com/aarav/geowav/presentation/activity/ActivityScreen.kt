@@ -80,14 +80,14 @@ fun ActivityScreen(
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(horizontal = 16.dp, vertical = 12.dp),
+                        .padding(start = 16.dp, end = 16.dp, top = 16.dp, bottom = 8.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Text(
                         text = "Activity",
                         fontFamily = manrope,
-                        fontWeight = FontWeight.ExtraBold,
-                        fontSize = 24.sp,
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 22.sp,
                         color = MaterialTheme.colorScheme.onBackground
                     )
                 }
@@ -100,13 +100,15 @@ fun ActivityScreen(
                         if (pagerState.currentPage in tabPositions.indices) {
                             TabRowDefaults.SecondaryIndicator(
                                 Modifier.tabIndicatorOffset(tabPositions[pagerState.currentPage]),
-                                color = MaterialTheme.colorScheme.primary
+                                color = MaterialTheme.colorScheme.primary,
+                                height = 3.dp
                             )
                         }
                     },
                     divider = {
                         HorizontalDivider(
-                            color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.4f)
+                            color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.35f),
+                            thickness = 1.dp
                         )
                     }
                 ) {
@@ -119,7 +121,7 @@ fun ActivityScreen(
                             Text(
                                 text = "Circle",
                                 fontFamily = manrope,
-                                fontWeight = FontWeight.Bold,
+                                fontWeight = if (pagerState.currentPage == 0) FontWeight.Bold else FontWeight.Medium,
                                 fontSize = 15.sp
                             )
                         }
@@ -133,7 +135,7 @@ fun ActivityScreen(
                             Text(
                                 text = "Me",
                                 fontFamily = manrope,
-                                fontWeight = FontWeight.Bold,
+                                fontWeight = if (pagerState.currentPage == 1) FontWeight.Bold else FontWeight.Medium,
                                 fontSize = 15.sp
                             )
                         }
@@ -225,12 +227,12 @@ fun CircleActivityContent(
             onFilterSelected = activityViewModel::onFilterChanged,
             onUpgradeRequired = { upgradeReason = it },
             onSetRangeClick = activityViewModel::showDatePicker,
-            modifier = Modifier.padding(top = 12.dp)
+            modifier = Modifier.padding(top = 10.dp)
         )
 
         CircleSummarySection(
             uiState = uiState,
-            modifier = Modifier.padding(start = 12.dp, top = 10.dp, end = 12.dp)
+            modifier = Modifier.padding(start = 16.dp, top = 10.dp, end = 16.dp)
         )
 
         ActivityContent(

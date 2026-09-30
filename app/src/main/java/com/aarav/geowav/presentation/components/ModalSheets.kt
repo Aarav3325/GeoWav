@@ -1,10 +1,13 @@
 package com.aarav.geowav.presentation.components
 
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.CubicBezierEasing
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
+import androidx.compose.animation.scaleIn
+import androidx.compose.animation.scaleOut
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.BorderStroke
@@ -19,6 +22,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
@@ -32,6 +36,7 @@ import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilledTonalButton
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
@@ -42,6 +47,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
@@ -50,11 +56,16 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+
 import com.aarav.geowav.R
 import com.aarav.geowav.core.utils.SubscriptionHelper
 import com.aarav.geowav.data.model.PurchaseResult
@@ -87,7 +98,6 @@ private val ObserveSheetEnterEasing = CubicBezierEasing(0.2f, 0f, 0f, 1f)
 private val ObserveSheetExitEasing = CubicBezierEasing(0.4f, 0f, 1f, 1f)
 
 @OptIn(ExperimentalMaterial3Api::class)
-@Preview(showBackground = true)
 @Composable
 fun PlaceModalSheet(
     place: Place?,
@@ -95,131 +105,292 @@ fun PlaceModalSheet(
     showSheet: Boolean,
     onDismissRequest: () -> Unit,
     clearSearch: () -> Unit,
-    onAddPlaceBtnClick: (String) -> Unit
+    onAddPlaceBtnClick: (String) -> Unit,
+    forJourney: Boolean = false,
+    onSelectJourneyDestination: ((Double, Double, String, String) -> Unit)? = null
 ) {
-
     AnimatedVisibility(showSheet) {
         ModalBottomSheet(
             dragHandle = {
                 Surface(
-                    shape = CircleShape,
+                    shape = RoundedCornerShape(2.dp),
                     modifier = Modifier
-                        .padding(top = 12.dp)
-                        .width(60.dp)
-                        .height(3.dp),
-                    color = MaterialTheme.colorScheme.secondary,
-                ) {
-
-                }
+                        .padding(top = 12.dp, bottom = 8.dp)
+                        .width(36.dp)
+                        .height(4.dp),
+                    color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f),
+                ) {}
             },
             onDismissRequest = onDismissRequest,
             sheetState = sheetState,
-            shape = RoundedCornerShape(24.dp),
-            containerColor = MaterialTheme.colorScheme.surface,
-            contentColor = MaterialTheme.colorScheme.onSurface
+            shape = RoundedCornerShape(topStart = 28.dp, topEnd = 28.dp),
+            containerColor = MaterialTheme.colorScheme.surfaceContainerLow,
+            contentColor = MaterialTheme.colorScheme.onSurface,
+            tonalElevation = 0.dp
         ) {
             SheetContent(
-                place,
-                clearSearch,
-                onAddPlaceBtnClick
+                place = place,
+                clearSearch = clearSearch,
+                onDismiss = onDismissRequest,
+                onAddPlaceBtnClick = onAddPlaceBtnClick,
+                forJourney = forJourney,
+                onSelectJourneyDestination = onSelectJourneyDestination
             )
         }
     }
 }
 
 
-@Preview(showBackground = true)
 @Composable
 fun SheetContent(
     place: Place?,
     clearSearch: () -> Unit,
-    onAddPlaceBtnClick: (String) -> Unit
+    onDismiss: () -> Unit = {},
+    onAddPlaceBtnClick: (String) -> Unit,
+    forJourney: Boolean = false,
+    onSelectJourneyDestination: ((Double, Double, String, String) -> Unit)? = null
 ) {
+    val displayName = place?.displayName?.takeIf { it.isNotBlank() } ?: "Selected Location"
+    val addressText = place?.shortFormattedAddress?.takeIf { it.isNotBlank() }
+        ?: place?.formattedAddress?.takeIf { it.isNotBlank() }
+        ?: "Address unavailable"
+
+    val lat = place?.location?.latitude ?: 0.0
+    val lng = place?.location?.longitude ?: 0.0
+    val coordinatesText = String.format(Locale.US, "%.5f, %.5f", lat, lng)
 
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(12.dp),
-        verticalArrangement = Arrangement.spacedBy(12.dp)
+            .navigationBarsPadding()
+            .padding(start = 20.dp, end = 20.dp, top = 4.dp, bottom = 16.dp),
+        verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
-        Row(verticalAlignment = Alignment.CenterVertically) {
-
+        // Hero Header Row
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(14.dp)
+        ) {
             Surface(
-                modifier = Modifier.size(32.dp),
-                color = MaterialTheme.colorScheme.secondaryContainer,
+                modifier = Modifier.size(48.dp),
+                color = if (forJourney)
+                    MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.7f)
+                else
+                    MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.7f),
                 shape = CircleShape,
-            ) {
-                Icon(
-                    painter = painterResource(R.drawable.navigation_arrow),
-                    contentDescription = null,
-                    modifier = Modifier
-                        .size(24.dp)
-                        .padding(6.dp),
-                    tint = MaterialTheme.colorScheme.onSecondaryContainer
+                border = BorderStroke(
+                    1.dp,
+                    if (forJourney)
+                        MaterialTheme.colorScheme.secondary.copy(alpha = 0.25f)
+                    else
+                        MaterialTheme.colorScheme.primary.copy(alpha = 0.25f)
                 )
+            ) {
+                Box(contentAlignment = Alignment.Center) {
+                    Icon(
+                        painter = painterResource(
+                            if (forJourney) R.drawable.navigation_arrow else R.drawable.map_pin
+                        ),
+                        contentDescription = null,
+                        modifier = Modifier.size(22.dp),
+                        tint = if (forJourney)
+                            MaterialTheme.colorScheme.secondary
+                        else
+                            MaterialTheme.colorScheme.primary
+                    )
+                }
             }
 
-            Spacer(Modifier.width(12.dp))
-
-            Text(
-                text = place?.displayName ?: "Invalid Place",
-                style = MaterialTheme.typography.titleMedium,
-                fontFamily = manrope,
-                fontWeight = FontWeight.SemiBold,
-                fontSize = 20.sp
-            )
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    text = displayName,
+                    style = MaterialTheme.typography.titleMedium,
+                    fontFamily = manrope,
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 19.sp,
+                    color = MaterialTheme.colorScheme.onSurface,
+                    maxLines = 2,
+                    overflow = TextOverflow.Ellipsis
+                )
+                Spacer(Modifier.height(2.dp))
+                Surface(
+                    shape = RoundedCornerShape(99.dp),
+                    color = MaterialTheme.colorScheme.surfaceContainerHigh
+                ) {
+                    Text(
+                        text = if (forJourney) "Journey Destination" else "Place Details",
+                        fontFamily = manrope,
+                        fontWeight = FontWeight.SemiBold,
+                        fontSize = 11.sp,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 2.dp)
+                    )
+                }
+            }
         }
 
-        Text(
-            text = place?.shortFormattedAddress ?: "Address not available",
-            style = MaterialTheme.typography.bodyMedium,
-            fontWeight = FontWeight.SemiBold,
-            fontFamily = manrope,
-            fontSize = 16.sp,
-            color = MaterialTheme.colorScheme.onSurfaceVariant
-        )
+        // Details Card
+        Card(
+            shape = RoundedCornerShape(20.dp),
+            colors = CardDefaults.cardColors(
+                containerColor = MaterialTheme.colorScheme.surfaceContainer
+            ),
+            border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.35f)),
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            Column(
+                modifier = Modifier.padding(16.dp),
+                verticalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                // Address Section
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    Surface(
+                        shape = CircleShape,
+                        color = MaterialTheme.colorScheme.primary.copy(alpha = 0.1f),
+                        modifier = Modifier.size(34.dp)
+                    ) {
+                        Box(contentAlignment = Alignment.Center) {
+                            Icon(
+                                painter = painterResource(R.drawable.map_pin),
+                                contentDescription = null,
+                                tint = MaterialTheme.colorScheme.primary,
+                                modifier = Modifier.size(16.dp)
+                            )
+                        }
+                    }
+                    Column(modifier = Modifier.weight(1f)) {
+                        Text(
+                            text = "Address",
+                            fontFamily = manrope,
+                            fontWeight = FontWeight.SemiBold,
+                            fontSize = 11.sp,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                        Spacer(Modifier.height(1.dp))
+                        Text(
+                            text = addressText,
+                            fontFamily = manrope,
+                            fontWeight = FontWeight.Medium,
+                            fontSize = 13.sp,
+                            color = MaterialTheme.colorScheme.onSurface,
+                            maxLines = 2,
+                            overflow = TextOverflow.Ellipsis
+                        )
+                    }
+                }
 
-        Text(
-            text = "Lat: ${
-                place?.location?.latitude?.toString()?.take(7)
-            }, Lng: ${place?.location?.longitude?.toString()?.take(7)}",
-            style = MaterialTheme.typography.labelMedium,
-            fontSize = 14.sp,
-            fontFamily = manrope,
-            color = MaterialTheme.colorScheme.onSurfaceVariant
-        )
+                HorizontalDivider(
+                    thickness = 0.5.dp,
+                    color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.25f)
+                )
 
-        FilledTonalButton(
+                // Coordinates Section
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    Surface(
+                        shape = CircleShape,
+                        color = MaterialTheme.colorScheme.secondary.copy(alpha = 0.1f),
+                        modifier = Modifier.size(34.dp)
+                    ) {
+                        Box(contentAlignment = Alignment.Center) {
+                            Icon(
+                                painter = painterResource(R.drawable.gps),
+                                contentDescription = null,
+                                tint = MaterialTheme.colorScheme.secondary,
+                                modifier = Modifier.size(16.dp)
+                            )
+                        }
+                    }
+                    Column(modifier = Modifier.weight(1f)) {
+                        Text(
+                            text = "GPS Coordinates",
+                            fontFamily = manrope,
+                            fontWeight = FontWeight.SemiBold,
+                            fontSize = 11.sp,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                        Spacer(Modifier.height(1.dp))
+                        Text(
+                            text = coordinatesText,
+                            fontFamily = manrope,
+                            fontWeight = FontWeight.Medium,
+                            fontSize = 13.sp,
+                            color = MaterialTheme.colorScheme.onSurface
+                        )
+                    }
+                }
+            }
+        }
+
+        // Action Button
+        Button(
             onClick = {
-                onAddPlaceBtnClick(place?.id ?: "0")
-                clearSearch()
+                if (forJourney && onSelectJourneyDestination != null && place != null) {
+                    val placeLat = place.location?.latitude ?: 0.0
+                    val placeLng = place.location?.longitude ?: 0.0
+                    val name = place.displayName ?: "Selected Location"
+                    val address = place.shortFormattedAddress ?: place.formattedAddress ?: ""
+                    onSelectJourneyDestination(placeLat, placeLng, name, address)
+                    clearSearch()
+                } else {
+                    onAddPlaceBtnClick(place?.id ?: "0")
+                    clearSearch()
+                }
             },
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(52.dp),
+            shape = RoundedCornerShape(16.dp),
             colors = ButtonDefaults.buttonColors(
                 containerColor = MaterialTheme.colorScheme.primary,
                 contentColor = MaterialTheme.colorScheme.onPrimary
-            ),
-
-            modifier = Modifier.fillMaxWidth(),
-            shape = RoundedCornerShape(10.dp)
+            )
         ) {
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.Center,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Text(
-                    "Add Place", fontFamily = manrope, fontWeight = FontWeight.SemiBold,
-                    fontSize = 16.sp
-                )
-
-                Spacer(modifier = Modifier.width(8.dp))
-
                 Icon(
-                    painter = painterResource(R.drawable.caret_circle_right),
-                    contentDescription = "caret circle right",
-                    modifier = Modifier.size(28.dp)
+                    painter = painterResource(
+                        if (forJourney) R.drawable.navigation_arrow else R.drawable.add
+                    ),
+                    contentDescription = null,
+                    modifier = Modifier.size(18.dp)
+                )
+                Spacer(modifier = Modifier.width(8.dp))
+                Text(
+                    text = if (forJourney) "Set as Destination" else "Add to Places",
+                    fontFamily = manrope,
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 15.sp
                 )
             }
+        }
+
+        // Dismiss / Cancel Button
+        TextButton(
+            onClick = {
+                clearSearch()
+                onDismiss()
+            },
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(44.dp)
+        ) {
+            Text(
+                text = "Cancel",
+                fontFamily = manrope,
+                fontWeight = FontWeight.SemiBold,
+                fontSize = 14.sp,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
         }
     }
 }
@@ -1000,4 +1171,276 @@ fun UpgradeConfirmBottomSheet(
             modifier = Modifier.fillMaxWidth()
         )
     }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun LocationRequestBottomSheet(
+    requesterName: String,
+    sheetState: SheetState,
+    showSheet: Boolean,
+    onDismissRequest: () -> Unit,
+    onAccept: (durationMinutes: Int) -> Unit,
+    onDecline: () -> Unit
+) {
+    if (!showSheet) return
+
+    val selectedDuration = remember { mutableStateOf(15) } // 15, 60, -1
+
+    ModalBottomSheet(
+        onDismissRequest = onDismissRequest,
+        sheetState = sheetState,
+        shape = RoundedCornerShape(topStart = 28.dp, topEnd = 28.dp),
+        containerColor = MaterialTheme.colorScheme.surfaceContainerLow,
+        contentColor = MaterialTheme.colorScheme.onSurface,
+        dragHandle = {
+            Surface(
+                modifier = Modifier
+                    .padding(top = 12.dp, bottom = 8.dp)
+                    .size(width = 36.dp, height = 4.dp),
+                shape = CircleShape,
+                color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.6f)
+            ) {}
+        }
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .navigationBarsPadding()
+                .padding(horizontal = 24.dp, vertical = 8.dp),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            // Icon Badge with layered tonal depth
+            Surface(
+                shape = CircleShape,
+                color = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.7f),
+                border = BorderStroke(1.dp, MaterialTheme.colorScheme.primary.copy(alpha = 0.2f)),
+                modifier = Modifier.size(56.dp)
+            ) {
+                Box(contentAlignment = Alignment.Center) {
+                    Icon(
+                        painter = painterResource(id = R.drawable.location_sharing),
+                        contentDescription = "Location Request Icon",
+                        tint = MaterialTheme.colorScheme.primary,
+                        modifier = Modifier.size(28.dp)
+                    )
+                }
+            }
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            // Sheet Title
+            Text(
+                text = "Location Request",
+                fontFamily = manrope,
+                fontWeight = FontWeight.Bold,
+                fontSize = 20.sp,
+                color = MaterialTheme.colorScheme.onSurface,
+                textAlign = TextAlign.Center
+            )
+
+            Spacer(modifier = Modifier.height(6.dp))
+
+            // Subtitle with bolded requester name for immediate clarity
+            Text(
+                text = buildAnnotatedString {
+                    withStyle(SpanStyle(fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurface)) {
+                        append(requesterName)
+                    }
+                    append(" is asking for your current location.")
+                },
+                fontFamily = manrope,
+                fontSize = 14.sp,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                textAlign = TextAlign.Center,
+                lineHeight = 20.sp
+            )
+
+            Spacer(modifier = Modifier.height(24.dp))
+
+            // Section Label
+            Text(
+                text = "Share for",
+                fontFamily = manrope,
+                fontWeight = FontWeight.SemiBold,
+                fontSize = 13.sp,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.fillMaxWidth()
+            )
+
+            Spacer(modifier = Modifier.height(10.dp))
+
+            // Duration options list with animated selection state
+            val durations = listOf(
+                15 to "15 minutes",
+                60 to "1 hour",
+                -1 to "Until I stop"
+            )
+
+            Column(
+                modifier = Modifier.fillMaxWidth(),
+                verticalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                durations.forEach { (duration, label) ->
+                    val isSelected = selectedDuration.value == duration
+                    val animatedContainerColor by animateColorAsState(
+                        targetValue = if (isSelected) {
+                            MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.55f)
+                        } else {
+                            MaterialTheme.colorScheme.surfaceContainerHigh
+                        },
+                        animationSpec = tween(durationMillis = 200),
+                        label = "durationContainerColor"
+                    )
+                    val animatedBorderColor by animateColorAsState(
+                        targetValue = if (isSelected) {
+                            MaterialTheme.colorScheme.primary
+                        } else {
+                            MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.3f)
+                        },
+                        animationSpec = tween(durationMillis = 200),
+                        label = "durationBorderColor"
+                    )
+
+                    Surface(
+                        onClick = { selectedDuration.value = duration },
+                        shape = RoundedCornerShape(16.dp),
+                        color = animatedContainerColor,
+                        border = BorderStroke(1.dp, animatedBorderColor),
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(horizontal = 16.dp, vertical = 14.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.SpaceBetween
+                        ) {
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(12.dp)
+                            ) {
+                                Icon(
+                                    painter = painterResource(id = R.drawable.clock),
+                                    contentDescription = null,
+                                    tint = if (isSelected) {
+                                        MaterialTheme.colorScheme.primary
+                                    } else {
+                                        MaterialTheme.colorScheme.onSurfaceVariant
+                                    },
+                                    modifier = Modifier.size(18.dp)
+                                )
+                                Text(
+                                    text = label,
+                                    fontFamily = manrope,
+                                    fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
+                                    fontSize = 15.sp,
+                                    color = if (isSelected) {
+                                        MaterialTheme.colorScheme.onPrimaryContainer
+                                    } else {
+                                        MaterialTheme.colorScheme.onSurface
+                                    }
+                                )
+                            }
+
+                            // Selection indicator
+                            Box(
+                                modifier = Modifier
+                                    .size(22.dp)
+                                    .clip(CircleShape)
+                                    .background(
+                                        if (isSelected) MaterialTheme.colorScheme.primary
+                                        else Color.Transparent
+                                    )
+                                    .border(
+                                        width = if (isSelected) 0.dp else 1.5.dp,
+                                        color = if (isSelected) Color.Transparent
+                                        else MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.7f),
+                                        shape = CircleShape
+                                    ),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                if (isSelected) {
+                                    Icon(
+                                        painter = painterResource(id = R.drawable.check),
+                                        contentDescription = "Selected",
+                                        tint = MaterialTheme.colorScheme.onPrimary,
+                                        modifier = Modifier.size(14.dp)
+                                    )
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
+            Spacer(modifier = Modifier.height(24.dp))
+
+            // Primary CTA: Share Location
+            Button(
+                onClick = { onAccept(selectedDuration.value) },
+                shape = RoundedCornerShape(16.dp),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = MaterialTheme.colorScheme.primary,
+                    contentColor = MaterialTheme.colorScheme.onPrimary
+                ),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(52.dp)
+            ) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    Icon(
+                        painter = painterResource(id = R.drawable.location_sharing),
+                        contentDescription = null,
+                        modifier = Modifier.size(18.dp),
+                        tint = MaterialTheme.colorScheme.onPrimary
+                    )
+                    Text(
+                        text = "Share Location",
+                        fontFamily = manrope,
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 15.sp
+                    )
+                }
+            }
+
+            Spacer(modifier = Modifier.height(8.dp))
+
+            // Secondary Action: Not Now
+            TextButton(
+                onClick = onDecline,
+                shape = RoundedCornerShape(16.dp),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(48.dp)
+            ) {
+                Text(
+                    text = "Not Now",
+                    fontFamily = manrope,
+                    fontWeight = FontWeight.SemiBold,
+                    fontSize = 14.sp,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+
+            Spacer(modifier = Modifier.height(8.dp))
+        }
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Preview(showBackground = true)
+@Composable
+fun PreviewLocationRequestSheet() {
+    LocationRequestBottomSheet(
+        "Aarav",
+        rememberModalBottomSheetState(),
+        true,
+        {},
+        {},
+        {}
+    )
 }

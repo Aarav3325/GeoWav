@@ -45,7 +45,8 @@ class LocationSharingVM
     val circleRepository: CircleRepository,
     val locationPermissionRepository: LocationPermissionRepository,
     val emergencySharingRepository: EmergencySharingRepository,
-    val locationLocationSharingRepository: LiveLocationSharingRepository
+    val locationLocationSharingRepository: LiveLocationSharingRepository,
+    val placeRepository: com.aarav.geowav.domain.repository.PlaceRepository
 ) : ViewModel() {
 
     val ACTION_STOP = "ACTION_STOP_LIVE_LOCATION"
@@ -63,6 +64,9 @@ class LocationSharingVM
         get() = firebaseAuth.currentUser?.uid.orEmpty()
 
 
+    private val _activeSession = MutableStateFlow<com.aarav.geowav.data.model.SharingSession?>(null)
+    val activeSession: StateFlow<com.aarav.geowav.data.model.SharingSession?> = _activeSession.asStateFlow()
+
     init {
         val recovered = readServiceState()
         _uiState.update {
@@ -71,7 +75,69 @@ class LocationSharingVM
 
         observeEmergency()
         recoverActualSharingState()
+        observeActiveSession()
+        observeSavedPlaces()
+    }
 
+    private fun observeSavedPlaces() {
+        viewModelScope.launch {
+            placeRepository.getPlaces().collect { places ->
+                _uiState.update { it.copy(savedPlaces = places) }
+            }
+        }
+    }
+
+    private fun observeActiveSession() {
+        if (currentUserId.isEmpty()) return
+        viewModelScope.launch {
+            locationLocationSharingRepository.observeActiveSession(currentUserId)
+                .collect { session ->
+                    _activeSession.value = session
+                    _uiState.update { it.copy(activeSession = session) }
+                }
+        }
+    }
+
+    fun pauseSession() {
+        if (currentUserId.isEmpty()) return
+        viewModelScope.launch {
+            locationLocationSharingRepository.updateSessionStatus(
+                currentUserId,
+                com.aarav.geowav.data.model.SessionStatus.PAUSED
+            )
+        }
+    }
+
+    fun resumeSession() {
+        if (currentUserId.isEmpty()) return
+        viewModelScope.launch {
+            locationLocationSharingRepository.updateSessionStatus(
+                currentUserId,
+                com.aarav.geowav.data.model.SessionStatus.ACTIVE
+            )
+        }
+    }
+
+    fun cancelSharing() {
+        stopTimestampListener()
+
+        _uiState.update {
+            it.copy(
+                sharingState = LiveLocationState.NotSharing,
+                isServiceActionLoading = true
+            )
+        }
+
+        val intent = Intent(context, LiveLocationService::class.java).apply {
+            action = ACTION_STOP
+            putExtra("STOP_STATUS", com.aarav.geowav.data.model.SessionStatus.CANCELLED.name)
+        }
+        context.startService(intent)
+
+        _uiState.value = _uiState.value.copy(
+            showStoppedDialog = true,
+            isServiceActionLoading = false
+        )
     }
 
     private var emergencyTimerJob: Job? = null
@@ -622,8 +688,10 @@ class LocationSharingVM
 data class LiveLocationUiState(
     val sharingState: LiveLocationState,
     val previousSharingState: LiveLocationState? = null,
+    val activeSession: com.aarav.geowav.data.model.SharingSession? = null,
     val selectedViewerIds: Set<String> = emptySet(),
     val lovedOnes: List<CircleMember> = emptyList(),
+    val savedPlaces: List<com.aarav.geowav.data.model.Place> = emptyList(),
     val isInitialLoading: Boolean = false,
     val isServiceActionLoading: Boolean = false,
     val updatingViewerId: String? = null,

@@ -220,6 +220,96 @@ class CircleRepositoryImpl
         }
     }
 
+    override suspend fun sendLocationRequest(
+        requesterUid: String,
+        requesterName: String,
+        recipientUid: String
+    ): Resource<String> {
+        return withNetworkTimeout {
+            val requestsRef = rootRef.child("location_requests").child(recipientUid)
+            val newRef = requestsRef.push()
+            val requestId = newRef.key ?: throw IllegalStateException("Could not generate request ID")
+            val now = System.currentTimeMillis()
+            val expiresAt = now + (5 * 60 * 1000L) // 5 minutes timeout
+
+            val payload = mapOf(
+                "requestId" to requestId,
+                "requesterId" to requesterUid,
+                "requesterName" to requesterName,
+                "recipientId" to recipientUid,
+                "status" to "PENDING",
+                "requestedAt" to now,
+                "expiresAt" to expiresAt
+            )
+
+            newRef.setValue(payload).await()
+            requestId
+        }
+    }
+
+    override fun observeIncomingLocationRequests(userId: String): Flow<List<com.aarav.geowav.data.model.LocationRequest>> = callbackFlow {
+        val ref = rootRef.child("location_requests").child(userId)
+
+        val listener = object : ValueEventListener {
+            override fun onDataChange(snapshot: DataSnapshot) {
+                val now = System.currentTimeMillis()
+                val requests = snapshot.children.mapNotNull { child ->
+                    val statusStr = child.child("status").getValue(String::class.java) ?: "PENDING"
+                    val status = try {
+                        com.aarav.geowav.data.model.LocationRequestStatus.valueOf(statusStr)
+                    } catch (e: Exception) {
+                        com.aarav.geowav.data.model.LocationRequestStatus.PENDING
+                    }
+                    val expiresAt = child.child("expiresAt").getValue(Long::class.java) ?: 0L
+
+                    if (status == com.aarav.geowav.data.model.LocationRequestStatus.PENDING && expiresAt > now) {
+                        com.aarav.geowav.data.model.LocationRequest(
+                            requestId = child.child("requestId").getValue(String::class.java) ?: child.key.orEmpty(),
+                            requesterId = child.child("requesterId").getValue(String::class.java).orEmpty(),
+                            requesterName = child.child("requesterName").getValue(String::class.java) ?: "Circle Member",
+                            recipientId = userId,
+                            status = status,
+                            requestedAt = child.child("requestedAt").getValue(Long::class.java) ?: now,
+                            expiresAt = expiresAt,
+                            approvedDurationMinutes = child.child("approvedDurationMinutes").getValue(Int::class.java)
+                        )
+                    } else null
+                }
+                trySend(requests)
+            }
+
+            override fun onCancelled(error: DatabaseError) {
+                close(error.toException())
+            }
+        }
+
+        ref.addValueEventListener(listener)
+
+        awaitClose {
+            ref.removeEventListener(listener)
+        }
+    }
+
+    override suspend fun respondToLocationRequest(
+        recipientUid: String,
+        requestId: String,
+        accept: Boolean,
+        durationMinutes: Int?
+    ): Resource<Unit> {
+        return withNetworkTimeout {
+            val status = if (accept) "ACCEPTED" else "DECLINED"
+            val updates = mutableMapOf<String, Any>(
+                "location_requests/$recipientUid/$requestId/status" to status
+            )
+            if (accept && durationMinutes != null) {
+                updates["location_requests/$recipientUid/$requestId/approvedDurationMinutes"] = durationMinutes
+            }
+
+            rootRef.updateChildren(updates).await()
+            Unit
+        }
+    }
+
     private suspend fun getUserAvatarUrl(userId: String): String? {
         return try {
             usersRef.child(userId)
@@ -233,6 +323,4 @@ class CircleRepositoryImpl
             null
         }
     }
-
-
 }

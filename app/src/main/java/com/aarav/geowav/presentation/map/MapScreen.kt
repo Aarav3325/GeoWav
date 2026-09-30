@@ -71,6 +71,7 @@ import com.google.maps.android.compose.MapUiSettings
 import com.google.maps.android.compose.Marker
 import com.google.maps.android.compose.MarkerState
 import com.google.maps.android.compose.rememberCameraPositionState
+import com.google.maps.android.compose.rememberMarkerState
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
@@ -85,6 +86,8 @@ fun MapScreen(
     navigateToManualAddPlace: (Double, Double, String) -> Unit,
     navigateToSettings: () -> Unit,
     navigateToHome: () -> Unit,
+    forJourney: Boolean = false,
+    onSelectJourneyDestination: ((Double, Double, String, String) -> Unit)? = null,
     modifier: Modifier = Modifier
 ) {
 
@@ -258,7 +261,8 @@ fun MapScreen(
 
                 if (uiState.selectedPlace != null) {
                     Marker(
-                        state = MarkerState(
+                        state = rememberMarkerState(
+                            key = selectedPlace?.displayName,
                             position = LatLng(
                                 selectedPlace?.location?.latitude ?: 0.0,
                                 selectedPlace?.location?.longitude ?: 0.0
@@ -274,7 +278,7 @@ fun MapScreen(
 
                 manualSelectedLatLng?.let { latLng ->
                     Marker(
-                        state = MarkerState(position = latLng),
+                        state = rememberMarkerState(key = latLng.toString(), position = latLng),
                         title = "Dropped pin"
                     )
                 }
@@ -302,7 +306,9 @@ fun MapScreen(
                 },
                 onDismissRequest = {
                     mapViewModel.dismissBottomSheet()
-                }
+                },
+                forJourney = forJourney,
+                onSelectJourneyDestination = onSelectJourneyDestination
             )
 
             LaunchedEffect(selectedPlace) {
@@ -336,7 +342,7 @@ fun MapScreen(
 
             if (!uiState.isSearchExpanded) {
                 SelectPlaceTopBar(
-                    screenTitle = "Select place",
+                    screenTitle = if (forJourney) "Select destination" else "Select place",
                     actionLabel = "Help",
                     onBack = navigateToHome,
                     onAction = { showPlaceHelpDialog = true },
@@ -361,11 +367,20 @@ fun MapScreen(
                         mapViewModel.clearManualPlace()
                     },
                     onContinue = {
-                        navigateToManualAddPlace(
-                            latLng.latitude,
-                            latLng.longitude,
-                            manualPlaceAddress ?: "Approximate location"
-                        )
+                        if (forJourney && onSelectJourneyDestination != null) {
+                            onSelectJourneyDestination(
+                                latLng.latitude,
+                                latLng.longitude,
+                                manualPlaceAddress ?: "Dropped Pin",
+                                manualPlaceAddress ?: "Approximate location"
+                            )
+                        } else {
+                            navigateToManualAddPlace(
+                                latLng.latitude,
+                                latLng.longitude,
+                                manualPlaceAddress ?: "Approximate location"
+                            )
+                        }
                     }
                 )
             }

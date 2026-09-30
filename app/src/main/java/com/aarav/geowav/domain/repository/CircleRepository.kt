@@ -43,4 +43,21 @@ interface CircleRepository {
         userId: String,
         circleMemberId: String
     ): Resource<Unit>
+
+    suspend fun sendLocationRequest(
+        requesterUid: String,
+        requesterName: String,
+        recipientUid: String
+    ): Resource<String>
+
+    fun observeIncomingLocationRequests(
+        userId: String
+    ): Flow<List<com.aarav.geowav.data.model.LocationRequest>>
+
+    suspend fun respondToLocationRequest(
+        recipientUid: String,
+        requestId: String,
+        accept: Boolean,
+        durationMinutes: Int?
+    ): Resource<Unit>
 }

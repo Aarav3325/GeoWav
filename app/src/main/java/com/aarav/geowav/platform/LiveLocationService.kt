@@ -69,13 +69,19 @@ class LiveLocationService : Service() {
 
     private var userPlan: UserPlan = UserPlan.FREE
     private var sessionStartTime: Long = 0L
+    private var sessionMode: com.aarav.geowav.data.model.SessionMode = com.aarav.geowav.data.model.SessionMode.NORMAL
+    private var sessionExpiresAt: Long? = null
+    private var destPlaceId: String? = null
+    private var destLocation: com.aarav.geowav.data.model.DestinationLocation? = null
+    private var sessionCreatedFrom: String? = null
+    private var sharedWithList: List<String> = emptyList()
+    private var stopStatus: com.aarav.geowav.data.model.SessionStatus = com.aarav.geowav.data.model.SessionStatus.COMPLETED
 
     private fun setSharingState(state: ServiceState) {
         sharedPreferences.edit(commit = true) {
             putString("live_location_state", state.name)
         }
     }
-
 
     override fun onBind(intent: Intent?): IBinder? = null
 
@@ -84,9 +90,13 @@ class LiveLocationService : Service() {
         flags: Int,
         startId: Int
     ): Int {
-
         when (intent?.action) {
             ACTION_STOP -> {
+                intent.getStringExtra("STOP_STATUS")?.let { statusName ->
+                    try {
+                        stopStatus = com.aarav.geowav.data.model.SessionStatus.valueOf(statusName)
+                    } catch (_: Exception) {}
+                }
 
                 setSharingState(ServiceState.NOT_SHARING)
 
@@ -95,7 +105,7 @@ class LiveLocationService : Service() {
                 }
 
                 stopForeground(true)
-                Log.i("SERVICE", "stopped")
+                Log.i("SERVICE", "stopped with status: $stopStatus")
 
                 val manager = getSystemService(NotificationManager::class.java)
                 manager.cancel(3)
@@ -109,25 +119,35 @@ class LiveLocationService : Service() {
             userPlan = UserPlan.valueOf(it)
         }
 
+        intent?.getStringExtra("SESSION_MODE")?.let { modeName ->
+            try {
+                sessionMode = com.aarav.geowav.data.model.SessionMode.valueOf(modeName)
+            } catch (_: Exception) {}
+        }
+
+        if (intent?.hasExtra("EXPIRES_AT") == true) {
+            sessionExpiresAt = intent.getLongExtra("EXPIRES_AT", 0L).takeIf { it > 0L }
+        }
+
+        intent?.getStringArrayListExtra("SHARED_WITH")?.let {
+            sharedWithList = it
+        }
+
+        destPlaceId = intent?.getStringExtra("DESTINATION_PLACE_ID")
+        if (intent?.hasExtra("DESTINATION_LAT") == true && intent.hasExtra("DESTINATION_LNG") == true) {
+            destLocation = com.aarav.geowav.data.model.DestinationLocation(
+                latitude = intent.getDoubleExtra("DESTINATION_LAT", 0.0),
+                longitude = intent.getDoubleExtra("DESTINATION_LNG", 0.0),
+                name = intent.getStringExtra("DESTINATION_NAME") ?: "",
+                address = intent.getStringExtra("DESTINATION_ADDRESS") ?: ""
+            )
+        }
+        sessionCreatedFrom = intent?.getStringExtra("CREATED_FROM")
+
         sessionStartTime = System.currentTimeMillis()
 
         return START_STICKY
     }
-
-
-//    override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
-//        if (!googleSignInClient.isLoggedIn()) {
-//            stopSelf()
-//            return START_NOT_STICKY
-//        }
-//
-////        setSharingState(LiveLocationState.Sharing)
-//        startForeground(1, createNotification())
-//        startLocationUpdates()
-//
-//
-//        return START_STICKY
-//    }
 
     override fun onCreate() {
         super.onCreate()
@@ -157,37 +177,6 @@ class LiveLocationService : Service() {
         }
     }
 
-//    private fun startLocationSharing() {
-//        var first = true
-//
-//        getLocationUpdates()
-//            .onEach { location ->
-//                try {
-//                    if (first) {
-//                        liveLocationSharingRepository
-//                            .startLiveLocationSharing(
-//                                googleSignInClient.getUserId(),
-//                                location.latitude,
-//                                location.longitude
-//                            )
-//                        setSharingState(LiveLocationState.Sharing)
-//                        first = false
-//                    } else {
-//                        liveLocationSharingRepository
-//                            .updateLocation(
-//                                googleSignInClient.getUserId(),
-//                                location.latitude,
-//                                location.longitude
-//                            )
-//                    }
-//                } catch (e: Exception) {
-//                    setSharingState(LiveLocationState.Error("Failed to share live location"))
-//                    stopSelf()
-//                }
-//            }
-//            .launchIn(serviceScope)
-//    }
-
     private suspend fun sendLocation(location: Location) {
         val userId = googleSignInClient.getUserId()
         val username = googleSignInClient.getUserName()
@@ -197,7 +186,13 @@ class LiveLocationService : Service() {
                 username,
                 userId,
                 location.latitude,
-                location.longitude
+                location.longitude,
+                mode = sessionMode,
+                expiresAt = sessionExpiresAt,
+                destinationPlaceId = destPlaceId,
+                destinationLocation = destLocation,
+                createdFrom = sessionCreatedFrom,
+                sharedWith = sharedWithList
             )
             hasStartedSharing = true
             setSharingState(ServiceState.SHARING)
@@ -218,7 +213,6 @@ class LiveLocationService : Service() {
         val stay = stayPointTracker.consumeQualifiedStay()
 
         stay?.let {
-
             val key = "${it.lat}_${it.lng}_${it.startedAt}"
 
             if (!pushedStays.contains(key)) {
@@ -240,10 +234,8 @@ class LiveLocationService : Service() {
         }
     }
 
-
     @SuppressLint("MissingPermission")
     private fun startLocationUpdates() {
-
         val request = LocationRequest.Builder(
             Priority.PRIORITY_HIGH_ACCURACY,
             5_000L
@@ -258,15 +250,28 @@ class LiveLocationService : Service() {
                 serviceScope.launch {
                     try {
                         val elapsedTime = System.currentTimeMillis() - sessionStartTime
-
                         val maxDuration = FeatureAccess.locationSharingLimit(userPlan)
 
+                        if (sessionExpiresAt != null && System.currentTimeMillis() >= sessionExpiresAt!!) {
+                            Log.i("SERVICE", "Session expired by expiresAt time")
+                            stopStatus = com.aarav.geowav.data.model.SessionStatus.EXPIRED
+                            setSharingState(ServiceState.NOT_SHARING)
+
+                            val intent = Intent("SESSION_LIMIT_REACHED").apply {
+                                `package` = packageName
+                            }
+                            sendBroadcast(intent)
+
+                            stopLocationUpdates()
+                            stopForeground(STOP_FOREGROUND_REMOVE)
+                            stopSelf()
+                            return@launch
+                        }
 
                         maxDuration?.let {
-
-                            if(elapsedTime >= maxDuration) {
+                            if (elapsedTime >= maxDuration) {
                                 Log.i("SERVICE", "Session limit reached")
-
+                                stopStatus = com.aarav.geowav.data.model.SessionStatus.EXPIRED
                                 setSharingState(ServiceState.NOT_SHARING)
 
                                 val intent = Intent("SESSION_LIMIT_REACHED").apply {
@@ -283,6 +288,38 @@ class LiveLocationService : Service() {
                         }
 
                         sendLocation(location)
+
+                        if (sessionMode == com.aarav.geowav.data.model.SessionMode.JOURNEY && destLocation != null) {
+                            val distanceResults = FloatArray(1)
+                            Location.distanceBetween(
+                                location.latitude,
+                                location.longitude,
+                                destLocation!!.latitude,
+                                destLocation!!.longitude,
+                                distanceResults
+                            )
+                            val distanceMeters = distanceResults[0]
+                            val arrivalThresholdMeters = 150f
+
+                            if (distanceMeters <= arrivalThresholdMeters) {
+                                Log.i("SERVICE", "Arrival detected at ${destLocation?.name} ($distanceMeters m)")
+                                stopStatus = com.aarav.geowav.data.model.SessionStatus.COMPLETED
+                                setSharingState(ServiceState.NOT_SHARING)
+
+                                com.aarav.geowav.core.utils.GeoNotificationHelper.show(
+                                    context = this@LiveLocationService,
+                                    channelId = "geo_channel",
+                                    title = "Arrival",
+                                    message = "You arrived at ${destLocation?.name ?: "your destination"}.",
+                                    type = com.aarav.geowav.core.utils.NotificationType.JourneyCompleted
+                                )
+
+                                stopLocationUpdates()
+                                stopForeground(STOP_FOREGROUND_REMOVE)
+                                stopSelf()
+                                return@launch
+                            }
+                        }
                     } catch (e: Exception) {
                         setSharingState(ServiceState.NOT_SHARING)
                         stopForeground(STOP_FOREGROUND_REMOVE)
@@ -322,7 +359,6 @@ class LiveLocationService : Service() {
     }
 
     override fun onDestroy() {
-
         stopForeground(STOP_FOREGROUND_REMOVE)
 
         if (::locationCallback.isInitialized) {
@@ -332,17 +368,13 @@ class LiveLocationService : Service() {
         serviceScope.cancel()
 
         CoroutineScope(Dispatchers.IO + NonCancellable).launch {
-
-
             googleSignInClient.getUserId()?.let {
                 val finalStays = stayPointTracker.finalizeAll()
 
                 finalStays.forEach { stay ->
-
                     val key = "${stay.lat}_${stay.lng}_${stay.startedAt}"
 
                     if (!pushedStays.contains(key)) {
-
                         pushedStays.add(key)
 
                         liveLocationSharingRepository.saveStayPoint(
@@ -352,7 +384,7 @@ class LiveLocationService : Service() {
                     }
                 }
 
-                liveLocationSharingRepository.stopSharingLiveLocation(it)
+                liveLocationSharingRepository.stopSharingLiveLocation(it, stopStatus)
             }
         }
 

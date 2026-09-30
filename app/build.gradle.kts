@@ -96,6 +96,7 @@ android {
 }
 
 dependencies {
+    implementation(platform(libs.firebase.bom))
     implementation("androidx.browser:browser:1.8.0")
 
     implementation("com.google.firebase:firebase-perf")
@@ -157,12 +158,11 @@ dependencies {
     ksp(libs.room.compiler)
     implementation(libs.room.ktx)
 
-    implementation(platform(libs.firebase.bom))
-
     implementation(libs.hilt.work)
     ksp(libs.hilt.compiler)
 
     implementation(libs.maps.compose)
+    implementation(libs.play.services.base)
     implementation(libs.play.services.maps)
 // Location Services
     implementation(libs.play.services.location)

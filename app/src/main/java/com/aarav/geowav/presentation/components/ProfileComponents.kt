@@ -42,7 +42,6 @@ import com.aarav.geowav.data.model.User
 import com.aarav.geowav.data.model.UserPlan
 import com.aarav.geowav.presentation.theme.manrope
 
-@OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 fun ProfileCard(
     isUploading: Boolean,
@@ -53,22 +52,8 @@ fun ProfileCard(
     userAvatar: String?,
     onAvatarClick: () -> Unit
 ) {
-
-    val context = LocalContext.current
-    val imageLoader = remember {
-        ImageLoader.Builder(context)
-            .components { add(SvgDecoder.Factory()) }
-            .build()
-    }
-
-    val imageUrl =
-        currentUser?.avatar?.takeIf { it.isNotBlank() }
-            ?: userAvatar.takeIf { !it.isNullOrBlank() }
-
-    val stableAvatar = remember(currentUser?.avatar) {
-        currentUser?.avatar
-    }
-
+    val imageUrl = currentUser?.avatar?.takeIf { it.isNotBlank() }
+        ?: userAvatar?.takeIf { !it.isNullOrBlank() }
 
     val badge = when (plan) {
         UserPlan.FREE -> null
@@ -76,13 +61,13 @@ fun ProfileCard(
         UserPlan.PRO -> R.drawable.geowav_pro_badge
     }
 
-
-    Card(
-        shape = RoundedCornerShape(16.dp),
+    Surface(
+        shape = RoundedCornerShape(20.dp),
         modifier = Modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceContainer,
-            contentColor = MaterialTheme.colorScheme.onSurface
+        color = MaterialTheme.colorScheme.surfaceContainer,
+        border = androidx.compose.foundation.BorderStroke(
+            1.dp,
+            MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.25f)
         )
     ) {
         Row(
@@ -92,99 +77,110 @@ fun ProfileCard(
             verticalAlignment = Alignment.CenterVertically
         ) {
             Box(
-                modifier = Modifier
+                modifier = Modifier.size(80.dp),
+                contentAlignment = Alignment.Center
             ) {
-
+                // Avatar container
                 Surface(
                     shape = CircleShape,
-                    color = Color.White,
+                    color = MaterialTheme.colorScheme.primaryContainer,
+                    border = androidx.compose.foundation.BorderStroke(
+                        1.5.dp,
+                        MaterialTheme.colorScheme.primary.copy(alpha = 0.25f)
+                    ),
                     modifier = Modifier
-                        .size(84.dp)
+                        .size(80.dp)
                         .clip(CircleShape)
-                        .clickable(
-                            enabled = !isUploading
-                        ) {
+                        .clickable(enabled = !isUploading) {
                             onAvatarClick()
                         }
                 ) {
-                    Box(
-                        modifier = Modifier
-                            .clip(CircleShape)
-                            .background(Color.White)
-                            .size(84.dp),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        if (!imageUrl.isNullOrBlank()) {
-                            AvatarImage(
-                                avatarUrl = imageUrl,
-                                isUploading = isUploading,
-                                modifier = Modifier.size(84.dp)
-                            )
-                        } else {
-//
+                    if (!imageUrl.isNullOrBlank()) {
+                        AsyncImage(
+                            model = imageUrl,
+                            contentDescription = "${currentUser?.username ?: "User"} avatar",
+                            contentScale = ContentScale.Crop,
+                            modifier = Modifier.fillMaxSize()
+                        )
+                    } else {
+                        Box(
+                            modifier = Modifier.fillMaxSize(),
+                            contentAlignment = Alignment.Center
+                        ) {
                             Text(
-                                text = currentUser?.username?.take(1) ?: "",
-                                color = Color.Black,
-                                fontSize = 42.sp,
-                                fontWeight = FontWeight.SemiBold,
-                                modifier = Modifier
-
+                                text = currentUser?.username?.take(1)?.uppercase() ?: "U",
+                                color = MaterialTheme.colorScheme.onPrimaryContainer,
+                                fontSize = 32.sp,
+                                fontWeight = FontWeight.Bold,
+                                fontFamily = manrope
                             )
                         }
                     }
-
                 }
 
-                if (!isUploading) {
+                if (isUploading) {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .background(Color.Black.copy(alpha = 0.45f), CircleShape),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        CircularProgressIndicator(
+                            modifier = Modifier.size(36.dp),
+                            color = MaterialTheme.colorScheme.primary,
+                            strokeWidth = 3.dp
+                        )
+                    }
+                } else {
                     Surface(
                         shape = CircleShape,
-                        color = MaterialTheme.colorScheme.tertiaryContainer,
+                        color = MaterialTheme.colorScheme.primary,
+                        border = androidx.compose.foundation.BorderStroke(
+                            2.dp,
+                            MaterialTheme.colorScheme.surfaceContainer
+                        ),
                         modifier = Modifier
-                            .size(24.dp)
+                            .size(28.dp)
                             .align(Alignment.BottomEnd)
                             .clip(CircleShape)
                             .clickable {
                                 onAvatarClick()
                             }
                     ) {
-                        Icon(
-                            painter = painterResource(R.drawable.camera),
-                            contentDescription = "camera",
-                            tint = MaterialTheme.colorScheme.onTertiaryContainer,
-                            modifier = Modifier.padding(4.dp)
-                        )
+                        Box(contentAlignment = Alignment.Center) {
+                            Icon(
+                                painter = painterResource(R.drawable.camera),
+                                contentDescription = "Change profile picture",
+                                tint = MaterialTheme.colorScheme.onPrimary,
+                                modifier = Modifier.size(14.dp)
+                            )
+                        }
                     }
                 }
-
-                if (isUploading) {
-                    CircularProgressIndicator(
-                        modifier = Modifier.size(84.dp)
-                    )
-                }
-
-
             }
 
             Column(
                 verticalArrangement = Arrangement.spacedBy(4.dp),
-                modifier = Modifier.padding(
-                    horizontal = 16.dp
-                )
+                modifier = Modifier
+                    .weight(1f)
+                    .padding(start = 16.dp)
             ) {
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(6.dp)
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
                     Text(
                         text = currentUser?.username ?: "User",
                         style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.onSurface,
                         fontFamily = manrope
                     )
 
                     badge?.let {
                         Icon(
                             painter = painterResource(it),
-                            contentDescription = null,
+                            contentDescription = "Subscription Badge",
                             tint = Color.Unspecified,
                             modifier = Modifier.size(18.dp)
                         )
@@ -193,7 +189,8 @@ fun ProfileCard(
 
                 Text(
                     text = currentUser?.email ?: "email@gmail.com",
-                    style = MaterialTheme.typography.titleSmall,
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                     fontFamily = manrope
                 )
             }

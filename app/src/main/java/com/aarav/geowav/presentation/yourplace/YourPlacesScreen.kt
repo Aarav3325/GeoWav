@@ -60,6 +60,7 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.navigationBarsPadding
+import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.material3.ExtendedFloatingActionButton
 import androidx.compose.material3.HorizontalDivider
 import com.aarav.geowav.presentation.components.PlaceTextField
@@ -89,10 +90,7 @@ fun YourPlacesScreen(
     navigateToPlaceDetails: (String) -> Unit = {}
 ) {
     val uiState by yourPlacesVM.uiState.collectAsState()
-
     val plan by subscriptionVM.userPlan.collectAsState()
-
-
 
     var upgradeContext by remember { mutableStateOf<UpgradeContext?>(null) }
     val placeToEdit = uiState.placeToEdit
@@ -109,37 +107,54 @@ fun YourPlacesScreen(
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = 16.dp),
-                verticalArrangement = Arrangement.spacedBy(24.dp)
+                    .padding(horizontal = 20.dp, vertical = 8.dp),
+                verticalArrangement = Arrangement.spacedBy(20.dp)
             ) {
-                Text(
-                    text = "Edit Place",
-                    style = MaterialTheme.typography.titleLarge,
-                    color = MaterialTheme.colorScheme.onSurface,
-                    fontFamily = manrope,
-                    fontWeight = FontWeight.Bold
+                // Drag handle
+                Box(
+                    modifier = Modifier
+                        .size(width = 36.dp, height = 4.dp)
+                        .clip(RoundedCornerShape(2.dp))
+                        .background(MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.6f))
+                        .align(Alignment.CenterHorizontally)
                 )
+
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    Text(
+                        text = "Edit Place",
+                        style = MaterialTheme.typography.titleLarge,
+                        color = MaterialTheme.colorScheme.onSurface,
+                        fontFamily = manrope,
+                        fontWeight = FontWeight.Bold
+                    )
+                }
 
                 Column(
                     verticalArrangement = Arrangement.spacedBy(16.dp),
                     modifier = Modifier
                         .fillMaxWidth()
-                        .background(
-                            MaterialTheme.colorScheme.surfaceContainerHigh,
+                        .clip(RoundedCornerShape(20.dp))
+                        .background(MaterialTheme.colorScheme.surfaceContainerHigh)
+                        .border(
+                            BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.35f)),
                             RoundedCornerShape(20.dp)
                         )
                         .padding(16.dp)
                 ) {
                     PlaceTextField(
                         placeHolder = "e.g., Home, Work, Gym",
-                        infoText = "Name",
+                        infoText = "Place Name",
                         name = placeName,
                         onValueChange = { placeName = it }
                     )
 
                     HorizontalDivider(
                         modifier = Modifier.padding(vertical = 4.dp),
-                        color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f)
+                        color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.4f)
                     )
 
                     RadiusChipGroup(
@@ -156,7 +171,7 @@ fun YourPlacesScreen(
                     },
                     modifier = Modifier
                         .fillMaxWidth()
-                        .height(54.dp),
+                        .height(52.dp),
                     shape = RoundedCornerShape(16.dp),
                     colors = androidx.compose.material3.ButtonDefaults.buttonColors(
                         containerColor = MaterialTheme.colorScheme.primary,
@@ -164,18 +179,17 @@ fun YourPlacesScreen(
                     )
                 ) {
                     Text(
-                        text = "Save Changes", 
+                        text = "Save Changes",
                         fontFamily = manrope,
                         fontWeight = FontWeight.Bold,
                         fontSize = 16.sp
                     )
                 }
-                
-                Spacer(modifier = Modifier.height(24.dp))
+
+                Spacer(modifier = Modifier.height(16.dp))
             }
         }
     }
-
 
     upgradeContext?.let {
         CustomBottomSheet(
@@ -202,7 +216,7 @@ fun YourPlacesScreen(
         }
     }
 
-    LaunchedEffect(uiState.placesList) {
+    LaunchedEffect(Unit) {
         yourPlacesVM.getPlaces()
     }
 
@@ -211,139 +225,269 @@ fun YourPlacesScreen(
             .background(MaterialTheme.colorScheme.background)
             .fillMaxSize()
     ) {
-
         Column(
-            modifier = Modifier
+            modifier = Modifier.fillMaxSize()
         ) {
-
+            // Screen Header with status bar padding
             Column(
-                modifier = Modifier.padding(top = 56.dp, start = 16.dp, end = 16.dp, bottom = 8.dp)
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .statusBarsPadding()
+                    .padding(horizontal = 16.dp, vertical = 12.dp)
             ) {
-                Text(
-                    text = "Your Places",
-                    fontSize = 28.sp,
-                    fontFamily = manrope,
-                    fontWeight = FontWeight.ExtraBold,
-                    color = MaterialTheme.colorScheme.onBackground
-                )
-                Spacer(modifier = Modifier.height(4.dp))
-                Text(
-                    text = "Awareness zones for circle notifications",
-                    fontSize = 13.sp,
-                    fontFamily = manrope,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    Column(modifier = Modifier.weight(1f)) {
+                        Text(
+                            text = "Your Places",
+                            fontSize = 24.sp,
+                            fontFamily = manrope,
+                            fontWeight = FontWeight.ExtraBold,
+                            color = MaterialTheme.colorScheme.onBackground
+                        )
+                        Spacer(modifier = Modifier.height(2.dp))
+                        Text(
+                            text = "Awareness zones for circle notifications",
+                            fontSize = 13.sp,
+                            fontFamily = manrope,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+
+                    if (uiState.placesList.isNotEmpty()) {
+                        val max = FeatureAccess.maxSavedPlaces(plan)
+                        Surface(
+                            shape = RoundedCornerShape(10.dp),
+                            color = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.7f),
+                            contentColor = MaterialTheme.colorScheme.onPrimaryContainer
+                        ) {
+                            Text(
+                                text = if (max == Int.MAX_VALUE) "${uiState.placesList.size} Saved" else "${uiState.placesList.size} / $max",
+                                fontFamily = manrope,
+                                fontWeight = FontWeight.SemiBold,
+                                fontSize = 12.sp,
+                                modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp)
+                            )
+                        }
+                    }
+                }
             }
 
             if (uiState.isLoading && uiState.placesList.isEmpty()) {
-                Box(
+                // Skeleton loading list
+                LazyColumn(
                     modifier = Modifier.fillMaxSize(),
-                    contentAlignment = Alignment.Center
+                    contentPadding = PaddingValues(top = 4.dp, bottom = 96.dp)
                 ) {
-                    Column(
-                        horizontalAlignment = Alignment.CenterHorizontally,
-                        verticalArrangement = Arrangement.Center
-                    ) {
-                        CircularProgressIndicator(
-                            color = MaterialTheme.colorScheme.primary,
-                            modifier = Modifier.size(48.dp)
+                    item {
+                        PlacesUsageCard(
+                            current = 0,
+                            plan = plan,
+                            isLoading = true,
+                            modifier = Modifier
+                                .padding(horizontal = 16.dp, vertical = 6.dp)
                         )
-                        Spacer(modifier = Modifier.height(16.dp))
-                        Text(
-                            text = "Loading your saved places...",
-                            fontFamily = manrope,
-                            fontWeight = FontWeight.SemiBold,
-                            color = MaterialTheme.colorScheme.onBackground
-                        )
+                    }
+
+                    items(3) {
+                        PlaceCardSkeleton()
                     }
                 }
             } else if (uiState.placesList.isEmpty()) {
+                // Polished Empty State with Radar Visual
                 Box(
-                    modifier = Modifier.fillMaxSize(),
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(horizontal = 24.dp)
+                        .padding(bottom = 48.dp),
                     contentAlignment = Alignment.Center
                 ) {
                     Column(
-                        modifier = Modifier,
                         horizontalAlignment = Alignment.CenterHorizontally,
                         verticalArrangement = Arrangement.spacedBy(16.dp)
                     ) {
+                        // Concentric Radar circles container
                         Surface(
                             shape = CircleShape,
-                            color = MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.5f),
-                            modifier = Modifier.size(96.dp)
+                            color = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.25f),
+                            modifier = Modifier.size(110.dp)
                         ) {
-                            Image(
-                                painter = painterResource(R.drawable.map_trifold),
-                                contentDescription = "Empty places",
-                                colorFilter = ColorFilter.tint(MaterialTheme.colorScheme.onSecondaryContainer.copy(alpha = 0.7f)),
-                                modifier = Modifier.padding(24.dp)
-                            )
+                            Box(contentAlignment = Alignment.Center) {
+                                Surface(
+                                    shape = CircleShape,
+                                    color = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.6f),
+                                    modifier = Modifier.size(76.dp)
+                                ) {
+                                    Box(contentAlignment = Alignment.Center) {
+                                        Icon(
+                                            painter = painterResource(R.drawable.map_trifold),
+                                            contentDescription = "Empty places",
+                                            tint = MaterialTheme.colorScheme.primary,
+                                            modifier = Modifier.size(34.dp)
+                                        )
+                                    }
+                                }
+                            }
                         }
 
                         Column(
                             horizontalAlignment = Alignment.CenterHorizontally,
-                            verticalArrangement = Arrangement.spacedBy(8.dp)
+                            verticalArrangement = Arrangement.spacedBy(6.dp)
                         ) {
                             Text(
-                                text = "No awareness zones",
-                                fontSize = 18.sp,
+                                text = "No Awareness Zones Yet",
+                                fontSize = 19.sp,
                                 fontFamily = manrope,
                                 color = MaterialTheme.colorScheme.onBackground,
-                                fontWeight = FontWeight.SemiBold,
+                                fontWeight = FontWeight.Bold
                             )
 
                             Text(
-                                text = "Add a meaningful place like Home or Work to get started.",
-                                fontSize = 14.sp,
+                                text = "Add meaningful places like Home, Work, or Gym so your circle gets automatic arrival and departure alerts.",
+                                fontSize = 13.sp,
                                 textAlign = TextAlign.Center,
                                 fontFamily = manrope,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                fontWeight = FontWeight.Normal,
-                                modifier = Modifier.padding(horizontal = 32.dp)
+                                lineHeight = 19.sp,
+                                modifier = Modifier.padding(horizontal = 16.dp)
+                            )
+                        }
+
+                        Spacer(modifier = Modifier.height(4.dp))
+
+                        Button(
+                            onClick = {
+                                val isLimitReached = uiState.placesList.size >= FeatureAccess.maxSavedPlaces(plan)
+                                if (!isLimitReached) {
+                                    navigateToMap()
+                                } else {
+                                    yourPlacesVM.onPlaceLimitReached(plan)
+                                }
+                            },
+                            shape = RoundedCornerShape(16.dp),
+                            colors = androidx.compose.material3.ButtonDefaults.buttonColors(
+                                containerColor = MaterialTheme.colorScheme.primary,
+                                contentColor = MaterialTheme.colorScheme.onPrimary
+                            ),
+                            modifier = Modifier.height(48.dp)
+                        ) {
+                            Icon(
+                                painter = painterResource(R.drawable.add),
+                                contentDescription = null,
+                                modifier = Modifier.size(18.dp)
+                            )
+                            Spacer(Modifier.width(8.dp))
+                            Text(
+                                text = "Add First Place",
+                                fontFamily = manrope,
+                                fontWeight = FontWeight.Bold,
+                                fontSize = 14.sp
                             )
                         }
                     }
                 }
-            }
+            } else {
+                LazyColumn(
+                    modifier = Modifier.fillMaxSize(),
+                    contentPadding = PaddingValues(top = 4.dp, bottom = 96.dp)
+                ) {
+                    item {
+                        PlacesUsageCard(
+                            current = uiState.placesList.size,
+                            plan = plan,
+                            isLoading = uiState.isLoading,
+                            onUpgradeClick = {
+                                yourPlacesVM.onPlaceLimitReached(plan)
+                            },
+                            modifier = Modifier
+                                .padding(horizontal = 16.dp, vertical = 6.dp)
+                        )
+                    }
 
-            LazyColumn(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(top = 8.dp),
-                contentPadding = PaddingValues(bottom = 88.dp)
-            ) {
-
-                item {
-                    PlacesUsageCard(
-                        current = uiState.placesList.size,
-                        plan = plan,
-                        isLoading = uiState.isLoading,
-                        modifier = Modifier
-                            .padding(horizontal = 12.dp)
-                            .padding(top = 8.dp, bottom = 8.dp)
-                    )
-                }
-
-                items(uiState.placesList) { place ->
-                    GeofencePlaceCard(
-                        place = place,
-                        onCardClick = { clickedPlace ->
-                            navigateToPlaceDetails(clickedPlace.placeId)
-                        }
-                    )
+                    items(uiState.placesList) { place ->
+                        GeofencePlaceCard(
+                            place = place,
+                            onCardClick = { clickedPlace ->
+                                navigateToPlaceDetails(clickedPlace.placeId)
+                            }
+                        )
+                    }
                 }
             }
         }
 
-        AddLocationFAB(
-            uiState.placesList,
-            yourPlacesVM::onPlaceLimitReached,
-            plan,
-            Modifier
-                .align(Alignment.BottomEnd).navigationBarsPadding().padding(bottom = 80.dp)
-                .padding(vertical = 16.dp, horizontal = 12.dp),
-            navigateToMap
-        )
+        if (uiState.placesList.isNotEmpty()) {
+            AddLocationFAB(
+                places = uiState.placesList,
+                onPlaceLimitReached = yourPlacesVM::onPlaceLimitReached,
+                userPlan = plan,
+                modifier = Modifier
+                    .align(Alignment.BottomEnd)
+                    .navigationBarsPadding()
+                    .padding(bottom = 96.dp, end = 16.dp),
+                onClick = navigateToMap
+            )
+        }
+    }
+}
+
+@Composable
+fun PlaceCardSkeleton() {
+    val shimmer = shimmerBrush()
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp, vertical = 6.dp),
+        shape = RoundedCornerShape(20.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surfaceContainer
+        ),
+        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.25f))
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Box(
+                modifier = Modifier
+                    .size(44.dp)
+                    .clip(CircleShape)
+                    .background(shimmer)
+            )
+
+            Spacer(Modifier.width(14.dp))
+
+            Column(modifier = Modifier.weight(1f)) {
+                Box(
+                    modifier = Modifier
+                        .width(130.dp)
+                        .height(18.dp)
+                        .clip(RoundedCornerShape(4.dp))
+                        .background(shimmer)
+                )
+                Spacer(Modifier.height(6.dp))
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth(0.7f)
+                        .height(14.dp)
+                        .clip(RoundedCornerShape(4.dp))
+                        .background(shimmer)
+                )
+                Spacer(Modifier.height(8.dp))
+                Box(
+                    modifier = Modifier
+                        .width(80.dp)
+                        .height(18.dp)
+                        .clip(RoundedCornerShape(6.dp))
+                        .background(shimmer)
+                )
+            }
+        }
     }
 }
 
@@ -360,10 +504,10 @@ fun AddLocationFAB(
 
     ExtendedFloatingActionButton(
         modifier = modifier,
-        shape = RoundedCornerShape(16.dp),
-        containerColor = MaterialTheme.colorScheme.primaryContainer,
-        contentColor = MaterialTheme.colorScheme.onPrimaryContainer,
-        elevation = FloatingActionButtonDefaults.elevation(8.dp),
+        shape = RoundedCornerShape(18.dp),
+        containerColor = if (isLimitReached) MaterialTheme.colorScheme.errorContainer else MaterialTheme.colorScheme.primaryContainer,
+        contentColor = if (isLimitReached) MaterialTheme.colorScheme.onErrorContainer else MaterialTheme.colorScheme.onPrimaryContainer,
+        elevation = FloatingActionButtonDefaults.elevation(6.dp),
         onClick = {
             if (!isLimitReached) {
                 onClick()
@@ -373,15 +517,17 @@ fun AddLocationFAB(
         },
         icon = {
             Icon(
-                painter = painterResource(R.drawable.add),
-                contentDescription = "add location",
+                painter = painterResource(if (isLimitReached) R.drawable.emergency else R.drawable.add),
+                contentDescription = if (isLimitReached) "Upgrade required" else "Add place",
+                modifier = Modifier.size(20.dp)
             )
         },
         text = {
             Text(
-                text = "New Place",
+                text = if (isLimitReached) "Limit Reached" else "New Place",
                 fontFamily = manrope,
-                fontWeight = FontWeight.Bold
+                fontWeight = FontWeight.Bold,
+                fontSize = 14.sp
             )
         }
     )
@@ -426,6 +572,7 @@ fun PlacesUsageCard(
     textSize: TextUnit? = null,
     showPlanInfo: Boolean = true,
     isLoading: Boolean = false,
+    onUpgradeClick: (() -> Unit)? = null,
     modifier: Modifier = Modifier
 ) {
     val max = FeatureAccess.maxSavedPlaces(plan)
@@ -439,19 +586,19 @@ fun PlacesUsageCard(
     }
 
     val usageText = if (isUnlimited)
-        "$current active places"
+        "$current active awareness zones"
     else
-        "$current / $max active places"
+        "$current / $max active awareness zones"
 
     val cardBg = if (isLimitReached)
-        MaterialTheme.colorScheme.errorContainer
+        MaterialTheme.colorScheme.errorContainer.copy(alpha = 0.45f)
     else
         MaterialTheme.colorScheme.surfaceContainer
 
     val cardBorder = if (isLimitReached)
-        BorderStroke(1.dp, MaterialTheme.colorScheme.error.copy(alpha = 0.5f))
+        BorderStroke(1.dp, MaterialTheme.colorScheme.error.copy(alpha = 0.45f))
     else
-        BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.3f))
+        BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.35f))
 
     val cardFg = if (isLimitReached)
         MaterialTheme.colorScheme.onErrorContainer
@@ -459,23 +606,23 @@ fun PlacesUsageCard(
         MaterialTheme.colorScheme.onSurface
 
     val cardFgMuted = if (isLimitReached)
-        cardFg.copy(alpha = 0.65f)
+        cardFg.copy(alpha = 0.75f)
     else
-        MaterialTheme.colorScheme.outline
+        MaterialTheme.colorScheme.onSurfaceVariant
 
     val badgeBg = if (isLimitReached)
         MaterialTheme.colorScheme.error
     else
-        MaterialTheme.colorScheme.surfaceContainerLow
+        MaterialTheme.colorScheme.surfaceContainerHighest
 
     val badgeFg = if (isLimitReached)
         MaterialTheme.colorScheme.onError
     else
-        MaterialTheme.colorScheme.outline
+        MaterialTheme.colorScheme.onSurfaceVariant
 
     Card(
         modifier = modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(20.dp),
+        shape = RoundedCornerShape(24.dp),
         colors = CardDefaults.cardColors(containerColor = cardBg),
         border = cardBorder,
         elevation = CardDefaults.cardElevation(0.dp)
@@ -534,7 +681,7 @@ fun PlacesUsageCard(
                         Text(
                             text = planText,
                             fontSize = 12.sp,
-                            fontWeight = FontWeight.Medium,
+                            fontWeight = FontWeight.SemiBold,
                             fontFamily = manrope,
                             color = cardFgMuted
                         )
@@ -557,21 +704,21 @@ fun PlacesUsageCard(
 
                 Text(
                     text = usageText,
-                    fontSize = textSize ?: 18.sp,
-                    fontWeight = FontWeight.SemiBold,
+                    fontSize = textSize ?: 17.sp,
+                    fontWeight = FontWeight.Bold,
                     fontFamily = manrope,
                     color = cardFg
                 )
 
                 if (!isUnlimited) {
-                    val targetProgress = current.toFloat() / max
+                    val targetProgress = (current.toFloat() / max).coerceIn(0f, 1f)
                     var progressAnimatable by remember { mutableStateOf(0f) }
                     LaunchedEffect(targetProgress) {
                         progressAnimatable = targetProgress
                     }
                     val animatedProgress by animateFloatAsState(
                         targetValue = progressAnimatable,
-                        animationSpec = tween(durationMillis = 1200, easing = FastOutSlowInEasing),
+                        animationSpec = tween(durationMillis = 1000, easing = FastOutSlowInEasing),
                         label = "PlacesUsageProgress"
                     )
                     Box(
@@ -579,7 +726,7 @@ fun PlacesUsageCard(
                             .fillMaxWidth()
                             .height(8.dp)
                             .clip(RoundedCornerShape(99.dp))
-                            .background(cardFg.copy(alpha = 0.15f))
+                            .background(cardFg.copy(alpha = 0.12f))
                     ) {
                         Box(
                             modifier = Modifier
@@ -608,13 +755,36 @@ fun PlacesUsageCard(
                 }
 
                 if (isLimitReached) {
-                    Text(
-                        text = "Upgrade to add more places",
-                        fontSize = 12.sp,
-                        fontWeight = FontWeight.Medium,
-                        fontFamily = manrope,
-                        color = cardFgMuted
-                    )
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(top = 2.dp),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(
+                            text = "Upgrade plan for unlimited zones",
+                            fontSize = 12.sp,
+                            fontWeight = FontWeight.Medium,
+                            fontFamily = manrope,
+                            color = cardFgMuted
+                        )
+
+                        if (onUpgradeClick != null) {
+                            androidx.compose.material3.TextButton(
+                                onClick = onUpgradeClick,
+                                contentPadding = PaddingValues(horizontal = 8.dp, vertical = 2.dp)
+                            ) {
+                                Text(
+                                    text = "Upgrade",
+                                    fontFamily = manrope,
+                                    fontWeight = FontWeight.Bold,
+                                    fontSize = 12.sp,
+                                    color = MaterialTheme.colorScheme.error
+                                )
+                            }
+                        }
+                    }
                 }
             }
         }

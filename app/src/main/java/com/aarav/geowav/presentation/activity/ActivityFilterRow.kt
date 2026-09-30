@@ -1,5 +1,6 @@
 package com.aarav.geowav.presentation.activity
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -19,6 +20,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.aarav.geowav.R
@@ -40,7 +42,7 @@ fun FilterRow(
     val isPro = userPlan == UserPlan.PRO
 
     LazyRow(
-        contentPadding = PaddingValues(horizontal = 12.dp),
+        contentPadding = PaddingValues(horizontal = 16.dp),
         modifier = modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.spacedBy(8.dp)
     ) {
@@ -115,36 +117,47 @@ fun LogFilterChip(
         selected = selected,
         onClick = onClick,
         label = {
-            Text(label, fontSize = 12.sp)
+            Text(
+                text = label,
+                fontSize = 12.sp,
+                fontFamily = com.aarav.geowav.presentation.theme.manrope,
+                fontWeight = if (selected) FontWeight.Bold else FontWeight.Medium
+            )
         },
         modifier = Modifier
             .wrapContentWidth()
             .wrapContentHeight()
             .padding(start = 0.dp)
-            .alpha(if (isLocked) 0.7f else 1f),
+            .alpha(if (isLocked) 0.85f else 1f),
         leadingIcon = {
             if (selected) {
                 Icon(
                     painter = painterResource(R.drawable.check),
-                    contentDescription = "",
+                    contentDescription = null,
                     modifier = Modifier.size(FilterChipDefaults.IconSize),
                     tint = MaterialTheme.colorScheme.onPrimary
                 )
             } else if (isLocked) {
                 Icon(
                     painter = painterResource(R.drawable.lock),
-                    contentDescription = "",
-                    modifier = Modifier.size(FilterChipDefaults.IconSize)
+                    contentDescription = "Pro feature",
+                    modifier = Modifier.size(14.dp),
+                    tint = MaterialTheme.colorScheme.secondary
                 )
             }
         },
-        shape = RoundedCornerShape(100.dp),
+        border = BorderStroke(
+            1.dp,
+            if (selected) MaterialTheme.colorScheme.primary
+            else MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.35f)
+        ),
+        shape = RoundedCornerShape(99.dp),
         colors = FilterChipDefaults.filterChipColors(
             selectedContainerColor = MaterialTheme.colorScheme.primary,
             selectedLabelColor = MaterialTheme.colorScheme.onPrimary,
-            containerColor = Color.Transparent,
-            labelColor = MaterialTheme.colorScheme.onSurfaceVariant,
-            disabledContainerColor = Color.Transparent,
+            containerColor = MaterialTheme.colorScheme.surfaceContainer,
+            labelColor = MaterialTheme.colorScheme.onSurface,
+            disabledContainerColor = MaterialTheme.colorScheme.surfaceContainer,
             disabledLabelColor = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f),
             disabledLeadingIconColor = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f)
         ),
