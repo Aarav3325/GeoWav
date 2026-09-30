@@ -102,7 +102,7 @@ dependencies {
     implementation("com.google.firebase:firebase-perf")
 
     // RevenueCat
-    implementation("com.revenuecat.purchases:purchases:8.10.8")
+    implementation("com.revenuecat.purchases:purchases:10.23.2")
     implementation("com.revenuecat.purchases:purchases-ui:8.10.8")
 
     // Firebase
