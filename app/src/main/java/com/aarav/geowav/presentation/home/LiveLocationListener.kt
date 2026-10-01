@@ -1440,7 +1440,9 @@ fun ViewerCardHome(
             "No one"
 
         viewerInfo.size == 1 -> {
-            viewerInfo.first().alias
+            val v = viewerInfo.first()
+
+            v.alias ?: v.profileName
         }
 
         viewerInfo.size == 2 ->
