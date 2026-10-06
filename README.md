@@ -136,11 +136,11 @@ GeoWav is optimized for smooth real-time location experiences.
 
 Screenshots
 
-<p align="center"> <img src="/screenshots/1.PNG" width="30%" /> <img src="/screenshots/2.PNG" width="30%" /> <img src="/screenshots/3.PNG" width="30%" /> </p>
+<p align="center"> <img src="/screenshots/1.png" width="30%" /> <img src="/screenshots/2.png" width="30%" /> <img src="/screenshots/3.png" width="30%" /> </p>
 
-<p align="center"> <img src="/screenshots/4.PNG" width="30%" /> <img src="/screenshots/5.PNG" width="30%" /> <img src="/screenshots/6.PNG" width="30%" /> </p>
+<p align="center"> <img src="/screenshots/4.png" width="30%" /> <img src="/screenshots/5.png" width="30%" /> <img src="/screenshots/6.png" width="30%" /> </p>
 
-<p align="center"> <img src="/screenshots/7.PNG" width="30%" /> <img src="/screenshots/8.PNG" width="30%" /> </p>
+<p align="center"> <img src="/screenshots/7.png" width="30%" /> <img src="/screenshots/8.png" width="30%" /> </p>
 
 ---
 
